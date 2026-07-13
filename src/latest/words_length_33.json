@@ -1,0 +1,47 @@
+{
+  "metadata": {
+    "curation": {
+      "method": "stratified_quality_score_v1",
+      "seed": 75,
+      "target_sample_size": 16,
+      "curation_date": "2026-05-28T01:39:10.899912Z",
+      "note": "Stratified by starting letter + quality score (frequency 0.45, positional 0.30, vowel balance 0.15, uniqueness 0.10)"
+    }
+  },
+  "answers": [
+    "cyclopentadienyldicarbonylcobalts",
+    "diisopropylchlorophosphoramidites",
+    "dimethylaminomethylcyclohexanones",
+    "dimethylaminonaphthalenesulfonyls",
+    "dimethylaminonaphthalenesulphonyl",
+    "hysterosalpingocontrastsonography",
+    "methyltetrahydropteroylglutamates",
+    "phosphatidyldimethylethanolamines",
+    "phosphatidylinositolbisphosphates",
+    "phosphoenolpyruvatecarboxykinases",
+    "phosphoribosylformylglycinamidine",
+    "tetramethyldiamidodiphenylmethane",
+    "tetramethyldiaminodiphenylmethane",
+    "trifluoropropylmethylpolysiloxane",
+    "trimethylsilylpropanesulphonating",
+    "trimethylsilyltrifluoroacetamides"
+  ],
+  "validGuesses": [
+    "cyclopentadienyldicarbonylcobalts",
+    "diisopropylchlorophosphoramidites",
+    "dimethylaminomethylcyclohexanones",
+    "dimethylaminonaphthalenesulfonyls",
+    "dimethylaminonaphthalenesulphonyl",
+    "hysterosalpingocontrastsonography",
+    "methyltetrahydropteroylglutamates",
+    "phosphatidyldimethylethanolamines",
+    "phosphatidylinositolbisphosphates",
+    "phosphoenolpyruvatecarboxykinases",
+    "phosphoribosylformylglycinamidine",
+    "tetramethyldiamidodiphenylmethane",
+    "tetramethyldiaminodiphenylmethane",
+    "trifluoropropylmethylpolysiloxane",
+    "trimethylsilylpropanesulphonating",
+    "trimethylsilyltrifluoroacetamides"
+  ]
+}

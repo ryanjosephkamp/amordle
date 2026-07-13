@@ -1,0 +1,9 @@
+{
+  "datasetUrl": "https://huggingface.co/datasets/ryanjosephkamp/english-openlist",
+  "datasetId": "ryanjosephkamp/english-openlist",
+  "folder": "latest/brrrdle",
+  "revision": "seed-2026-05-25",
+  "generatedAt": "2026-05-25T00:00:00Z",
+  "lengths": [2, 5, 35],
+  "note": "Historical seed. Do not load at runtime. Superseded by `src/latest/` per LOCAL-WORD-LISTS-SPEC-2026-05-28 (Phase 17). Retained on disk for auditability, for the small set of inline `answers[].definitions` merged into the local source by `src/data/localWordLists.ts`, and as an emergency fallback. The runtime gameplay loader resolves `BUNDLED_WORD_LISTS` from `LOCAL_WORD_LISTS` (`src/latest/words_length_N.json`), not from this directory."
+}

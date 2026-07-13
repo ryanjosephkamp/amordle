@@ -1,0 +1,39 @@
+{
+  "metadata": {
+    "curation": {
+      "method": "stratified_quality_score_v1",
+      "seed": 76,
+      "target_sample_size": 12,
+      "curation_date": "2026-05-28T01:39:10.899912Z",
+      "note": "Stratified by starting letter + quality score (frequency 0.45, positional 0.30, vowel balance 0.15, uniqueness 0.10)"
+    }
+  },
+  "answers": [
+    "carboxymethylhydroxyethylcellulose",
+    "cyclopentadienyltricarbonylrhenium",
+    "dimethylaminomethyldiphenylbutanol",
+    "dimethylaminonaphthalenesulphonyls",
+    "galactosylgalactosylxylosylprotein",
+    "perfluorohexamethylbicyclopropenyl",
+    "supercalifragilisticexpialidocious",
+    "tetramethylcyclopropanecarboxylate",
+    "tetramethyldiaminodiphenylmethanes",
+    "tetramethyldiaminotriphenylmethane",
+    "tetraphenylcyclobutadienepalladium",
+    "trifluoropropylmethylpolysiloxanes"
+  ],
+  "validGuesses": [
+    "carboxymethylhydroxyethylcellulose",
+    "cyclopentadienyltricarbonylrhenium",
+    "dimethylaminomethyldiphenylbutanol",
+    "dimethylaminonaphthalenesulphonyls",
+    "galactosylgalactosylxylosylprotein",
+    "perfluorohexamethylbicyclopropenyl",
+    "supercalifragilisticexpialidocious",
+    "tetramethylcyclopropanecarboxylate",
+    "tetramethyldiaminodiphenylmethanes",
+    "tetramethyldiaminotriphenylmethane",
+    "tetraphenylcyclobutadienepalladium",
+    "trifluoropropylmethylpolysiloxanes"
+  ]
+}

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Awordle maskable icon">
+  <rect width="512" height="512" fill="#07111f"/>
+  <circle cx="256" cy="256" r="190" fill="#020617"/>
+  <rect x="128" y="144" width="80" height="80" rx="16" fill="#67e8f9"/>
+  <rect x="216" y="144" width="80" height="80" rx="16" fill="#fbbf24"/>
+  <rect x="304" y="144" width="80" height="80" rx="16" fill="#34d399"/>
+  <text x="256" y="340" fill="#ecfeff" font-family="Arial, sans-serif" font-size="68" font-weight="900" text-anchor="middle">BRR</text>
+</svg>

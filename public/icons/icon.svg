@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Awordle icon">
+  <rect width="512" height="512" rx="112" fill="#020617"/>
+  <rect x="92" y="92" width="84" height="84" rx="18" fill="#67e8f9"/>
+  <rect x="214" y="92" width="84" height="84" rx="18" fill="#fbbf24"/>
+  <rect x="336" y="92" width="84" height="84" rx="18" fill="#34d399"/>
+  <rect x="92" y="214" width="84" height="84" rx="18" fill="#1e293b" stroke="#67e8f9" stroke-width="8"/>
+  <rect x="214" y="214" width="84" height="84" rx="18" fill="#34d399"/>
+  <rect x="336" y="214" width="84" height="84" rx="18" fill="#1e293b" stroke="#67e8f9" stroke-width="8"/>
+  <text x="256" y="404" fill="#ecfeff" font-family="Arial, sans-serif" font-size="72" font-weight="900" text-anchor="middle">BRR</text>
+</svg>
