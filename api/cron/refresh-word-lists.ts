@@ -48,7 +48,7 @@ async function fetchJson(url: string, init?: { readonly signal?: AbortSignal }):
  * dictionaries remain in place and the failure detail is logged and
  * returned.
  */
-export default async function handler(request: Request): Promise<Response> {
+export async function handleCronRefresh(request: Request): Promise<Response> {
   const authorization = request.headers.get('authorization')
   if (!CRON_SECRET || authorization !== `Bearer ${CRON_SECRET}`) {
     return jsonResponse({ error: 'Unauthorized' }, { status: 401 })
@@ -181,3 +181,5 @@ export default async function handler(request: Request): Promise<Response> {
     { status: 200 },
   )
 }
+
+export default { fetch: handleCronRefresh }

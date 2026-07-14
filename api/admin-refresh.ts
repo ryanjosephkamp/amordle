@@ -46,7 +46,7 @@ async function fetchJson(url: string, init?: { readonly signal?: AbortSignal }):
   return response.json()
 }
 
-export default async function handler(request: Request): Promise<Response> {
+export async function handleAdminRefresh(request: Request): Promise<Response> {
   if (request.method !== 'POST') {
     return jsonResponse({ error: 'Method not allowed' }, { status: 405 })
   }
@@ -192,3 +192,5 @@ export default async function handler(request: Request): Promise<Response> {
     { status: 202 },
   )
 }
+
+export default { fetch: handleAdminRefresh }

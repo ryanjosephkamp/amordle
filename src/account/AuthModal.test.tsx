@@ -31,7 +31,7 @@ describe('AuthModal (structural)', () => {
         onRequestPasswordReset={noop}
       />,
     )
-    expect(html).toContain('Sign in to Awordle')
+    expect(html).toContain('Sign in to amordle')
     expect(html).toContain('Email + password')
     expect(html).toContain('Magic link')
     expect(html.indexOf('Email + password')).toBeLessThan(html.indexOf('Magic link'))

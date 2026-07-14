@@ -188,11 +188,11 @@ function normalizePayloadText(value: string, fallback: string, maxLength: number
 export function createBrowserNotificationPayload(item: NotificationItemViewModel): BrowserNotificationPayload {
   return {
     options: {
-      body: normalizePayloadText(item.detail, 'Open Awordle for details.', 180),
+      body: normalizePayloadText(item.detail, 'Open amordle for details.', 180),
       silent: true,
       tag: `brrrdle-${item.kind}`,
     },
-    title: normalizePayloadText(item.title, 'Awordle notification', 80),
+    title: normalizePayloadText(item.title, 'amordle notification', 80),
   }
 }
 
@@ -236,7 +236,7 @@ export function dispatchBrowserNotification(
 export function getBrowserNotificationStatusDescription(state: BrowserNotificationPermissionState): string {
   switch (state) {
     case 'default':
-      return 'Use the Settings button below to ask this browser for permission. Awordle never asks automatically.'
+      return 'Use the Settings button below to ask this browser for permission. amordle never asks automatically.'
     case 'denied':
       return 'This browser has blocked notification permission. Change the browser site setting to allow it again.'
     case 'granted':

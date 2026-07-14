@@ -14,7 +14,7 @@ const ROUTES = [
   { button: /^Settings$/i, title: /^Settings$/i },
   { button: /^Help$/i, title: /^Help$/i },
   { button: /^Feedback$/i, title: /^Feedback$/i },
-  { button: /^About$/i, title: /^About Awordle$/i },
+  { button: /^About$/i, title: /^About amordle$/i },
 ] as const
 
 async function triggerLocalDailyNotification(page: Page): Promise<void> {
@@ -29,7 +29,7 @@ test.describe('Functional shell characterization @layout', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    const navigation = page.getByRole('navigation', { name: /^Awordle destinations$/i })
+    const navigation = page.getByRole('navigation', { name: /^amordle destinations$/i })
     await expect(navigation).toBeVisible()
     await expect(page.getByRole('main')).toHaveCount(1)
 
@@ -53,7 +53,7 @@ test.describe('Functional shell characterization @layout', () => {
     const focusToggle = page.getByRole('button', { name: /^Enter focus mode$/i })
     await focusToggle.click()
     await expect(page.getByRole('button', { name: /^Exit focus mode and restore the full shell$/i })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.getByRole('navigation', { name: /^Awordle destinations$/i })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: /^amordle destinations$/i })).toBeVisible()
     await expectNoHorizontalOverflow(page)
 
     await page.getByRole('button', { name: /^Exit focus mode and restore the full shell$/i }).click()

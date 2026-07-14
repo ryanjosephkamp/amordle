@@ -69,7 +69,7 @@ describe('LunarSignalStage', () => {
       </LunarSignalStage>,
     )
 
-    expect(html).not.toContain('Awordle route summary')
+    expect(html).not.toContain('amordle route summary')
     expect(html).not.toContain('5 letters')
     expect(html).not.toContain('Banks')
     expect(html).not.toContain('Ready')
@@ -96,7 +96,7 @@ describe('LunarSignalStage', () => {
     expect(html).toContain('aria-label="Current progression"')
     expect(html).toContain('Level 2')
     expect(html).toContain('42 coins')
-    expect(html).not.toContain('Awordle route summary')
+    expect(html).not.toContain('amordle route summary')
     expect(html).not.toContain('5 letters')
   })
 

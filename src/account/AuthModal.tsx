@@ -134,7 +134,7 @@ export function AuthModal({
       description="Sign in to sync progress, level up, and unlock the Admin tools for authorized users."
       isOpen={isOpen}
       onClose={onClose}
-      title={phase === 'forgot-password' ? 'Reset your password' : 'Sign in to Awordle'}
+      title={phase === 'forgot-password' ? 'Reset your password' : 'Sign in to amordle'}
     >
       {phase === 'forgot-password' ? (
         <div className="space-y-3">
@@ -221,7 +221,7 @@ export function AuthModal({
               </p>
             </>
           ) : (
-            <p className="text-xs text-slate-400">We will email you a one-time sign-in link for this Awordle site.</p>
+            <p className="text-xs text-slate-400">We will email you a one-time sign-in link for this amordle site.</p>
           )}
 
           <div className="flex flex-wrap items-center gap-2">

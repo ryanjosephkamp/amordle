@@ -90,7 +90,7 @@ export function AuthPanel({
 
       {method === 'magic-link' ? (
         <>
-          <p className="text-xs text-slate-400">We will email you a one-time sign-in link for this Awordle site.</p>
+          <p className="text-xs text-slate-400">We will email you a one-time sign-in link for this amordle site.</p>
           <Button onClick={() => onSendMagicLink?.(email)} variant="primary">Send magic link</Button>
         </>
       ) : (

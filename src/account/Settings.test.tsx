@@ -154,9 +154,9 @@ describe('Settings', () => {
     )
 
     expect(html).toContain('Account management')
-    expect(html).toContain('Sign in to Awordle')
+    expect(html).toContain('Sign in to amordle')
     expect(html).toContain('Sign in / Create account')
-    expect(html.indexOf('Sign in to Awordle')).toBeGreaterThan(html.indexOf('Account management'))
+    expect(html.indexOf('Sign in to amordle')).toBeGreaterThan(html.indexOf('Account management'))
   })
 
   it('keeps unconfigured account setup copy in Account management', () => {

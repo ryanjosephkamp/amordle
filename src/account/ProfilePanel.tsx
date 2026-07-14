@@ -411,7 +411,7 @@ export function ProfilePanel({
 }: ProfilePanelProps) {
   return (
     <Dialog
-      description="Customize how you appear in Awordle. Saved to your account."
+      description="Customize how you appear in amordle. Saved to your account."
       isOpen={isOpen}
       onClose={onClose}
       title="Your profile"

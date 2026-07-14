@@ -30,7 +30,7 @@ function sourceLabel(source: NotificationItemViewModel['source']): string {
     case 'multiplayer':
       return 'Multiplayer'
     default:
-      return 'Awordle'
+      return 'amordle'
   }
 }
 

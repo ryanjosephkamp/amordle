@@ -23,7 +23,7 @@ export const APP_ROUTES = [
     id: 'home',
     label: 'Home',
     shortLabel: 'Home',
-    description: 'Choose an Awordle mode and review launch status.',
+    description: 'Choose an amordle mode and review launch status.',
     navigationGroup: 'play',
   },
   {
@@ -45,7 +45,7 @@ export const APP_ROUTES = [
     id: 'og-daily',
     label: 'og Daily',
     shortLabel: 'og',
-    description: 'Classic daily Awordle, fixed at five letters for launch.',
+    description: 'Classic daily amordle, fixed at five letters for launch.',
     navigationGroup: 'play',
     mode: 'og',
     scope: 'daily',
@@ -56,7 +56,7 @@ export const APP_ROUTES = [
     id: 'go-daily',
     label: 'go Daily',
     shortLabel: 'go',
-    description: 'Daily multi-board Awordle, fixed at five letters for launch.',
+    description: 'Daily multi-board amordle, fixed at five letters for launch.',
     navigationGroup: 'play',
     mode: 'go',
     scope: 'daily',
@@ -104,7 +104,7 @@ export const APP_ROUTES = [
     id: 'word-explorer',
     label: 'Word Explorer',
     shortLabel: 'Words',
-    description: 'Browse and search the exact words Awordle is using.',
+    description: 'Browse and search the exact words amordle is using.',
     navigationGroup: 'support',
   },
   {
@@ -159,9 +159,9 @@ export const APP_ROUTES = [
   },
   {
     id: 'about',
-    label: 'About Awordle',
+    label: 'About amordle',
     shortLabel: 'About',
-    description: 'Project notes, rules context, credits, and release details for Awordle.',
+    description: 'Project notes, rules context, credits, and release details for amordle.',
     navigationGroup: 'support',
   },
   {

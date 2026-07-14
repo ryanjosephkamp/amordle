@@ -1,6 +1,6 @@
-# Awordle Ranked Multiplayer
+# amordle Ranked Multiplayer
 
-Awordle preserves the source contracts for ranked Practice and ranked Daily OG/GO. Remote authority verification remains pending until a dedicated Awordle Supabase project exists.
+amordle preserves the source contracts for ranked Practice and ranked Daily OG/GO. Remote authority verification remains pending until the dedicated amordle Supabase project is verified, migrated, and configured.
 
 ## Rating model
 

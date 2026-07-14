@@ -8,7 +8,7 @@ describe('emoji sharing', () => {
     const guesses = [getGuessResult('cigar', 'crane'), getGuessResult('crane', 'crane')]
 
     expect(formatOgShare({ dateKey: '2026-05-26', guesses, maxAttempts: 6, mode: 'og', scope: 'daily', status: 'won' })).toBe([
-      'Awordle og daily 2026-05-26 2/6',
+      'amordle og daily 2026-05-26 2/6',
       '🟩⬛⬛🟨🟨',
       '🟩🟩🟩🟩🟩',
     ].join('\n'))

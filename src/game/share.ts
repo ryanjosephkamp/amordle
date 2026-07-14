@@ -28,7 +28,7 @@ export interface GoShareInput extends ShareHeaderInput {
 
 function formatHeader({ dateKey, mode, scope }: ShareHeaderInput): string {
   const scopeLabel = scope === 'daily' && dateKey ? `${scope} ${dateKey}` : scope
-  return `Awordle ${mode} ${scopeLabel}`
+  return `amordle ${mode} ${scopeLabel}`
 }
 
 function formatGuessRow(guess: GuessResult): string {

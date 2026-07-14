@@ -416,9 +416,9 @@ export function AboutBrrrdlePanel() {
     <section className="space-y-5" aria-labelledby="about-brrrdle-title">
       <div className="space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-ice-200)]">About</p>
-        <h2 id="about-brrrdle-title" className="text-3xl font-bold text-white">About Awordle</h2>
+        <h2 id="about-brrrdle-title" className="text-3xl font-bold text-white">About amordle</h2>
         <p className="max-w-3xl text-base leading-7 text-slate-300">
-          Awordle is a word-game playground built around og single boards, go chains, daily puzzles, and wide-range practice lengths.
+          amordle is a word-game playground built around og single boards, go chains, daily puzzles, and wide-range practice lengths.
         </p>
       </div>
 
@@ -440,7 +440,7 @@ export function AboutBrrrdlePanel() {
       <Panel className="space-y-4 text-sm leading-6 text-slate-300" tone="muted">
         <div className="space-y-1">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-cyan-100">Rules and surfaces</p>
-          <h3 className="text-2xl font-bold text-white">Current Awordle reference</h3>
+          <h3 className="text-2xl font-bold text-white">Current amordle reference</h3>
           <p>
             Help stays focused on quick orientation. This page keeps the deeper reference material for modes, public surfaces, and multiplayer boundaries.
           </p>
@@ -504,7 +504,7 @@ export function AboutBrrrdlePanel() {
             <div className="rounded-lg border border-white/10 bg-black/30 p-3">
               <p className="font-semibold text-cyan-100">Expected score</p>
               <p className="mt-1">
-                Awordle uses the standard {MULTIPLAYER_ELO_EXPECTED_SCORE_SCALE}-point Elo curve.
+                amordle uses the standard {MULTIPLAYER_ELO_EXPECTED_SCORE_SCALE}-point Elo curve.
               </p>
               <div
                 aria-label="Expected score formula"

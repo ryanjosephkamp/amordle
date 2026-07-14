@@ -1,4 +1,4 @@
-# Contributing to Awordle
+# Contributing to amordle
 
 Keep changes small, reviewable, and tied to an explicitly approved scope.
 
@@ -21,7 +21,7 @@ npx tsc --noEmit -p tsconfig.app.json
 npx tsc --noEmit -p tsconfig.node.json
 ```
 
-Use Playwright guest/local lanes when they do not require external services. Authority-enabled scenarios require the dedicated Awordle test environment and strict temporary-user/row cleanup.
+Use Playwright guest/local lanes when they do not require external services. Authority-enabled scenarios require the dedicated amordle test environment and strict temporary-user/row cleanup.
 
 ## Safety
 

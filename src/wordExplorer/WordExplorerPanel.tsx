@@ -123,7 +123,7 @@ export function WordExplorerPanel() {
       <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-ice-200)]">word data</p>
       <h2 id="word-explorer-title" className="text-3xl font-bold text-white">Word Explorer</h2>
       <p className="max-w-3xl text-base leading-7 text-slate-300">
-        Browse and search the exact words this build of Awordle is using. Choose a length, search the live list,
+        Browse and search the exact words this build of amordle is using. Choose a length, search the live list,
         and request additions for missing words.
       </p>
 
