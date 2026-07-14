@@ -1,4 +1,4 @@
-# English OpenList Awordle Artifacts
+# English OpenList amordle Artifacts
 
 Generated on `2026-05-28T01:39:10.899912+00:00` for release `2026-05-28`.
 
@@ -6,7 +6,7 @@ This folder contains primary JSON artifacts for lowercase ASCII words from 2 thr
 
 ## Primary files
 
-`words_length_{N}.json` files are the primary Awordle artifacts. Each file includes `metadata.curation`, curated `answers`, and complete `validGuesses` word arrays. `answers` are generated with the `stratified_quality_score_v1` method; `validGuesses` remains the full per-length list.
+`words_length_{N}.json` files are the primary amordle artifacts. Each file includes `metadata.curation`, curated `answers`, and complete `validGuesses` word arrays. `answers` are generated with the `stratified_quality_score_v1` method; `validGuesses` remains the full per-length list.
 
 ## Transitional compatibility files
 

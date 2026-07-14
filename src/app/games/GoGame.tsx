@@ -628,7 +628,7 @@ function GoGameSession({
           {scope === 'daily' ? 'Daily go chain' : 'Practice go chain'}
         </h2>
         <p className="max-w-3xl text-base leading-7 text-slate-300">
-          {session.puzzles.length} linked Awordle puzzles are active with prior answers carried forward as pre-filled rows on later puzzles.
+          {session.puzzles.length} linked amordle puzzles are active with prior answers carried forward as pre-filled rows on later puzzles.
         </p>
       </div>
 

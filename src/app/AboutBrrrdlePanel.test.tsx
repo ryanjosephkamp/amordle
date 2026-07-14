@@ -6,7 +6,7 @@ describe('AboutBrrrdlePanel', () => {
   it('keeps deeper current-surface reference content on About instead of Help', () => {
     const html = renderToStaticMarkup(<AboutBrrrdlePanel />)
 
-    expect(html).toContain('Current Awordle reference')
+    expect(html).toContain('Current amordle reference')
     expect(html).toContain('Daily games are fixed shared puzzles')
     expect(html).toContain('Practice games are configurable before the first submitted guess')
     expect(html).toContain('OG is one board')

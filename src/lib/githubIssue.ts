@@ -1,5 +1,5 @@
 /**
- * Build pre-filled GitHub "new issue" URLs for the Awordle repository.
+ * Build pre-filled GitHub "new issue" URLs for the amordle repository.
  *
  * The helpers below never submit anything on the user's behalf; they only
  * construct the URL that the user will open in a new tab and review on
@@ -8,7 +8,7 @@
  */
 
 export const BRRRDLE_REPO_OWNER = 'ryanjosephkamp'
-export const BRRRDLE_REPO_NAME = 'awordle'
+export const BRRRDLE_REPO_NAME = 'amordle'
 
 export interface NewIssueInput {
   readonly title: string

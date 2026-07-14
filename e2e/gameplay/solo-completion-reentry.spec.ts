@@ -65,7 +65,7 @@ async function deleteSoloLettersWithKeyboard(page: Page, regionName: RegExp, cou
 }
 
 async function goHome(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /Awordle Command Center/i }).click()
+  await page.getByRole('button', { name: /amordle Command Center/i }).click()
   await expect(page.locator('#dashboard-home-title')).toBeVisible()
 }
 

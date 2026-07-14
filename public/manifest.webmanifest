@@ -1,6 +1,6 @@
 {
-  "name": "Awordle",
-  "short_name": "Awordle",
+  "name": "amordle",
+  "short_name": "amordle",
   "description": "A Wordle and Hurdle hybrid with daily, practice, and multiplayer play.",
   "start_url": "/",
   "scope": "/",

@@ -82,9 +82,9 @@ export function LunarSignalStage({
       data-surface={surfaceTheme}
     >
       <div className="brrrdle-lunar-interface">
-        <header className="brrrdle-lunar-topbar" aria-label="Awordle controls">
+        <header className="brrrdle-lunar-topbar" aria-label="amordle controls">
           <button className="brrrdle-lunar-brand" onClick={() => onNavigate('home')} type="button">
-            <span>Awordle</span>
+            <span>amordle</span>
             <small>{commandTitle}</small>
           </button>
 
@@ -108,7 +108,7 @@ export function LunarSignalStage({
         </header>
 
         <main className="brrrdle-lunar-grid">
-          <nav aria-label="Awordle destinations" className="brrrdle-lunar-rail">
+          <nav aria-label="amordle destinations" className="brrrdle-lunar-rail">
             {routes.map((route) => {
               const isActive = route.id === activeRoute.id
               const attention = routeAttention?.[route.id]

@@ -52,7 +52,7 @@ describe('browser notification helpers', () => {
     } })).toBe('granted')
     expect(getBrowserNotificationStatusLabel('default')).toBe('Not requested')
     expect(getBrowserNotificationStatusLabel('denied')).toBe('Blocked')
-    expect(getBrowserNotificationStatusDescription('default')).toContain('Awordle never asks automatically')
+    expect(getBrowserNotificationStatusDescription('default')).toContain('amordle never asks automatically')
     expect(getBrowserNotificationStatusDescription('granted')).toContain('foreground-only')
   })
 

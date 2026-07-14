@@ -31,7 +31,7 @@ const MOBILE_SCROLL_TARGETS: readonly MobileRouteTarget[] = [
   { label: 'Word Explorer', navigationName: /^Words$/i, title: /^Word Explorer$/i },
   { label: 'Profile', navigationName: /^Profile$/i, title: /^Profile$/i },
   { label: 'Settings', navigationName: /^Settings$/i, title: /^Settings$/i },
-  { label: 'About Awordle', navigationName: /^About$/i, title: /^About Awordle$/i },
+  { label: 'About amordle', navigationName: /^About$/i, title: /^About amordle$/i },
 ]
 
 function getWrongPracticeOgGuess(): string {
@@ -88,7 +88,7 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
       await page.goto('/')
 
       if (route.navigationName) {
-        const routeRail = page.getByRole('navigation', { name: /^Awordle destinations$/i })
+        const routeRail = page.getByRole('navigation', { name: /^amordle destinations$/i })
         await expect(routeRail).toBeVisible()
         await routeRail.getByRole('button', { name: route.navigationName }).click()
       }
@@ -103,7 +103,7 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
 
       await expectLocatorCenterNotCovered(routeTitle)
       if (route.navigationName) {
-        const routeRail = page.getByRole('navigation', { name: /^Awordle destinations$/i })
+        const routeRail = page.getByRole('navigation', { name: /^amordle destinations$/i })
         await expectLocatorCenterNotCovered(routeRail.getByRole('button', { name: route.navigationName }))
       }
 

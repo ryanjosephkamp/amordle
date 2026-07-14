@@ -8,7 +8,7 @@ import {
 } from './githubIssue'
 
 describe('buildNewIssueUrl', () => {
-  it('produces a URL pointing at the Awordle repo', () => {
+  it('produces a URL pointing at the amordle repo', () => {
     const url = buildNewIssueUrl({ title: 't', body: 'b' })
     expect(url.startsWith(`https://github.com/${BRRRDLE_REPO_OWNER}/${BRRRDLE_REPO_NAME}/issues/new?`)).toBe(true)
   })

@@ -536,7 +536,7 @@ function OgGameSession({
           {scope === 'daily' ? 'Daily og puzzle' : 'Practice og puzzle'}
         </h2>
         <p className="max-w-3xl text-base leading-7 text-slate-300">
-          Classic single-board Awordle is active with canonical tile states, physical keyboard input, on-screen keyboard input, and optional hard mode.
+          Classic single-board amordle is active with canonical tile states, physical keyboard input, on-screen keyboard input, and optional hard mode.
         </p>
       </div>
 

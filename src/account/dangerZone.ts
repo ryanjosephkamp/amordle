@@ -1,7 +1,7 @@
 import type { BrrrdleSupabaseClient } from './supabaseClient'
 
-export const DELETE_ACCOUNT_CONFIRMATION = 'DELETE AWORDLE ACCOUNT'
-export const RESET_PROGRESS_CONFIRMATION = 'RESET AWORDLE PROGRESS'
+export const DELETE_ACCOUNT_CONFIRMATION = 'DELETE AMORDLE ACCOUNT'
+export const RESET_PROGRESS_CONFIRMATION = 'RESET AMORDLE PROGRESS'
 
 export function isConfirmationMatch(value: string, expected: string): boolean {
   return value.trim() === expected

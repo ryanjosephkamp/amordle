@@ -1,4 +1,4 @@
-# Awordle E2E Suite
+# amordle E2E Suite
 
 The Playwright suite exercises gameplay through the real browser app. Multiplayer
 scenarios use two isolated browser contexts and Supabase-backed persistence.

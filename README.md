@@ -1,14 +1,15 @@
-# Awordle
+# amordle
 
-Awordle (pronounced “Award-le”) is a Wordle and Hurdle hybrid with Solo, Daily, Practice, and authenticated Multiplayer play.
+amordle (pronounced like “immortal”) is a Wordle and Hurdle hybrid with Solo, Daily, Practice, and authenticated Multiplayer play.
 
-This repository is the clean-history successor to the locked `brrrdle-dev` functional shell. Its initial source foundation comes from the exact Golden Checkpoint `phase-58-final-functional-shell-golden-2026-07-13`, with user-visible branding changed to Awordle and compatibility identifiers intentionally preserved.
+This repository is the clean-history successor to the locked `brrrdle-dev` functional shell. Its initial source foundation comes from the exact Golden Checkpoint `phase-58-final-functional-shell-golden-2026-07-13`, with user-visible branding changed to amordle and compatibility identifiers intentionally preserved.
 
 ## Current status
 
 - Source foundation, tests, APIs, public assets, and all 41 ordered Supabase migrations are present.
 - Guest/local behavior can be developed and tested without a configured backend.
-- No Awordle Supabase project or Vercel project has been provisioned, linked, migrated, or deployed yet.
+- A dedicated Vercel project is linked to `ryanjosephkamp/amordle` and deployed at `https://amordle.vercel.app`.
+- A dedicated Supabase project has been created, but linking, migration application, runtime configuration, and authority verification remain pending.
 - Remote-authority and hosted-clone acceptance remain separately gated work.
 - No license has been selected.
 
@@ -32,7 +33,7 @@ npm run dev
 
 Vite prints the local URL. Guest/local lanes do not require Supabase configuration.
 
-To enable account or remote multiplayer behavior in a future independently authorized setup, copy `.env.example` to `.env.local` and provide only values from the dedicated Awordle services. Never reuse, print, or commit credentials from another project.
+To enable account or remote multiplayer behavior in a future independently authorized setup, copy `.env.example` to `.env.local` and provide only values from the dedicated amordle services. Never reuse, print, or commit credentials from another project.
 
 ## Verification
 
@@ -44,7 +45,7 @@ npx tsc --noEmit -p tsconfig.app.json
 npx tsc --noEmit -p tsconfig.node.json
 ```
 
-Browser scenarios that create authenticated users or durable multiplayer rows require a separately provisioned Awordle Supabase project and process-scoped test credentials. See [e2e/README.md](e2e/README.md).
+Browser scenarios that create authenticated users or durable multiplayer rows require the separately configured amordle Supabase project and process-scoped test credentials. See [e2e/README.md](e2e/README.md).
 
 ## Repository structure
 

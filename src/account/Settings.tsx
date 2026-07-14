@@ -393,7 +393,7 @@ export function Settings({
           </div>
         ) : authState.status === 'anonymous' ? (
           <div className="space-y-2 rounded-2xl border border-slate-800 bg-slate-950/55 p-3">
-            <p className="font-semibold text-cyan-100">Sign in to Awordle</p>
+            <p className="font-semibold text-cyan-100">Sign in to amordle</p>
             <p>Open a clean dialog with Magic Link, Email + Password, and Forgot Password.</p>
             {onOpenAuthModal ? (
               <Button onClick={onOpenAuthModal} variant="primary">Sign in / Create account</Button>
