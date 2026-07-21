@@ -1,11 +1,27 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { createDefaultGuestProgress } from '../../src/account'
 import { DEFAULT_DIFFICULTY_TIER } from '../../src/data'
 import { createGoSession, createPracticeGoSetup, enterGoLetter, serializeGoSession, submitGoGuess } from '../../src/game'
 import { expectNoConsoleFailures, installConsoleGuards } from '../fixtures/assertions'
-import { chooseSoloPracticeMode, navigateToSoloPractice } from '../fixtures/gameActions'
+import { chooseSoloPracticeMode } from '../fixtures/gameActions'
+import { navigateToSoloPractice } from './soloTestNavigation'
 
 const GUEST_PROGRESS_STORAGE_KEY = 'brrrdle:guest-progress:v1'
+
+async function openPracticeTools(game: Locator): Promise<void> {
+  const tools = game.locator('details.brrrdle-solo-tools-disclosure')
+  if (!await tools.evaluate((element) => (element as HTMLDetailsElement).open)) {
+    await tools.getByText(/^Practice tools$/i).click()
+  }
+  await expect(tools).toHaveAttribute('open', '')
+}
+
+async function openMarketplace(page: Page): Promise<void> {
+  await page.getByRole('button', { name: /^MORE$/i }).click()
+  const more = page.getByRole('dialog', { name: /^More destinations$/i })
+  await more.getByRole('button', { name: /^Marketplace$/i }).click()
+  await expect(page.locator('#marketplace-title')).toBeVisible()
+}
 
 test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practice', () => {
   test('a final reveal completes OG and advances GO through canonical game flow', async ({ page }) => {
@@ -27,14 +43,17 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'og')
     const ogGame = page.getByRole('region', { name: /Practice og puzzle/i })
+    await openPracticeTools(ogGame)
     for (const inventory of [10, 9, 8, 7, 6]) {
       await ogGame.getByRole('button', { name: new RegExp(`Reveal letter \\(${inventory}\\)`, 'i') }).click()
     }
-    await expect(ogGame.getByText(/^Solved\./i)).toBeVisible()
-    await expect(ogGame.locator('[role="row"]').first().locator('[data-state="correct"]')).toHaveCount(5)
+    const ogResult = page.getByRole('region', { name: /^OG result$/i })
+    await expect(ogResult.getByRole('heading', { level: 3, name: /^PUZZLE SOLVED$/i })).toBeVisible()
+    await expect(page.getByRole('grid', { name: /^Guess grid$/i })).toHaveCount(0)
 
     await chooseSoloPracticeMode(page, 'go')
     const goGame = page.getByRole('region', { name: /Practice go chain/i })
+    await openPracticeTools(goGame)
     for (const inventory of [5, 4, 3, 2, 1]) {
       await goGame.getByRole('button', { name: new RegExp(`Reveal letter \\(${inventory}\\)`, 'i') }).click()
     }
@@ -88,10 +107,12 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'go')
     const game = page.getByRole('region', { name: /Practice go chain/i })
+    await openPracticeTools(game)
     await game.getByRole('button', { name: /^Reveal letter \(1\)$/i }).click()
     await expect(game.getByText(/^Advancing to final results\.$/i)).toBeVisible()
-    await expect(game.getByText(/^Solved all 5 go puzzles\./i)).toBeVisible({ timeout: 5_000 })
-    await expect(game.getByText(/^Solved puzzle definitions$/i)).toBeVisible()
+    const result = page.getByRole('region', { name: /^GO result$/i })
+    await expect(result.getByRole('heading', { level: 3, name: /^CHAIN COMPLETE$/i })).toBeVisible({ timeout: 5_000 })
+    await expect(page.getByText(/^Solved puzzle definitions$/i)).toBeVisible()
     await expectNoConsoleFailures(consoleFailures)
   })
 
@@ -108,8 +129,7 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    await page.getByRole('button', { name: /^Market$/i }).click()
-    await expect(page.locator('#marketplace-title')).toBeVisible()
+    await openMarketplace(page)
     await page.getByRole('button', { name: /Buy for 25 coins/i }).click()
     await expect(page.getByText('Purchase complete.')).toBeVisible()
     await expect(page.getByText('115 coins available.')).toBeVisible()
@@ -121,7 +141,7 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'og')
     const game = page.getByRole('region', { name: /Practice og puzzle/i })
-    await expect(game.getByText('Solo Practice tools')).toBeVisible()
+    await openPracticeTools(game)
     await game.getByRole('button', { name: /Reveal letter \(1\)/i }).click()
     const revealedText = game.getByText(/^Revealed:/i)
     await expect(revealedText).toBeVisible()
@@ -157,14 +177,15 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'og')
     const restoredOg = page.getByRole('region', { name: /Practice og puzzle/i })
+    await openPracticeTools(restoredOg)
     await expect(restoredOg.getByText(/^Revealed:/i)).toBeVisible()
     await expect(restoredOg.getByRole('gridcell', { name: new RegExp(`^Row 1, tile ${revealedPosition}, ${revealedLetter}$`, 'i') })).toHaveAttribute('data-state', 'correct')
     for (const label of disabledKeyLabels) await expect(restoredOg.getByRole('button', { name: label! })).toBeDisabled()
 
     await page.getByRole('tab', { name: /^Daily Solo$/i }).click()
-    await expect(page.getByText('Solo Practice tools')).toHaveCount(0)
-    await page.getByRole('button', { name: /^Multiplayer$/i }).click()
-    await expect(page.getByText('Solo Practice tools')).toHaveCount(0)
+    await expect(page.getByText(/^Practice tools$/i)).toHaveCount(0)
+    await page.getByRole('button', { name: /^COMBAT$/i }).click()
+    await expect(page.getByText(/^Practice tools$/i)).toHaveCount(0)
     await expectNoConsoleFailures(consoleFailures)
   })
 
@@ -187,6 +208,7 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'go')
     const game = page.getByRole('region', { name: /Practice go chain/i })
+    await openPracticeTools(game)
     await game.getByRole('button', { name: /Reveal letter \(1\)/i }).click()
     await game.getByRole('button', { name: /Remove incorrect letters \(1\)/i }).click()
 
@@ -197,6 +219,7 @@ test.describe('Phase 57 Solo Practice marketplace and consumables @solo @practic
     await navigateToSoloPractice(page)
     await chooseSoloPracticeMode(page, 'go')
     const restored = page.getByRole('region', { name: /Practice go chain/i })
+    await openPracticeTools(restored)
     await expect(restored.getByText(/^Revealed:/i)).toBeVisible()
     for (const label of removedKeyLabels) await expect(restored.getByRole('button', { name: label! })).toBeDisabled()
     await expectNoConsoleFailures(consoleFailures)

@@ -23,19 +23,20 @@ import {
   type GoSessionState,
   type KeyboardInput,
   type PuzzleSessionState,
-  type TileState,
   formatGoShare,
 } from '../../game'
 import { clearDailyGoStoredSession, loadDailyGoStoredSession, saveDailyGoStoredSession } from '../../game/storage/dailyGoStorage'
 import { dateKeyToLocalDate, getActiveDailyDate } from '../../daily'
-import { applyPracticeHintsToDraft, calculatePayToContinueCost, createInitialConsumableEffects, deletePracticeDraftLetter, enterPracticeDraftLetter, getPracticeDraftTiles, removePracticeIncorrectLetters, revealNextPracticeLetter, type ConsumableEffects, type ConsumableType } from '../../progression'
+import { applyPracticeHintsToDraft, calculatePayToContinueCost, createInitialConsumableEffects, deletePracticeDraftLetter, enterPracticeDraftLetter, removePracticeIncorrectLetters, revealNextPracticeLetter, type ConsumableEffects, type ConsumableType } from '../../progression'
 import { PracticeConsumableControls } from '../../marketplace'
-import { Button, Keyboard, Panel, ShareButton } from '../../ui'
+import { Button, Keyboard, Panel, ShareButton, SoloBoard } from '../../ui'
 import { useSound } from '../../sound'
 import { classNames } from '../../ui/classNames'
 import { GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE, GAMEPLAY_AUTOCENTER_TARGETS } from '../gameplayAutoCenter'
 import { CustomizeMenu } from './CustomizeMenu'
 import { getSoloGoSolvedTransition, type SoloGoSolvedTransition } from './goTransitions'
+import { selectSoloBoardPresentation } from './soloBoardRows'
+import { SoloResultHandoff } from './SoloResultHandoff'
 import { createGoGameSessionKey } from './soloSessionKeys'
 import { getSoloInputSoundEvents, getSoloSubmitSoundEvents } from './soloSoundEvents'
 import { WordListPreparationPanel } from './WordListPreparationPanel'
@@ -49,6 +50,8 @@ interface GoGameProps {
   readonly initialResume?: GoResumeSlot
   readonly keyboardDisabled?: boolean
   readonly onGameComplete?: (input: CompletedGameInput) => void
+  readonly onOpenCalendar?: () => void
+  readonly onOpenHistory?: () => void
   readonly onResumeCapture?: (capture: ResumeCapture) => void
   readonly onSoloCloudMutation?: (mutation: SoloCloudMutation) => void
   readonly onSaveDifficultyDefault?: (tier: DifficultyTier) => void
@@ -70,16 +73,7 @@ interface GoGameProps {
   readonly onMarkDailyUnlocked?: () => void
 }
 
-type GridTileState = TileState | 'empty' | 'current'
 const SOLO_GO_TRANSITION_MS = 2000
-
-const tileStateClasses: Record<GridTileState, string> = {
-  absent: 'border-slate-700 bg-slate-950 text-slate-400',
-  correct: 'border-emerald-300/70 bg-emerald-300/25 text-emerald-50',
-  current: 'border-cyan-200/70 bg-cyan-300/10 text-cyan-50',
-  empty: 'border-slate-700 bg-slate-950/60 text-slate-500',
-  present: 'border-amber-300/70 bg-amber-300/20 text-amber-50',
-}
 
 function canRestoreDailySession(serialized: ReturnType<typeof serializeGoSession>, setup: GoSessionSetup): boolean {
   return serialized.puzzles.length === setup.puzzles.length
@@ -103,66 +97,6 @@ function createInitialDailySession(setup: ReturnType<typeof createDailyGoSetup>,
 
   clearDailyGoStoredSession(undefined, pastDailyDateKey)
   return createGoSession(setup, hardMode)
-}
-
-function GuessGrid({ effects, session }: { readonly effects: ConsumableEffects; readonly session: PuzzleSessionState }) {
-  type GridTile = { readonly isSubmitted: boolean; readonly letter: string; readonly state: GridTileState }
-  const rows = useMemo(() => Array.from({ length: session.maxAttempts }, (_, rowIndex) => {
-    const submittedGuess = session.guesses[rowIndex]
-    if (submittedGuess) {
-      return submittedGuess.tiles.map((tile): GridTile => ({ isSubmitted: true, letter: tile.letter, state: tile.state }))
-    }
-
-    if (rowIndex === session.guesses.length && session.status === 'playing') {
-      return getPracticeDraftTiles(session.currentGuess, session.wordLength, effects).map((tile): GridTile => ({
-        isSubmitted: false,
-        letter: tile.letter,
-        state: tile.locked ? 'correct' : tile.letter ? 'current' : 'empty',
-      }))
-    }
-
-    return Array.from({ length: session.wordLength }, (): GridTile => ({ isSubmitted: false, letter: '', state: 'empty' }))
-  }), [effects, session.currentGuess, session.guesses, session.maxAttempts, session.status, session.wordLength])
-
-  return (
-    <div
-      aria-label="Go guess grid"
-      className="@container space-y-1.5 sm:space-y-2"
-      role="grid"
-      tabIndex={-1}
-      {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.solo }}
-    >
-      {rows.map((row, rowIndex) => (
-        <div
-          className={classNames('mx-auto grid gap-1 sm:gap-1.5', session.lastValidation && rowIndex === session.guesses.length ? 'motion-safe:animate-[brrrdle-row-shake_180ms_ease-in-out]' : undefined)}
-          key={rowIndex}
-          role="row"
-          style={{
-            gridTemplateColumns: `repeat(${session.wordLength}, minmax(0, 1fr))`,
-            maxWidth: `calc(var(--brrrdle-tile-max) * ${session.wordLength} + 0.375rem * ${session.wordLength - 1})`,
-          }}
-        >
-          {row.map((tile, tileIndex) => (
-            <div
-              aria-label={`Row ${rowIndex + 1}, tile ${tileIndex + 1}${tile.letter ? `, ${tile.letter}` : ''}`}
-              className={classNames(
-                '@container flex aspect-square items-center justify-center rounded-md border font-black uppercase',
-                tileStateClasses[tile.state],
-                tile.state === 'current' ? 'motion-safe:animate-[brrrdle-tile-pop_180ms_ease-out]' : undefined,
-                tile.isSubmitted ? 'motion-safe:animate-[brrrdle-tile-reveal_360ms_ease-out]' : undefined,
-              )}
-              data-state={tile.state}
-              key={`${rowIndex}-${tileIndex}`}
-              role="gridcell"
-              style={{ fontSize: 'clamp(0.625rem, 50cqi, 1.75rem)' }}
-            >
-              {tile.letter}
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function getCompletionPercentage(session: PuzzleSessionState): number {
@@ -192,6 +126,8 @@ function GoGameSession({
   keyboardDisabled,
   onDifficultyChange,
   onGameComplete,
+  onOpenCalendar,
+  onOpenHistory,
   onGoPuzzleCountChange,
   onPracticeLengthChange,
   onPracticeSeedChange,
@@ -220,6 +156,8 @@ function GoGameSession({
   readonly keyboardDisabled: boolean
   readonly onDifficultyChange: (tier: DifficultyTier) => void
   readonly onGameComplete?: (input: CompletedGameInput) => void
+  readonly onOpenCalendar?: () => void
+  readonly onOpenHistory?: () => void
   readonly onGoPuzzleCountChange: (count: GoPuzzleCount) => void
   readonly onPracticeLengthChange: (length: number) => void
   readonly onPracticeSeedChange: () => void
@@ -619,10 +557,24 @@ function GoGameSession({
     </div>
   ) : null
   const hasPostGuessControls = Boolean(terminalControl || revealControl)
+  const boardPresentation = useMemo(
+    () => selectSoloBoardPresentation(
+      displayPuzzle,
+      scope === 'practice' && !isSolvedTransitionActive
+        ? consumableEffects
+        : createInitialConsumableEffects(),
+    ),
+    [consumableEffects, displayPuzzle, isSolvedTransitionActive, scope],
+  )
+  const totalGuesses = session.puzzles.reduce((total, puzzle) => total + puzzle.guesses.length, 0)
+  const solvedPuzzleCount = session.puzzles.filter((puzzle) => puzzle.status === 'won').length
+  const terminalPuzzles = session.puzzles.filter((puzzle, index) => (
+    puzzle.status === 'won' || (lossAnswerRevealed && index === session.currentPuzzleIndex)
+  ))
 
   return (
     <section className="brrrdle-solo-gameplay space-y-5" aria-labelledby="go-game-title">
-      <div className="space-y-2">
+      <div className="brrrdle-solo-game-header space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-ice-200)]">go {scope}</p>
         <h2 id="go-game-title" className="text-3xl font-bold text-white">
           {scope === 'daily' ? 'Daily go chain' : 'Practice go chain'}
@@ -632,147 +584,198 @@ function GoGameSession({
         </p>
       </div>
 
-      <Panel className="space-y-4" tone="muted">
-        {scope === 'practice' ? (
-          <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-700 bg-slate-950/50 p-3">
-            <label className="grid gap-1 text-sm font-semibold text-cyan-100">
-              Practice length
-              <select
-                className="rounded-xl border border-slate-600 bg-slate-950 px-3 py-2 text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-                onChange={(event) => onPracticeLengthChange(Number(event.target.value))}
-                value={practiceLength}
-              >
-                {practiceLengths.map((length) => (
-                  <option key={length} value={length}>{length} letters</option>
-                ))}
-              </select>
-            </label>
-            <Button onClick={onPracticeSeedChange} variant="secondary">New go chain</Button>
-            <p className="text-sm leading-6 text-slate-300">The selected length applies to all five practice puzzles.</p>
-          </div>
-        ) : null}
-
-        {onSaveDifficultyDefault ? (
-          <CustomizeMenu
-            defaultDifficulty={defaultDifficulty}
-            defaultGoPuzzleCount={defaultGoPuzzleCount}
-            difficulty={difficulty}
-            goPuzzleCount={goPuzzleCount}
-            locked={customizeLocked}
-            onDifficultyChange={onDifficultyChange}
-            onGoPuzzleCountChange={onGoPuzzleCountChange}
-            onSaveDefault={() => onSaveDifficultyDefault(difficulty)}
-            onSaveGoPuzzleCountDefault={onSaveGoPuzzleCountDefault ? () => onSaveGoPuzzleCountDefault(goPuzzleCount) : undefined}
-          />
-        ) : null}
-
-        <label className="flex items-center gap-3 text-sm font-semibold text-cyan-100">
-          <input
-            checked={session.hardMode}
-            className="h-4 w-4 accent-cyan-300"
-            disabled={hardModeLocked}
-            onChange={(event) => setSession((currentSession) => setGoHardMode(currentSession, event.target.checked))}
-            type="checkbox"
-          />
-          Hard mode
-        </label>
-
-        <div className="grid gap-2 sm:grid-cols-5" aria-label="Go puzzle progress">
-          {session.puzzles.map((puzzle, index) => (
-            <div
-              className={classNames(
-                'rounded-2xl border p-3 text-sm',
-                index === displayPuzzleIndex ? 'border-cyan-200/70 bg-cyan-300/10 text-cyan-50' : 'border-slate-700 bg-slate-950/50 text-slate-300',
-              )}
-              key={`${puzzle.answer}-${index}`}
-            >
-              <p className="font-bold">Puzzle {index + 1}</p>
-              <p className="capitalize">{puzzle.status}</p>
-              {index < session.currentPuzzleIndex || (isSolvedTransitionActive && index === displayPuzzleIndex && displayPuzzle.status === 'won') ? <p>{puzzle.answer.toLocaleUpperCase('en-US')}</p> : null}
-            </div>
-          ))}
-        </div>
-
-        <GuessGrid effects={scope === 'practice' && !isSolvedTransitionActive ? consumableEffects : createInitialConsumableEffects()} session={displayPuzzle} />
-
-        <div aria-live="polite" className="min-h-20 rounded-2xl border border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-200" role="status">
-          <p>{statusMessage}</p>
-          {currentPuzzle.lastValidation ? <p className="mt-1 min-h-6 font-semibold text-amber-100">{currentPuzzle.lastValidation.message}</p> : <p aria-hidden="true" className="mt-1 min-h-6" />}
-        </div>
-
-        <div className="brrrdle-solo-post-guess-controls flex flex-col gap-4">
-          <div
-            className={classNames(hasPostGuessControls ? 'order-1 md:order-2' : undefined)}
-            tabIndex={-1}
-            {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.soloKeyboard }}
-          >
-            <Keyboard disabled={session.status !== 'playing' || isSolvedTransitionActive} disabledLetters={scope === 'practice' ? consumableEffects.removedLetters : undefined} letterStates={letterStates} onInput={handleInput} />
-          </div>
-          {hasPostGuessControls ? (
-            <div className="order-2 flex flex-col gap-4 md:order-1">
-              {terminalControl}
-              {revealControl}
-            </div>
-          ) : null}
-        </div>
-
-        {scope === 'practice' ? (
-          <PracticeConsumableControls consumables={consumables} disabled={session.status !== 'playing' || isSolvedTransitionActive} effects={consumableEffects} onUse={handleUseConsumable} />
-        ) : null}
-
-
+      <Panel className="brrrdle-solo-game-panel" tone="muted">
         {showEndState ? (
-          <ShareButton
-            label="Share go result"
-            text={formatGoShare({
-              currentPuzzleIndex: session.currentPuzzleIndex,
-              dateKey: setup.dateKey,
-              mode: 'go',
-              puzzles: session.puzzles,
-              scope,
-              status: session.status,
-            })}
-          />
-        ) : null}
+          <div className="brrrdle-solo-result-layout">
+            <SoloResultHandoff
+              attemptsUsed={totalGuesses}
+              evidence={(
+                <ol className="brrrdle-solo-result-ledger" aria-label="GO chain answer ledger">
+                  {terminalPuzzles.map((puzzle) => {
+                    const puzzleIndex = session.puzzles.indexOf(puzzle)
+                    return (
+                      <li key={`${puzzle.answer}-${puzzleIndex}`}>
+                        <span>Puzzle {puzzleIndex + 1}</span>
+                        <strong>{puzzle.answer.toLocaleUpperCase('en-US')}</strong>
+                        <span>{puzzle.guesses.length} {puzzle.guesses.length === 1 ? 'guess' : 'guesses'}</span>
+                      </li>
+                    )
+                  })}
+                </ol>
+              )}
+              mode="go"
+              puzzleCount={session.puzzles.length}
+              scope={scope}
+              solvedPuzzleCount={solvedPuzzleCount}
+              status={session.status === 'won' ? 'won' : 'lost'}
+              wordLength={currentPuzzle.wordLength}
+            >
+              {scope === 'practice' ? (
+                <Button onClick={onPracticeSeedChange} variant="primary">New go chain</Button>
+              ) : null}
+              {scope === 'daily' && onOpenCalendar ? (
+                <Button onClick={onOpenCalendar} variant="secondary">Calendar</Button>
+              ) : null}
+              {onOpenHistory ? (
+                <Button onClick={onOpenHistory} variant="ghost">Solo history</Button>
+              ) : null}
+              <ShareButton
+                label="Share go result"
+                text={formatGoShare({
+                  currentPuzzleIndex: session.currentPuzzleIndex,
+                  dateKey: setup.dateKey,
+                  mode: 'go',
+                  puzzles: session.puzzles,
+                  scope,
+                  status: session.status,
+                })}
+              />
+            </SoloResultHandoff>
 
-        {solvedPuzzles.length > 0 ? (
-          <div className="rounded-2xl border border-slate-700 bg-slate-950/50 p-4">
-            <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-bold text-cyan-100">Solved puzzle definitions</p>
-              <Button onClick={() => setShowDefinitions((value) => !value)} variant="ghost">
-                {showDefinitions ? 'Hide Definitions' : 'Show All'}
-              </Button>
-            </div>
-            {showDefinitions ? (
-              <div className="mt-3 flex flex-col gap-3">
-                {solvedPuzzles.map((puzzle, index) => (
-                  <DefinitionPanel
-                    enabled
-                    key={`${puzzle.answer}-${index}`}
-                    mode="go"
-                    scope={scope}
-                    word={puzzle.answer}
-                    wordLength={puzzle.wordLength}
-                  />
-                ))}
-              </div>
+            {solvedPuzzles.length > 0 ? (
+              <details className="brrrdle-solo-definition-ledger" open={showDefinitions}>
+                <summary onClick={(event) => {
+                  event.preventDefault()
+                  setShowDefinitions((value) => !value)
+                }}>
+                  Solved puzzle definitions
+                </summary>
+                <div>
+                  {solvedPuzzles.map((puzzle, index) => (
+                    <DefinitionPanel
+                      enabled
+                      key={`${puzzle.answer}-${index}`}
+                      mode="go"
+                      scope={scope}
+                      word={puzzle.answer}
+                      wordLength={puzzle.wordLength}
+                    />
+                  ))}
+                </div>
+              </details>
             ) : null}
-          </div>
-        ) : null}
 
-        <DefinitionPanel
-          enabled={showCurrentPuzzleDefinition}
-          mode="go"
-          scope={scope}
-          word={currentPuzzle.answer}
-          wordLength={currentPuzzle.wordLength}
-        />
+            <DefinitionPanel
+              enabled={showCurrentPuzzleDefinition}
+              mode="go"
+              scope={scope}
+              word={currentPuzzle.answer}
+              wordLength={currentPuzzle.wordLength}
+            />
+          </div>
+        ) : (
+          <div className="brrrdle-solo-game-layout">
+            <div className="brrrdle-solo-game-core">
+              <SoloBoard
+                activeCell={boardPresentation.activeCell}
+                ariaLabel="Go guess grid"
+                autoCenterAttribute={{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.solo }}
+                rows={boardPresentation.rows}
+                shakeRowIndex={currentPuzzle.lastValidation ? currentPuzzle.guesses.length : undefined}
+                wordLength={displayPuzzle.wordLength}
+              />
+
+              <div aria-live="polite" className="brrrdle-solo-status min-h-20" role="status">
+                <p>{statusMessage}</p>
+                {currentPuzzle.lastValidation ? <p className="mt-1 min-h-6 font-semibold text-amber-100">{currentPuzzle.lastValidation.message}</p> : <p aria-hidden="true" className="mt-1 min-h-6" />}
+              </div>
+
+              <div className="brrrdle-solo-post-guess-controls flex flex-col gap-4">
+                <div
+                  className={classNames(hasPostGuessControls ? 'order-1 md:order-2' : undefined)}
+                  tabIndex={-1}
+                  {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.soloKeyboard }}
+                >
+                  <Keyboard disabled={session.status !== 'playing' || isSolvedTransitionActive} disabledLetters={scope === 'practice' ? consumableEffects.removedLetters : undefined} letterStates={letterStates} onInput={handleInput} />
+                </div>
+                {hasPostGuessControls ? (
+                  <div className="order-2 flex flex-col gap-4 md:order-1">
+                    {terminalControl}
+                    {revealControl}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <aside className="brrrdle-solo-game-rail" aria-label="GO chain controls">
+              <div className="brrrdle-go-chain-spine" aria-label="Go puzzle progress">
+                <p>{session.puzzles.length}-puzzle chain</p>
+                <ol>
+                  {session.puzzles.map((puzzle, index) => (
+                    <li
+                      data-current={index === displayPuzzleIndex ? 'true' : undefined}
+                      data-status={puzzle.status}
+                      key={`puzzle-${index}`}
+                    >
+                      <span>{index + 1}</span>
+                      <strong>{puzzle.status}</strong>
+                      {index < session.currentPuzzleIndex || (isSolvedTransitionActive && index === displayPuzzleIndex && displayPuzzle.status === 'won')
+                        ? <small>{puzzle.answer.toLocaleUpperCase('en-US')}</small>
+                        : null}
+                    </li>
+                  ))}
+                </ol>
+              </div>
+
+              <div className="brrrdle-solo-setup-controls">
+                {scope === 'practice' ? (
+                  <div className="brrrdle-solo-practice-config">
+                    <label>
+                      Practice length
+                      <select
+                        onChange={(event) => onPracticeLengthChange(Number(event.target.value))}
+                        value={practiceLength}
+                      >
+                        {practiceLengths.map((length) => (
+                          <option key={length} value={length}>{length} letters</option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button onClick={onPracticeSeedChange} variant="secondary">New go chain</Button>
+                    <p>The selected length applies to every puzzle in this Practice chain.</p>
+                  </div>
+                ) : null}
+
+                {onSaveDifficultyDefault ? (
+                  <CustomizeMenu
+                    defaultDifficulty={defaultDifficulty}
+                    defaultGoPuzzleCount={defaultGoPuzzleCount}
+                    difficulty={difficulty}
+                    goPuzzleCount={goPuzzleCount}
+                    locked={customizeLocked}
+                    onDifficultyChange={onDifficultyChange}
+                    onGoPuzzleCountChange={onGoPuzzleCountChange}
+                    onSaveDefault={() => onSaveDifficultyDefault(difficulty)}
+                    onSaveGoPuzzleCountDefault={onSaveGoPuzzleCountDefault ? () => onSaveGoPuzzleCountDefault(goPuzzleCount) : undefined}
+                  />
+                ) : null}
+
+                <label className="brrrdle-solo-hard-mode">
+                  <input
+                    checked={session.hardMode}
+                    disabled={hardModeLocked}
+                    onChange={(event) => setSession((currentSession) => setGoHardMode(currentSession, event.target.checked))}
+                    type="checkbox"
+                  />
+                  Hard mode
+                </label>
+              </div>
+
+              {scope === 'practice' ? (
+                <details className="brrrdle-solo-tools-disclosure">
+                  <summary>Practice tools</summary>
+                  <PracticeConsumableControls consumables={consumables} disabled={session.status !== 'playing' || isSolvedTransitionActive} effects={consumableEffects} onUse={handleUseConsumable} />
+                </details>
+              ) : null}
+            </aside>
+          </div>
+        )}
       </Panel>
     </section>
   )
 }
 
-export function GoGame({ coins, consumables = { removeIncorrectLetters: 0, revealOneLetter: 0 }, defaultDifficulty = DEFAULT_DIFFICULTY_TIER, defaultGoPuzzleCount = DEFAULT_GO_PUZZLE_COUNT, defaultHardMode = false, initialResume, keyboardDisabled = false, onAdvancePracticeSeed, onConsumeConsumable, onGameComplete, onResumeCapture, onSoloCloudMutation, onSaveDifficultyDefault, onSaveGoPuzzleCountDefault, onSpendCoins, practiceSeedCounter = 0, practiceSeedUserId, progressOwnerKey, scope, pastDailyDateKey, onMarkDailyUnlocked }: GoGameProps) {
+export function GoGame({ coins, consumables = { removeIncorrectLetters: 0, revealOneLetter: 0 }, defaultDifficulty = DEFAULT_DIFFICULTY_TIER, defaultGoPuzzleCount = DEFAULT_GO_PUZZLE_COUNT, defaultHardMode = false, initialResume, keyboardDisabled = false, onAdvancePracticeSeed, onConsumeConsumable, onGameComplete, onOpenCalendar, onOpenHistory, onResumeCapture, onSoloCloudMutation, onSaveDifficultyDefault, onSaveGoPuzzleCountDefault, onSpendCoins, practiceSeedCounter = 0, practiceSeedUserId, progressOwnerKey, scope, pastDailyDateKey, onMarkDailyUnlocked }: GoGameProps) {
   const [initialPracticeResume] = useState(() => initialResume?.scope === 'practice' ? initialResume : undefined)
   const initialDailyResume = initialResume?.scope === 'daily' ? initialResume : undefined
   // Practice resume captures are written on every input. Treat the incoming
@@ -830,6 +833,8 @@ export function GoGame({ coins, consumables = { removeIncorrectLetters: 0, revea
       keyboardDisabled={keyboardDisabled}
       onDifficultyChange={(tier) => { setResumeConsumed(true); setDifficulty(tier) }}
       onGameComplete={onGameComplete}
+      onOpenCalendar={onOpenCalendar}
+      onOpenHistory={onOpenHistory}
       onGoPuzzleCountChange={(count) => { setResumeConsumed(true); setGoPuzzleCount(count) }}
       onMarkDailyUnlocked={onMarkDailyUnlocked}
       onConsumeConsumable={onConsumeConsumable}

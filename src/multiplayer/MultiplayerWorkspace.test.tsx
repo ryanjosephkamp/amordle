@@ -126,6 +126,10 @@ describe('MultiplayerWorkspace', () => {
     expect(html).toContain('1 Live v1 game visible to you')
     expect(html).toContain('Freshest Jun 14, 2026')
     expect(html).toContain('Live v1')
+    expect(html).toContain('>COMBAT</h2>')
+    expect(html).toContain('Shared-board word duels')
+    expect(html).toContain('combat-command-grid')
+    expect(html).toContain('combat-live-rail')
   })
 
   it('uses the main subtab row only on Overview while keeping section actions', () => {

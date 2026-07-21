@@ -84,11 +84,13 @@ export interface RefreshOptions {
  *
  * The Hugging Face publisher may emit either:
  *   1. A WordListFile object that already matches the brrrdle schema, or
- *   2. A flat array of lowercase words.
+ *   2. A flat array of lowercase words, or
+ *   3. A raw object with answers, validGuesses, and curation-only metadata.
  *
- * In case (2), metadata is injected from the refresh source info so the
- * resulting object passes the existing `validateWordListFile` checks. This
- * keeps `wordListSchema.ts` as the single source of truth for validation.
+ * In cases (2) and (3), metadata is injected from the refresh source info so
+ * the resulting object passes the existing `validateWordListFile` checks.
+ * Fully formed or inconsistently partial objects pass through unchanged so the
+ * canonical validator remains the single source of truth for rejection.
  */
 function coercePayload(
   payload: unknown,
@@ -105,6 +107,36 @@ function coercePayload(
       },
       answers: payload,
       validGuesses: payload,
+    }
+  }
+  if (typeof payload === 'object' && payload !== null) {
+    const record = payload as Record<string, unknown>
+    const metadata = typeof record.metadata === 'object'
+      && record.metadata !== null
+      && !Array.isArray(record.metadata)
+      ? record.metadata as Record<string, unknown>
+      : undefined
+    const hasOnlyCurationMetadata = metadata
+      && typeof metadata.curation === 'object'
+      && metadata.curation !== null
+      && !Array.isArray(metadata.curation)
+      && Object.keys(metadata).every((key) => key === 'curation')
+
+    if (
+      hasOnlyCurationMetadata
+      && Array.isArray(record.answers)
+      && Array.isArray(record.validGuesses)
+    ) {
+      return {
+        ...record,
+        metadata: {
+          length,
+          source: `huggingface:${source.datasetId}`,
+          version: source.revision,
+          generatedAt: source.generatedAt,
+          curation: metadata.curation,
+        },
+      }
     }
   }
   return payload

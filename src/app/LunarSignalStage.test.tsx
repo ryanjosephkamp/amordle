@@ -4,178 +4,122 @@ import { DEFAULT_SURFACE_THEME } from '../theme'
 import { getRouteById, getPrimaryNavigationRoutes } from './routes'
 import { LunarSignalStage } from './LunarSignalStage'
 
+function renderShell(options: {
+  readonly activeRouteId?: Parameters<typeof getRouteById>[0]
+  readonly children?: React.ReactNode
+  readonly focusModeEnabled?: boolean
+  readonly metrics?: readonly { readonly label: string; readonly value: React.ReactNode }[]
+  readonly progressionHud?: React.ReactNode
+  readonly routeAttention?: Parameters<typeof LunarSignalStage>[0]['routeAttention']
+  readonly soloSubtab?: Parameters<typeof LunarSignalStage>[0]['soloSubtab']
+} = {}) {
+  return renderToStaticMarkup(
+    <LunarSignalStage
+      accountControls={<button type="button">Account menu</button>}
+      activeRoute={getRouteById(options.activeRouteId ?? 'home')}
+      focusModeEnabled={options.focusModeEnabled}
+      metrics={options.metrics ?? []}
+      onFocusModeChange={() => undefined}
+      onNavigate={() => undefined}
+      onShellNavigate={() => undefined}
+      progressionHud={options.progressionHud}
+      routeAttention={options.routeAttention}
+      routes={getPrimaryNavigationRoutes(false)}
+      soloSubtab={options.soloSubtab ?? 'overview'}
+      surfaceTheme={DEFAULT_SURFACE_THEME}
+    >
+      {options.children ?? <section aria-label="Route content">Route child</section>}
+    </LunarSignalStage>,
+  )
+}
+
 describe('LunarSignalStage', () => {
-  it('mounts Home route children instead of leaving Home as a dormant selector only', () => {
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Guest</button>}
-        activeRoute={getRouteById('home')}
-        metrics={[]}
-        onNavigate={() => undefined}
-        routes={getPrimaryNavigationRoutes(false)}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Home dashboard test content">Dashboard child</section>
-      </LunarSignalStage>,
-    )
+  it('keeps route children mounted inside exactly one main landmark', () => {
+    const html = renderShell({
+      children: <section aria-label="Home dashboard test content">Dashboard child</section>,
+    })
 
     expect(html).toContain('Dashboard child')
+    expect(html.match(/<main/g)).toHaveLength(1)
     expect(html).not.toContain('Pick a colored tab below')
     expect(html).not.toContain('Deck readout')
-    expect(html).not.toContain('Mode deck')
   })
 
-  it('renders route attention badges as descriptions without changing route button names', () => {
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Guest</button>}
-        activeRoute={getRouteById('solo')}
-        metrics={[]}
-        onNavigate={() => undefined}
-        routeAttention={{
-          multiplayer: {
-            ariaLabel: '2 Multiplayer games need your turn',
-            label: '2',
-            tone: 'urgent',
-          },
-        }}
-        routes={getPrimaryNavigationRoutes(false)}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Solo content">Solo child</section>
-      </LunarSignalStage>,
-    )
+  it('renders the accepted desktop and mobile destination labels from one authority', () => {
+    const html = renderShell()
 
-    expect(html).toContain('aria-label="Multiplayer"')
-    expect(html).toContain('2 Multiplayer games need your turn')
+    expect(html).toContain('aria-label="Primary destinations"')
+    expect(html).toContain('aria-label="Mobile destinations"')
+    expect(html).toContain('aria-label="PLAY"')
+    expect(html).toContain('aria-label="DAILY"')
+    expect(html).toContain('aria-label="COMBAT"')
+    expect(html).toContain('aria-label="CALENDAR"')
+    expect(html).toContain('aria-label="STATS"')
+    expect(html).toContain('aria-label="MORE"')
+    expect(html).not.toContain('aria-label="Multiplayer"')
+    expect(html).not.toContain('amordle COMBAT')
+  })
+
+  it('uses destination-aware titles without changing the mounted route', () => {
+    const dailyHtml = renderShell({ activeRouteId: 'solo', soloSubtab: 'daily' })
+    const combatHtml = renderShell({ activeRouteId: 'multiplayer' })
+
+    expect(dailyHtml).toContain('<h1 id="active-route-title">DAILY</h1>')
+    expect(dailyHtml).toContain('aria-current="page"')
+    expect(combatHtml).toContain('<h1 id="active-route-title">COMBAT</h1>')
+    expect(combatHtml).toContain('Route child')
+  })
+
+  it('renders route attention as an accessible COMBAT destination description', () => {
+    const html = renderShell({
+      activeRouteId: 'solo',
+      routeAttention: {
+        multiplayer: {
+          ariaLabel: '2 COMBAT games need your turn',
+          label: '2',
+          tone: 'urgent',
+        },
+      },
+    })
+
+    expect(html).toContain('aria-label="COMBAT"')
+    expect(html).toContain('2 COMBAT games need your turn')
     expect(html).toContain('aria-hidden="true"')
     expect(html).toContain('data-tone="urgent"')
   })
 
-  it('does not render global header status chips on ordinary pages', () => {
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Guest</button>}
-        activeRoute={getRouteById('home')}
-        metrics={[
-          { label: 'Daily', value: '5 letters' },
-          { label: 'Banks', value: 34 },
-        ]}
-        onNavigate={() => undefined}
-        routes={getPrimaryNavigationRoutes(false)}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Home dashboard test content">Dashboard child</section>
-      </LunarSignalStage>,
-    )
-
-    expect(html).not.toContain('amordle route summary')
-    expect(html).not.toContain('5 letters')
-    expect(html).not.toContain('Banks')
-    expect(html).not.toContain('Ready')
-    expect(html).not.toContain('System readout')
-  })
-
-  it('renders the explicit progression HUD slot without reviving legacy metrics', () => {
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Guest</button>}
-        activeRoute={getRouteById('solo')}
-        metrics={[
-          { label: 'Daily', value: '5 letters' },
-        ]}
-        onNavigate={() => undefined}
-        progressionHud={<aside aria-label="Current progression">Level 2 / 42 coins</aside>}
-        routes={getPrimaryNavigationRoutes(false)}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Solo content">Solo child</section>
-      </LunarSignalStage>,
-    )
+  it('does not revive global metric chips and keeps the explicit progression slot', () => {
+    const html = renderShell({
+      metrics: [
+        { label: 'Daily', value: '5 letters' },
+        { label: 'Banks', value: 34 },
+      ],
+      progressionHud: <aside aria-label="Current progression">Level 2 / 42 coins</aside>,
+    })
 
     expect(html).toContain('aria-label="Current progression"')
     expect(html).toContain('Level 2')
     expect(html).toContain('42 coins')
     expect(html).not.toContain('amordle route summary')
     expect(html).not.toContain('5 letters')
+    expect(html).not.toContain('Banks')
   })
 
-  it('renders a reversible inactive Focus Mode control without changing route access', () => {
-    const routes = getPrimaryNavigationRoutes(false)
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Account menu</button>}
-        activeRoute={getRouteById('solo')}
-        focusModeEnabled={false}
-        metrics={[]}
-        onFocusModeChange={() => undefined}
-        onNavigate={() => undefined}
-        progressionHud={<aside aria-label="Current progression">Level 2 / 42 coins</aside>}
-        routes={routes}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Solo content">Solo child</section>
-      </LunarSignalStage>,
-    )
+  it('renders reversible Focus Mode recovery without changing route children', () => {
+    const inactiveHtml = renderShell({ activeRouteId: 'solo' })
+    const activeHtml = renderShell({ activeRouteId: 'multiplayer', focusModeEnabled: true })
 
-    expect(html).toContain('aria-label="Enter focus mode"')
-    expect(html).toContain('aria-pressed="false"')
-    expect(html).toContain('Focus')
-    expect(html).not.toContain('is-focus-mode')
-    expect(html).toContain('Account menu')
-    expect(html).toContain('aria-label="Current progression"')
-    routes.forEach((route) => {
-      expect(html).toContain(`aria-label="${route.shortLabel}"`)
-    })
+    expect(inactiveHtml).toContain('aria-label="Enter focus mode"')
+    expect(inactiveHtml).toContain('aria-pressed="false"')
+    expect(inactiveHtml).not.toContain('is-focus-mode')
+    expect(activeHtml).toContain('is-focus-mode')
+    expect(activeHtml).toContain('aria-label="Exit focus mode and restore the full shell"')
+    expect(activeHtml).toContain('aria-pressed="true"')
+    expect(activeHtml).toContain('Account menu')
+    expect(activeHtml).toContain('Route child')
   })
 
-  it('keeps exit recovery account controls attention and routes visible in Focus Mode', () => {
-    const routes = getPrimaryNavigationRoutes(false)
-    const html = renderToStaticMarkup(
-      <LunarSignalStage
-        accountControls={<button type="button">Account menu</button>}
-        activeRoute={getRouteById('multiplayer')}
-        focusModeEnabled
-        metrics={[]}
-        onFocusModeChange={() => undefined}
-        onNavigate={() => undefined}
-        progressionHud={<aside aria-label="Current progression">Level 2 / 42 coins</aside>}
-        routeAttention={{
-          multiplayer: {
-            ariaLabel: '2 Multiplayer games need your turn',
-            label: '2',
-            tone: 'urgent',
-          },
-          settings: {
-            ariaLabel: 'Sync needs attention',
-            label: '!',
-            tone: 'attention',
-          },
-        }}
-        routes={routes}
-        surfaceTheme={DEFAULT_SURFACE_THEME}
-      >
-        <section aria-label="Multiplayer content">Multiplayer child</section>
-      </LunarSignalStage>,
-    )
-
-    expect(html).toContain('is-focus-mode')
-    expect(html).toContain('aria-label="Exit focus mode and restore the full shell"')
-    expect(html).toContain('aria-pressed="true"')
-    expect(html).toContain('Exit focus')
-    expect(html).toContain('Account menu')
-    expect(html).toContain('aria-label="Current progression"')
-    expect(html).toContain('2 Multiplayer games need your turn')
-    expect(html).toContain('Sync needs attention')
-    expect(html).toContain('aria-current="page"')
-    expect(html).toContain('aria-label="Settings"')
-    expect(html).toContain('aria-label="Help"')
-    routes.forEach((route) => {
-      expect(html).toContain(`aria-label="${route.shortLabel}"`)
-    })
-  })
-
-  it('does not need browser storage to render Focus Mode', () => {
+  it('does not read or write browser storage to render Focus Mode', () => {
     const originalDescriptor = Object.getOwnPropertyDescriptor(globalThis, 'localStorage')
     const throwingStorage: Storage = {
       clear: () => {
@@ -200,21 +144,7 @@ describe('LunarSignalStage', () => {
     })
 
     try {
-      expect(() => renderToStaticMarkup(
-        <LunarSignalStage
-          accountControls={<button type="button">Account menu</button>}
-          activeRoute={getRouteById('solo')}
-          focusModeEnabled
-          metrics={[]}
-          onFocusModeChange={() => undefined}
-          onNavigate={() => undefined}
-          progressionHud={<aside aria-label="Current progression">Level 2 / 42 coins</aside>}
-          routes={getPrimaryNavigationRoutes(false)}
-          surfaceTheme={DEFAULT_SURFACE_THEME}
-        >
-          <section aria-label="Solo content">Solo child</section>
-        </LunarSignalStage>,
-      )).not.toThrow()
+      expect(() => renderShell({ activeRouteId: 'solo', focusModeEnabled: true })).not.toThrow()
     } finally {
       if (originalDescriptor) {
         Object.defineProperty(globalThis, 'localStorage', originalDescriptor)

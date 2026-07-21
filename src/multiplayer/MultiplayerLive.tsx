@@ -34,7 +34,7 @@ export function MultiplayerLiveSpectatorDetails({
   readonly id?: string
 }) {
   return (
-    <div className="mt-4 space-y-4 rounded-lg border border-cyan-200/15 bg-cyan-400/5 p-4 text-sm leading-6 text-slate-300" id={id}>
+    <div className="combat-spectator-evidence mt-4 space-y-4 p-4 text-sm leading-6 text-slate-300" id={id}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-cyan-100">Spectator view</p>
@@ -74,9 +74,9 @@ export function MultiplayerLiveSpectatorDetails({
           No submitted turns visible yet.
         </div>
       ) : (
-        <div className="space-y-2">
+        <div className="combat-live-shared-board space-y-2" data-live-shared-board="true">
           {details.moves.map((move, index) => (
-            <div className="min-w-0 rounded border border-white/10 bg-black/20 p-3" key={`${move.playerLabel}:${move.guess}:${index}`}>
+            <div className="combat-live-move min-w-0 p-3" data-actor={move.playerLabel} key={`${move.playerLabel}:${move.guess}:${index}`}>
               <div className="flex flex-wrap items-center justify-between gap-2">
                 <p className="break-words font-semibold text-white">{move.playerLabel} · {move.puzzleLabel}</p>
                 {move.createdAt ? <p className="text-xs uppercase tracking-[0.12em] text-slate-500">{formatDateTime(move.createdAt)}</p> : null}
@@ -133,7 +133,7 @@ function MultiplayerLiveCard({
   const spectatorDetailsId = game.viewerRole === 'spectator' ? `live-spectator-details-${game.id}` : undefined
 
   return (
-    <article className="rounded-lg border border-white/10 bg-black/30 p-4 shadow-xl shadow-black/20" aria-label={game.title}>
+    <article className="combat-live-card p-4" aria-label={game.title}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-[var(--color-ice-200)]">{game.scopeLabel}</p>
@@ -251,7 +251,7 @@ export function MultiplayerLive({
           {restrictedGameCount} active {restrictedGameCount === 1 ? 'game is' : 'games are'} hidden by Live privacy rules.
         </div>
       ) : null}
-      <div className="grid gap-3 lg:grid-cols-2">
+      <div className="combat-live-list">
         {liveGames.map((game) => (
           <MultiplayerLiveCard
             game={game}

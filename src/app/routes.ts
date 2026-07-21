@@ -185,6 +185,7 @@ export const PRIMARY_NAVIGATION_ROUTE_IDS = [
   'leaderboard',
   'word-explorer',
   'profile',
+  'definitions',
   'settings',
   'help',
   'feedback',

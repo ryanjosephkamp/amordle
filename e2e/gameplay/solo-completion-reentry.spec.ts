@@ -7,9 +7,10 @@ import { expectNoConsoleFailures, installConsoleGuards } from '../fixtures/asser
 import { cleanupE2eRun } from '../fixtures/cleanup'
 import { installFixedBrowserTime } from '../fixtures/dailyClock'
 import { getE2eEnv } from '../fixtures/env'
-import { chooseSoloPracticeMode, navigateToSoloPractice, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
+import { chooseSoloPracticeMode, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
 import { createAuthenticatedSupabaseClient } from '../fixtures/supabaseAdmin'
 import { createE2eUser, createRunId, signInThroughUi, type E2eUser } from '../fixtures/testUsers'
+import { navigateToSoloPractice } from './soloTestNavigation'
 
 const GUEST_PROGRESS_STORAGE_KEY = 'brrrdle:guest-progress:v1'
 const FIXED_DAILY_DATE_KEY = '2026-06-11'
@@ -42,7 +43,7 @@ async function waitForCompletedGame(page: Page, gameId: string, slotKey: SoloSlo
 }
 
 async function navigateToSoloDaily(page: Page, mode: 'go' | 'og'): Promise<void> {
-  await page.getByRole('button', { name: /^Solo$/i }).click()
+  await page.getByRole('button', { name: /^PLAY$/i }).click()
   await expect(page.locator('#solo-workspace-title')).toBeVisible()
   await page.getByRole('tab', { name: /^Daily Solo$/i }).click()
   const modeGroup = page.getByRole('group', { name: /^Daily Solo mode$/i })
@@ -65,7 +66,7 @@ async function deleteSoloLettersWithKeyboard(page: Page, regionName: RegExp, cou
 }
 
 async function goHome(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /amordle Command Center/i }).click()
+  await page.getByRole('button', { name: /^amordle Home$/i }).click()
   await expect(page.locator('#dashboard-home-title')).toBeVisible()
 }
 
@@ -142,16 +143,6 @@ function findWrongGuess(validGuesses: ReadonlySet<string>, answer: string): stri
   return guess
 }
 
-async function expectSubmittedWord(page: Page, gridLabel: RegExp, word: string, rowNumber: number): Promise<void> {
-  const grid = page.getByRole('grid', { name: gridLabel }).first()
-  await expect(grid).toBeVisible()
-  for (const [index, letter] of [...word.toLocaleUpperCase('en-US')].entries()) {
-    const tile = grid.getByLabel(new RegExp(`^Row ${rowNumber}, tile ${index + 1}, ${letter}$`, 'i'))
-    await expect(tile).toBeVisible()
-    await expect(tile).toHaveClass(/bg-emerald-300\/25/)
-  }
-}
-
 async function expectWordVisible(page: Page, gridLabel: RegExp, word: string, rowNumber: number): Promise<void> {
   const grid = page.getByRole('grid', { name: gridLabel }).first()
   await expect(grid).toBeVisible()
@@ -168,9 +159,13 @@ async function expectDraftRowEmpty(page: Page, gridLabel: RegExp, rowNumber: num
   }
 }
 
-async function expectTerminalState(page: Page, statusText: RegExp, gridLabel: RegExp, finalAnswer: string, rowNumber: number): Promise<void> {
-  await expect(page.getByText(statusText).first()).toBeVisible({ timeout: 20_000 })
-  await expectSubmittedWord(page, gridLabel, finalAnswer, rowNumber)
+async function expectTerminalState(page: Page, _statusText: RegExp, gridLabel: RegExp, finalAnswer: string, rowNumber: number): Promise<void> {
+  void rowNumber
+  const mode = gridLabel.source.toLocaleLowerCase('en-US').includes('go guess') ? 'GO' : 'OG'
+  const result = page.getByRole('region', { name: new RegExp(`^${mode} result$`, 'i') })
+  await expect(result).toBeVisible({ timeout: 20_000 })
+  await expect(result).toContainText(finalAnswer.toLocaleUpperCase('en-US'))
+  await expect(page.getByRole('grid', { name: gridLabel })).toHaveCount(0)
 }
 
 async function expectCompletionSurvivesReentry(

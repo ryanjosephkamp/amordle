@@ -16,8 +16,8 @@ test.describe('deeper functional-shell loading boundaries @navigation @performan
     expect(requests.some((url) => /words_length_|word-list-/.test(url))).toBe(false)
     expect(requests.some((url) => /SoloWorkspace/.test(url))).toBe(false)
 
-    const navigation = page.getByRole('navigation', { name: /^amordle destinations$/i })
-    await navigation.getByRole('button', { name: /^Solo$/i }).click()
+    const navigation = page.getByRole('navigation', { name: /^Primary destinations$/i })
+    await navigation.getByRole('button', { name: /^PLAY$/i }).click()
     await expect(page.locator('#solo-workspace-title')).toBeVisible()
     expect(requests.some((url) => /SoloWorkspace/.test(url))).toBe(true)
     expect(requests.some((url) => /words_length_|word-list-/.test(url))).toBe(false)
@@ -34,8 +34,8 @@ test.describe('deeper functional-shell loading boundaries @navigation @performan
     await page.route(settingsModuleRequest, (route) => route.abort())
     await page.goto('/')
 
-    const navigation = page.getByRole('navigation', { name: /^amordle destinations$/i })
-    await navigation.getByRole('button', { name: /^Settings$/i }).click()
+    const navigation = page.getByRole('navigation', { name: /^Primary destinations$/i })
+    await page.getByRole('navigation', { name: /^Utility destinations$/i }).getByRole('button', { name: /^Settings$/i }).click()
     await expect(page.getByRole('heading', { name: /^Settings could not load$/i })).toBeVisible()
     await expect(page.getByRole('main')).toHaveCount(1)
     await expect(navigation).toBeVisible()

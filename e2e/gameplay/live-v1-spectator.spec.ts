@@ -224,6 +224,7 @@ test.describe('Live v1 spectator @multiplayer', () => {
       })
       await selectMultiplayerGame(host.page, playingCancellation.id, { status: 'playing' })
       await host.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await host.page.getByRole('button', { name: /^Forfeit match$/i }).click()
       await waitForMultiplayerRowForUsers({
         mode: 'og',
         scope: 'practice',
@@ -257,6 +258,7 @@ test.describe('Live v1 spectator @multiplayer', () => {
       await submitGuessWithKeyboard(host.page, wrongGuess)
       await waitForTurn(rival.page)
       await rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
       await waitForMultiplayerRowForUsers({
         mode: 'og',
         scope: 'practice',

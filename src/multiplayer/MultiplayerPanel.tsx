@@ -3,7 +3,7 @@ import { prepareBundledWordList, useWordListPreparation, useWordListSetPreparati
 import type { GoPuzzleCount } from '../game/constants'
 import type { GameMode, PlayScope } from '../game/types'
 import { DefinitionPanel } from '../definitions'
-import { Button, Panel } from '../ui'
+import { Button, Dialog, Panel } from '../ui'
 import { classNames } from '../ui/classNames'
 import {
   MAX_MULTIPLAYER_GAMES,
@@ -47,7 +47,10 @@ import type {
 } from './multiplayerRepository'
 import type { PracticeRematchRequestResult } from './multiplayerRepository'
 import { RivalIdentityCard } from './RivalIdentityCard'
-import { projectMultiplayerPerformance } from './scoring'
+import { CombatResultPanel, CombatScoreboard } from './CombatScoreboard'
+import {
+  getCompetitiveRatingEligibility,
+} from './scoring'
 import {
   createPracticeRematchGameProjection,
   getPracticePostgameActions,
@@ -194,9 +197,13 @@ function getGameTitle(game: MultiplayerGame): string {
 
 function getGameMatchLabel(game: MultiplayerGame): string {
   if (game.ranked) {
-    return game.status === 'won' || game.status === 'lost' || game.status === 'expired'
+    const isTerminal = game.status === 'won' || game.status === 'lost' || game.status === 'expired'
+    if (!isTerminal) {
+      return 'Ranked · trusted settlement after terminal result'
+    }
+    return getCompetitiveRatingEligibility(game).eligible
       ? 'Ranked · trusted settlement eligible'
-      : 'Ranked · trusted settlement after terminal result'
+      : 'Ranked · settlement unavailable'
   }
   if (game.customGameCode) {
     return `Custom ${game.customGameCode} · unrated`
@@ -234,7 +241,7 @@ function formatUtcDateTime(value: string | undefined): string {
   }).format(date)
 }
 
-function ClockSummary({
+export function CombatClockSummary({
   game,
   getPlayerLabel,
   now,
@@ -248,7 +255,11 @@ function ClockSummary({
     return null
   }
   return (
-    <div className="grid gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 sm:grid-cols-2">
+    <section
+      aria-label="COMBAT clocks"
+      className="combat-clock-summary grid gap-2 rounded-lg border border-cyan-300/20 bg-cyan-300/10 p-3 sm:grid-cols-2"
+      data-combat-clocks="true"
+    >
       {game.players.map((player) => {
         const remaining = clock.remainingByPlayer[player.id]
         const isActive = clock.activePlayerId === player.id
@@ -267,7 +278,7 @@ function ClockSummary({
           </div>
         )
       })}
-    </div>
+    </section>
   )
 }
 
@@ -810,6 +821,7 @@ function PreparedMultiplayerPanel({
   const [rankedQueue, setRankedQueue] = useState<RankedQueueUiState>({ message: '', status: 'idle' })
   const [rankedQueueBusy, setRankedQueueBusy] = useState(false)
   const [clockNow, setClockNow] = useState(() => new Date())
+  const [forfeitConfirmationOpen, setForfeitConfirmationOpen] = useState(false)
   const previousVisibleGamesRef = useRef<readonly MultiplayerGame[]>(visibleGames)
   const openedPrivateMatchGameIdsRef = useRef<Set<string>>(new Set())
   const rankedQueueRefreshInFlightRef = useRef(false)
@@ -909,6 +921,9 @@ function PreparedMultiplayerPanel({
         ...(participantIdentityState?.gameId === selectedGame.id ? participantIdentityState.profiles : {}),
       }
     : undefined
+  const selectedPresentationGame = selectedGame
+    ? { ...selectedGame, playerProfiles: selectedPlayerProfiles }
+    : undefined
   const getSelectedPlayerLabel = (
     playerId: MultiplayerPlayerId,
     fallback?: string,
@@ -937,7 +952,17 @@ function PreparedMultiplayerPanel({
   const rivalPlayerId = viewerPlayerId === 'player-one' ? 'player-two' : viewerPlayerId === 'player-two' ? 'player-one' : undefined
   const rivalPlayer = rivalPlayerId && selectedGame ? selectedGame.players.find((player) => player.id === rivalPlayerId) : undefined
   const waitingHostPlayer = !viewerPlayerId && selectedGame ? selectedGame.players.find((player) => player.id === 'player-one') : undefined
-  const selectedPerformance = selectedGame ? projectMultiplayerPerformance(selectedGame) : undefined
+  const selectedRatings = selectedGame?.ratingBucket
+    ? Object.fromEntries(selectedGame.players.flatMap((player) => {
+        const userId = selectedGame.playerUserIds?.[player.id]
+        const rating = userId
+          ? competitive.rating.profiles.find((profile) => (
+              profile.bucket === selectedGame.ratingBucket && profile.userId === userId
+            ))?.rating
+          : undefined
+        return typeof rating === 'number' ? [[player.id, rating]] : []
+      }))
+    : undefined
   const sharedStatusMessage = selectedGame ? getMultiplayerStatusMessage(selectedGame, viewerPlayerId) : undefined
   const localStatusMessage = localMessage
     && (!selectedGame || (localMessage.gameId === selectedGame.id && localMessage.updatedAt === selectedGame.updatedAt))
@@ -1646,6 +1671,7 @@ function PreparedMultiplayerPanel({
     if (!selectedGame || readOnly || !viewerPlayerId) {
       return
     }
+    setForfeitConfirmationOpen(false)
     const result = forfeitMultiplayerGame(normalized, {
       gameId: selectedGame.id,
       playerId: viewerPlayerId,
@@ -1957,10 +1983,15 @@ function PreparedMultiplayerPanel({
   }
 
   return (
-    <Panel className="min-w-0 space-y-4 text-sm leading-6 text-slate-300" data-testid={`multiplayer-panel-${scope}`} tone="muted">
+    <Panel className="combat-match-panel min-w-0 space-y-4 text-sm leading-6 text-slate-300" data-testid={`multiplayer-panel-${scope}`} tone="muted">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="break-words text-xl font-bold text-white">{scope === 'daily' ? 'Daily Multiplayer' : 'Practice Multiplayer'}</h3>
+          <h3
+            aria-label={scope === 'daily' ? 'Daily Multiplayer' : 'Practice Multiplayer'}
+            className="break-words text-xl font-black tracking-[0.08em] text-white"
+          >
+            {scope === 'daily' ? 'DAILY COMBAT' : 'PRACTICE COMBAT'}
+          </h3>
           <p className="break-words">
             Turn-based matches sync between signed-in players. You can keep up to {MAX_MULTIPLAYER_GAMES} active games at once.
             {scope === 'daily' ? ' Daily Multiplayer uses midnight UTC and past games are view-only.' : ' Practice games can use an optional chess-clock time limit.'}
@@ -1975,7 +2006,7 @@ function PreparedMultiplayerPanel({
       </div>
 
       {!readOnly ? (
-        <div className="space-y-3 rounded-lg border border-white/10 bg-black/30 p-3">
+        <div className="combat-match-config space-y-3 p-3">
           <div className="grid min-w-0 gap-3 2xl:grid-cols-[minmax(0,1fr)_minmax(11rem,14rem)]">
           <div className="grid min-w-0 gap-3 sm:grid-cols-2 2xl:grid-cols-5">
             <label className="grid min-w-0 gap-1 font-semibold text-cyan-100">
@@ -2072,13 +2103,19 @@ function PreparedMultiplayerPanel({
               <p className="capitalize">{defaultDifficulty}</p>
             </div>
           </div>
-          <Button className="min-h-14 w-full px-4" disabled={!canCreate} onClick={createGame} variant="primary">
+          <Button
+            aria-label={canCreate && matchKind !== 'ranked' ? 'Open multiplayer match' : undefined}
+            className="min-h-14 w-full px-4"
+            disabled={!canCreate}
+            onClick={createGame}
+            variant="primary"
+          >
             {canCreate
               ? matchKind === 'ranked'
                 ? scope === 'daily'
                   ? 'Enter ranked Daily queue'
                   : rankedTimeLimitMs === TIMED_RANKED_PRACTICE_TIME_LIMIT_MS ? 'Enter timed ranked queue' : 'Enter ranked queue'
-                : 'Open multiplayer match'
+                : 'Open COMBAT match'
               : rankedQueueBusy
                 ? 'Ranked queue working'
                 : matchKind === 'ranked' && rankedQueue.status === 'queued'
@@ -2218,7 +2255,7 @@ function PreparedMultiplayerPanel({
 
       {selectedGame ? (
         <div
-          className="min-w-0 space-y-4 rounded-lg border border-white/10 bg-black/30 p-4"
+          className="combat-match-arena min-w-0 space-y-4 p-4"
           data-current-turn={selectedGame.currentTurn}
           data-game-id={selectedGame.id}
           data-mode={selectedGame.mode}
@@ -2247,7 +2284,7 @@ function PreparedMultiplayerPanel({
             ) : null}
           </div>
 
-          <ClockSummary game={selectedGame} getPlayerLabel={getSelectedPlayerLabel} now={clockNow} />
+          <CombatClockSummary game={selectedGame} getPlayerLabel={getSelectedPlayerLabel} now={clockNow} />
 
           {!readOnly && selectedGame.status === 'waiting' ? (
             <div className="rounded-lg border border-cyan-300/30 bg-cyan-300/10 p-4">
@@ -2275,19 +2312,28 @@ function PreparedMultiplayerPanel({
           ) : null}
 
           {!readOnly && viewerPlayerId && (selectedGame.status === 'playing' || showTerminalSolvedSurface) ? (
-            <MultiplayerGameSurface
-              disabled={showTerminalSolvedSurface || !canSubmitSelectedGame}
-              game={selectedGame}
-              onSubmitGuess={submitTurn}
-              playerId={viewerPlayerId}
-              statusLabel={showTerminalSolvedSurface ? 'Advancing to final results' : canSubmitSelectedGame ? 'Your turn' : 'Waiting for the other player'}
-            />
+            <>
+              <CombatScoreboard
+                game={selectedPresentationGame ?? selectedGame}
+                ratings={selectedRatings}
+                viewerUserId={viewerUserId}
+              />
+              <MultiplayerGameSurface
+                disabled={showTerminalSolvedSurface || !canSubmitSelectedGame}
+                game={selectedPresentationGame ?? selectedGame}
+                onSubmitGuess={submitTurn}
+                playerId={viewerPlayerId}
+                statusLabel={showTerminalSolvedSurface ? 'Advancing to final results' : canSubmitSelectedGame ? 'Your turn' : 'Waiting for the other player'}
+              />
+            </>
           ) : null}
 
-          {selectedGame.status === 'cancelled' ? (
-            <p className="rounded-lg border border-slate-500/30 bg-slate-900/70 p-3 text-sm text-slate-300">
-              This multiplayer lobby was cancelled before a rival joined. It no longer counts against the active-game limit.
-            </p>
+          {isTerminalMultiplayerGame(selectedGame) && !showTerminalSolvedSurface ? (
+            <CombatResultPanel
+              game={selectedPresentationGame ?? selectedGame}
+              ratings={selectedRatings}
+              viewerUserId={viewerUserId}
+            />
           ) : null}
 
           {!readOnly && viewerPlayerId && selectedGame.status === 'playing' ? (
@@ -2298,7 +2344,7 @@ function PreparedMultiplayerPanel({
                   ? 'Forfeiting ends this ranked game and can settle as a ranked loss once trusted settlement confirms both participants.'
                   : 'Forfeiting ends this multiplayer game. Unranked and custom games do not move Elo.'}
               </p>
-              <Button className="mt-2" onClick={forfeitGame} variant="secondary">Forfeit</Button>
+              <Button className="mt-2" onClick={() => setForfeitConfirmationOpen(true)} variant="secondary">Forfeit</Button>
             </div>
           ) : null}
 
@@ -2312,22 +2358,6 @@ function PreparedMultiplayerPanel({
             <p className="rounded-lg border border-cyan-300/30 bg-cyan-300/10 p-3 font-semibold text-cyan-50" data-testid="multiplayer-status-message">
               {displayStatusMessage}
             </p>
-          ) : null}
-
-          {selectedPerformance ? (
-            <div className="min-w-0 space-y-2 rounded-lg border border-violet-300/30 bg-violet-300/10 p-3">
-              <p className="break-words font-semibold text-violet-50">{selectedPerformance.summary}</p>
-              <div className="grid min-w-0 gap-2 2xl:grid-cols-2">
-                {selectedPerformance.players.map((player) => (
-                  <p className="min-w-0 break-words rounded-md border border-white/10 bg-black/30 p-2" key={player.playerId}>
-                    {getSelectedPlayerLabel(player.playerId)}: {player.summary}
-                  </p>
-                ))}
-              </div>
-              {selectedGame.ranked ? (
-                <p className="text-xs text-violet-100">Points decide this result. Elo updates only after trusted settlement confirms authenticated server-authorized ranked evidence; local preview, spectator, custom, unranked Daily, and unsupported timed Practice rows stay unrated.</p>
-              ) : null}
-            </div>
           ) : null}
 
           {!readOnly && selectedPostgameActions && !showTerminalSolvedSurface ? (
@@ -2348,8 +2378,8 @@ function PreparedMultiplayerPanel({
             />
           ) : null}
 
-          <div className="space-y-2">
-            <p className="font-semibold text-cyan-100">Turn history</p>
+          <div className="combat-turn-ledger space-y-2">
+            <p className="font-semibold text-cyan-100">Shared turn evidence</p>
             {selectedGame.moves.length > 0 ? (
               <div className="min-w-0 space-y-2">
                 {selectedGame.moves.map((move) => (
@@ -2392,6 +2422,24 @@ function PreparedMultiplayerPanel({
           ) : null}
         </div>
       ) : null}
+      <Dialog
+        description="This ends the active match. After the first shared guess, the forfeiting player loses regardless of the current points."
+        isOpen={forfeitConfirmationOpen}
+        onClose={() => setForfeitConfirmationOpen(false)}
+        title="Confirm forfeit"
+      >
+        <div className="space-y-4">
+          <p>
+            {selectedGame?.moves.length
+              ? 'This match has started. Forfeit precedence will determine the result before the scoreline.'
+              : 'No shared guess has been submitted. Leaving now may be recorded as a cancellation rather than a loss.'}
+          </p>
+          <div className="flex flex-wrap justify-end gap-2">
+            <Button onClick={() => setForfeitConfirmationOpen(false)} variant="secondary">Keep playing</Button>
+            <Button data-dialog-initial-focus onClick={() => { void forfeitGame() }} variant="primary">Forfeit match</Button>
+          </div>
+        </div>
+      </Dialog>
     </Panel>
   )
 }

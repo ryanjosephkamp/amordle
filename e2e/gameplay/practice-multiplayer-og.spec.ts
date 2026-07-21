@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test'
 import { expectNoConsoleFailures, expectVisibleStatus } from '../fixtures/assertions'
 import { getCurrentAnswer, getValidWrongGuess, projectionFromRow } from '../fixtures/answers'
 import { navigateToPracticeMultiplayer, openMultiplayerMatch, joinWaitingMultiplayerGame, selectMultiplayerGame, setPracticeMultiplayerTimeLimit, setPracticeMultiplayerWordLength, submitGuessWithKeyboard, waitForTurn } from '../fixtures/gameActions'
-import { updateMultiplayerProjection, upsertPublicProfileForUser, waitForMultiplayerRowByIdForUsers, waitForMultiplayerRowForUsers } from '../fixtures/supabaseAdmin'
+import { createAuthenticatedSupabaseClient, updateMultiplayerProjection, upsertPublicProfileForUser, waitForMultiplayerRowByIdForUsers, waitForMultiplayerRowForUsers, waitForRankedQueueRowsForUsers } from '../fixtures/supabaseAdmin'
 import { createTwoClientSession, type TwoClientSession } from '../fixtures/twoClientGame'
 
 const TIMED_RANKED_PRACTICE_TIME_LIMIT_MS = 300_000
@@ -107,6 +107,40 @@ async function searchRankedPracticeAgain(page: TwoClientSession['host']['page'])
   await action.click({ timeout: 20_000 })
 }
 
+async function expectMatchedPracticeClaimIsIdempotent(
+  session: TwoClientSession,
+  matchedGameId: string,
+): Promise<void> {
+  const matchedRows = await waitForRankedQueueRowsForUsers({
+    minCount: 2,
+    status: 'matched',
+    userIds: [session.host.user.id, session.rival.user.id],
+  })
+  const hostRequest = matchedRows.find((row) => (
+    row.user_id === session.host.user.id
+    && (row.matched_game_id === matchedGameId || row.matched_match_id === matchedGameId)
+  ))
+  expect(hostRequest?.id).toBeTruthy()
+
+  const client = await createAuthenticatedSupabaseClient(session.host.user)
+  try {
+    const { data, error } = await client.rpc('claim_ranked_async_matchmaking_pair', {
+      p_matched_game_id: null,
+      p_request_id: hostRequest!.id,
+    })
+    expect(error).toBeNull()
+    const result = Array.isArray(data) ? data[0] : data
+    expect(result).toMatchObject({
+      matched_game_id: matchedGameId,
+      request_id: hostRequest!.id,
+      request_status: 'matched',
+    })
+    expect(result?.opponent_request_id).toBeTruthy()
+  } finally {
+    await client.auth.signOut()
+  }
+}
+
 test.describe('Practice Multiplayer OG @practice @multiplayer', () => {
   test('creates, joins, submits, and completes an OG match through two real clients', async ({ browser }) => {
     const session = await createTwoClientSession(browser)
@@ -191,6 +225,7 @@ test.describe('Practice Multiplayer OG @practice @multiplayer', () => {
       await submitGuessWithKeyboard(session.host.page, wrongGuess)
       await waitForTurn(session.rival.page)
       await session.rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await session.rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
 
       const forfeitedRow = await waitForMultiplayerRowForUsers({
         mode: 'og',
@@ -260,6 +295,7 @@ test.describe('Practice Multiplayer OG @practice @multiplayer', () => {
       })
 
       await session.rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await session.rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
 
       const forfeitedRow = await waitForMultiplayerRowByIdForUsers({
         id: playingRow.id,
@@ -317,6 +353,7 @@ test.describe('Practice Multiplayer OG @practice @multiplayer', () => {
       })
 
       await session.rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await session.rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
 
       await expect(session.rival.page.getByRole('alert')).toContainText(
         'Unable to save this multiplayer update. The durable game was reloaded; please try again.',
@@ -578,6 +615,7 @@ test.describe('Practice Multiplayer OG @practice @multiplayer', () => {
       await expectSelectedGame(session.host.page, nextTimedRankedRow.id)
       await expectSelectedGame(session.rival.page, nextTimedRankedRow.id)
       await expectOpponentNamesVisible(session)
+      await expectMatchedPracticeClaimIsIdempotent(session, nextTimedRankedRow.id)
 
       await expectNoConsoleFailures(session.host.consoleFailures)
       await expectNoConsoleFailures(session.rival.consoleFailures)

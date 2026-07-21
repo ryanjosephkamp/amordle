@@ -38,7 +38,7 @@ function KeyboardButton({
     <button
       aria-label={title}
       className={classNames(
-        'flex items-center justify-center rounded-md border font-bold uppercase transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50',
+        'brrrdle-keyboard-key flex items-center justify-center rounded-md border font-bold uppercase transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)] disabled:cursor-not-allowed disabled:opacity-50',
         stateClasses[state],
         className,
       )}
@@ -48,8 +48,8 @@ function KeyboardButton({
       style={{
         minHeight: 'var(--brrrdle-key-min)',
         minWidth: isAction
-          ? 'clamp(2.75rem, 13cqi, 4.5rem)'
-          : 'clamp(1.75rem, 8.5cqi, var(--brrrdle-key-max))',
+          ? 'var(--brrrdle-key-action-width)'
+          : 'var(--brrrdle-key-letter-width)',
         paddingInline: isAction ? '0.5rem' : '0.25rem',
         fontSize: isAction ? 'var(--brrrdle-key-action-font)' : 'var(--brrrdle-key-font)',
         touchAction: 'manipulation',
@@ -66,10 +66,10 @@ export function Keyboard({ disabled = false, disabledLetters = [], letterStates 
   return (
     <section
       aria-label="Keyboard"
-      className="@container mx-auto w-full max-w-2xl space-y-1.5 rounded-lg border border-white/10 bg-slate-950 px-2 py-2 sm:space-y-2"
+      className="brrrdle-keyboard @container mx-auto w-full max-w-2xl space-y-1.5 rounded-lg border border-white/10 bg-slate-950 px-2 py-2 sm:space-y-2"
     >
       {keyboardRows.map((row, rowIndex) => (
-        <div className="flex justify-center gap-1 sm:gap-1.5" key={row}>
+        <div className="brrrdle-keyboard-row flex justify-center gap-1 sm:gap-1.5" key={row}>
           {rowIndex === 2 ? (
             <KeyboardButton disabled={disabled} isAction onClick={() => onInput({ type: 'submit' })} title="Submit guess">
               Enter

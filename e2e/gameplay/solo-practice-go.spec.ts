@@ -1,7 +1,8 @@
 import { expect, test } from '@playwright/test'
 import { createPracticeGoSetup } from '../../src/game/go/session'
 import { expectNoConsoleFailures, installConsoleGuards } from '../fixtures/assertions'
-import { chooseSoloPracticeMode, navigateToSoloPractice, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
+import { chooseSoloPracticeMode, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
+import { navigateToSoloPractice } from './soloTestNavigation'
 
 test.describe('Solo Practice GO @solo @practice', () => {
   test('solves the first GO puzzle and carries it into the next board', async ({ page }) => {

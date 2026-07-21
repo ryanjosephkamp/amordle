@@ -1077,6 +1077,10 @@ describe('MultiplayerPanel', () => {
 
     expect(html).toContain('Ranked · trusted settlement after terminal result')
     expect(html).toContain('Forfeiting ends this ranked game and can settle as a ranked loss once trusted settlement confirms both participants.')
+    expect(html).toContain('COMBAT SCORELINE')
+    expect(html).toContain('data-combat-scoreline="true"')
+    expect(html).toContain('0 PTS')
+    expect(html).toContain('>Forfeit</button>')
   })
 
   it('shows Practice Hard Mode creation controls and rival-visible lobby status', () => {

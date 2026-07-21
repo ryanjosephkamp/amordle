@@ -9,7 +9,7 @@ import {
   expectPageCanScrollVertically,
   installConsoleGuards,
 } from '../fixtures/assertions'
-import { chooseSoloPracticeMode, navigateToSoloPractice } from '../fixtures/gameActions'
+import { chooseSoloPracticeMode } from '../fixtures/gameActions'
 import { createE2eUser, deleteE2eUser, signInThroughUi, type E2eUser } from '../fixtures/testUsers'
 
 const MOBILE_VIEWPORT = { height: 844, width: 390 } as const
@@ -17,21 +17,23 @@ const MOBILE_VIEWPORT = { height: 844, width: 390 } as const
 interface MobileRouteTarget {
   readonly label: string
   readonly navigationName?: RegExp
+  readonly source?: 'dock' | 'more'
   readonly title: RegExp
 }
 
 const MOBILE_SCROLL_TARGETS: readonly MobileRouteTarget[] = [
   { label: 'Home', title: /^Home$/i },
-  { label: 'Solo', navigationName: /^Solo$/i, title: /^Solo$/i },
-  { label: 'Calendar', navigationName: /^Calendar$/i, title: /^Calendar$/i },
-  { label: 'Multiplayer', navigationName: /^Multiplayer$/i, title: /^Multiplayer$/i },
-  { label: 'History', navigationName: /^History$/i, title: /^History$/i },
-  { label: 'Stats', navigationName: /^Stats$/i, title: /^Stats$/i },
-  { label: 'Leaderboard', navigationName: /^Leaderboard$/i, title: /^Leaderboard$/i },
-  { label: 'Word Explorer', navigationName: /^Words$/i, title: /^Word Explorer$/i },
-  { label: 'Profile', navigationName: /^Profile$/i, title: /^Profile$/i },
-  { label: 'Settings', navigationName: /^Settings$/i, title: /^Settings$/i },
-  { label: 'About amordle', navigationName: /^About$/i, title: /^About amordle$/i },
+  { label: 'Play', navigationName: /^PLAY$/i, source: 'dock', title: /^PLAY$/i },
+  { label: 'Daily', navigationName: /^DAILY$/i, source: 'dock', title: /^DAILY$/i },
+  { label: 'Calendar', navigationName: /^Calendar$/i, source: 'more', title: /^Calendar$/i },
+  { label: 'Combat', navigationName: /^COMBAT$/i, source: 'dock', title: /^COMBAT$/i },
+  { label: 'History', navigationName: /^History$/i, source: 'more', title: /^History$/i },
+  { label: 'Stats', navigationName: /^Stats$/i, source: 'more', title: /^Stats$/i },
+  { label: 'Leaderboard', navigationName: /^Leaderboard$/i, source: 'more', title: /^Leaderboard$/i },
+  { label: 'Word Explorer', navigationName: /^Word Explorer$/i, source: 'more', title: /^Word Explorer$/i },
+  { label: 'Profile', navigationName: /^Profile$/i, source: 'more', title: /^Profile$/i },
+  { label: 'Settings', navigationName: /^Settings$/i, source: 'more', title: /^Settings$/i },
+  { label: 'About amordle', navigationName: /^About amordle$/i, source: 'more', title: /^About amordle$/i },
 ]
 
 function getWrongPracticeOgGuess(): string {
@@ -66,6 +68,12 @@ async function expectNoAppScrollIntoView(page: Page): Promise<void> {
   expect(calls, 'ordinary Solo navigation should not call scrollIntoView').toBe(0)
 }
 
+async function navigateToSoloPracticeWave02(page: Page): Promise<void> {
+  await page.getByRole('navigation', { name: /^Mobile destinations$/i }).getByRole('button', { name: /^PLAY$/i }).click()
+  await expect(page.locator('#solo-workspace-title')).toBeVisible()
+  await page.getByRole('tab', { name: /^Practice Solo$/i }).click()
+}
+
 test('progression HUD opens the existing Stats route @layout', async ({ page }) => {
   const consoleFailures = installConsoleGuards(page)
   await page.goto('/')
@@ -87,24 +95,27 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
       const consoleFailures = installConsoleGuards(page)
       await page.goto('/')
 
-      if (route.navigationName) {
-        const routeRail = page.getByRole('navigation', { name: /^amordle destinations$/i })
-        await expect(routeRail).toBeVisible()
-        await routeRail.getByRole('button', { name: route.navigationName }).click()
+      const mobileDock = page.getByRole('navigation', { name: /^Mobile destinations$/i })
+      if (route.navigationName && route.source === 'dock') {
+        await expect(mobileDock).toBeVisible()
+        await mobileDock.getByRole('button', { name: route.navigationName }).click()
+      } else if (route.navigationName && route.source === 'more') {
+        await mobileDock.getByRole('button', { name: /^MORE$/i }).click()
+        await page.getByRole('dialog', { name: /^More destinations$/i }).getByRole('button', { name: route.navigationName }).click()
       }
 
       const routeTitle = page.getByRole('heading', { level: 1, name: route.title })
       await expect(routeTitle).toBeVisible()
       await expectNoHorizontalOverflow(page)
 
-      const diagnostics = await expectPageCanScrollVertically(page)
+      const diagnostics = await expectPageCanScrollVertically(page, 0)
       console.log(`mobile-scroll-diagnostics ${route.label}: ${JSON.stringify(diagnostics)}`)
       await expectPageCanScrollToEnd(page)
 
       await expectLocatorCenterNotCovered(routeTitle)
       if (route.navigationName) {
-        const routeRail = page.getByRole('navigation', { name: /^amordle destinations$/i })
-        await expectLocatorCenterNotCovered(routeRail.getByRole('button', { name: route.navigationName }))
+        const visibleDockButtonName = route.source === 'more' ? /^MORE$/i : route.navigationName
+        await expectLocatorCenterNotCovered(mobileDock.getByRole('button', { name: visibleDockButtonName }))
       }
 
       const finalDiagnostics = await collectScrollDiagnostics(page)
@@ -147,7 +158,7 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
     await installScrollIntoViewCounter(page)
-    await navigateToSoloPractice(page)
+    await navigateToSoloPracticeWave02(page)
     await chooseSoloPracticeMode(page, 'og')
 
     const soloRegion = page.getByRole('region', { name: /Practice og puzzle/i })
@@ -162,7 +173,7 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
     await installScrollIntoViewCounter(page)
-    await page.getByRole('button', { name: /^Solo$/i }).click()
+    await page.getByRole('navigation', { name: /^Mobile destinations$/i }).getByRole('button', { name: /^PLAY$/i }).click()
     await expect(page.locator('#solo-workspace-title')).toBeVisible()
     await page.getByRole('tab', { name: /^Daily Solo$/i }).click()
     const modeGroup = page.getByRole('group', { name: /^Daily Solo mode$/i })
@@ -179,7 +190,7 @@ test.describe('mobile scroll and layout regression harness @layout', () => {
   test('Solo Practice OG physical-keyboard submission does not auto-scroll the page', async ({ page }) => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
-    await navigateToSoloPractice(page)
+    await navigateToSoloPracticeWave02(page)
     await chooseSoloPracticeMode(page, 'og')
     await installScrollIntoViewCounter(page)
     await page.evaluate(() => window.scrollTo(0, 0))

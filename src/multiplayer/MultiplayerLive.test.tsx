@@ -123,6 +123,8 @@ describe('MultiplayerLive', () => {
     expect(html).toContain('Rival player')
     expect(html).toContain('Host · Puzzle 1')
     expect(html).toContain('aria-label="Host submitted ROBOT"')
+    expect(html).toContain('data-live-shared-board="true"')
+    expect(html.match(/data-live-shared-board="true"/g)).toHaveLength(1)
     expect(html).not.toContain('Submit guess')
     expect(html).not.toContain('Forfeit')
     expect(html).not.toContain('Cancel game')

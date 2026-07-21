@@ -102,6 +102,7 @@ import { ProgressionHud } from './ProgressionHud'
 import { createRetryableLazyRoute } from './RetryableLazyRoute'
 import { getPrimaryNavigationRoutes, getRouteById, type AppRoute, type AppRouteId } from './routes'
 import { DEFAULT_NAVIGATION_STATE, loadNavigationState, saveNavigationState, type HistoryFilters, type LegacyPracticeMode, type MultiplayerSubtabId, type NavigationState, type PublicProfileReturnRoute, type SoloSubtabId } from './navigationState'
+import type { ShellNavigationIntent } from './shell/routePresentation'
 
 type PracticeMode = LegacyPracticeMode
 
@@ -805,6 +806,8 @@ function RoutePanel({
         initialResume={dailyOgResume?.mode === 'og' ? dailyOgResume : undefined}
         keyboardDisabled={keyboardDisabled}
         onGameComplete={onGameComplete}
+        onOpenCalendar={() => onSelectRoute('calendar')}
+        onOpenHistory={() => onOpenSoloHistory({ mode: 'og', scope: 'daily' })}
         onResumeCapture={onResumeCapture}
         onSaveDifficultyDefault={(tier) => onUpdateSettings({ difficultyDefault: tier })}
         onSoloCloudMutation={onSoloCloudMutation}
@@ -822,6 +825,8 @@ function RoutePanel({
         initialResume={dailyGoResume?.mode === 'go' ? dailyGoResume : undefined}
         keyboardDisabled={keyboardDisabled}
         onGameComplete={onGameComplete}
+        onOpenCalendar={() => onSelectRoute('calendar')}
+        onOpenHistory={() => onOpenSoloHistory({ mode: 'go', scope: 'daily' })}
         onResumeCapture={onResumeCapture}
         onSaveDifficultyDefault={(tier) => onUpdateSettings({ difficultyDefault: tier })}
         onSaveGoPuzzleCountDefault={(count) => onUpdateSettings({ goPuzzleCountDefault: count })}
@@ -844,6 +849,7 @@ function RoutePanel({
         onAdvancePracticeSeed={() => onPracticeSeedAdvance('og')}
         onConsumeConsumable={onConsumeConsumable}
         onGameComplete={onGameComplete}
+        onOpenHistory={() => onOpenSoloHistory({ mode: 'og', scope: 'practice' })}
         onResumeCapture={onResumeCapture}
         onSaveDifficultyDefault={(tier) => onUpdateSettings({ difficultyDefault: tier })}
         onSoloCloudMutation={onSoloCloudMutation}
@@ -867,6 +873,7 @@ function RoutePanel({
         onAdvancePracticeSeed={() => onPracticeSeedAdvance('go')}
         onConsumeConsumable={onConsumeConsumable}
         onGameComplete={onGameComplete}
+        onOpenHistory={() => onOpenSoloHistory({ mode: 'go', scope: 'practice' })}
         onResumeCapture={onResumeCapture}
         onSaveDifficultyDefault={(tier) => onUpdateSettings({ difficultyDefault: tier })}
         onSaveGoPuzzleCountDefault={(count) => onUpdateSettings({ goPuzzleCountDefault: count })}
@@ -1764,6 +1771,29 @@ function AppInner() {
     setActiveRouteId(routeId)
     saveNavigationState({ activeRouteId: routeId, publicProfileReturnRoute: undefined })
   }, [daily.dateKey])
+  const handleShellNavigate = useCallback((intent: ShellNavigationIntent) => {
+    if (intent.routeId === 'solo' && intent.soloSubtab) {
+      setFocusedLiveSpectatorGameId(undefined)
+      setActiveRouteId('solo')
+      setSoloSubtab(intent.soloSubtab)
+      saveNavigationState({
+        activeRouteId: 'solo',
+        soloSubtab: intent.soloSubtab,
+      })
+      return
+    }
+    if (intent.routeId === 'multiplayer' && intent.multiplayerSubtab) {
+      setFocusedLiveSpectatorGameId(undefined)
+      setActiveRouteId('multiplayer')
+      setMultiplayerSubtab(intent.multiplayerSubtab)
+      saveNavigationState({
+        activeRouteId: 'multiplayer',
+        multiplayerSubtab: intent.multiplayerSubtab,
+      })
+      return
+    }
+    handleNavigate(intent.routeId)
+  }, [handleNavigate])
   const handleOpenPublicProfile = useCallback((publicProfileId: string, returnRoute: PublicProfileReturnRoute = 'leaderboard') => {
     setFocusedLiveSpectatorGameId(undefined)
     setSelectedPublicProfileId(publicProfileId)
@@ -3070,9 +3100,11 @@ function AppInner() {
           { label: 'banks', value: BUNDLED_WORD_LIST_LENGTHS.length },
         ]}
         onNavigate={handleNavigate}
+        onShellNavigate={handleShellNavigate}
         progressionHud={<ProgressionHud progression={guestProgress.progression} onOpenStats={handleOpenStats} />}
         routeAttention={routeAttention}
         routes={prismRoutes}
+        soloSubtab={soloSubtab}
       >
           <RoutePanel
             authMessage={authMessage}

@@ -175,6 +175,7 @@ function RecentResultsList({
 function SoloOverview({
   activeGames,
   onDailyModeChange,
+  onOpenCalendar,
   onOpenHistory,
   onPracticeModeChange,
   onResumeGame,
@@ -183,6 +184,7 @@ function SoloOverview({
 }: {
   readonly activeGames: readonly SoloActiveGameViewModel[]
   readonly onDailyModeChange: (mode: SoloMode) => void
+  readonly onOpenCalendar: () => void
   readonly onOpenHistory: (filters?: { readonly mode?: SoloMode; readonly scope?: SoloScope }) => void
   readonly onPracticeModeChange: (mode: SoloMode) => void
   readonly onResumeGame: (key: SoloActiveGameKey) => void
@@ -199,18 +201,37 @@ function SoloOverview({
   }
 
   return (
-    <div className="space-y-5">
-      <div className="grid gap-3 md:grid-cols-4">
-        <Button onClick={() => startDaily('og')} variant="primary">Daily OG</Button>
-        <Button onClick={() => startDaily('go')} variant="primary">Daily GO</Button>
-        <Button onClick={() => startPractice('og')} variant="secondary">Practice OG</Button>
-        <Button onClick={() => startPractice('go')} variant="secondary">Practice GO</Button>
+    <div className="brrrdle-solo-overview space-y-5">
+      <div className="brrrdle-solo-format-gates">
+        <article className="brrrdle-solo-format-gate" data-format="og">
+          <div>
+            <p>OG · ONE BOARD</p>
+            <h3>Single puzzle. Direct verdict.</h3>
+            <span>Choose the fixed Daily challenge or a configurable Practice puzzle.</span>
+          </div>
+          <div className="brrrdle-solo-format-actions">
+            <Button onClick={() => startDaily('og')} variant="primary">Daily OG</Button>
+            <Button onClick={() => startPractice('og')} variant="secondary">Practice OG</Button>
+          </div>
+        </article>
+        <article className="brrrdle-solo-format-gate" data-format="go">
+          <div>
+            <p>GO · LINKED CHAIN</p>
+            <h3>Connected puzzles. Persistent evidence.</h3>
+            <span>Carry solved answers forward through the Daily or Practice chain.</span>
+          </div>
+          <div className="brrrdle-solo-format-actions">
+            <Button onClick={() => startDaily('go')} variant="primary">Daily GO</Button>
+            <Button onClick={() => startPractice('go')} variant="secondary">Practice GO</Button>
+          </div>
+        </article>
       </div>
 
-      <Panel className="space-y-4" tone="muted">
+      <Panel className="brrrdle-solo-active-band space-y-4" tone="muted">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h3 className="text-lg font-bold text-white">Active Solo Games</h3>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--color-ice-200)]">Active sessions</p>
+            <h3 className="text-lg font-bold text-white">Resume without losing state</h3>
             <p className="text-sm text-slate-400">{activeGames.length} active</p>
           </div>
           <Button onClick={() => onSubtabChange('active')} size="sm" variant="ghost">View Active</Button>
@@ -218,16 +239,23 @@ function SoloOverview({
         <ActiveGameList activeGames={activeGames.slice(0, 4)} onResumeGame={onResumeGame} />
       </Panel>
 
-      <Panel className="space-y-4" tone="muted">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+      <div className="brrrdle-solo-utility-strip">
+        <Button onClick={onOpenCalendar} size="sm" variant="ghost">Calendar</Button>
+        <Button onClick={() => onOpenHistory({})} size="sm" variant="ghost">Solo History</Button>
+      </div>
+
+      <details className="brrrdle-solo-recent-results">
+        <summary>
           <div>
             <h3 className="text-lg font-bold text-white">Recent Solo Results</h3>
             <p className="text-sm text-slate-400">{recentResults.length} shown</p>
           </div>
-          <Button onClick={() => onOpenHistory({})} size="sm" variant="ghost">Solo History</Button>
+          <span>Review</span>
+        </summary>
+        <div className="mt-4">
+          <RecentResultsList onOpenHistory={onOpenHistory} recentResults={recentResults.slice(0, 5)} />
         </div>
-        <RecentResultsList onOpenHistory={onOpenHistory} recentResults={recentResults.slice(0, 5)} />
-      </Panel>
+      </details>
     </div>
   )
 }
@@ -319,6 +347,7 @@ export function SoloWorkspace({
         <SoloOverview
           activeGames={activeGames}
           onDailyModeChange={onDailyModeChange}
+          onOpenCalendar={onOpenCalendar}
           onOpenHistory={onOpenHistory}
           onPracticeModeChange={onPracticeModeChange}
           onResumeGame={onResumeGame}

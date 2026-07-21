@@ -90,7 +90,7 @@ describe('attention view models', () => {
       tone: 'attention',
     })
     expect(routeAttention.multiplayer).toEqual({
-      ariaLabel: '2 Multiplayer games need your turn',
+      ariaLabel: '2 COMBAT games need your turn',
       label: '2',
       tone: 'urgent',
     })

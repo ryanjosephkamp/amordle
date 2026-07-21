@@ -3,13 +3,14 @@ import { dateKeyToLocalDate } from '../../src/daily'
 import { createDailyOgSetup, createPracticeOgSetup } from '../../src/game/og/session'
 import { expectNoConsoleFailures, installConsoleGuards } from '../fixtures/assertions'
 import { installFixedBrowserTime } from '../fixtures/dailyClock'
-import { chooseSoloPracticeMode, navigateToSoloPractice, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
+import { chooseSoloPracticeMode, submitSoloGuessWithKeyboard } from '../fixtures/gameActions'
+import { navigateToSoloPractice } from './soloTestNavigation'
 
 const FIXED_DAILY_DATE_KEY = '2026-06-11'
 const FIXED_DAILY_ISO = `${FIXED_DAILY_DATE_KEY}T16:00:00.000Z`
 
 async function navigateToDailyOg(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Solo$/i }).click()
+  await page.getByRole('button', { name: /^PLAY$/i }).click()
   await expect(page.locator('#solo-workspace-title')).toBeVisible()
   await page.getByRole('tab', { name: /^Daily Solo$/i }).click()
   await page.getByRole('group', { name: /^Daily Solo mode$/i }).getByRole('button', { name: /^OG$/i }).click()
@@ -17,8 +18,9 @@ async function navigateToDailyOg(page: Page): Promise<void> {
 }
 
 async function expectSolvedOg(page: Page): Promise<void> {
-  await expect(page.getByText(/^Solved\./i).first()).toBeVisible({ timeout: 20_000 })
-  await expect(page.getByRole('grid', { name: /^Guess grid$/i })).toBeVisible()
+  await expect(page.getByRole('region', { name: /^OG result$/i })).toBeVisible({ timeout: 20_000 })
+  await expect(page.getByText(/^PUZZLE SOLVED$/i)).toBeVisible()
+  await expect(page.getByRole('grid', { name: /^Guess grid$/i })).toHaveCount(0)
 }
 
 test.describe('Solo OG characterization @solo', () => {

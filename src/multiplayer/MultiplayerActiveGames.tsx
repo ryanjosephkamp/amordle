@@ -48,7 +48,7 @@ function MultiplayerActiveGameCard({
     <article
       aria-label={game.title}
       aria-current={selected ? 'true' : undefined}
-      className={`rounded-lg border p-4 shadow-xl shadow-black/20 ${cardTone}`}
+      className={`combat-active-game border p-4 ${cardTone}`}
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
@@ -122,7 +122,7 @@ export function MultiplayerActiveGames({
   }
 
   return (
-    <div className="grid gap-3 lg:grid-cols-2">
+    <div className="combat-active-list">
       {visibleGames.map((game) => (
         <MultiplayerActiveGameCard
           game={game}

@@ -66,14 +66,14 @@ function createSoloRouteCue(dashboard: DashboardViewModel): AttentionCueViewMode
 }
 
 function createMultiplayerRouteCue(dashboard: DashboardViewModel): AttentionCueViewModel | undefined {
-  return countCue(dashboard.summary.yourTurnMultiplayerCount, 'Multiplayer game needs your turn', {
-    plural: 'Multiplayer games need your turn',
+  return countCue(dashboard.summary.yourTurnMultiplayerCount, 'COMBAT game needs your turn', {
+    plural: 'COMBAT games need your turn',
     tone: 'urgent',
   })
-    ?? countCue(dashboard.summary.openLobbyCount, 'open Multiplayer lobby', {
-      plural: 'open Multiplayer lobbies',
+    ?? countCue(dashboard.summary.openLobbyCount, 'open COMBAT lobby', {
+      plural: 'open COMBAT lobbies',
     })
-    ?? countCue(dashboard.summary.activeMultiplayerCount, 'active Multiplayer game')
+    ?? countCue(dashboard.summary.activeMultiplayerCount, 'active COMBAT game')
     ?? countCue(dashboard.summary.liveGameCount, 'Live v1 game visible to you', {
       plural: 'Live v1 games visible to you',
       tone: 'neutral',

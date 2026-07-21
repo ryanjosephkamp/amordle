@@ -150,6 +150,7 @@ test.describe('Practice Multiplayer GO @practice @multiplayer', () => {
       await submitGuessWithKeyboard(session.host.page, wrongGuess)
       await waitForTurn(session.rival.page)
       await session.rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await session.rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
 
       const forfeitedRow = await waitForMultiplayerRowByIdForUsers({
         id: playingRow.id,

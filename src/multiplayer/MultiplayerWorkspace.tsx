@@ -249,8 +249,8 @@ function MultiplayerOverview({
   const latestLive = liveRows[0]?.updatedAt
 
   return (
-    <div className="min-w-0 space-y-5">
-      <Panel className="space-y-4" tone="muted">
+    <div className="combat-command-grid min-w-0">
+      <Panel className="combat-overview-active space-y-4" tone="muted">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white">Active Multiplayer Games</h3>
@@ -263,7 +263,7 @@ function MultiplayerOverview({
         <MultiplayerActiveGames activeGames={activeGames} limit={4} onOpenPublicProfile={onOpenPublicProfile} onResumeGame={onResumeGame} selectedGameId={selectedGameId} />
       </Panel>
 
-      <Panel className="space-y-4" tone="muted">
+      <Panel className="combat-overview-lobby space-y-4" tone="muted">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white">Lobby</h3>
@@ -276,7 +276,7 @@ function MultiplayerOverview({
         <MultiplayerLobby limit={4} onJoinGame={onJoinGame} onOpenGame={onResumeGame} rows={lobbyRows} />
       </Panel>
 
-      <Panel className="space-y-4" tone="muted">
+      <Panel className="combat-live-rail space-y-4" tone="muted">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white">Live v1</h3>
@@ -289,7 +289,7 @@ function MultiplayerOverview({
         <MultiplayerLive liveGames={liveRows.slice(0, 4)} onOpenFocusedSpectatorGame={onOpenFocusedSpectatorGame} onOpenPublicProfile={onOpenPublicProfile} onResumeGame={onResumeGame} onSelectGame={onSelectGame} restrictedGameCount={restrictedLiveCount} selectedGameId={selectedGameId} viewerUserId={viewerUserId} />
       </Panel>
 
-      <Panel className="space-y-4" tone="muted">
+      <Panel className="combat-overview-results space-y-4" tone="muted">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
             <h3 className="text-lg font-bold text-white">Recent Multiplayer Results</h3>
@@ -411,10 +411,13 @@ export function MultiplayerWorkspace({
   }, [liveSurfaceActive, onLiveSurfaceActiveChange])
 
   return (
-    <section className="min-w-0 space-y-5" aria-labelledby="multiplayer-workspace-title">
-      <div className="min-w-0 space-y-2">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-ice-200)]">Multiplayer</p>
-        <h2 id="multiplayer-workspace-title" className="break-words text-3xl font-bold text-white">Multiplayer</h2>
+    <section className="combat-workspace min-w-0 space-y-5" aria-labelledby="multiplayer-workspace-title">
+      <div className="combat-workspace-heading min-w-0">
+        <p className="combat-workspace-kicker">Shared-board word duels</p>
+        <h2 id="multiplayer-workspace-title" className="break-words text-4xl font-black tracking-[0.18em] text-white">COMBAT</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-slate-400">
+          Enter a queue, answer on one shared board, and outscore your rival across every actor-attributed turn.
+        </p>
       </div>
       {focusedSpectatorGameId ? (
         <FocusedSpectatorView game={focusedSpectatorGame} onBack={onCloseFocusedSpectatorGame} />

@@ -3,11 +3,71 @@ import { describe, expect, it } from 'vitest'
 import { DEFAULT_DIFFICULTY_TIER } from '../data/difficulty'
 import { createPracticeGoSetup, createPracticeOgSetup } from '../game'
 import { getGuessResult } from '../game/tileStates'
-import { createMultiplayerGame, getMultiplayerAnswerWords, joinMultiplayerGame, submitMultiplayerGuess } from './multiplayer'
+import { createMultiplayerGame, getMultiplayerAnswerWords, joinMultiplayerGame, submitMultiplayerGuess, type MultiplayerGame } from './multiplayer'
 import { createDailyMultiplayerGoSetup } from './dailyMultiplayer'
 import { MultiplayerGameSurface } from './MultiplayerGameSurface'
 
 describe('MultiplayerGameSurface', () => {
+  it.each([3, 5, 8, 35])('keeps a %i-letter COMBAT board in one board-local 32px coordinate system', (wordLength) => {
+    const game = createMultiplayerGame({
+      mode: 'og',
+      playerUserIds: { 'player-one': 'host-user' },
+      scope: 'practice',
+      seed: 1,
+      wordLength,
+    })
+
+    const html = renderToStaticMarkup(
+      <MultiplayerGameSurface
+        game={game}
+        onSubmitGuess={() => undefined}
+        playerId="player-one"
+        statusLabel="Waiting for a rival"
+      />,
+    )
+
+    expect(html.match(/data-combat-shared-board="true"/g)).toHaveLength(1)
+    expect(html).toContain(`min-width:calc(5.5rem + 0.5rem + 2rem * ${wordLength} + 0.375rem * ${wordLength - 1})`)
+    expect(html).toContain(`grid-template-columns:repeat(${wordLength}, minmax(2rem, 1fr))`)
+  })
+
+  it('retains every source-authorized extended attempt row on the shared board', () => {
+    const game = createMultiplayerGame({
+      mode: 'og',
+      playerUserIds: { 'player-one': 'host-user' },
+      scope: 'practice',
+      seed: 1,
+      wordLength: 5,
+    })
+    const extendedSession = {
+      ...game.serializedSession,
+      session: {
+        ...game.serializedSession.session,
+        maxAttempts: 9,
+      },
+    }
+    const extended = {
+      ...game,
+      serializedSession: extendedSession,
+      playerSessions: {
+        ...game.playerSessions,
+        'player-one': extendedSession,
+      },
+    } as MultiplayerGame
+
+    const html = renderToStaticMarkup(
+      <MultiplayerGameSurface
+        game={extended}
+        onSubmitGuess={() => undefined}
+        playerId="player-one"
+        statusLabel="Your turn"
+      />,
+    )
+
+    expect(html.match(/role="row"/g)).toHaveLength(9)
+    expect(html).toContain('9 attempts remaining.')
+  })
+
   it('renders a full board and on-screen keyboard without pay-to-continue controls', () => {
     const game = createMultiplayerGame({
       mode: 'og',
@@ -79,6 +139,54 @@ describe('MultiplayerGameSurface', () => {
     expect(keyMatch?.[1]).not.toContain('border-slate-600 bg-slate-800')
     expect(rivalHtml).toContain('5 attempts remaining.')
     expect(rivalHtml).toContain('Use the on-screen keyboard')
+    expect(rivalHtml).toContain('data-combat-shared-board="true"')
+    expect(rivalHtml).toContain('data-actor="player-one"')
+    expect(rivalHtml).toContain('>Host</p>')
+    expect(rivalHtml).toContain('min-width:calc(5.5rem + 0.5rem + 2rem * 5 + 0.375rem * 4)')
+  })
+
+  it('keeps duplicate shared guesses attributed to their distinct actors in chronological order', () => {
+    const game = createMultiplayerGame({
+      mode: 'og',
+      playerProfiles: {
+        'player-one': { label: 'Dennis' },
+        'player-two': { label: 'Mayar' },
+      },
+      playerUserIds: { 'player-one': 'host-user' },
+      scope: 'practice',
+      seed: 1,
+      wordLength: 5,
+    })
+    const setup = createPracticeOgSetup(5, 1)
+    const answer = getMultiplayerAnswerWords(game)[0]
+    const repeatedGuess = [...setup.validGuesses].find((candidate) => candidate !== answer)!
+    const joined = joinMultiplayerGame({ games: [game] }, {
+      gameId: game.id,
+      userId: 'rival-user',
+    })
+    const first = submitMultiplayerGuess(joined.state, {
+      gameId: game.id,
+      guess: repeatedGuess,
+      playerId: 'player-one',
+    })
+    const second = submitMultiplayerGuess(first.state, {
+      gameId: game.id,
+      guess: repeatedGuess,
+      playerId: 'player-two',
+    })
+
+    const html = renderToStaticMarkup(
+      <MultiplayerGameSurface
+        game={second.game!}
+        onSubmitGuess={() => undefined}
+        playerId="player-one"
+        statusLabel="Your turn"
+      />,
+    )
+
+    expect(html.match(/data-actor="player-one"/g)).toHaveLength(2)
+    expect(html.match(/data-actor="player-two"/g)).toHaveLength(1)
+    expect(html.indexOf('Dennis · You')).toBeLessThan(html.indexOf('Mayar'))
   })
 
   it('briefly renders a solved go puzzle on the rival board before showing the next puzzle', () => {
@@ -269,7 +377,7 @@ describe('MultiplayerGameSurface', () => {
     expect(keyMatch?.[1]).not.toContain('border-slate-600 bg-slate-800')
   })
 
-  it('colors the Daily Multiplayer GO final-puzzle keyboard from prior solution evidence', () => {
+  it('preserves correct Daily Multiplayer GO keyboard precedence from prior solved shared evidence', () => {
     const game = createMultiplayerGame({
       createdAt: '2026-06-04T12:00:00.000Z',
       dailyDateKey: '2026-06-04',
@@ -337,6 +445,6 @@ describe('MultiplayerGameSurface', () => {
 
     const keyMatch = rivalHtml.match(new RegExp(`<button[^>]*aria-label="Enter ${priorOnlyEvidence.letter.toLocaleUpperCase('en-US')}"[^>]*class="([^"]*)"`))
     expect(keyMatch?.[1]).toBeDefined()
-    expect(keyMatch?.[1]).not.toContain('border-slate-600 bg-slate-800')
+    expect(keyMatch?.[1]).toContain('border-emerald-300/60 bg-emerald-300/25')
   })
 })

@@ -57,7 +57,7 @@ test.describe('refresh route persistence @navigation', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    await page.getByRole('button', { name: /^Solo$/i }).click()
+    await page.getByRole('button', { name: /^PLAY$/i }).click()
     await expect(page.locator('#solo-workspace-title')).toBeVisible()
     await page.getByRole('tab', { name: /^Practice Solo$/i }).click()
     await expect(page.getByRole('group', { name: /^Practice Solo mode$/i })).toBeVisible()
@@ -66,7 +66,7 @@ test.describe('refresh route persistence @navigation', () => {
     await page.reload({ waitUntil: 'domcontentloaded' })
 
     await expectHome(page)
-    await page.getByRole('button', { name: /^Solo$/i }).click()
+    await page.getByRole('button', { name: /^PLAY$/i }).click()
     await expect(page.locator('#solo-workspace-title')).toBeVisible()
     await page.getByRole('tab', { name: /^Practice Solo$/i }).click()
     await page.getByRole('group', { name: /^Practice Solo mode$/i }).getByRole('button', { name: /^GO$/i }).click()
@@ -78,14 +78,14 @@ test.describe('refresh route persistence @navigation', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    await page.getByRole('button', { name: /^Multiplayer$/i }).click()
+    await page.getByRole('button', { name: /^COMBAT$/i }).click()
     await expect(page.locator('#multiplayer-workspace-title')).toBeVisible()
     await page.getByRole('tab', { name: /^Lobby$/i }).click()
 
     await page.reload({ waitUntil: 'domcontentloaded' })
 
     await expectHome(page)
-    await page.getByRole('button', { name: /^Multiplayer$/i }).click()
+    await page.getByRole('button', { name: /^COMBAT$/i }).click()
     await expect(page.locator('#multiplayer-workspace-title')).toBeVisible()
     await page.getByRole('tab', { name: /^Lobby$/i }).click()
     await expect(page.getByRole('heading', { level: 3, name: /^Lobby$/i })).toBeVisible()
@@ -109,9 +109,9 @@ test.describe('refresh route persistence @navigation', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    await page.getByRole('button', { name: /^Solo$/i }).click()
+    await page.getByRole('button', { name: /^PLAY$/i }).click()
     await expect(page.locator('#solo-workspace-title')).toBeVisible()
-    await page.getByRole('button', { name: /^Multiplayer$/i }).click()
+    await page.getByRole('button', { name: /^COMBAT$/i }).click()
     await expect(page.locator('#multiplayer-workspace-title')).toBeVisible()
 
     await page.goBack()

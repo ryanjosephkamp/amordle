@@ -58,6 +58,34 @@ describe('refreshWordListsFromHuggingFace', () => {
     expect(result.files[0].file.answers).toHaveLength(3)
   })
 
+  it('accepts the current raw object payload by injecting source metadata and preserving curation', async () => {
+    const curation = {
+      policy: 'english-openlist',
+      reviewedAt: '2026-07-19T00:27:36.000Z',
+    }
+    const result = await refreshWordListsFromHuggingFace({
+      fetchJson: async () => ({
+        metadata: { curation },
+        answers: ['go', 'ox'],
+        validGuesses: ['go', 'ox', 'am'],
+      }),
+      source: SOURCE,
+      lengths: [2],
+    })
+
+    expect(result.ok).toBe(true)
+    if (!result.ok) return
+    expect(result.files[0].file.metadata).toEqual({
+      length: 2,
+      source: 'huggingface:ryanjosephkamp/english-openlist',
+      version: 'test-revision',
+      generatedAt: '2026-05-26T00:00:00Z',
+      curation,
+    })
+    expect(result.files[0].file.answers.map((entry) => entry.word)).toEqual(['go', 'ox'])
+    expect(result.files[0].file.validGuesses).toEqual(['go', 'ox', 'am'])
+  })
+
   it('aborts atomically when any single length fails schema validation', async () => {
     const result = await refreshWordListsFromHuggingFace({
       fetchJson: async (url) => {
@@ -75,6 +103,7 @@ describe('refreshWordListsFromHuggingFace', () => {
     if (result.ok) return
     expect(result.failures).toHaveLength(1)
     expect(result.failures[0]).toMatchObject({ length: 5, reason: 'invalid-payload' })
+    expect(result.failures[0].message).toContain('reported metadata length 4')
     expect(result.message).toContain('Refresh aborted')
   })
 

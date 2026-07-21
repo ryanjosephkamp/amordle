@@ -19,18 +19,19 @@ import {
   type KeyboardInput,
   type OgPuzzleSetup,
   type PuzzleSessionState,
-  type TileState,
   formatOgShare,
 } from '../../game'
 import { clearDailyOgStoredSession, loadDailyOgStoredSession, saveDailyOgStoredSession } from '../../game/storage/dailyOgStorage'
 import { dateKeyToLocalDate, getActiveDailyDate } from '../../daily'
-import { applyPracticeHintsToDraft, calculatePayToContinueCost, createInitialConsumableEffects, deletePracticeDraftLetter, enterPracticeDraftLetter, getPracticeDraftTiles, removePracticeIncorrectLetters, revealNextPracticeLetter, type ConsumableEffects, type ConsumableType } from '../../progression'
+import { applyPracticeHintsToDraft, calculatePayToContinueCost, createInitialConsumableEffects, deletePracticeDraftLetter, enterPracticeDraftLetter, removePracticeIncorrectLetters, revealNextPracticeLetter, type ConsumableEffects, type ConsumableType } from '../../progression'
 import { PracticeConsumableControls } from '../../marketplace'
 import { useSound } from '../../sound'
-import { Button, Keyboard, Panel, ShareButton } from '../../ui'
+import { Button, Keyboard, Panel, ShareButton, SoloBoard } from '../../ui'
 import { classNames } from '../../ui/classNames'
 import { GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE, GAMEPLAY_AUTOCENTER_TARGETS } from '../gameplayAutoCenter'
 import { CustomizeMenu } from './CustomizeMenu'
+import { selectSoloBoardPresentation } from './soloBoardRows'
+import { SoloResultHandoff } from './SoloResultHandoff'
 import { createOgGameSessionKey } from './soloSessionKeys'
 import { getSoloInputSoundEvents, getSoloSubmitSoundEvents } from './soloSoundEvents'
 import { WordListPreparationPanel } from './WordListPreparationPanel'
@@ -43,6 +44,8 @@ interface OgGameProps {
   readonly initialResume?: OgResumeSlot
   readonly keyboardDisabled?: boolean
   readonly onGameComplete?: (input: CompletedGameInput) => void
+  readonly onOpenCalendar?: () => void
+  readonly onOpenHistory?: () => void
   readonly onResumeCapture?: (capture: ResumeCapture) => void
   readonly onSoloCloudMutation?: (mutation: SoloCloudMutation) => void
   readonly onSaveDifficultyDefault?: (tier: DifficultyTier) => void
@@ -66,16 +69,6 @@ interface OgGameProps {
   readonly onMarkDailyUnlocked?: () => void
 }
 
-type GridTileState = TileState | 'empty' | 'current'
-
-const tileStateClasses: Record<GridTileState, string> = {
-  absent: 'border-slate-700 bg-slate-950 text-slate-400',
-  correct: 'border-emerald-300/70 bg-emerald-300/25 text-emerald-50',
-  current: 'border-cyan-200/70 bg-cyan-300/10 text-cyan-50',
-  empty: 'border-slate-700 bg-slate-950/60 text-slate-500',
-  present: 'border-amber-300/70 bg-amber-300/20 text-amber-50',
-}
-
 function canRestoreDailySession(serialized: ReturnType<typeof serializeOgSession>, setup: OgPuzzleSetup): boolean {
   return serialized.answer === setup.answer && serialized.answer.length === setup.wordLength
 }
@@ -92,66 +85,6 @@ function createInitialDailySession(setup: ReturnType<typeof createDailyOgSetup>,
 
   clearDailyOgStoredSession(undefined, pastDailyDateKey)
   return createOgSession(setup, hardMode)
-}
-
-function GuessGrid({ effects, session }: { readonly effects: ConsumableEffects; readonly session: PuzzleSessionState }) {
-  type GridTile = { readonly isSubmitted: boolean; readonly letter: string; readonly state: GridTileState }
-  const rows = useMemo(() => Array.from({ length: session.maxAttempts }, (_, rowIndex) => {
-    const submittedGuess = session.guesses[rowIndex]
-    if (submittedGuess) {
-      return submittedGuess.tiles.map((tile): GridTile => ({ isSubmitted: true, letter: tile.letter, state: tile.state }))
-    }
-
-    if (rowIndex === session.guesses.length && session.status === 'playing') {
-      return getPracticeDraftTiles(session.currentGuess, session.wordLength, effects).map((tile): GridTile => ({
-        isSubmitted: false,
-        letter: tile.letter,
-        state: tile.locked ? 'correct' : tile.letter ? 'current' : 'empty',
-      }))
-    }
-
-    return Array.from({ length: session.wordLength }, (): GridTile => ({ isSubmitted: false, letter: '', state: 'empty' }))
-  }), [effects, session.currentGuess, session.guesses, session.maxAttempts, session.status, session.wordLength])
-
-  return (
-    <div
-      aria-label="Guess grid"
-      className="@container space-y-1.5 sm:space-y-2"
-      role="grid"
-      tabIndex={-1}
-      {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.solo }}
-    >
-      {rows.map((row, rowIndex) => (
-        <div
-          className={classNames('mx-auto grid gap-1 sm:gap-1.5', session.lastValidation && rowIndex === session.guesses.length ? 'motion-safe:animate-[brrrdle-row-shake_180ms_ease-in-out]' : undefined)}
-          key={rowIndex}
-          role="row"
-          style={{
-            gridTemplateColumns: `repeat(${session.wordLength}, minmax(0, 1fr))`,
-            maxWidth: `calc(var(--brrrdle-tile-max) * ${session.wordLength} + 0.375rem * ${session.wordLength - 1})`,
-          }}
-        >
-          {row.map((tile, tileIndex) => (
-            <div
-              aria-label={`Row ${rowIndex + 1}, tile ${tileIndex + 1}${tile.letter ? `, ${tile.letter}` : ''}`}
-              className={classNames(
-                '@container flex aspect-square items-center justify-center rounded-md border font-black uppercase',
-                tileStateClasses[tile.state],
-                tile.state === 'current' ? 'motion-safe:animate-[brrrdle-tile-pop_180ms_ease-out]' : undefined,
-                tile.isSubmitted ? 'motion-safe:animate-[brrrdle-tile-reveal_360ms_ease-out]' : undefined,
-              )}
-              data-state={tile.state}
-              key={`${rowIndex}-${tileIndex}`}
-              role="gridcell"
-              style={{ fontSize: 'clamp(0.625rem, 50cqi, 1.75rem)' }}
-            >
-              {tile.letter}
-            </div>
-          ))}
-        </div>
-      ))}
-    </div>
-  )
 }
 
 function getCompletionPercentage(session: PuzzleSessionState): number {
@@ -172,6 +105,8 @@ function OgGameSession({
   keyboardDisabled,
   onDifficultyChange,
   onGameComplete,
+  onOpenCalendar,
+  onOpenHistory,
   onPracticeLengthChange,
   onPracticeSeedChange,
   onResumeCapture,
@@ -196,6 +131,8 @@ function OgGameSession({
   readonly keyboardDisabled: boolean
   readonly onDifficultyChange: (tier: DifficultyTier) => void
   readonly onGameComplete?: (input: CompletedGameInput) => void
+  readonly onOpenCalendar?: () => void
+  readonly onOpenHistory?: () => void
   readonly onPracticeLengthChange: (length: number) => void
   readonly onPracticeSeedChange: () => void
   readonly onResumeCapture?: (capture: ResumeCapture) => void
@@ -527,10 +464,17 @@ function OgGameSession({
     </div>
   ) : null
   const hasPostGuessControls = Boolean(terminalControl || revealControl)
+  const boardPresentation = useMemo(
+    () => selectSoloBoardPresentation(
+      session,
+      scope === 'practice' ? consumableEffects : createInitialConsumableEffects(),
+    ),
+    [consumableEffects, scope, session],
+  )
 
   return (
     <section className="brrrdle-solo-gameplay space-y-5" aria-labelledby="og-game-title">
-      <div className="space-y-2">
+      <div className="brrrdle-solo-game-header space-y-2">
         <p className="text-sm font-semibold uppercase tracking-[0.28em] text-[var(--color-ice-200)]">og {scope}</p>
         <h2 id="og-game-title" className="text-3xl font-bold text-white">
           {scope === 'daily' ? 'Daily og puzzle' : 'Practice og puzzle'}
@@ -540,101 +484,140 @@ function OgGameSession({
         </p>
       </div>
 
-      <Panel className="space-y-4" tone="muted">
-        {scope === 'practice' ? (
-          <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-slate-700 bg-slate-950/50 p-3">
-            <label className="grid gap-1 text-sm font-semibold text-cyan-100">
-              Practice length
-              <select
-                className="rounded-xl border border-slate-600 bg-slate-950 px-3 py-2 text-slate-100 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--color-focus-ring)]"
-                onChange={(event) => onPracticeLengthChange(Number(event.target.value))}
-                value={practiceLength}
-              >
-                {practiceLengths.map((length) => (
-                  <option key={length} value={length}>{length} letters</option>
-                ))}
-              </select>
-            </label>
-            <Button onClick={onPracticeSeedChange} variant="secondary">New practice puzzle</Button>
-          </div>
-        ) : null}
-
-        {onSaveDifficultyDefault ? (
-          <CustomizeMenu
-            defaultDifficulty={defaultDifficulty}
-            difficulty={difficulty}
-            locked={session.guesses.length > 0}
-            onDifficultyChange={onDifficultyChange}
-            onSaveDefault={() => onSaveDifficultyDefault(difficulty)}
-          />
-        ) : null}
-
-        <label className="flex items-center gap-3 text-sm font-semibold text-cyan-100">
-          <input
-            checked={session.hardMode}
-            className="h-4 w-4 accent-cyan-300"
-            disabled={session.guesses.length > 0}
-            onChange={(event) => setSession((currentSession) => ({ ...currentSession, hardMode: event.target.checked, lastValidation: undefined }))}
-            type="checkbox"
-          />
-          Hard mode
-        </label>
-
-        <GuessGrid effects={scope === 'practice' ? consumableEffects : createInitialConsumableEffects()} session={session} />
-
-        <div aria-live="polite" className="min-h-20 rounded-2xl border border-slate-700 bg-slate-950/70 p-3 text-sm leading-6 text-slate-200" role="status">
-          <p>{statusMessage}</p>
-          {session.lastValidation ? <p className="mt-1 min-h-6 font-semibold text-amber-100">{session.lastValidation.message}</p> : <p aria-hidden="true" className="mt-1 min-h-6" />}
-        </div>
-
-        <div className="brrrdle-solo-post-guess-controls flex flex-col gap-4">
-          <div
-            className={classNames(hasPostGuessControls ? 'order-1 md:order-2' : undefined)}
-            tabIndex={-1}
-            {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.soloKeyboard }}
-          >
-            <Keyboard disabled={session.status !== 'playing'} disabledLetters={scope === 'practice' ? consumableEffects.removedLetters : undefined} letterStates={letterStates} onInput={handleInput} />
-          </div>
-          {hasPostGuessControls ? (
-            <div className="order-2 flex flex-col gap-4 md:order-1">
-              {terminalControl}
-              {revealControl}
-            </div>
-          ) : null}
-        </div>
-
-        {scope === 'practice' ? (
-          <PracticeConsumableControls consumables={consumables} disabled={session.status !== 'playing'} effects={consumableEffects} onUse={handleUseConsumable} />
-        ) : null}
-
-
+      <Panel className="brrrdle-solo-game-panel" tone="muted">
         {endStateRevealed ? (
-          <ShareButton
-            label="Share og result"
-            text={formatOgShare({
-              dateKey: setup.dateKey,
-              guesses: session.guesses,
-              maxAttempts: session.maxAttempts,
-              mode: 'og',
-              scope,
-              status: session.status,
-            })}
-          />
-        ) : null}
+          <div className="brrrdle-solo-result-layout">
+            <SoloResultHandoff
+              attemptsUsed={session.guesses.length}
+              evidence={(
+                <div className="brrrdle-solo-result-answer">
+                  <span>Terminal answer</span>
+                  <strong>{session.answer.toLocaleUpperCase('en-US')}</strong>
+                </div>
+              )}
+              mode="og"
+              scope={scope}
+              status={session.status === 'won' ? 'won' : 'lost'}
+              wordLength={session.wordLength}
+            >
+              {scope === 'practice' ? (
+                <Button onClick={onPracticeSeedChange} variant="primary">New practice puzzle</Button>
+              ) : null}
+              {scope === 'daily' && onOpenCalendar ? (
+                <Button onClick={onOpenCalendar} variant="secondary">Calendar</Button>
+              ) : null}
+              {onOpenHistory ? (
+                <Button onClick={onOpenHistory} variant="ghost">Solo history</Button>
+              ) : null}
+              <ShareButton
+                label="Share og result"
+                text={formatOgShare({
+                  dateKey: setup.dateKey,
+                  guesses: session.guesses,
+                  maxAttempts: session.maxAttempts,
+                  mode: 'og',
+                  scope,
+                  status: session.status,
+                })}
+              />
+            </SoloResultHandoff>
+            <DefinitionPanel
+              enabled
+              mode="og"
+              scope={scope}
+              word={session.answer}
+              wordLength={session.wordLength}
+            />
+          </div>
+        ) : (
+          <div className="brrrdle-solo-game-layout">
+            <div className="brrrdle-solo-game-core">
+              <SoloBoard
+                activeCell={boardPresentation.activeCell}
+                ariaLabel="Guess grid"
+                autoCenterAttribute={{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.solo }}
+                rows={boardPresentation.rows}
+                shakeRowIndex={session.lastValidation ? session.guesses.length : undefined}
+                wordLength={session.wordLength}
+              />
 
-        <DefinitionPanel
-          enabled={endStateRevealed}
-          mode="og"
-          scope={scope}
-          word={session.answer}
-          wordLength={session.wordLength}
-        />
+              <div aria-live="polite" className="brrrdle-solo-status min-h-20" role="status">
+                <p>{statusMessage}</p>
+                {session.lastValidation ? <p className="mt-1 min-h-6 font-semibold text-amber-100">{session.lastValidation.message}</p> : <p aria-hidden="true" className="mt-1 min-h-6" />}
+              </div>
+
+              <div className="brrrdle-solo-post-guess-controls flex flex-col gap-4">
+                <div
+                  className={classNames(hasPostGuessControls ? 'order-1 md:order-2' : undefined)}
+                  tabIndex={-1}
+                  {...{ [GAMEPLAY_AUTOCENTER_TARGET_ATTRIBUTE]: GAMEPLAY_AUTOCENTER_TARGETS.soloKeyboard }}
+                >
+                  <Keyboard disabled={session.status !== 'playing'} disabledLetters={scope === 'practice' ? consumableEffects.removedLetters : undefined} letterStates={letterStates} onInput={handleInput} />
+                </div>
+                {hasPostGuessControls ? (
+                  <div className="order-2 flex flex-col gap-4 md:order-1">
+                    {terminalControl}
+                    {revealControl}
+                  </div>
+                ) : null}
+              </div>
+            </div>
+
+            <aside className="brrrdle-solo-game-rail" aria-label="OG game controls">
+              <div className="brrrdle-solo-setup-controls">
+                {scope === 'practice' ? (
+                  <div className="brrrdle-solo-practice-config">
+                    <label>
+                      Practice length
+                      <select
+                        onChange={(event) => onPracticeLengthChange(Number(event.target.value))}
+                        value={practiceLength}
+                      >
+                        {practiceLengths.map((length) => (
+                          <option key={length} value={length}>{length} letters</option>
+                        ))}
+                      </select>
+                    </label>
+                    <Button onClick={onPracticeSeedChange} variant="secondary">New practice puzzle</Button>
+                  </div>
+                ) : null}
+
+                {onSaveDifficultyDefault ? (
+                  <CustomizeMenu
+                    defaultDifficulty={defaultDifficulty}
+                    difficulty={difficulty}
+                    locked={session.guesses.length > 0}
+                    onDifficultyChange={onDifficultyChange}
+                    onSaveDefault={() => onSaveDifficultyDefault(difficulty)}
+                  />
+                ) : null}
+
+                <label className="brrrdle-solo-hard-mode">
+                  <input
+                    checked={session.hardMode}
+                    disabled={session.guesses.length > 0}
+                    onChange={(event) => setSession((currentSession) => ({ ...currentSession, hardMode: event.target.checked, lastValidation: undefined }))}
+                    type="checkbox"
+                  />
+                  Hard mode
+                </label>
+              </div>
+
+              {scope === 'practice' ? (
+                <details className="brrrdle-solo-tools-disclosure">
+                  <summary>Practice tools</summary>
+                  <PracticeConsumableControls consumables={consumables} disabled={session.status !== 'playing'} effects={consumableEffects} onUse={handleUseConsumable} />
+                </details>
+              ) : null}
+            </aside>
+          </div>
+        )}
       </Panel>
     </section>
   )
 }
 
-export function OgGame({ coins, consumables = { removeIncorrectLetters: 0, revealOneLetter: 0 }, defaultDifficulty = DEFAULT_DIFFICULTY_TIER, defaultHardMode = false, initialResume, keyboardDisabled = false, onAdvancePracticeSeed, onConsumeConsumable, onGameComplete, onResumeCapture, onSoloCloudMutation, onSaveDifficultyDefault, onSpendCoins, practiceSeedCounter = 0, practiceSeedUserId, progressOwnerKey, scope, pastDailyDateKey, onMarkDailyUnlocked }: OgGameProps) {
+export function OgGame({ coins, consumables = { removeIncorrectLetters: 0, revealOneLetter: 0 }, defaultDifficulty = DEFAULT_DIFFICULTY_TIER, defaultHardMode = false, initialResume, keyboardDisabled = false, onAdvancePracticeSeed, onConsumeConsumable, onGameComplete, onOpenCalendar, onOpenHistory, onResumeCapture, onSoloCloudMutation, onSaveDifficultyDefault, onSpendCoins, practiceSeedCounter = 0, practiceSeedUserId, progressOwnerKey, scope, pastDailyDateKey, onMarkDailyUnlocked }: OgGameProps) {
   const [initialPracticeResume] = useState(() => initialResume?.scope === 'practice' ? initialResume : undefined)
   const initialDailyResume = initialResume?.scope === 'daily' ? initialResume : undefined
   // Practice resume captures are written on every input. Treat the incoming
@@ -688,6 +671,8 @@ export function OgGame({ coins, consumables = { removeIncorrectLetters: 0, revea
       keyboardDisabled={keyboardDisabled}
       onDifficultyChange={(tier) => { setResumeConsumed(true); setDifficulty(tier) }}
       onGameComplete={onGameComplete}
+      onOpenCalendar={onOpenCalendar}
+      onOpenHistory={onOpenHistory}
       onMarkDailyUnlocked={onMarkDailyUnlocked}
       onConsumeConsumable={onConsumeConsumable}
       onPracticeLengthChange={(length) => { setResumeConsumed(true); setPracticeLength(length) }}

@@ -33,7 +33,7 @@ function jsonResponse(body: unknown, init: JsonResponseInit): Response {
  *     The client falls back to bundled data in this case.
  *   - 502 only for store I/O errors.
  */
-export default async function handler(request: Request): Promise<Response> {
+export async function handleWordListManifest(request: Request): Promise<Response> {
   if (request.method !== 'GET') {
     return jsonResponse({ error: 'Method not allowed' }, { status: 405 })
   }
@@ -59,3 +59,5 @@ export default async function handler(request: Request): Promise<Response> {
     return jsonResponse({ ok: false, message }, { status: 502 })
   }
 }
+
+export default { fetch: handleWordListManifest }

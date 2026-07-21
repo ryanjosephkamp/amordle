@@ -3,18 +3,19 @@ import { expectNoConsoleFailures, expectNoHorizontalOverflow, installConsoleGuar
 import { createE2eUser, deleteE2eUser, signInThroughUi, type E2eUser } from '../fixtures/testUsers'
 
 const ROUTES = [
-  { button: /^Solo$/i, title: /^Solo$/i },
-  { button: /^Multiplayer$/i, title: /^Multiplayer$/i },
-  { button: /^Calendar$/i, title: /^Calendar$/i },
-  { button: /^History$/i, title: /^History$/i },
-  { button: /^Stats$/i, title: /^Stats$/i },
-  { button: /^Leaderboard$/i, title: /^Leaderboard$/i },
-  { button: /^Words$/i, title: /^Word Explorer$/i },
-  { button: /^Profile$/i, title: /^Profile$/i },
-  { button: /^Settings$/i, title: /^Settings$/i },
-  { button: /^Help$/i, title: /^Help$/i },
-  { button: /^Feedback$/i, title: /^Feedback$/i },
-  { button: /^About$/i, title: /^About amordle$/i },
+  { button: /^PLAY$/i, source: 'rail', title: /^PLAY$/i },
+  { button: /^DAILY$/i, source: 'rail', title: /^DAILY$/i },
+  { button: /^COMBAT$/i, source: 'rail', title: /^COMBAT$/i },
+  { button: /^CALENDAR$/i, source: 'rail', title: /^Calendar$/i },
+  { button: /^STATS$/i, source: 'rail', title: /^Stats$/i },
+  { button: /^History$/i, source: 'more', title: /^History$/i },
+  { button: /^Leaderboard$/i, source: 'more', title: /^Leaderboard$/i },
+  { button: /^Word Explorer$/i, source: 'more', title: /^Word Explorer$/i },
+  { button: /^Profile$/i, source: 'more', title: /^Profile$/i },
+  { button: /^Settings$/i, source: 'utility', title: /^Settings$/i },
+  { button: /^Help$/i, source: 'utility', title: /^Help$/i },
+  { button: /^Feedback$/i, source: 'more', title: /^Feedback$/i },
+  { button: /^About amordle$/i, source: 'more', title: /^About amordle$/i },
 ] as const
 
 async function triggerLocalDailyNotification(page: Page): Promise<void> {
@@ -29,17 +30,31 @@ test.describe('Functional shell characterization @layout', () => {
     const consoleFailures = installConsoleGuards(page)
     await page.goto('/')
 
-    const navigation = page.getByRole('navigation', { name: /^amordle destinations$/i })
+    const navigation = page.getByRole('navigation', { name: /^Primary destinations$/i })
     await expect(navigation).toBeVisible()
     await expect(page.getByRole('main')).toHaveCount(1)
 
     for (const route of ROUTES) {
-      const button = navigation.getByRole('button', { name: route.button })
+      let button
+      if (route.source === 'rail') {
+        button = navigation.getByRole('button', { name: route.button })
+      } else if (route.source === 'utility') {
+        button = page.getByRole('navigation', { name: /^Utility destinations$/i }).getByRole('button', { name: route.button })
+      } else {
+        await navigation.getByRole('button', { name: /^MORE$/i }).click()
+        const dialog = page.getByRole('dialog', { name: /^More destinations$/i })
+        await expect(dialog).toBeFocused()
+        button = dialog.getByRole('button', { name: route.button })
+      }
       await button.focus()
       await expect(button).toBeFocused()
-      await page.keyboard.press('Enter')
+      await button.press('Enter')
       await expect(page.getByRole('heading', { level: 1, name: route.title })).toBeVisible()
-      await expect(button).toHaveAttribute('aria-current', 'page')
+      if (route.source !== 'more') {
+        await expect(button).toHaveAttribute('aria-current', 'page')
+      } else {
+        await expect(navigation.getByRole('button', { name: /^MORE$/i })).toHaveAttribute('aria-current', 'page')
+      }
     }
 
     await expectNoConsoleFailures(consoleFailures)
@@ -53,11 +68,12 @@ test.describe('Functional shell characterization @layout', () => {
     const focusToggle = page.getByRole('button', { name: /^Enter focus mode$/i })
     await focusToggle.click()
     await expect(page.getByRole('button', { name: /^Exit focus mode and restore the full shell$/i })).toHaveAttribute('aria-pressed', 'true')
-    await expect(page.getByRole('navigation', { name: /^amordle destinations$/i })).toBeVisible()
+    await expect(page.getByRole('navigation', { name: /^Mobile destinations$/i })).toBeHidden()
     await expectNoHorizontalOverflow(page)
 
     await page.getByRole('button', { name: /^Exit focus mode and restore the full shell$/i }).click()
     await expect(page.getByRole('button', { name: /^Enter focus mode$/i })).toHaveAttribute('aria-pressed', 'false')
+    await expect(page.getByRole('navigation', { name: /^Mobile destinations$/i })).toBeVisible()
     await expectNoConsoleFailures(consoleFailures)
   })
 

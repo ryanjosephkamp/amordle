@@ -21,10 +21,12 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.106.2",
     "@vercel/blob": "^2.4.0",
+    "lucide-react": "1.25.0",
     "react": "^19.2.6",
     "react-dom": "^19.2.6"
   },
   "devDependencies": {
+    "@axe-core/playwright": "4.12.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/vite": "^4.3.0",

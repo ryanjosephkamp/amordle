@@ -128,6 +128,36 @@ describe('SoloWorkspace', () => {
     expect(overviewHtml).not.toContain('min-w-[42rem]')
   })
 
+  it('presents the overview format-first while keeping all four source-authorized starts', () => {
+    const html = renderToStaticMarkup(
+      <SoloWorkspace
+        activeSubtab="overview"
+        dailyMode="og"
+        history={[]}
+        onDailyModeChange={() => undefined}
+        onOpenCalendar={() => undefined}
+        onOpenHistory={() => undefined}
+        onPracticeModeChange={() => undefined}
+        onResumeGame={() => undefined}
+        onSubtabChange={() => undefined}
+        practiceMode="og"
+        renderDailyGame={() => <div>Daily game</div>}
+        renderPracticeGame={() => <div>Practice game</div>}
+        resumeSlots={{}}
+      />,
+    )
+
+    expect(html).toContain('OG · ONE BOARD')
+    expect(html).toContain('GO · LINKED CHAIN')
+    expect(html).toContain('Daily OG')
+    expect(html).toContain('Practice OG')
+    expect(html).toContain('Daily GO')
+    expect(html).toContain('Practice GO')
+    expect(html).toContain('Active sessions')
+    expect(html).toContain('Calendar')
+    expect(html).toContain('Solo History')
+  })
+
   it('keeps active Solo cards focused on resuming instead of selecting', () => {
     const resumeSlots: ResumeSlotCollection = {
       'daily-og': createResumeSlot({

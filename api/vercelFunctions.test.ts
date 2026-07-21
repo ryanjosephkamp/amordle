@@ -2,8 +2,13 @@ import { describe, expect, it } from 'vitest'
 
 import adminRefreshFunction, { handleAdminRefresh } from './admin-refresh.js'
 import cronRefreshFunction, { handleCronRefresh } from './cron/refresh-word-lists.js'
+import wordListManifestFunction, { handleWordListManifest } from './word-lists/manifest.js'
 
 describe('Vercel Web function exports', () => {
+  it('exposes the word-list manifest handler through the Web fetch interface', () => {
+    expect(wordListManifestFunction.fetch).toBe(handleWordListManifest)
+  })
+
   it('exposes the cron refresh handler through the Web fetch interface', () => {
     expect(cronRefreshFunction.fetch).toBe(handleCronRefresh)
   })

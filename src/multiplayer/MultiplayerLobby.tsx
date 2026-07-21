@@ -43,8 +43,8 @@ export function MultiplayerLobby({
   }
 
   return (
-    <div className="overflow-x-auto">
-      <table className="w-full min-w-[48rem] border-separate border-spacing-y-2 text-left text-sm">
+    <div className="combat-lobby-ledger overflow-x-auto">
+      <table className="w-full min-w-[48rem] border-collapse text-left text-sm">
         <thead className="text-xs uppercase tracking-[0.18em] text-slate-400">
           <tr>
             <th className="px-3 py-1">Lobby</th>
@@ -94,7 +94,7 @@ function MultiplayerLobbyRow({
   const disabled = row.claimBlocked || (!row.canJoin && !row.canCancel)
 
   return (
-    <tr className="bg-black/30 text-slate-200">
+    <tr className="combat-lobby-row text-slate-200">
       <td className="rounded-l-lg border-y border-l border-white/10 px-3 py-3">
         <p className="font-semibold">{row.scopeLabel} {row.modeLabel}</p>
         <p className="text-xs text-slate-400">{row.timeLimitLabel}{row.hardModeLabel ? ` · ${row.hardModeLabel}` : ''}</p>

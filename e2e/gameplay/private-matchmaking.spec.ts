@@ -129,6 +129,7 @@ test.describe('Private matchmaking @multiplayer', () => {
       await expect(session.host.page.getByTestId('multiplayer-selected-game')).toContainText(new RegExp(firstGuess, 'i'), { timeout: 30_000 })
 
       await session.rival.page.getByRole('button', { name: /^Forfeit$/i }).click()
+      await session.rival.page.getByRole('button', { name: /^Forfeit match$/i }).click()
       const forfeitedRow = await waitForMultiplayerRowForUsers({
         mode: 'og',
         scope: 'practice',

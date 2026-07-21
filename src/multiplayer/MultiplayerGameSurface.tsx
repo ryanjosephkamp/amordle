@@ -125,6 +125,10 @@ function getSharedMoveGuesses(game: MultiplayerGame, puzzleIndex: number): reado
     .map((move): GuessResult => ({ guess: move.guess, tiles: move.tiles }))
 }
 
+function getAllSharedMoveGuesses(game: MultiplayerGame): readonly GuessResult[] {
+  return game.moves.map((move): GuessResult => ({ guess: move.guess, tiles: move.tiles }))
+}
+
 function isSameGuessResult(left: GuessResult, right: GuessResult): boolean {
   return left.guess === right.guess
     && left.tiles.length === right.tiles.length
@@ -198,56 +202,156 @@ function applyInput(session: PuzzleSessionState | GoSessionState, input: Keyboar
   return submitGuess(session)
 }
 
-function GuessGrid({ session }: { readonly session: PuzzleSessionState }) {
+function getPlayerSurfaceLabel(
+  game: MultiplayerGame,
+  actor: MultiplayerPlayerId,
+  viewerPlayerId?: MultiplayerPlayerId,
+): string {
+  const profile = game.playerProfiles?.[actor]
+  const identityLabel = profile?.displayName?.trim()
+    || profile?.label.trim()
+    || game.players.find((player) => player.id === actor)?.label.trim()
+  const label = identityLabel && !['you', 'rival'].includes(identityLabel.toLocaleLowerCase('en-US'))
+    ? identityLabel
+    : actor === 'player-one' ? 'Player one' : 'Player two'
+  return actor === viewerPlayerId ? `${label} · You` : label
+}
+
+function GuessGrid({
+  game,
+  playerId,
+  puzzleIndex,
+  session,
+}: {
+  readonly game: MultiplayerGame
+  readonly playerId?: MultiplayerPlayerId
+  readonly puzzleIndex: number
+  readonly session: PuzzleSessionState
+}) {
   type GridTile = { readonly isSubmitted: boolean; readonly letter: string; readonly state: GridTileState }
-  const rows = useMemo(() => Array.from({ length: session.maxAttempts }, (_, rowIndex) => {
-    const submittedGuess = session.guesses[rowIndex]
-    if (submittedGuess) {
-      return submittedGuess.tiles.map((tile): GridTile => ({ isSubmitted: true, letter: tile.letter, state: tile.state }))
-    }
+  type GridRow = { readonly actor?: MultiplayerPlayerId; readonly tiles: readonly GridTile[] }
+  const activeTileIndex = Math.min(session.currentGuess.length, session.wordLength - 1)
+  const activeTileRef = useRef<HTMLDivElement | null>(null)
+  const boardScrollerRef = useRef<HTMLDivElement | null>(null)
+  const visibleMoves = useMemo(
+    () => game.moves.filter((move) => move.puzzleIndex <= puzzleIndex),
+    [game.moves, puzzleIndex],
+  )
+  const rows = useMemo(() => {
+    const attributedMoveIndexes = new Set<number>()
 
-    if (rowIndex === session.guesses.length && session.status === 'playing') {
-      return Array.from({ length: session.wordLength }, (_, tileIndex): GridTile => ({
-        isSubmitted: false,
-        letter: session.currentGuess[tileIndex] ?? '',
-        state: session.currentGuess[tileIndex] ? 'current' : 'empty',
-      }))
-    }
+    return Array.from({ length: session.maxAttempts }, (_, rowIndex) => {
+      const submittedGuess = session.guesses[rowIndex]
+      if (submittedGuess) {
+        const matchingMoveIndex = visibleMoves.findIndex((move, moveIndex) => (
+          !attributedMoveIndexes.has(moveIndex)
+          && isSameGuessResult(submittedGuess, { guess: move.guess, tiles: move.tiles })
+        ))
+        if (matchingMoveIndex >= 0) {
+          attributedMoveIndexes.add(matchingMoveIndex)
+        }
+        return {
+          actor: matchingMoveIndex >= 0 ? visibleMoves[matchingMoveIndex]?.playerId : undefined,
+          tiles: submittedGuess.tiles.map((tile): GridTile => ({
+            isSubmitted: true,
+            letter: tile.letter,
+            state: tile.state,
+          })),
+        } satisfies GridRow
+      }
 
-    return Array.from({ length: session.wordLength }, (): GridTile => ({ isSubmitted: false, letter: '', state: 'empty' }))
-  }), [session.currentGuess, session.guesses, session.maxAttempts, session.status, session.wordLength])
+      if (rowIndex === session.guesses.length && session.status === 'playing') {
+        return {
+          actor: game.currentTurn,
+          tiles: Array.from({ length: session.wordLength }, (_, tileIndex): GridTile => ({
+            isSubmitted: false,
+            letter: session.currentGuess[tileIndex] ?? '',
+            state: session.currentGuess[tileIndex] ? 'current' : 'empty',
+          })),
+        } satisfies GridRow
+      }
+
+      return {
+        tiles: Array.from(
+          { length: session.wordLength },
+          (): GridTile => ({ isSubmitted: false, letter: '', state: 'empty' }),
+        ),
+      } satisfies GridRow
+    })
+  }, [
+    game.currentTurn,
+    session.currentGuess,
+    session.guesses,
+    session.maxAttempts,
+    session.status,
+    session.wordLength,
+    visibleMoves,
+  ])
+
+  useEffect(() => {
+    const scroller = boardScrollerRef.current
+    const activeTile = activeTileRef.current
+    if (!scroller || !activeTile || scroller.scrollWidth <= scroller.clientWidth) {
+      return
+    }
+    const scrollerBounds = scroller.getBoundingClientRect()
+    const tileBounds = activeTile.getBoundingClientRect()
+    if (tileBounds.left < scrollerBounds.left) {
+      scroller.scrollTo({ left: scroller.scrollLeft - (scrollerBounds.left - tileBounds.left) })
+    } else if (tileBounds.right > scrollerBounds.right) {
+      scroller.scrollTo({ left: scroller.scrollLeft + (tileBounds.right - scrollerBounds.right) })
+    }
+  }, [activeTileIndex, session.guesses.length, session.wordLength])
 
   return (
-    <div aria-label="Multiplayer guess grid" className="@container space-y-1.5 sm:space-y-2" role="grid">
-      {rows.map((row, rowIndex) => (
-        <div
-          className={classNames('mx-auto grid gap-1 sm:gap-1.5', session.lastValidation && rowIndex === session.guesses.length ? 'motion-safe:animate-[brrrdle-row-shake_180ms_ease-in-out]' : undefined)}
-          key={rowIndex}
-          role="row"
-          style={{
-            gridTemplateColumns: `repeat(${session.wordLength}, minmax(0, 1fr))`,
-            maxWidth: `calc(var(--brrrdle-tile-max) * ${session.wordLength} + 0.375rem * ${session.wordLength - 1})`,
-          }}
-        >
-          {row.map((tile, tileIndex) => (
+    <div
+      aria-label="Shared actor-attributed COMBAT board"
+      className="combat-board-scroll"
+      data-combat-shared-board="true"
+      ref={boardScrollerRef}
+      role="region"
+      tabIndex={0}
+    >
+      <div
+        aria-label="Multiplayer guess grid"
+        className="@container mx-auto space-y-1.5 sm:space-y-2"
+        role="grid"
+        style={{
+          maxWidth: `calc(7.5rem + 0.5rem + var(--brrrdle-tile-max) * ${session.wordLength} + 0.375rem * ${session.wordLength - 1})`,
+          minWidth: `calc(5.5rem + 0.5rem + 2rem * ${session.wordLength} + 0.375rem * ${session.wordLength - 1})`,
+        }}
+      >
+        {rows.map((row, rowIndex) => (
+          <div className="combat-board-row" data-actor={row.actor} key={rowIndex} role="row">
+            <p className="combat-board-actor" data-active={row.actor === game.currentTurn ? 'true' : undefined}>
+              {row.actor ? getPlayerSurfaceLabel(game, row.actor, playerId) : '\u00a0'}
+            </p>
             <div
-              aria-label={`Row ${rowIndex + 1}, tile ${tileIndex + 1}${tile.letter ? `, ${tile.letter}` : ''}`}
-              className={classNames(
-                '@container flex aspect-square items-center justify-center rounded-md border font-black uppercase',
-                tileStateClasses[tile.state],
-                tile.state === 'current' ? 'motion-safe:animate-[brrrdle-tile-pop_180ms_ease-out]' : undefined,
-                tile.isSubmitted ? 'motion-safe:animate-[brrrdle-tile-reveal_360ms_ease-out]' : undefined,
-              )}
-              data-state={tile.state}
-              key={`${rowIndex}-${tileIndex}`}
-              role="gridcell"
-              style={{ fontSize: 'clamp(0.625rem, 50cqi, 1.75rem)' }}
+              className={classNames('grid gap-1 sm:gap-1.5', session.lastValidation && rowIndex === session.guesses.length ? 'motion-safe:animate-[brrrdle-row-shake_180ms_ease-in-out]' : undefined)}
+              style={{ gridTemplateColumns: `repeat(${session.wordLength}, minmax(2rem, 1fr))` }}
             >
-              {tile.letter}
+              {row.tiles.map((tile, tileIndex) => (
+                <div
+                  aria-label={`Row ${rowIndex + 1}, tile ${tileIndex + 1}${tile.letter ? `, ${tile.letter}` : ''}`}
+                  className={classNames(
+                    '@container flex aspect-square items-center justify-center rounded-md border font-black uppercase',
+                    tileStateClasses[tile.state],
+                    tile.state === 'current' ? 'motion-safe:animate-[brrrdle-tile-pop_180ms_ease-out]' : undefined,
+                    tile.isSubmitted ? 'motion-safe:animate-[brrrdle-tile-reveal_360ms_ease-out]' : undefined,
+                  )}
+                  data-state={tile.state}
+                  key={`${rowIndex}-${tileIndex}`}
+                  ref={rowIndex === session.guesses.length && tileIndex === activeTileIndex ? activeTileRef : undefined}
+                  role="gridcell"
+                  style={{ fontSize: 'clamp(0.625rem, 50cqi, 1.75rem)' }}
+                >
+                  {tile.letter}
+                </div>
+              ))}
             </div>
-          ))}
-        </div>
-      ))}
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
@@ -297,7 +401,9 @@ export function MultiplayerGameSurface({ disabled = false, game, onSubmitGuess, 
   const preservedGoPrefixLength = isGo ? activePuzzleIndex : 0
   const displayPuzzle = activePuzzle ? getDisplayPuzzle(activePuzzle, sharedGuesses, preservedGoPrefixLength) : undefined
   const keyboardGuesses = isGo && displayPuzzle
-    ? displayPuzzle.guesses
+    ? game.scope === 'daily'
+      ? [...displayPuzzle.guesses, ...getAllSharedMoveGuesses(game)]
+      : displayPuzzle.guesses
     : sharedGuesses.length > 0
       ? sharedGuesses
       : activePuzzle?.guesses ?? []
@@ -411,7 +517,12 @@ export function MultiplayerGameSurface({ disabled = false, game, onSubmitGuess, 
         </div>
       ) : null}
 
-      <GuessGrid session={displayPuzzle ?? activePuzzle} />
+      <GuessGrid
+        game={game}
+        playerId={playerId}
+        puzzleIndex={activePuzzleIndex}
+        session={displayPuzzle ?? activePuzzle}
+      />
 
       <div aria-live="polite" className="min-h-20 rounded-2xl border border-slate-700 bg-black/30 p-3 text-sm leading-6 text-slate-200" role="status">
         <p>{inputDisabled ? statusLabel : 'Use the on-screen keyboard to enter your guess.'}</p>

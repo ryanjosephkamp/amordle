@@ -17,7 +17,7 @@ export async function chooseSoloPracticeMode(page: Page, mode: 'go' | 'og'): Pro
 }
 
 export async function navigateToPracticeMultiplayer(page: Page): Promise<void> {
-  await page.getByRole('button', { name: /^Multiplayer$/i }).click()
+  await page.getByRole('button', { name: /^(?:COMBAT|Multiplayer)$/i }).click()
   await expect(page.locator('#multiplayer-workspace-title')).toBeVisible()
   await page.getByRole('tab', { name: /^Practice Multiplayer$/i }).click()
   await expect(page.getByRole('heading', { level: 3, name: /^Practice Multiplayer$/i })).toBeVisible()
@@ -33,7 +33,7 @@ async function ensureMultiplayerWorkspace(page: Page): Promise<void> {
   if (await page.locator('#multiplayer-workspace-title').isVisible({ timeout: 1_000 }).catch(() => false)) {
     return
   }
-  await page.getByRole('button', { name: /^Multiplayer$/i }).click()
+  await page.getByRole('button', { name: /^(?:COMBAT|Multiplayer)$/i }).click()
   await expect(page.locator('#multiplayer-workspace-title')).toBeVisible({ timeout: 20_000 })
 }
 
