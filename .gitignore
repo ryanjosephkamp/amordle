@@ -1,0 +1,26 @@
+# Private environment and local service linkage
+.env
+.env.*
+!.env.example
+*.local
+.vercel/
+supabase/.temp/
+
+# Dependencies, builds, tests, and logs
+node_modules/
+dist/
+dist-ssr/
+coverage/
+playwright-report/
+test-results/
+*.log
+
+# Internal-only future workflow artifacts
+.codex-internal/
+prompt-packages/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json

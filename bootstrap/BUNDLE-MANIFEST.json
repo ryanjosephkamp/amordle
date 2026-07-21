@@ -1,0 +1,1373 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-21T02:37:48.722Z",
+  "repository": "ryanjosephkamp/amordle",
+  "defaultBranch": "bootstrap/greenfield-2026-07-20",
+  "publication": "private-bootstrap-never-public",
+  "selfChecksumExcluded": true,
+  "counts": {
+    "filesExcludingManifest": 118,
+    "concepts": 64,
+    "migrations": 42
+  },
+  "concepts": [
+    {
+      "id": "L01",
+      "surface": "Active gameplay shell",
+      "viewport": "1440×1024",
+      "title": "Thermal Divide",
+      "path": "bootstrap/concepts/locked/L01.png",
+      "sha256": "fb9519db7ac0305fc9a1166855060ec9a3dd86d45caf2d855fa872fbea785ec3"
+    },
+    {
+      "id": "L02",
+      "surface": "Active gameplay shell",
+      "viewport": "390×844",
+      "title": "Score Dock",
+      "path": "bootstrap/concepts/locked/L02.png",
+      "sha256": "ed1b0c090bed8ac48af08969d11be3bfee44fe5d4e2a2038accf7f8f986d0a26"
+    },
+    {
+      "id": "L03",
+      "surface": "COMBAT hub",
+      "viewport": "1440×1024",
+      "title": "Match Exchange",
+      "path": "bootstrap/concepts/locked/L03.png",
+      "sha256": "42036753fdc5a318d3daa2bf17927b96c3d5175d417e64714cc488e0da9be9a7"
+    },
+    {
+      "id": "L04",
+      "surface": "COMBAT hub",
+      "viewport": "390×844",
+      "title": "Exchange Sheet",
+      "path": "bootstrap/concepts/locked/L04.png",
+      "sha256": "de9d5c3f33b8f46de9b9b7b9c225983d8452138747e9b92429278be4ca81b092"
+    },
+    {
+      "id": "L05",
+      "surface": "Ranked Practice COMBAT post-match",
+      "viewport": "1440×1024",
+      "title": "Verdict Line",
+      "path": "bootstrap/concepts/locked/L05.png",
+      "sha256": "61db7cf699644dc6a3e4788a6ce932e99f039a9c67e1d8c677763cd0ad50c829"
+    },
+    {
+      "id": "L06",
+      "surface": "Ranked Practice COMBAT post-match",
+      "viewport": "390×844",
+      "title": "Result Sheet",
+      "path": "bootstrap/concepts/locked/L06.png",
+      "sha256": "e0ed122ca5f9d223104585105c7bb7833a45856d1f23277db39ff8d2d9567bf7"
+    },
+    {
+      "id": "L07",
+      "surface": "PLAY / Solo overview",
+      "viewport": "1440×1024",
+      "title": "Twin Gate",
+      "path": "bootstrap/concepts/locked/L07.png",
+      "sha256": "67b6263149f8465c315f34b2b38a4ea157fdb9fabdc2004f734f67c1f8499db5"
+    },
+    {
+      "id": "L08",
+      "surface": "PLAY / Solo overview",
+      "viewport": "390×844",
+      "title": "Stacked Gate",
+      "path": "bootstrap/concepts/locked/L08.png",
+      "sha256": "d60f79146bce3f5b1c877487e1fa5345b6603ae9553dde4f88c7046d8d5d4c00"
+    },
+    {
+      "id": "L09",
+      "surface": "Daily Calendar hub",
+      "viewport": "1440×1024",
+      "title": "Today Ledger",
+      "path": "bootstrap/concepts/locked/L09.png",
+      "sha256": "a350bb290a587f4de6b1420e4ca2423b3ba47e5b080174043d3c7a4ccd55015b"
+    },
+    {
+      "id": "L10",
+      "surface": "Daily Calendar hub",
+      "viewport": "390×844",
+      "title": "Command Stack",
+      "path": "bootstrap/concepts/locked/L10.png",
+      "sha256": "a86f512f93df6633406a15deb8ac33fc99760d9960e0a7f12a28270a20b2b1a7"
+    },
+    {
+      "id": "L11",
+      "surface": "Unified completed-result History",
+      "viewport": "1440×1024",
+      "title": "Date Rule Ledger",
+      "path": "bootstrap/concepts/locked/L11.png",
+      "sha256": "295d1451cb98863d80b01381cea0609095f22a53a4b87acb304d1d3b5aa8c561"
+    },
+    {
+      "id": "L12",
+      "surface": "Unified completed-result History",
+      "viewport": "390×844",
+      "title": "Filter Sheet",
+      "path": "bootstrap/concepts/locked/L12.png",
+      "sha256": "fc15335d7cbab4b43463e75bcf2f76588fb64525c973cb9e2fb3a5748c9091ef"
+    },
+    {
+      "id": "L13",
+      "surface": "Stats and Leaderboard",
+      "viewport": "1440×1024",
+      "title": "Private Signal Ledger",
+      "path": "bootstrap/concepts/locked/L13.png",
+      "sha256": "589f8a6a3d5c899b331ffa6518bf36de094ed0010de95fef7c92d8b5f5feb4c5"
+    },
+    {
+      "id": "L14",
+      "surface": "Stats and Leaderboard",
+      "viewport": "390×844",
+      "title": "Signal Stack",
+      "path": "bootstrap/concepts/locked/L14.png",
+      "sha256": "2acb72605a4088d35046dec279d22aed8818a6eff1f2ec437b250d6103aeb7f6"
+    },
+    {
+      "id": "L15",
+      "surface": "Profile and Account",
+      "viewport": "1440×1024",
+      "title": "Profile Command",
+      "path": "bootstrap/concepts/locked/L15.png",
+      "sha256": "f477b1309334755aa48676f5c197cabfe4f4642c5678ad5e8aab7c4b1a800204"
+    },
+    {
+      "id": "L16",
+      "surface": "Profile and Account",
+      "viewport": "390×844",
+      "title": "Profile Relay",
+      "path": "bootstrap/concepts/locked/L16.png",
+      "sha256": "83610ef6aec27cc4eda6bd28e5214d38550eb83de64b31647c2a26e521596d09"
+    },
+    {
+      "id": "L17",
+      "surface": "Marketplace and Progression",
+      "viewport": "1440×1024",
+      "title": "Practice Toolkit",
+      "path": "bootstrap/concepts/locked/L17.png",
+      "sha256": "fbed323f25d023ff960cf9d237da7e3ae185557ae0b4d3ddfe5f2464f55997a5"
+    },
+    {
+      "id": "L18",
+      "surface": "Marketplace and Progression",
+      "viewport": "390×844",
+      "title": "Balance Dock",
+      "path": "bootstrap/concepts/locked/L18.png",
+      "sha256": "d0e604d2e98b2d625e0734a73c77448bda980ffd3532cbab1538d5fd8bd87af1"
+    },
+    {
+      "id": "L19",
+      "surface": "Word Explorer and Definitions",
+      "viewport": "1440×1024",
+      "title": "Definition Console",
+      "path": "bootstrap/concepts/locked/L19.png",
+      "sha256": "d6b5d6076f1a1e0bf8fdc05db4f4707704ac9cb184558c0560332bfe036a0f4e"
+    },
+    {
+      "id": "L20",
+      "surface": "Word Explorer and Definitions",
+      "viewport": "390×844",
+      "title": "Definition Stack",
+      "path": "bootstrap/concepts/locked/L20.png",
+      "sha256": "a769729485c28d1fc542fd0b2c381e5bd9a42ea139c8c213a88463c65a7a61d9"
+    },
+    {
+      "id": "L21",
+      "surface": "Settings and Preferences",
+      "viewport": "1440×1024",
+      "title": "Preference Ledger",
+      "path": "bootstrap/concepts/locked/L21.png",
+      "sha256": "397c974f55e3f1a8b4bce986a67bc285a7020c81d1ba2df71454376274511105"
+    },
+    {
+      "id": "L22",
+      "surface": "Settings and Preferences",
+      "viewport": "390×844",
+      "title": "Category Relay",
+      "path": "bootstrap/concepts/locked/L22.png",
+      "sha256": "978e7328405f61134ffc8da843c93d52fcd1e6f6a7f3db7b0142b17f72cdad72"
+    },
+    {
+      "id": "L23",
+      "surface": "Help, Tutorial, Feedback, and About",
+      "viewport": "1440×1024",
+      "title": "Guided Briefing",
+      "path": "bootstrap/concepts/locked/L23.png",
+      "sha256": "5add84dbb504a80153f274e144e932e6d87be17e0605a79f70cab915de9faa13"
+    },
+    {
+      "id": "L24",
+      "surface": "Help, Tutorial, Feedback, and About",
+      "viewport": "390×844",
+      "title": "Step Stack",
+      "path": "bootstrap/concepts/locked/L24.png",
+      "sha256": "1e4a9f66bce0088beb6e13eef359bbaac1f1eaa9fba766e202fbda2e37b1534f"
+    },
+    {
+      "id": "L25",
+      "surface": "Home command hub",
+      "viewport": "1440×1024",
+      "title": "Local Launch",
+      "path": "bootstrap/concepts/locked/L25.png",
+      "sha256": "d8b96e396314493185233b57873fc6f19cf395219af32ac0f893b2661fbb40c8"
+    },
+    {
+      "id": "L26",
+      "surface": "Home command hub",
+      "viewport": "390×844",
+      "title": "Gate Stack",
+      "path": "bootstrap/concepts/locked/L26.png",
+      "sha256": "a8c5569794c5d855f3a16d05ac40ee280616c5aa3c79417617e6fd7dbec4a540"
+    },
+    {
+      "id": "L27",
+      "surface": "COMBAT Live spectator",
+      "viewport": "1440×1024",
+      "title": "Live Exchange",
+      "path": "bootstrap/concepts/locked/L27.png",
+      "sha256": "5b1b265622f74a4c4d0126f949a25a0ea4881a8e762b9d5d32a02380861febf5"
+    },
+    {
+      "id": "L28",
+      "surface": "COMBAT Live spectator",
+      "viewport": "390×844",
+      "title": "Exchange Dock",
+      "path": "bootstrap/concepts/locked/L28.png",
+      "sha256": "1737482147588807ccc069948e87a8809b29a1dd35c656cae745f7261d508ced"
+    },
+    {
+      "id": "L29",
+      "surface": "Solo active gameplay — regular mode",
+      "viewport": "1440×1024",
+      "title": "Chain Spine",
+      "path": "bootstrap/concepts/locked/L29.png",
+      "sha256": "c8f84fdf626df95a58abbd675c4a6198af790684903d5dac76317657ae106103"
+    },
+    {
+      "id": "L30",
+      "surface": "Solo active gameplay — Focus Mode",
+      "viewport": "1440×1024",
+      "title": "Quiet Spine",
+      "path": "bootstrap/concepts/locked/L30.png",
+      "sha256": "2d714b3fb48b18658e848a33048e12804dd5d797eec563e23da3315d693ae1ff"
+    },
+    {
+      "id": "L31",
+      "surface": "Solo active gameplay — regular mode",
+      "viewport": "390×844",
+      "title": "Play Stack",
+      "path": "bootstrap/concepts/locked/L31.png",
+      "sha256": "cdc4203b47cf9b97563c8854bb28475c656cc97323ef2c422a15f18b089374d6"
+    },
+    {
+      "id": "L32",
+      "surface": "Solo active gameplay — Focus Mode",
+      "viewport": "390×844",
+      "title": "Quiet Stack",
+      "path": "bootstrap/concepts/locked/L32.png",
+      "sha256": "5e55b97f925ec661186a8bd2ccfb2b266669e98fbecb34976eebe1341e182516"
+    },
+    {
+      "id": "L33",
+      "surface": "Solo post-game and result handoff",
+      "viewport": "1440×1024",
+      "title": "Final Ledger",
+      "path": "bootstrap/concepts/locked/L33.png",
+      "sha256": "2f59099d00f9a7535a9670d77596c9a2b062443738201418b2731939dd2543f9"
+    },
+    {
+      "id": "L34",
+      "surface": "Solo post-game and result handoff",
+      "viewport": "390×844",
+      "title": "Verdict Stack",
+      "path": "bootstrap/concepts/locked/L34.png",
+      "sha256": "973a98cf685f90bcb5257f4bece5a0148b59cb2452fd9642b86fac1b5f9f9b07"
+    },
+    {
+      "id": "L35",
+      "surface": "COMBAT gameplay validation — eight-letter GO",
+      "viewport": "1440×1024",
+      "title": "Chain Scoreline",
+      "path": "bootstrap/concepts/locked/L35.png",
+      "sha256": "7971d074cfbed5c27e5990cf17cc31217a213e84ccbda8a197bdb8c2f2d86588"
+    },
+    {
+      "id": "L36",
+      "surface": "COMBAT gameplay validation — eight-letter GO",
+      "viewport": "390×844",
+      "title": "Score Spine",
+      "path": "bootstrap/concepts/locked/L36.png",
+      "sha256": "90a1afa44b3aafa074e197a3a4fea41e887d9e5a0955f46f17fc68ea2810af43"
+    },
+    {
+      "id": "L37",
+      "surface": "COMBAT gameplay validation — three-letter timed OG",
+      "viewport": "1440×1024",
+      "title": "Time Split",
+      "path": "bootstrap/concepts/locked/L37.png",
+      "sha256": "d7f362182a3fed7aa200aebfc89050798906e376ce47955de2edc8e069f83a43"
+    },
+    {
+      "id": "L38",
+      "surface": "COMBAT gameplay validation — three-letter timed OG",
+      "viewport": "390×844",
+      "title": "Pressure Dock",
+      "path": "bootstrap/concepts/locked/L38.png",
+      "sha256": "eb8dc4ff82d08ab9d008e1fddd7c5be8f7caf92ad1885d2418a11502e34ddd9c"
+    },
+    {
+      "id": "L39",
+      "surface": "COMBAT gameplay validation — Daily asynchronous ranked OG",
+      "viewport": "1440×1024",
+      "title": "Deadline Bridge",
+      "path": "bootstrap/concepts/locked/L39.png",
+      "sha256": "a372a09fda58d7def8d3e642e9ee5cdfff426e6a2a3e8f421606a1cfbdda50cd"
+    },
+    {
+      "id": "L40",
+      "surface": "COMBAT gameplay validation — Daily asynchronous ranked OG",
+      "viewport": "390×844",
+      "title": "Return Dock",
+      "path": "bootstrap/concepts/locked/L40.png",
+      "sha256": "b0cab4fee253fc024d836f992d12e2533d4deb6a05faf530cf2957be5afac317"
+    },
+    {
+      "id": "L41",
+      "surface": "COMBAT gameplay validation — ranked timed Practice OG timeout result",
+      "viewport": "1440×1024",
+      "title": "Clock Verdict",
+      "path": "bootstrap/concepts/locked/L41.png",
+      "sha256": "7ac7dc8be7804a7d45f70b99da48d53defebd563d9b14375ad3ef1f53d5bb29a"
+    },
+    {
+      "id": "L42",
+      "surface": "COMBAT gameplay validation — ranked timed Practice OG timeout result",
+      "viewport": "390×844",
+      "title": "Timeout Sheet",
+      "path": "bootstrap/concepts/locked/L42.png",
+      "sha256": "bfa73486b53650c17e7e25e5e3bc137e68b8e976aff54f9d5fd8328c251e1e41"
+    },
+    {
+      "id": "L43",
+      "surface": "COMBAT gameplay validation — ranked Practice OG post-start forfeit result",
+      "viewport": "1440×1024",
+      "title": "Concession Verdict",
+      "path": "bootstrap/concepts/locked/L43.png",
+      "sha256": "5ba79ffac5e2463e706d20c214d389397224e8de79bea567f9496db7549cc0a8"
+    },
+    {
+      "id": "L44",
+      "surface": "COMBAT gameplay validation — ranked Practice OG post-start forfeit result",
+      "viewport": "390×844",
+      "title": "Verdict Dock",
+      "path": "bootstrap/concepts/locked/L44.png",
+      "sha256": "b4d9ef854f7bcae2219c8436248d904bfe6dd117890c8f4bad94da7863bdf882"
+    },
+    {
+      "id": "L45",
+      "surface": "COMBAT gameplay validation — ranked Practice OG pre-guess cancellation",
+      "viewport": "1440×1024",
+      "title": "Cancelled Ledger",
+      "path": "bootstrap/concepts/locked/L45.png",
+      "sha256": "212e18e46bd6dbf47e1a8137985a23e729a8a5e484730e7a0c7c06d24caf90b8"
+    },
+    {
+      "id": "L46",
+      "surface": "COMBAT gameplay validation — ranked Practice OG pre-guess cancellation",
+      "viewport": "390×844",
+      "title": "Cancellation Sheet",
+      "path": "bootstrap/concepts/locked/L46.png",
+      "sha256": "46f5c162852097327753584435b6ad591c5cd9094dc072114f6246add5c7bee4"
+    },
+    {
+      "id": "L47",
+      "surface": "Protected Admin — authorized refresh confirmation",
+      "viewport": "1440×1024",
+      "title": "Operation Brief",
+      "path": "bootstrap/concepts/locked/L47.png",
+      "sha256": "ad905bd31d0796f4ed3615744cfa11dda31f9857bc0dc43458a59a83267f1442"
+    },
+    {
+      "id": "L48",
+      "surface": "Protected Admin — authorized refresh confirmation",
+      "viewport": "390×844",
+      "title": "Action Ledger",
+      "path": "bootstrap/concepts/locked/L48.png",
+      "sha256": "b134134d11c21143b47bbff7e97f53763c27bf37588ace1fbf8f04ac22ffa833"
+    },
+    {
+      "id": "L49",
+      "surface": "Protected Admin — authenticated non-admin permission denied",
+      "viewport": "1440×1024",
+      "title": "Lock Marker",
+      "path": "bootstrap/concepts/locked/L49.png",
+      "sha256": "7166c79cf5541e9d40a54b950581a97ebe24de465148239eb1354831668629da"
+    },
+    {
+      "id": "L50",
+      "surface": "Protected Admin — authenticated non-admin permission denied",
+      "viewport": "390×844",
+      "title": "Lock Stack",
+      "path": "bootstrap/concepts/locked/L50.png",
+      "sha256": "ce22b01a5f383a36f8895e781fb427e81bebf6a9b1575cdb32da49e1c824f9d1"
+    },
+    {
+      "id": "L51",
+      "surface": "Protected Admin — authorized refresh in flight",
+      "viewport": "1440×1024",
+      "title": "Execution Ledger",
+      "path": "bootstrap/concepts/locked/L51.png",
+      "sha256": "05c81081f69655ffada4200830170ffdb8aa744454648d093bc55e1fecd35fa7"
+    },
+    {
+      "id": "L52",
+      "surface": "Protected Admin — authorized refresh in flight",
+      "viewport": "390×844",
+      "title": "Quiet Run Dock",
+      "path": "bootstrap/concepts/locked/L52.png",
+      "sha256": "c394fe99bfcec02775231710c0827eeaa4c70f9f71208f01c88bea4e3fdc629e"
+    },
+    {
+      "id": "L53",
+      "surface": "Protected Admin — authorized refresh success",
+      "viewport": "1440×1024",
+      "title": "Outcome Ledger",
+      "path": "bootstrap/concepts/locked/L53.png",
+      "sha256": "c8363e3b3897158b0dc50c8108efc54e1cc4e13da0c4cd3340c14bbaf46d4b00"
+    },
+    {
+      "id": "L54",
+      "surface": "Protected Admin — authorized refresh success",
+      "viewport": "390×844",
+      "title": "Quiet Outcome Dock",
+      "path": "bootstrap/concepts/locked/L54.png",
+      "sha256": "922062ad11aeefe6e6cef83a2d16b02d96bb13a15dc3e275f21d6d2e8e4e0af8"
+    },
+    {
+      "id": "L55",
+      "surface": "Protected Admin — authorized refresh failure",
+      "viewport": "1440×1024",
+      "title": "Recovery Brief",
+      "path": "bootstrap/concepts/locked/L55.png",
+      "sha256": "3be9e2bec267a8d3896da36d0770b6a1e8d662c282c96e2b2b9a9d064c758fe5"
+    },
+    {
+      "id": "L56",
+      "surface": "Protected Admin — authorized refresh failure",
+      "viewport": "390×844",
+      "title": "Quiet Recovery Dock",
+      "path": "bootstrap/concepts/locked/L56.png",
+      "sha256": "d5d2befa64b93539bf305253f1d47784192e98ae1c125ea6a3de8984088b6384"
+    },
+    {
+      "id": "L57",
+      "surface": "Protected Admin — anonymous access denied",
+      "viewport": "1440×1024",
+      "title": "Guest Threshold",
+      "path": "bootstrap/concepts/locked/L57.png",
+      "sha256": "63fae0b216146030c855a7f42c0331375ddfe45e5422b52f3fe46c740c6d63dc"
+    },
+    {
+      "id": "L58",
+      "surface": "Protected Admin — anonymous access denied",
+      "viewport": "390×844",
+      "title": "Guest Lock Stack",
+      "path": "bootstrap/concepts/locked/L58.png",
+      "sha256": "2a4ba976ad97d058cd4f8cc2f4550a9fd7526f31960198d608b33611c0bb72e1"
+    },
+    {
+      "id": "L59",
+      "surface": "Protected Admin — unconfigured environment",
+      "viewport": "1440×1024",
+      "title": "Syncless Threshold",
+      "path": "bootstrap/concepts/locked/L59.png",
+      "sha256": "2bcb5178396453a0942376eb1dd8fd1424165da98d9ececd3a060feb48693a9c"
+    },
+    {
+      "id": "L60",
+      "surface": "Protected Admin — unconfigured environment",
+      "viewport": "390×844",
+      "title": "Syncless Lock Stack",
+      "path": "bootstrap/concepts/locked/L60.png",
+      "sha256": "40c189e11bee18675ee500fcb7fbfa10ade15a129c6fd54c311051f86c213ee1"
+    },
+    {
+      "id": "L61",
+      "surface": "Protected Admin — authorized Operational Dashboard ready",
+      "viewport": "1440×1024",
+      "title": "Operations Matrix",
+      "path": "bootstrap/concepts/locked/L61.png",
+      "sha256": "710da1bb5455e6fda855866937ad9188289f06a405e7ab66c2e83bee5b1a1de9"
+    },
+    {
+      "id": "L62",
+      "surface": "Protected Admin — authorized Operational Dashboard ready",
+      "viewport": "390×844",
+      "title": "Matrix Stack",
+      "path": "bootstrap/concepts/locked/L62.png",
+      "sha256": "cb9e5ad0c99685a0af1b0615ad849d54cb06bb21c1966e111d2b25c8aa57d088"
+    },
+    {
+      "id": "L63",
+      "surface": "Cross-system state sheet",
+      "viewport": "1440×1024",
+      "title": "Recovery Ledger",
+      "path": "bootstrap/concepts/locked/L63.png",
+      "sha256": "d7d663e98983e9a4a78ef811b68b7d40dfa846fba0375d43ef0657611399eaaf"
+    },
+    {
+      "id": "L64",
+      "surface": "Cross-system state sheet",
+      "viewport": "390×844",
+      "title": "Continuity Dock",
+      "path": "bootstrap/concepts/locked/L64.png",
+      "sha256": "1b969e990e314bfb43d1bdf654bbca6466c908d78e3b06731632a301558ac997"
+    }
+  ],
+  "migrations": [
+    {
+      "version": "20260526012500",
+      "name": "phase8_accounts",
+      "path": "bootstrap/supabase/migrations/20260526012500_phase8_accounts.sql",
+      "sha256": "b6d5f52f228987978127e3cfe410dc76a23c991e28582c7aa2886d4a60ba48b6"
+    },
+    {
+      "version": "20260604024500",
+      "name": "phase23_live_multiplayer",
+      "path": "bootstrap/supabase/migrations/20260604024500_phase23_live_multiplayer.sql",
+      "sha256": "3923a2587b32712c4f9217524848e6653be62080e2beb4890222079a32ae0053"
+    },
+    {
+      "version": "20260604033000",
+      "name": "phase23_competitive_multiplayer",
+      "path": "bootstrap/supabase/migrations/20260604033000_phase23_competitive_multiplayer.sql",
+      "sha256": "058080e5109f5b9537d63669341de2a97d6c1816a4658018b0837105fa874f73"
+    },
+    {
+      "version": "20260604050824",
+      "name": "phase23_online_multiplayer_fixes",
+      "path": "bootstrap/supabase/migrations/20260604050824_phase23_online_multiplayer_fixes.sql",
+      "sha256": "c7e68fba2197596cec7e30adf9fb528756b98bc0c381763f375ad16a226961ef"
+    },
+    {
+      "version": "20260604202631",
+      "name": "phase23_multiplayer_grants_reset_forfeit",
+      "path": "bootstrap/supabase/migrations/20260604202631_phase23_multiplayer_grants_reset_forfeit.sql",
+      "sha256": "cc0db80c578e766f7d16be63b40fdd7adfbbab8908cdcda4a80d1fd3c665d9ab"
+    },
+    {
+      "version": "20260604210000",
+      "name": "phase23_live_policy_recursion_fix",
+      "path": "bootstrap/supabase/migrations/20260604210000_phase23_live_policy_recursion_fix.sql",
+      "sha256": "bd931fa12ab7c7da0befaa75b9f0160a36366cf5e864f7b2b151314a7209929d"
+    },
+    {
+      "version": "20260604211000",
+      "name": "phase23_live_join_policy_fix",
+      "path": "bootstrap/supabase/migrations/20260604211000_phase23_live_join_policy_fix.sql",
+      "sha256": "e7d2dc23a91f0ab140db196f81be9d7d9fc66e6f2e51e3d6ca71517f143430dd"
+    },
+    {
+      "version": "20260604211500",
+      "name": "phase23_live_matched_lobby_visibility",
+      "path": "bootstrap/supabase/migrations/20260604211500_phase23_live_matched_lobby_visibility.sql",
+      "sha256": "0f5de6d3e34629fe7e9d6909e260147a12fcf37231d8adf98722a64e741280db"
+    },
+    {
+      "version": "20260604223000",
+      "name": "phase23_daily_multiplayer_claims",
+      "path": "bootstrap/supabase/migrations/20260604223000_phase23_daily_multiplayer_claims.sql",
+      "sha256": "bd30360847f63f6a8bf8c1df5d59ac23651bcd3a4c6bb0adea7622c9b033a6a6"
+    },
+    {
+      "version": "20260605043000",
+      "name": "phase23_stage4_lobby_cancel_spectators",
+      "path": "bootstrap/supabase/migrations/20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+      "sha256": "60b85321d29084f2fad5d84653520995bf41842acc00e07aa9bbdaaeca35f68e"
+    },
+    {
+      "version": "20260605223500",
+      "name": "phase23_stage6_daily_claim_release",
+      "path": "bootstrap/supabase/migrations/20260605223500_phase23_stage6_daily_claim_release.sql",
+      "sha256": "d839483549d8a3ff03a7f813c8217c97c4b9a16bfc6077eb5458d3a46ad2772b"
+    },
+    {
+      "version": "20260615235440",
+      "name": "phase26_live_v1_authenticated_spectator_projection",
+      "path": "bootstrap/supabase/migrations/20260615235440_phase26_live_v1_authenticated_spectator_projection.sql",
+      "sha256": "74faf075d3d4617567d66b3b117fae108ea2803158531d5a7bdba41fa5be860d"
+    },
+    {
+      "version": "20260616054019",
+      "name": "phase27_trusted_settlement_ranked_queue",
+      "path": "bootstrap/supabase/migrations/20260616054019_phase27_trusted_settlement_ranked_queue.sql",
+      "sha256": "c10cf16373fc7e78aee9ea0b0abc8d2bbfe1185c76e3fe8cc8e66601936c03c2"
+    },
+    {
+      "version": "20260616055149",
+      "name": "phase27_settlement_rpc_unambiguous_profile_upsert",
+      "path": "bootstrap/supabase/migrations/20260616055149_phase27_settlement_rpc_unambiguous_profile_upsert.sql",
+      "sha256": "c8ccdf4408e92ac7fad1e5dc19c2a4b85a51a41e830d823ac4184b40fe122644"
+    },
+    {
+      "version": "20260616165434",
+      "name": "phase27_ranked_queue_game_finalization",
+      "path": "bootstrap/supabase/migrations/20260616165434_phase27_ranked_queue_game_finalization.sql",
+      "sha256": "6a73b22922dd6693240c748b64cce78a4d4b396644a7dc70f6ce69bcc572339a"
+    },
+    {
+      "version": "20260618004638",
+      "name": "phase28_live_spectator_v2_daily_terminal_hold",
+      "path": "bootstrap/supabase/migrations/20260618004638_phase28_live_spectator_v2_daily_terminal_hold.sql",
+      "sha256": "63d526b14e242ef0cfb65805748a2b8776e6c31f00c170953f41c2fe5f9b42eb"
+    },
+    {
+      "version": "20260621003033",
+      "name": "phase29_public_profile_rls",
+      "path": "bootstrap/supabase/migrations/20260621003033_phase29_public_profile_rls.sql",
+      "sha256": "fb1ec0df10608664a921f6edae37054a8f704d611fe56e0a018199193dbaf96d"
+    },
+    {
+      "version": "20260623011923",
+      "name": "phase30_public_ranked_leaderboard_rpc",
+      "path": "bootstrap/supabase/migrations/20260623011923_phase30_public_ranked_leaderboard_rpc.sql",
+      "sha256": "2d6fcbc61872b5f6d5218f3b4c8dd8925fffa7aad05b0b57f205252e9b0b9284"
+    },
+    {
+      "version": "20260623235121",
+      "name": "phase31_practice_rematch_requests",
+      "path": "bootstrap/supabase/migrations/20260623235121_phase31_practice_rematch_requests.sql",
+      "sha256": "67a0d63f61189680d1f987630851d1b1dc6f9f87e53ada39ba1b53f39aa18f13"
+    },
+    {
+      "version": "20260624233635",
+      "name": "phase32_participant_identity_rpc",
+      "path": "bootstrap/supabase/migrations/20260624233635_phase32_participant_identity_rpc.sql",
+      "sha256": "9286b66fef567d143e1e7e06e2d9c155bf199663425dad0e1f9a0d41a12ea136"
+    },
+    {
+      "version": "20260626000925",
+      "name": "phase33_timed_ranked_practice",
+      "path": "bootstrap/supabase/migrations/20260626000925_phase33_timed_ranked_practice.sql",
+      "sha256": "2d38a2c50566e31b241702dec49f50a678f0a3a505b8c979c839b4d19e42ebe6"
+    },
+    {
+      "version": "20260627230835",
+      "name": "phase35_ranked_live_identity_spectator_profiles",
+      "path": "bootstrap/supabase/migrations/20260627230835_phase35_ranked_live_identity_spectator_profiles.sql",
+      "sha256": "cd7c0da86a8ff5ea1c402f3cdeea6bd82c47e59a5101e3b5cb7805912e2eba4d"
+    },
+    {
+      "version": "20260630215141",
+      "name": "phase38_public_spectator_projection",
+      "path": "bootstrap/supabase/migrations/20260630215141_phase38_public_spectator_projection.sql",
+      "sha256": "170b38a5a9da0b003541dda2d23d9e7a0b35c122747d9f6d730c0e35cf79955b"
+    },
+    {
+      "version": "20260630220251",
+      "name": "phase38_daily_claim_rpc_anon_revoke",
+      "path": "bootstrap/supabase/migrations/20260630220251_phase38_daily_claim_rpc_anon_revoke.sql",
+      "sha256": "4809b727cbc036a4bbc14fad6d4989a4231cba33f6a2b3822e4d968aff758bec"
+    },
+    {
+      "version": "20260701221500",
+      "name": "phase40_private_match_requests",
+      "path": "bootstrap/supabase/migrations/20260701221500_phase40_private_match_requests.sql",
+      "sha256": "fe27cf98a83608a5b11dab2ae83d05c17876d8cc9f8334a7f853418dac6f8c20"
+    },
+    {
+      "version": "20260701232434",
+      "name": "phase40_private_match_accept_contract_repair",
+      "path": "bootstrap/supabase/migrations/20260701232434_phase40_private_match_accept_contract_repair.sql",
+      "sha256": "94672cbb0b1f93c2b384e1d5704197f819c5ba4acbfb5b77a572c8ad52f30d9b"
+    },
+    {
+      "version": "20260703152720",
+      "name": "phase42_site_stats_dashboard_rpc",
+      "path": "bootstrap/supabase/migrations/20260703152720_phase42_site_stats_dashboard_rpc.sql",
+      "sha256": "e04a38c4cca099f4fc8535936c039bbfb5c1f30b1c4cfc328121a1bc998c6ab3"
+    },
+    {
+      "version": "20260703154556",
+      "name": "phase42_browser_grant_rls_repair",
+      "path": "bootstrap/supabase/migrations/20260703154556_phase42_browser_grant_rls_repair.sql",
+      "sha256": "843b23d300f276b816e26c644ce592665469080e5b47a6bdb23359e46b649e74"
+    },
+    {
+      "version": "20260703160756",
+      "name": "phase42_ranked_result_rls_recursion_repair",
+      "path": "bootstrap/supabase/migrations/20260703160756_phase42_ranked_result_rls_recursion_repair.sql",
+      "sha256": "4e77d91fedf92a79b8462a89c7db076e174eb8ddcc1e3420d6b208e1b11bfc55"
+    },
+    {
+      "version": "20260703230106",
+      "name": "phase43_ranked_queue_matching_fairness",
+      "path": "bootstrap/supabase/migrations/20260703230106_phase43_ranked_queue_matching_fairness.sql",
+      "sha256": "c1a2cdbd9c32d434291eadece0b34893ebd05c86793df89a44f85872d49efc9c"
+    },
+    {
+      "version": "20260708202000",
+      "name": "phase50_ranked_practice_fifo_matchmaking",
+      "path": "bootstrap/supabase/migrations/20260708202000_phase50_ranked_practice_fifo_matchmaking.sql",
+      "sha256": "376cb6363a9dcea7be6dc11925054837e269c625a89d1700dc81b8870ba382de"
+    },
+    {
+      "version": "20260710061039",
+      "name": "phase55_ranked_daily_multiplayer",
+      "path": "bootstrap/supabase/migrations/20260710061039_phase55_ranked_daily_multiplayer.sql",
+      "sha256": "7e71de944f6c3f3a89b947a5cd2b8dcc45a1049fa8391f552f8ecb02308dadf4"
+    },
+    {
+      "version": "20260710180608",
+      "name": "phase55_ranked_daily_contract_repair",
+      "path": "bootstrap/supabase/migrations/20260710180608_phase55_ranked_daily_contract_repair.sql",
+      "sha256": "078e0e44e2151841666ec1a6c9f133544df5c280e3eb9d53aba36590bac27c14"
+    },
+    {
+      "version": "20260710183654",
+      "name": "phase55_ranked_daily_queue_matched_at_repair",
+      "path": "bootstrap/supabase/migrations/20260710183654_phase55_ranked_daily_queue_matched_at_repair.sql",
+      "sha256": "a865791b87280d14fd0f44dcbed4a5da072bee7d329e58dc6d1a135ca506f637"
+    },
+    {
+      "version": "20260710184116",
+      "name": "phase55_ranked_daily_cleanup_orphan_repair",
+      "path": "bootstrap/supabase/migrations/20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+      "sha256": "4fdde5ae912617f002eec9df698c417c55b96028c8393a08a283eca4f46aae3f"
+    },
+    {
+      "version": "20260710184922",
+      "name": "phase55_ranked_daily_finalization_authority_repair",
+      "path": "bootstrap/supabase/migrations/20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+      "sha256": "f13da197325f5799cf98a04f5faa250ec0608d1733c241fc0dccac4b99038432"
+    },
+    {
+      "version": "20260711001811",
+      "name": "phase56_private_request_center_and_anti_spam",
+      "path": "bootstrap/supabase/migrations/20260711001811_phase56_private_request_center_and_anti_spam.sql",
+      "sha256": "8848a57785b04da2631a3a9dbafa9a591d0213d04c9e888984c467e309c4e925"
+    },
+    {
+      "version": "20260711051818",
+      "name": "phase57_solo_practice_marketplace_and_consumables",
+      "path": "bootstrap/supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql",
+      "sha256": "8fbbaf6a8f6ec2fb5398716d2f06161666743367b0330999c20adabd6265a209"
+    },
+    {
+      "version": "20260711212934",
+      "name": "post_phase57_spectator_termination_transparency",
+      "path": "bootstrap/supabase/migrations/20260711212934_post_phase57_spectator_termination_transparency.sql",
+      "sha256": "d079f996ea2ccfa588332a8db19d7a637ac0be30713b45f951d3b222cf1c98c8"
+    },
+    {
+      "version": "20260712175405",
+      "name": "phase58_go_chain_selector_v2",
+      "path": "bootstrap/supabase/migrations/20260712175405_phase58_go_chain_selector_v2.sql",
+      "sha256": "b8b486f1503e21f1854919fb0b9893c6f516a96b97bf784b1d4dfbd291eecb62"
+    },
+    {
+      "version": "20260712190338",
+      "name": "phase58_go_chain_selector_v2_bigint_overflow_repair",
+      "path": "bootstrap/supabase/migrations/20260712190338_phase58_go_chain_selector_v2_bigint_overflow_repair.sql",
+      "sha256": "3b12c91703ba5231a0c1c05e7ea7d7a8dceeb0dd8629e05ae10c1c29c0c23f24"
+    },
+    {
+      "version": "20260719212914",
+      "name": "post_phase58_ranked_practice_claim_idempotence",
+      "path": "bootstrap/supabase/migrations/20260719212914_post_phase58_ranked_practice_claim_idempotence.sql",
+      "sha256": "07884cc5129f8f3b99c6d524aa4751bee59ff9823b6133d91b798125853eba3f"
+    }
+  ],
+  "files": [
+    {
+      "path": ".env.example",
+      "bytes": 855,
+      "sha256": "0b2e563c2b51166230dbacca40f64d3725a5194e016440ae5509cfd213017e3f"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 389,
+      "sha256": "361fce9d514371860d26b5ed46a21baf9cae016ae8a2fcbfa46e2cfb8807d4a2"
+    },
+    {
+      "path": "bootstrap/BACKEND-AND-SERVICES-CONTRACT.md",
+      "bytes": 19531,
+      "sha256": "e963ca78184191291076dcd533a507efd0fdef544203dda94f68ebd0adbdc7f1"
+    },
+    {
+      "path": "bootstrap/BOOTSTRAP-INSTRUCTIONS.md",
+      "bytes": 6674,
+      "sha256": "0e6c517716795a4afc77ccc87625eb42aa0b3d988a6fa055b37e31c33da0d2b9"
+    },
+    {
+      "path": "bootstrap/CONCEPT-GALLERY-MAP.md",
+      "bytes": 60365,
+      "sha256": "966fb8274cc2247fdf43e253fe600108c08dd7f5eee386eb01d4b0446176e410"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L01.png",
+      "bytes": 1819701,
+      "sha256": "fb9519db7ac0305fc9a1166855060ec9a3dd86d45caf2d855fa872fbea785ec3"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L02.png",
+      "bytes": 423744,
+      "sha256": "ed1b0c090bed8ac48af08969d11be3bfee44fe5d4e2a2038accf7f8f986d0a26"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L03.png",
+      "bytes": 1869050,
+      "sha256": "42036753fdc5a318d3daa2bf17927b96c3d5175d417e64714cc488e0da9be9a7"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L04.png",
+      "bytes": 410071,
+      "sha256": "de9d5c3f33b8f46de9b9b7b9c225983d8452138747e9b92429278be4ca81b092"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L05.png",
+      "bytes": 2013590,
+      "sha256": "61db7cf699644dc6a3e4788a6ce932e99f039a9c67e1d8c677763cd0ad50c829"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L06.png",
+      "bytes": 417741,
+      "sha256": "e0ed122ca5f9d223104585105c7bb7833a45856d1f23277db39ff8d2d9567bf7"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L07.png",
+      "bytes": 1770563,
+      "sha256": "67b6263149f8465c315f34b2b38a4ea157fdb9fabdc2004f734f67c1f8499db5"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L08.png",
+      "bytes": 412017,
+      "sha256": "d60f79146bce3f5b1c877487e1fa5345b6603ae9553dde4f88c7046d8d5d4c00"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L09.png",
+      "bytes": 1802465,
+      "sha256": "a350bb290a587f4de6b1420e4ca2423b3ba47e5b080174043d3c7a4ccd55015b"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L10.png",
+      "bytes": 421374,
+      "sha256": "a86f512f93df6633406a15deb8ac33fc99760d9960e0a7f12a28270a20b2b1a7"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L11.png",
+      "bytes": 1604457,
+      "sha256": "295d1451cb98863d80b01381cea0609095f22a53a4b87acb304d1d3b5aa8c561"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L12.png",
+      "bytes": 381115,
+      "sha256": "fc15335d7cbab4b43463e75bcf2f76588fb64525c973cb9e2fb3a5748c9091ef"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L13.png",
+      "bytes": 1813306,
+      "sha256": "589f8a6a3d5c899b331ffa6518bf36de094ed0010de95fef7c92d8b5f5feb4c5"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L14.png",
+      "bytes": 421173,
+      "sha256": "2acb72605a4088d35046dec279d22aed8818a6eff1f2ec437b250d6103aeb7f6"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L15.png",
+      "bytes": 1827214,
+      "sha256": "f477b1309334755aa48676f5c197cabfe4f4642c5678ad5e8aab7c4b1a800204"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L16.png",
+      "bytes": 430737,
+      "sha256": "83610ef6aec27cc4eda6bd28e5214d38550eb83de64b31647c2a26e521596d09"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L17.png",
+      "bytes": 1889865,
+      "sha256": "fbed323f25d023ff960cf9d237da7e3ae185557ae0b4d3ddfe5f2464f55997a5"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L18.png",
+      "bytes": 445878,
+      "sha256": "d0e604d2e98b2d625e0734a73c77448bda980ffd3532cbab1538d5fd8bd87af1"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L19.png",
+      "bytes": 1523981,
+      "sha256": "d6b5d6076f1a1e0bf8fdc05db4f4707704ac9cb184558c0560332bfe036a0f4e"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L20.png",
+      "bytes": 394317,
+      "sha256": "a769729485c28d1fc542fd0b2c381e5bd9a42ea139c8c213a88463c65a7a61d9"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L21.png",
+      "bytes": 1751277,
+      "sha256": "397c974f55e3f1a8b4bce986a67bc285a7020c81d1ba2df71454376274511105"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L22.png",
+      "bytes": 421300,
+      "sha256": "978e7328405f61134ffc8da843c93d52fcd1e6f6a7f3db7b0142b17f72cdad72"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L23.png",
+      "bytes": 1811565,
+      "sha256": "5add84dbb504a80153f274e144e932e6d87be17e0605a79f70cab915de9faa13"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L24.png",
+      "bytes": 414724,
+      "sha256": "1e4a9f66bce0088beb6e13eef359bbaac1f1eaa9fba766e202fbda2e37b1534f"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L25.png",
+      "bytes": 1790472,
+      "sha256": "d8b96e396314493185233b57873fc6f19cf395219af32ac0f893b2661fbb40c8"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L26.png",
+      "bytes": 427826,
+      "sha256": "a8c5569794c5d855f3a16d05ac40ee280616c5aa3c79417617e6fd7dbec4a540"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L27.png",
+      "bytes": 1862547,
+      "sha256": "5b1b265622f74a4c4d0126f949a25a0ea4881a8e762b9d5d32a02380861febf5"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L28.png",
+      "bytes": 363634,
+      "sha256": "1737482147588807ccc069948e87a8809b29a1dd35c656cae745f7261d508ced"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L29.png",
+      "bytes": 1676568,
+      "sha256": "c8f84fdf626df95a58abbd675c4a6198af790684903d5dac76317657ae106103"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L30.png",
+      "bytes": 1261178,
+      "sha256": "2d714b3fb48b18658e848a33048e12804dd5d797eec563e23da3315d693ae1ff"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L31.png",
+      "bytes": 371146,
+      "sha256": "cdc4203b47cf9b97563c8854bb28475c656cc97323ef2c422a15f18b089374d6"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L32.png",
+      "bytes": 358201,
+      "sha256": "5e55b97f925ec661186a8bd2ccfb2b266669e98fbecb34976eebe1341e182516"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L33.png",
+      "bytes": 1492274,
+      "sha256": "2f59099d00f9a7535a9670d77596c9a2b062443738201418b2731939dd2543f9"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L34.png",
+      "bytes": 337035,
+      "sha256": "973a98cf685f90bcb5257f4bece5a0148b59cb2452fd9642b86fac1b5f9f9b07"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L35.png",
+      "bytes": 1958167,
+      "sha256": "7971d074cfbed5c27e5990cf17cc31217a213e84ccbda8a197bdb8c2f2d86588"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L36.png",
+      "bytes": 440498,
+      "sha256": "90a1afa44b3aafa074e197a3a4fea41e887d9e5a0955f46f17fc68ea2810af43"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L37.png",
+      "bytes": 1834576,
+      "sha256": "d7f362182a3fed7aa200aebfc89050798906e376ce47955de2edc8e069f83a43"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L38.png",
+      "bytes": 418465,
+      "sha256": "eb8dc4ff82d08ab9d008e1fddd7c5be8f7caf92ad1885d2418a11502e34ddd9c"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L39.png",
+      "bytes": 1505627,
+      "sha256": "a372a09fda58d7def8d3e642e9ee5cdfff426e6a2a3e8f421606a1cfbdda50cd"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L40.png",
+      "bytes": 358905,
+      "sha256": "b0cab4fee253fc024d836f992d12e2533d4deb6a05faf530cf2957be5afac317"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L41.png",
+      "bytes": 1857350,
+      "sha256": "7ac7dc8be7804a7d45f70b99da48d53defebd563d9b14375ad3ef1f53d5bb29a"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L42.png",
+      "bytes": 427552,
+      "sha256": "bfa73486b53650c17e7e25e5e3bc137e68b8e976aff54f9d5fd8328c251e1e41"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L43.png",
+      "bytes": 1734261,
+      "sha256": "5ba79ffac5e2463e706d20c214d389397224e8de79bea567f9496db7549cc0a8"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L44.png",
+      "bytes": 391819,
+      "sha256": "b4d9ef854f7bcae2219c8436248d904bfe6dd117890c8f4bad94da7863bdf882"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L45.png",
+      "bytes": 1846269,
+      "sha256": "212e18e46bd6dbf47e1a8137985a23e729a8a5e484730e7a0c7c06d24caf90b8"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L46.png",
+      "bytes": 431156,
+      "sha256": "46f5c162852097327753584435b6ad591c5cd9094dc072114f6246add5c7bee4"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L47.png",
+      "bytes": 1669571,
+      "sha256": "ad905bd31d0796f4ed3615744cfa11dda31f9857bc0dc43458a59a83267f1442"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L48.png",
+      "bytes": 438363,
+      "sha256": "b134134d11c21143b47bbff7e97f53763c27bf37588ace1fbf8f04ac22ffa833"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L49.png",
+      "bytes": 1584279,
+      "sha256": "7166c79cf5541e9d40a54b950581a97ebe24de465148239eb1354831668629da"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L50.png",
+      "bytes": 361827,
+      "sha256": "ce22b01a5f383a36f8895e781fb427e81bebf6a9b1575cdb32da49e1c824f9d1"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L51.png",
+      "bytes": 1736777,
+      "sha256": "05c81081f69655ffada4200830170ffdb8aa744454648d093bc55e1fecd35fa7"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L52.png",
+      "bytes": 428312,
+      "sha256": "c394fe99bfcec02775231710c0827eeaa4c70f9f71208f01c88bea4e3fdc629e"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L53.png",
+      "bytes": 1729994,
+      "sha256": "c8363e3b3897158b0dc50c8108efc54e1cc4e13da0c4cd3340c14bbaf46d4b00"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L54.png",
+      "bytes": 419891,
+      "sha256": "922062ad11aeefe6e6cef83a2d16b02d96bb13a15dc3e275f21d6d2e8e4e0af8"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L55.png",
+      "bytes": 1599873,
+      "sha256": "3be9e2bec267a8d3896da36d0770b6a1e8d662c282c96e2b2b9a9d064c758fe5"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L56.png",
+      "bytes": 415921,
+      "sha256": "d5d2befa64b93539bf305253f1d47784192e98ae1c125ea6a3de8984088b6384"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L57.png",
+      "bytes": 1551056,
+      "sha256": "63fae0b216146030c855a7f42c0331375ddfe45e5422b52f3fe46c740c6d63dc"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L58.png",
+      "bytes": 397360,
+      "sha256": "2a4ba976ad97d058cd4f8cc2f4550a9fd7526f31960198d608b33611c0bb72e1"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L59.png",
+      "bytes": 1595252,
+      "sha256": "2bcb5178396453a0942376eb1dd8fd1424165da98d9ececd3a060feb48693a9c"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L60.png",
+      "bytes": 393146,
+      "sha256": "40c189e11bee18675ee500fcb7fbfa10ade15a129c6fd54c311051f86c213ee1"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L61.png",
+      "bytes": 1666517,
+      "sha256": "710da1bb5455e6fda855866937ad9188289f06a405e7ab66c2e83bee5b1a1de9"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L62.png",
+      "bytes": 428651,
+      "sha256": "cb9e5ad0c99685a0af1b0615ad849d54cb06bb21c1966e111d2b25c8aa57d088"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L63.png",
+      "bytes": 1588667,
+      "sha256": "d7d663e98983e9a4a78ef811b68b7d40dfa846fba0375d43ef0657611399eaaf"
+    },
+    {
+      "path": "bootstrap/concepts/locked/L64.png",
+      "bytes": 445589,
+      "sha256": "1b969e990e314bfb43d1bdf654bbca6466c908d78e3b06731632a301558ac997"
+    },
+    {
+      "path": "bootstrap/CONSTITUTION.md",
+      "bytes": 5266,
+      "sha256": "8cc2e16096a72fcdae521bd32891ec4086fecdc54bdd20bdccdb865499908c5d"
+    },
+    {
+      "path": "bootstrap/FUNCTIONAL-CONTRACT.md",
+      "bytes": 21888,
+      "sha256": "ae55152ef464f5607ec77f06fe3a199bbb99b05dfac2efcdd7d95d821f30597b"
+    },
+    {
+      "path": "bootstrap/SOURCE-REFERENCE-MANIFEST.md",
+      "bytes": 3382,
+      "sha256": "f86843939bea645e49c2f45d385d4b38ef33df0b3dd58cac36aaaaf2b9beba97"
+    },
+    {
+      "path": "bootstrap/START-HERE.md",
+      "bytes": 3336,
+      "sha256": "33c50801df514b28818e880c688825ea7e72df106ccbcedab034a6351b3ea673"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260526012500_phase8_accounts.sql",
+      "bytes": 2904,
+      "sha256": "b6d5f52f228987978127e3cfe410dc76a23c991e28582c7aa2886d4a60ba48b6"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604024500_phase23_live_multiplayer.sql",
+      "bytes": 8957,
+      "sha256": "3923a2587b32712c4f9217524848e6653be62080e2beb4890222079a32ae0053"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604033000_phase23_competitive_multiplayer.sql",
+      "bytes": 10515,
+      "sha256": "058080e5109f5b9537d63669341de2a97d6c1816a4658018b0837105fa874f73"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604050824_phase23_online_multiplayer_fixes.sql",
+      "bytes": 4345,
+      "sha256": "c7e68fba2197596cec7e30adf9fb528756b98bc0c381763f375ad16a226961ef"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604202631_phase23_multiplayer_grants_reset_forfeit.sql",
+      "bytes": 809,
+      "sha256": "cc0db80c578e766f7d16be63b40fdd7adfbbab8908cdcda4a80d1fd3c665d9ab"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604210000_phase23_live_policy_recursion_fix.sql",
+      "bytes": 940,
+      "sha256": "bd931fa12ab7c7da0befaa75b9f0160a36366cf5e864f7b2b151314a7209929d"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604211000_phase23_live_join_policy_fix.sql",
+      "bytes": 630,
+      "sha256": "e7d2dc23a91f0ab140db196f81be9d7d9fc66e6f2e51e3d6ca71517f143430dd"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604211500_phase23_live_matched_lobby_visibility.sql",
+      "bytes": 638,
+      "sha256": "0f5de6d3e34629fe7e9d6909e260147a12fcf37231d8adf98722a64e741280db"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260604223000_phase23_daily_multiplayer_claims.sql",
+      "bytes": 5550,
+      "sha256": "bd30360847f63f6a8bf8c1df5d59ac23651bcd3a4c6bb0adea7622c9b033a6a6"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+      "bytes": 3119,
+      "sha256": "60b85321d29084f2fad5d84653520995bf41842acc00e07aa9bbdaaeca35f68e"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260605223500_phase23_stage6_daily_claim_release.sql",
+      "bytes": 3824,
+      "sha256": "d839483549d8a3ff03a7f813c8217c97c4b9a16bfc6077eb5458d3a46ad2772b"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260615235440_phase26_live_v1_authenticated_spectator_projection.sql",
+      "bytes": 8185,
+      "sha256": "74faf075d3d4617567d66b3b117fae108ea2803158531d5a7bdba41fa5be860d"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260616054019_phase27_trusted_settlement_ranked_queue.sql",
+      "bytes": 32049,
+      "sha256": "c10cf16373fc7e78aee9ea0b0abc8d2bbfe1185c76e3fe8cc8e66601936c03c2"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260616055149_phase27_settlement_rpc_unambiguous_profile_upsert.sql",
+      "bytes": 4100,
+      "sha256": "c8ccdf4408e92ac7fad1e5dc19c2a4b85a51a41e830d823ac4184b40fe122644"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260616165434_phase27_ranked_queue_game_finalization.sql",
+      "bytes": 16915,
+      "sha256": "6a73b22922dd6693240c748b64cce78a4d4b396644a7dc70f6ce69bcc572339a"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260618004638_phase28_live_spectator_v2_daily_terminal_hold.sql",
+      "bytes": 10511,
+      "sha256": "63d526b14e242ef0cfb65805748a2b8776e6c31f00c170953f41c2fe5f9b42eb"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260621003033_phase29_public_profile_rls.sql",
+      "bytes": 13591,
+      "sha256": "fb1ec0df10608664a921f6edae37054a8f704d611fe56e0a018199193dbaf96d"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260623011923_phase30_public_ranked_leaderboard_rpc.sql",
+      "bytes": 6306,
+      "sha256": "2d6fcbc61872b5f6d5218f3b4c8dd8925fffa7aad05b0b57f205252e9b0b9284"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260623235121_phase31_practice_rematch_requests.sql",
+      "bytes": 30381,
+      "sha256": "67a0d63f61189680d1f987630851d1b1dc6f9f87e53ada39ba1b53f39aa18f13"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260624233635_phase32_participant_identity_rpc.sql",
+      "bytes": 7120,
+      "sha256": "9286b66fef567d143e1e7e06e2d9c155bf199663425dad0e1f9a0d41a12ea136"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260626000925_phase33_timed_ranked_practice.sql",
+      "bytes": 60756,
+      "sha256": "2d38a2c50566e31b241702dec49f50a678f0a3a505b8c979c839b4d19e42ebe6"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260627230835_phase35_ranked_live_identity_spectator_profiles.sql",
+      "bytes": 10242,
+      "sha256": "cd7c0da86a8ff5ea1c402f3cdeea6bd82c47e59a5101e3b5cb7805912e2eba4d"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260630215141_phase38_public_spectator_projection.sql",
+      "bytes": 9035,
+      "sha256": "170b38a5a9da0b003541dda2d23d9e7a0b35c122747d9f6d730c0e35cf79955b"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260630220251_phase38_daily_claim_rpc_anon_revoke.sql",
+      "bytes": 1111,
+      "sha256": "4809b727cbc036a4bbc14fad6d4989a4231cba33f6a2b3822e4d968aff758bec"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260701221500_phase40_private_match_requests.sql",
+      "bytes": 34490,
+      "sha256": "fe27cf98a83608a5b11dab2ae83d05c17876d8cc9f8334a7f853418dac6f8c20"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260701232434_phase40_private_match_accept_contract_repair.sql",
+      "bytes": 10586,
+      "sha256": "94672cbb0b1f93c2b384e1d5704197f819c5ba4acbfb5b77a572c8ad52f30d9b"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260703152720_phase42_site_stats_dashboard_rpc.sql",
+      "bytes": 8820,
+      "sha256": "e04a38c4cca099f4fc8535936c039bbfb5c1f30b1c4cfc328121a1bc998c6ab3"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260703154556_phase42_browser_grant_rls_repair.sql",
+      "bytes": 3947,
+      "sha256": "843b23d300f276b816e26c644ce592665469080e5b47a6bdb23359e46b649e74"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260703160756_phase42_ranked_result_rls_recursion_repair.sql",
+      "bytes": 1173,
+      "sha256": "4e77d91fedf92a79b8462a89c7db076e174eb8ddcc1e3420d6b208e1b11bfc55"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260703230106_phase43_ranked_queue_matching_fairness.sql",
+      "bytes": 8830,
+      "sha256": "c1a2cdbd9c32d434291eadece0b34893ebd05c86793df89a44f85872d49efc9c"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260708202000_phase50_ranked_practice_fifo_matchmaking.sql",
+      "bytes": 4446,
+      "sha256": "376cb6363a9dcea7be6dc11925054837e269c625a89d1700dc81b8870ba382de"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260710061039_phase55_ranked_daily_multiplayer.sql",
+      "bytes": 211276,
+      "sha256": "7e71de944f6c3f3a89b947a5cd2b8dcc45a1049fa8391f552f8ecb02308dadf4"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260710180608_phase55_ranked_daily_contract_repair.sql",
+      "bytes": 24312,
+      "sha256": "078e0e44e2151841666ec1a6c9f133544df5c280e3eb9d53aba36590bac27c14"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260710183654_phase55_ranked_daily_queue_matched_at_repair.sql",
+      "bytes": 1167,
+      "sha256": "a865791b87280d14fd0f44dcbed4a5da072bee7d329e58dc6d1a135ca506f637"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+      "bytes": 2918,
+      "sha256": "4fdde5ae912617f002eec9df698c417c55b96028c8393a08a283eca4f46aae3f"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+      "bytes": 3861,
+      "sha256": "f13da197325f5799cf98a04f5faa250ec0608d1733c241fc0dccac4b99038432"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260711001811_phase56_private_request_center_and_anti_spam.sql",
+      "bytes": 16100,
+      "sha256": "8848a57785b04da2631a3a9dbafa9a591d0213d04c9e888984c467e309c4e925"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql",
+      "bytes": 11025,
+      "sha256": "8fbbaf6a8f6ec2fb5398716d2f06161666743367b0330999c20adabd6265a209"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260711212934_post_phase57_spectator_termination_transparency.sql",
+      "bytes": 20270,
+      "sha256": "d079f996ea2ccfa588332a8db19d7a637ac0be30713b45f951d3b222cf1c98c8"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260712175405_phase58_go_chain_selector_v2.sql",
+      "bytes": 7312,
+      "sha256": "b8b486f1503e21f1854919fb0b9893c6f516a96b97bf784b1d4dfbd291eecb62"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260712190338_phase58_go_chain_selector_v2_bigint_overflow_repair.sql",
+      "bytes": 846,
+      "sha256": "3b12c91703ba5231a0c1c05e7ea7d7a8dceeb0dd8629e05ae10c1c29c0c23f24"
+    },
+    {
+      "path": "bootstrap/supabase/migrations/20260719212914_post_phase58_ranked_practice_claim_idempotence.sql",
+      "bytes": 11415,
+      "sha256": "07884cc5129f8f3b99c6d524aa4751bee59ff9823b6133d91b798125853eba3f"
+    },
+    {
+      "path": "bootstrap/TESTING-AND-ACCEPTANCE-CONTRACT.md",
+      "bytes": 15661,
+      "sha256": "2cb44aafbde8e0b84aaf53afcb0ec7e1403034c0381cb516790807415b173141"
+    },
+    {
+      "path": "README.md",
+      "bytes": 750,
+      "sha256": "e3c429494c5b3fb3c5c18a7bb35cbc322f04bc2464a0683fea51d3643ce7df7e"
+    },
+    {
+      "path": "vercel.json",
+      "bytes": 104,
+      "sha256": "b2ca3677c797f6006864cf604eee0ad15713d2d2b5f8b8b8b6f74a683095f428"
+    }
+  ]
+}
