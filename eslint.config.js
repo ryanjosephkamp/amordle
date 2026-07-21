@@ -9,6 +9,9 @@ export default tseslint.config(
     ignores: [
       'dist/**',
       '.codex-internal/**',
+      '.pnpm-store/**',
+      '.tooling/**',
+      '.vercel/**',
       'coverage/**',
       'node_modules/**',
       'playwright-report/**',

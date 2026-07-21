@@ -1,14 +1,14 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { SupabaseAdminVerifier, type AdminVerifier } from './_lib/admin-auth';
-import { VercelBlobStore } from './_lib/blob-store';
-import { bearerToken, methodNotAllowed, sendJson, type SafeHttpResponse } from './_lib/http';
-import { RefreshError, safeRefreshFailure, writeSafeLog } from './_lib/safe-error';
-import { readBlobToken } from './_lib/server-env';
+import { SupabaseAdminVerifier, type AdminVerifier } from './_lib/admin-auth.js';
+import { VercelBlobStore } from './_lib/blob-store.js';
+import { bearerToken, methodNotAllowed, sendJson, type SafeHttpResponse } from './_lib/http.js';
+import { RefreshError, safeRefreshFailure, writeSafeLog } from './_lib/safe-error.js';
+import { readBlobToken } from './_lib/server-env.js';
 import {
   refreshAllWordLists,
   refreshRequestId,
   type RefreshSummary,
-} from './_lib/word-list-refresh';
+} from './_lib/word-list-refresh.js';
 
 export type AdminRefreshDependencies = {
   verifier: AdminVerifier;

@@ -1,8 +1,8 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { wordListManifestSchema } from '../../src/services/manifest-service';
-import { VercelBlobStore, type WordListStore } from '../_lib/blob-store';
-import { methodNotAllowed, sendJson, type SafeHttpResponse } from '../_lib/http';
-import { readBlobToken } from '../_lib/server-env';
+import { wordListManifestSchema } from '../../src/services/manifest-service.js';
+import { VercelBlobStore, type WordListStore } from '../_lib/blob-store.js';
+import { methodNotAllowed, sendJson, type SafeHttpResponse } from '../_lib/http.js';
+import { readBlobToken } from '../_lib/server-env.js';
 
 const FALLBACK_NOTE =
   'Remote word-list storage is not configured; bundled word data remains available.';

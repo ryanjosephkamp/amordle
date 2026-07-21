@@ -1,8 +1,9 @@
-import type { ServiceFailure, ServiceFailureCode } from '../types/services';
+import type { ServiceFailure, ServiceFailureCode } from '../types/services.js';
 
 const RETRYABLE_CODES = new Set(['network', 'conflict']);
 
 export class ServiceError extends Error {
+  readonly cause?: unknown;
   readonly failure: ServiceFailure;
 
   constructor(
@@ -10,7 +11,8 @@ export class ServiceError extends Error {
     message: string,
     options?: { cause?: unknown; retryable?: boolean },
   ) {
-    super(message, { cause: options?.cause });
+    super(message);
+    if (options?.cause !== undefined) this.cause = options.cause;
     this.name = 'ServiceError';
     this.failure = {
       code,

@@ -1,7 +1,11 @@
 import { z } from 'zod';
-import type { Json } from '../types/database';
-import type { PublicManifestResponse, WordListDocument, WordListManifest } from '../types/services';
-import { ServiceError } from './service-error';
+import type { Json } from '../types/database.js';
+import type {
+  PublicManifestResponse,
+  WordListDocument,
+  WordListManifest,
+} from '../types/services.js';
+import { ServiceError } from './service-error.js';
 
 const answerSchema = z.object({ word: z.string() }).catchall(z.json());
 const wordListDocumentSchema = z.object({

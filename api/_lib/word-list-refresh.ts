@@ -1,14 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
-import type { Json } from '../../src/types/database';
+import type { Json } from '../../src/types/database.js';
 import type {
   WordAnswerRecord,
   WordListDocument,
   WordListManifest,
   WordListManifestLength,
-} from '../../src/types/services';
-import type { WordListStore } from './blob-store';
-import { RefreshError } from './safe-error';
+} from '../../src/types/services.js';
+import type { WordListStore } from './blob-store.js';
+import { RefreshError } from './safe-error.js';
 
 const DATASET = 'ryanjosephkamp/english-openlist' as const;
 const PATH_PREFIX = 'latest/brrrdle' as const;
@@ -134,27 +134,30 @@ export function validateWordListPayload(payload: unknown, length: number): WordL
     );
   }
 
-  const rawMetadata = Array.isArray(source) ? null : source.metadata;
-  if (rawMetadata !== null && rawMetadata !== undefined && !isJsonRecord(rawMetadata)) {
-    throw new RefreshError('validation', `Length ${length} metadata was invalid.`);
+  const rawMetadata: unknown = Array.isArray(source) ? null : source.metadata;
+  let metadata: Record<string, Json> | null = null;
+  if (rawMetadata !== null && rawMetadata !== undefined) {
+    if (!isJsonRecord(rawMetadata)) {
+      throw new RefreshError('validation', `Length ${length} metadata was invalid.`);
+    }
+    metadata = rawMetadata;
   }
-  if (rawMetadata && rawMetadata.length !== undefined && rawMetadata.length !== length) {
+  if (metadata && metadata.length !== undefined && metadata.length !== length) {
     throw new RefreshError('validation', `Length ${length} metadata did not match its file.`);
   }
   return {
     metadata: {
       length,
       source:
-        rawMetadata && typeof rawMetadata.source === 'string'
-          ? rawMetadata.source
+        metadata && typeof metadata.source === 'string'
+          ? metadata.source
           : `huggingface:${DATASET}`,
-      version:
-        rawMetadata && typeof rawMetadata.version === 'string' ? rawMetadata.version : 'unknown',
+      version: metadata && typeof metadata.version === 'string' ? metadata.version : 'unknown',
       generatedAt:
-        rawMetadata && typeof rawMetadata.generatedAt === 'string'
-          ? rawMetadata.generatedAt
+        metadata && typeof metadata.generatedAt === 'string'
+          ? metadata.generatedAt
           : new Date(0).toISOString(),
-      ...(rawMetadata?.curation === undefined ? {} : { curation: rawMetadata.curation }),
+      ...(metadata?.curation === undefined ? {} : { curation: metadata.curation }),
     },
     answers,
     validGuesses,

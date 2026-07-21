@@ -2,12 +2,15 @@ export type RefreshStage =
   'configuration' | 'source-metadata' | 'fetch' | 'validation' | 'persistence';
 
 export class RefreshError extends Error {
+  readonly cause?: unknown;
+
   constructor(
     readonly stage: RefreshStage,
     readonly safeDetail: string,
     options?: { cause?: unknown },
   ) {
-    super(safeDetail, { cause: options?.cause });
+    super(safeDetail);
+    if (options?.cause !== undefined) this.cause = options.cause;
     this.name = 'RefreshError';
   }
 }

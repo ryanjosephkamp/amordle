@@ -1,14 +1,14 @@
 import { timingSafeEqual } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { VercelBlobStore } from '../_lib/blob-store';
-import { bearerToken, methodNotAllowed, sendJson, type SafeHttpResponse } from '../_lib/http';
-import { RefreshError, safeRefreshFailure, writeSafeLog } from '../_lib/safe-error';
-import { readBlobToken, readCronSecret } from '../_lib/server-env';
+import { VercelBlobStore } from '../_lib/blob-store.js';
+import { bearerToken, methodNotAllowed, sendJson, type SafeHttpResponse } from '../_lib/http.js';
+import { RefreshError, safeRefreshFailure, writeSafeLog } from '../_lib/safe-error.js';
+import { readBlobToken, readCronSecret } from '../_lib/server-env.js';
 import {
   refreshAllWordLists,
   refreshRequestId,
   type RefreshSummary,
-} from '../_lib/word-list-refresh';
+} from '../_lib/word-list-refresh.js';
 
 export type CronRefreshDependencies = {
   secret: string | null;

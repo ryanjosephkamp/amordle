@@ -1,6 +1,4 @@
-import { createClient } from '@supabase/supabase-js';
-import type { Database } from '../../src/types/database';
-import { readServerSupabaseConfig } from './server-env';
+import { readServerSupabaseConfig } from './server-env.js';
 
 export type AdminVerification = 'admin' | 'non-admin' | 'invalid' | 'unavailable';
 
@@ -13,13 +11,19 @@ export class SupabaseAdminVerifier implements AdminVerifier {
     const config = readServerSupabaseConfig();
     if (!config) return 'unavailable';
     try {
-      const client = createClient<Database>(config.url, config.anonKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-        global: { headers: { Authorization: `Bearer ${token}` } },
+      const response = await fetch(`${config.url}/auth/v1/user`, {
+        headers: { apikey: config.anonKey, Authorization: `Bearer ${token}` },
       });
-      const { data, error } = await client.auth.getUser(token);
-      if (error || !data.user) return 'invalid';
-      return data.user.app_metadata.role === 'admin' ? 'admin' : 'non-admin';
+      if (response.status === 401 || response.status === 403) return 'invalid';
+      if (!response.ok) return 'unavailable';
+      const user: unknown = await response.json();
+      if (typeof user !== 'object' || user === null || !('app_metadata' in user)) return 'invalid';
+      const metadata = user.app_metadata;
+      return typeof metadata === 'object' && metadata !== null && 'role' in metadata
+        ? metadata.role === 'admin'
+          ? 'admin'
+          : 'non-admin'
+        : 'non-admin';
     } catch {
       return 'unavailable';
     }

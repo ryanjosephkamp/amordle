@@ -1,5 +1,5 @@
 import { list, put } from '@vercel/blob';
-import { RefreshError } from './safe-error';
+import { RefreshError } from './safe-error.js';
 
 export interface WordListStore {
   put(path: string, body: string, contentType: string): Promise<{ url: string }>;
