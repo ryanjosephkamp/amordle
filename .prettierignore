@@ -1,0 +1,7 @@
+dist
+coverage
+playwright-report
+test-results
+supabase/migrations
+.codex-internal
+public/word-lists/bundled/words_length_*.json
