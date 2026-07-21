@@ -122,6 +122,31 @@ test('Solo keyboard, rejection, durable restore, focus, and terminal recovery ar
   await expect(page).not.toHaveURL(/focus=1/);
 });
 
+test('physical-key input reaches a tile below the 100ms p95 budget', async ({ page }, testInfo) => {
+  await page.goto('/play/practice/og');
+  await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
+    timeout: 15_000,
+  });
+  const firstTile = page.getByRole('gridcell').first();
+  const samples: number[] = [];
+  for (let index = 0; index < 20; index += 1) {
+    const started = performance.now();
+    await page.keyboard.press('a');
+    await expect(firstTile).toHaveAttribute('aria-label', 'A, draft');
+    samples.push(performance.now() - started);
+    await page.keyboard.press('Backspace');
+    await expect(firstTile).toHaveAttribute('aria-label', 'empty position 1');
+  }
+  samples.sort((left, right) => left - right);
+  const p95 = samples[Math.ceil(samples.length * 0.95) - 1] ?? Number.POSITIVE_INFINITY;
+  expect(p95).toBeLessThan(100);
+  await testInfo.attach('key-to-tile-performance.json', {
+    body: JSON.stringify({ p95Ms: p95, samplesMs: samples }, null, 2),
+    contentType: 'application/json',
+  });
+  console.info(JSON.stringify({ keyToTileP95Ms: p95 }));
+});
+
 for (const width of [320, 360, 390, 412, 768, 960, 1440, 1920]) {
   test(`has no page overflow at ${width}px`, async ({ page }) => {
     await page.setViewportSize({ width, height: width < 600 ? 844 : 900 });

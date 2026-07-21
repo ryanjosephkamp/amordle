@@ -23,7 +23,9 @@ test.describe('protected preview API contracts', () => {
     const body = await response.text();
     expectSafeBody(body);
     if (response.status() === 200) {
-      expect(response.headers()['cache-control']).toContain('s-maxage=300');
+      // Vercel consumes the handler's s-maxage directive at its CDN boundary
+      // and returns the remaining bounded browser max-age to the client.
+      expect(response.headers()['cache-control']).toContain('max-age=60');
       expect(JSON.parse(body)).toHaveProperty('manifest');
     }
   });
@@ -43,5 +45,50 @@ test.describe('protected preview API contracts', () => {
       );
       expectSafeBody(await response.text());
     }
+  });
+
+  test('renders the protected mobile preview within visual stability budgets', async ({
+    page,
+  }, testInfo) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.addInitScript(() => {
+      const metrics = { cls: 0, lcp: 0 };
+      Object.defineProperty(window, '__amordleMetrics', { value: metrics });
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) metrics.lcp = entry.startTime;
+      }).observe({ type: 'largest-contentful-paint', buffered: true });
+      new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const shift = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+          if (!shift.hadRecentInput) metrics.cls += shift.value ?? 0;
+        }
+      }).observe({ type: 'layout-shift', buffered: true });
+    });
+    const requestedWordBanks: string[] = [];
+    page.on('request', (request) => {
+      if (/words_length_\d+\.json/.test(request.url())) requestedWordBanks.push(request.url());
+    });
+    await page.goto('/');
+    await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible();
+    await page.waitForTimeout(500);
+    const metrics = await page.evaluate(
+      () =>
+        (
+          window as unknown as Window & {
+            __amordleMetrics: { cls: number; lcp: number };
+          }
+        ).__amordleMetrics,
+    );
+    expect(metrics.lcp).toBeGreaterThan(0);
+    expect(metrics.lcp).toBeLessThanOrEqual(2_500);
+    expect(metrics.cls).toBeLessThanOrEqual(0.1);
+    expect(requestedWordBanks).toEqual([]);
+    expect(await page.request.get('/manifest.webmanifest')).toBeOK();
+    expect(await page.request.get('/sw.js')).toBeOK();
+    await testInfo.attach('protected-preview-performance.json', {
+      body: JSON.stringify(metrics, null, 2),
+      contentType: 'application/json',
+    });
+    console.info(JSON.stringify({ protectedPreviewPerformance: metrics }));
   });
 });
