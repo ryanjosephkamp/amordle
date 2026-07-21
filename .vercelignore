@@ -1,0 +1,11 @@
+.codex-internal/
+.git/
+.pnpm-store/
+.tooling/
+.vercel/
+coverage/
+dist/
+node_modules/
+playwright-report/
+test-results/
+*.log
