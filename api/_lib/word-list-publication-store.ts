@@ -21,9 +21,15 @@ export type PublicationWrite = {
 };
 
 export class PublicationPreconditionError extends Error {
-  constructor(message = 'The publication precondition did not match.', options?: ErrorOptions) {
-    super(message, options);
+  readonly cause?: unknown;
+
+  constructor(
+    message = 'The publication precondition did not match.',
+    options?: { readonly cause?: unknown },
+  ) {
+    super(message);
     this.name = 'PublicationPreconditionError';
+    this.cause = options?.cause;
   }
 }
 

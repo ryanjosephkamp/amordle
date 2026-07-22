@@ -459,7 +459,7 @@ export async function refreshAllWordLists(
     expiresAt: new Date(acquiredAt.getTime() + REFRESH_LEASE_DURATION_MS).toISOString(),
   };
   const acquired = await acquireRefreshLease(publication, lease, acquiredAt.getTime());
-  if (!acquired.acquired) {
+  if (acquired.acquired === false) {
     const current = parseManifest(await readPublicationRecord(publication, MANIFEST_PATH));
     const currentResult = existingManifestResult(current, revision, generatedAt);
     return (
