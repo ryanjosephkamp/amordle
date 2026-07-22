@@ -1,0 +1,600 @@
+{
+  "schemaVersion": 1,
+  "authority": {
+    "shellCheckpoint": "062624b2",
+    "amordleStart": "d92bfc710d693fbb1740ef65a350f589591a2fbe",
+    "productionReleaseIncluded": false
+  },
+  "evidenceProfiles": {
+    "domain-ui": ["automated", "manual"],
+    "ui": ["automated", "visual", "manual"],
+    "service": ["automated", "service", "cleanup", "manual"],
+    "privacy": ["automated", "service", "cleanup"],
+    "cleanup": ["automated", "service", "cleanup"],
+    "operations": ["automated", "hosted", "cleanup", "manual"],
+    "visual": ["automated", "visual", "manual"]
+  },
+  "items": [
+    {
+      "id": "APP-01",
+      "capability": "All product routes and protected Admin remain reachable.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-02",
+      "capability": "Refresh preserves persisted game state for explicit re-entry.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-03",
+      "capability": "Back, Forward, and in-app navigation do not corrupt route or game state.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-04",
+      "capability": "Supported desktop and mobile layouts avoid overflow, clipping, and blocked controls.",
+      "checkpoint": 1,
+      "evidenceProfile": "visual",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-05",
+      "capability": "Manual scrolling remains responsive and auto-scroll stays narrowly scoped.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-06",
+      "capability": "Keyboard navigation, focus, dialogs, status, and controls remain accessible.",
+      "checkpoint": 5,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-07",
+      "capability": "Focus Mode reduces chrome without hiding required gameplay state or controls.",
+      "checkpoint": 1,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-08",
+      "capability": "Progression HUD and Marketplace share authoritative coin and progression state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-09",
+      "capability": "Notifications, account menus, dialogs, and private-request actions dismiss and route predictably.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-10",
+      "capability": "PWA registration and prompted updates remain non-blocking.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-11",
+      "capability": "The redesign may replace decoration while preserving state and accessibility meaning.",
+      "checkpoint": 5,
+      "evidenceProfile": "visual",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "APP-12",
+      "capability": "Selected subtab numeric and Ready badges remain readable and accessible.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+
+    {
+      "id": "GAME-01",
+      "capability": "OG validation, duplicate scoring, keyboard precedence, attempts, outcomes, and Hard Mode are exact.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-02",
+      "capability": "GO chain count, automatic advancement, prior evidence, terminal completion, and Hard Mode are exact.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-03",
+      "capability": "Practice configuration supports lengths 2-35, difficulty, Hard Mode, and GO counts without changing Daily.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-04",
+      "capability": "Solo Daily is deterministic for the local date and preserves current and past access rules.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-05",
+      "capability": "Guest Solo remains local and separate from signed-in cloud history.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-06",
+      "capability": "Signed-in Solo guesses, completion, continuation, inventory, and consumables persist and resume.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-07",
+      "capability": "New Practice games supersede resume lanes without resurrecting completed sessions.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-08",
+      "capability": "Completion, final green rows, definitions, and GO transition evidence survive re-entry.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-09",
+      "capability": "Draft, invalid, submitted, consumable, solved, transition, and completion feedback is perceivable.",
+      "checkpoint": 1,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-10",
+      "capability": "Sound preferences and gameplay or notification cues are user-controlled and correctly triggered.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-11",
+      "capability": "Word lists validate, cache, refresh, cover every length, and do not expose answers.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-12",
+      "capability": "Definitions use curated metadata or explicit fallback without duplicate final GO definitions.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-13",
+      "capability": "Sharing is accurate and privacy-safe without premature answer disclosure.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "GAME-14",
+      "capability": "GO selection is versioned, deterministic, no-replacement, cutoff-aware, and preserves stored chains.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+
+    {
+      "id": "ACC-01",
+      "capability": "Create account, sign in, sign out, restore, recover, and auth errors are functional.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-02",
+      "capability": "One validated public player name is used consistently.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-03",
+      "capability": "Avatar, accent, and account badge remain responsive and privacy-safe.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-04",
+      "capability": "Public profiles expose only sanctioned metadata and preserve return and private-match actions.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-05",
+      "capability": "Settings preserve notification, private-request, block, sound, account, and reset boundaries.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-06",
+      "capability": "Local state is account-scoped, versioned, migration-safe, and isolated on account switch.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-07",
+      "capability": "Automatic sync, explicit status, retry, and authoritative economy recovery coexist.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-08",
+      "capability": "Coins, XP, level, continuation, past Daily, purchases, and consumables are deterministic and idempotent.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-09",
+      "capability": "History displays accurate retained Solo and COMBAT records within privacy boundaries.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-10",
+      "capability": "Calendar exposes current and eligible past Dailies with payment and routing state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-11",
+      "capability": "Private Stats preserve provenance, Solo, COMBAT, progression, and aggregates.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-12",
+      "capability": "Public site stats and leaderboard metadata are sanitized, labeled, and fresh.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "ACC-13",
+      "capability": "Marketplace sells only 25-coin Reveal and 40-coin Remove with authoritative state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+
+    {
+      "id": "MP-01",
+      "capability": "Practice COMBAT OG and GO create, join, alternate, persist, resume, complete, and clean up.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-02",
+      "capability": "Unranked and ranked Daily COMBAT use distinct fixed-five UTC, claim-safe, no-clock lanes.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-03",
+      "capability": "Player-owned canonical sessions remain authoritative over rival display projections.",
+      "checkpoint": 3,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-04",
+      "capability": "Shared rows and keyboard evidence converge for both participants without replay.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-05",
+      "capability": "COMBAT GO holds, transitions, prior answers, definitions, and turn ownership synchronize.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-06",
+      "capability": "Practice settings and clocks and ranked Daily restrictions are server-enforced.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-07",
+      "capability": "Cancel, forfeit, timeout, completion, winner precedence, and conflicts are durable and idempotent.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-08",
+      "capability": "Ranked Practice FIFO supports compatible repeat opponents and finalizes once.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-09",
+      "capability": "Ratings, bands, points, and trusted settlement are deterministic by bucket.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-10",
+      "capability": "Private Practice requests implement eligible settings and their full durable lifecycle.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-11",
+      "capability": "Active Games lists participant-owned games, turn cues, resume, and sanctioned profile links.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-12",
+      "capability": "Lobby lists joinable public games and enforces join and cancel without identity expansion.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-13",
+      "capability": "Live lists sanctioned games and participant-only identity links.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-14",
+      "capability": "Spectators are read-only and receive sanitized answerless projections.",
+      "checkpoint": 3,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-15",
+      "capability": "Realtime refocus and polling converge without stale flashes, resets, or auth noise.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-16",
+      "capability": "Private-request notifications deduplicate, honor preferences, and route to exact state.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-17",
+      "capability": "Postgame rematches and actions preserve eligibility, result state, and privacy.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-18",
+      "capability": "Ranked Daily has four independent FIFO lanes with distinct answer and rating namespaces.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-19",
+      "capability": "Private opt-out, blocking, uniqueness, locks, anti-spam, visibility, and mutations are server-enforced.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-20",
+      "capability": "Same-tab provisional COMBAT projection is same-account only and yields to repository authority within five seconds.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "MP-21",
+      "capability": "Participant startup reads coalesce, reject stale generations, and load only required word banks.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+
+    {
+      "id": "SUP-01",
+      "capability": "Home summarizes real actionable state and routes to core areas.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "SUP-02",
+      "capability": "Word Explorer loads, filters, paginates, copies, and defines sanctioned answer-safe data.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "SUP-03",
+      "capability": "Help and About are reachable and accurately separate instructions and rating explanation.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "SUP-04",
+      "capability": "Feedback produces a previewable sanitized GitHub issue handoff without silent submission.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "SUP-05",
+      "capability": "Admin diagnostics and refresh are role-first, protected, and non-public.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "SUP-06",
+      "capability": "Refresh and update failures remain visible without blocking gameplay.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "planned",
+      "evidence": {}
+    },
+
+    {
+      "id": "AM-PRIVACY-01",
+      "capability": "No answer, email, raw auth identifier, seed, private schema field, or secret crosses an unapproved boundary.",
+      "checkpoint": 5,
+      "evidenceProfile": "privacy",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "AM-BACKEND-01",
+      "capability": "Exactly 42 immutable migrations and exactly three HTTP APIs remain in the release candidate.",
+      "checkpoint": 5,
+      "evidenceProfile": "operations",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "AM-BLOB-01",
+      "capability": "Word refresh uses lease and conditional promotion; failure preserves the prior manifest.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "AM-CLEANUP-01",
+      "capability": "Every hosted run records exact resources and proves zero residue with fail-closed cleanup.",
+      "checkpoint": 5,
+      "evidenceProfile": "cleanup",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "AM-VISUAL-01",
+      "capability": "All L01-L64 concepts retain composition, density, hierarchy, responsive behavior, and fire or ice identity.",
+      "checkpoint": 5,
+      "evidenceProfile": "visual",
+      "status": "planned",
+      "evidence": {}
+    },
+    {
+      "id": "AM-RELEASE-01",
+      "capability": "The candidate is protected, non-production, immutable, rollback-ready, and not merged.",
+      "checkpoint": 5,
+      "evidenceProfile": "operations",
+      "status": "planned",
+      "evidence": {}
+    }
+  ]
+}
