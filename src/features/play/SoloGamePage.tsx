@@ -69,6 +69,7 @@ import {
   currentPracticeGeneration,
   type PracticeGenerationLane,
 } from './practice-generation-repository';
+import { coordinateLegacyGoRestart } from './legacy-go-restart-coordinator';
 import { ownerStorageSegment, type VersionedEnvelope } from '../../persistence/local-repository';
 import { normalizeSoloLaunch, type SoloLaunchSpec } from './solo-launch';
 import { soloSessionRepository, type SoloSession } from './solo-session-repository';
@@ -361,6 +362,7 @@ function SoloRuntime({
   const revision = useRef(initial.revision);
   const continuationRecoveryInFlight = useRef(false);
   const consumableRecoveryInFlight = useRef(false);
+  const legacyRestartInFlight = useRef(false);
   const [message, setMessage] = useState(
     initial.legacyRestartNeeded
       ? 'GO attempt rules were updated. This active chain will restart after durable actions recover.'
@@ -1004,6 +1006,7 @@ function SoloRuntime({
   useEffect(() => {
     if (
       !legacyRestartPending ||
+      legacyRestartInFlight.current ||
       session.mode !== 'go' ||
       !needsGoAttemptPolicyRestart(session) ||
       continuationBlocked ||
@@ -1012,34 +1015,109 @@ function SoloRuntime({
     ) {
       return;
     }
-    let restartGeneration = initial.generation;
-    if (config.scope === 'practice') {
-      const currentGeneration = currentPracticeGeneration(identity, generationLane);
-      restartGeneration = currentGeneration + 1;
-      if (
-        !commitPracticeGeneration(identity, generationLane, currentGeneration, restartGeneration)
-      ) {
+    legacyRestartInFlight.current = true;
+    let mounted = true;
+    const previous = session;
+    const previousRevision = revision.current;
+    const currentGeneration =
+      config.scope === 'practice'
+        ? currentPracticeGeneration(identity, generationLane)
+        : initial.generation;
+    const restartGeneration =
+      config.scope === 'practice' ? currentGeneration + 1 : initial.generation;
+    const restarted = createSession(config, wordList, restartGeneration);
+    let replacementRevision: number | undefined;
+
+    const run = async () => {
+      const result = await coordinateLegacyGoRestart({
+        replaceLocal: () => {
+          const saved = repository.save(identity, restarted, {
+            expectedRevision: previousRevision,
+            replaceCorrupt: false,
+          });
+          if (!saved.ok) return false;
+          replacementRevision = saved.envelope.revision;
+          return true;
+        },
+        rollbackLocal: () => {
+          if (replacementRevision === undefined) return false;
+          const rolledBack = repository.save(identity, previous, {
+            expectedRevision: replacementRevision,
+            replaceCorrupt: false,
+          });
+          if (!rolledBack.ok) return false;
+          revision.current = rolledBack.envelope.revision;
+          return true;
+        },
+        ...(cloudRepository && identity.kind === 'authenticated'
+          ? {
+              replaceCloud: async () => {
+                const sync = await syncSoloCloudLane({
+                  repository: cloudRepository,
+                  identity,
+                  lane: sessionKey(config),
+                  session: restarted,
+                });
+                return sync.status === 'published' || sync.status === 'current';
+              },
+              rollbackCloud: async () => {
+                const sync = await syncSoloCloudLane({
+                  repository: cloudRepository,
+                  identity,
+                  lane: sessionKey(config),
+                  session: { ...previous, updatedAt: new Date().toISOString() },
+                });
+                return sync.status === 'published' || sync.status === 'current';
+              },
+            }
+          : {}),
+        ...(config.scope === 'practice'
+          ? {
+              commitGeneration: () =>
+                commitPracticeGeneration(
+                  identity,
+                  generationLane,
+                  currentGeneration,
+                  restartGeneration,
+                ),
+            }
+          : {}),
+      });
+
+      if (!mounted) return;
+      if (result === 'committed' && replacementRevision !== undefined) {
+        revision.current = replacementRevision;
+        setSession(restarted);
+        setLegacyRestartPending(false);
+        setTerminalFinalized(false);
         setMessage(
-          'The corrected GO chain could not reserve a new Practice generation. Reload to retry; the saved chain is unchanged.',
+          config.scope === 'daily'
+            ? 'GO attempt rules updated. This Daily chain restarted with its canonical answers.'
+            : 'GO attempt rules updated. A new deterministic Practice chain is ready.',
         );
         return;
       }
-    }
-    const restarted = createSession(config, wordList, restartGeneration);
-    if (!persist(restarted)) {
+      const reason =
+        result === 'local-failed'
+          ? 'local persistence did not accept the replacement'
+          : result === 'cloud-failed'
+            ? 'account sync reported a newer or unavailable lane'
+            : result === 'generation-failed'
+              ? 'the Practice generation reservation did not commit'
+              : 'the safety rollback could not be confirmed';
       setMessage(
-        'The corrected GO chain could not replace the saved lane. Reload to retry; no reward or history entry was created.',
+        `The corrected GO chain is paused because ${reason}. Reload to reconcile and retry; no reward or history entry was created.`,
       );
-      return;
-    }
-    setLegacyRestartPending(false);
-    setTerminalFinalized(false);
-    setMessage(
-      config.scope === 'daily'
-        ? 'GO attempt rules updated. This Daily chain restarted with its canonical answers.'
-        : 'GO attempt rules updated. A new deterministic Practice chain is ready.',
-    );
+    };
+
+    void run().finally(() => {
+      legacyRestartInFlight.current = false;
+    });
+    return () => {
+      mounted = false;
+    };
   }, [
+    cloudRepository,
     config,
     consumableBlocked,
     continuationBlocked,
@@ -1048,7 +1126,7 @@ function SoloRuntime({
     identity,
     initial.generation,
     legacyRestartPending,
-    persist,
+    repository,
     session,
     wordList,
   ]);
