@@ -1,19 +1,36 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router';
+import { useAuth } from '../../app/auth-context';
 import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
 import { PageHeader, RuledList, SectionHeading } from '../../components/Surface';
+import { readLocalSoloProjections } from '../supporting/local-solo-projections';
 
 export function PlayPage() {
   const navigate = useNavigate();
+  const { identity, status: authStatus } = useAuth();
   const [mode, setMode] = useState<'og' | 'go'>('og');
   const [length, setLength] = useState(5);
   const [difficulty, setDifficulty] = useState('expert');
   const [hard, setHard] = useState(false);
   const [count, setCount] = useState(5);
+  const activeSolo = useMemo(
+    () =>
+      authStatus === 'loading'
+        ? []
+        : readLocalSoloProjections(identity).filter((session) => session.status === 'playing'),
+    [authStatus, identity],
+  );
   return (
     <div className="page page--play-overview">
-      <PageHeader title="Play" eyebrow="Solo · 2 active" />
+      <PageHeader
+        title="Play"
+        eyebrow={
+          authStatus === 'loading'
+            ? 'Solo · checking identity'
+            : `Solo · ${activeSolo.length} active`
+        }
+      />
       <nav className="subnav" aria-label="Solo">
         <a aria-current="page" href="#formats">
           Overview
@@ -24,7 +41,15 @@ export function PlayPage() {
         <ButtonLink to="/play/practice/og" tone="quiet">
           Practice
         </ButtonLink>
-        <a href="#active">Active 2</a>
+        <a href="#active">
+          Active
+          <span
+            className="subnav-badge"
+            aria-label={`${activeSolo.length} active Solo ${activeSolo.length === 1 ? 'session' : 'sessions'}`}
+          >
+            {activeSolo.length}
+          </span>
+        </a>
       </nav>
       <SectionHeading title="Choose a format" />
       <div className="format-grid" id="formats">
@@ -110,28 +135,35 @@ export function PlayPage() {
         </Button>
       </form>
       <SectionHeading title="Active Solo" />
-      <RuledList>
-        <div className="record-row">
-          <span className="mode-mark">GO</span>
-          <div>
-            <strong>Practice Solo · GO · 5L</strong>
-            <small>Puzzle 2/3 · draft 2/5 · one prior answer carried</small>
-          </div>
-          <ButtonLink to="/play/practice/go" tone="primary">
-            Resume GO
-          </ButtonLink>
-        </div>
-        <div className="record-row">
-          <span className="mode-mark">OG</span>
-          <div>
-            <strong>Daily Solo · OG · 5L</strong>
-            <small>1/6 guesses · ready for the next guess</small>
-          </div>
-          <ButtonLink to="/play/daily/og" tone="primary">
-            Resume OG
-          </ButtonLink>
-        </div>
-      </RuledList>
+      <div id="active">
+        <RuledList>
+          {authStatus === 'loading' ? (
+            <p className="support-state" role="status">
+              Checking the identity namespace before reading active sessions…
+            </p>
+          ) : null}
+          {authStatus !== 'loading'
+            ? activeSolo.map((session) => (
+                <div className="record-row" key={session.id}>
+                  <span className="mode-mark">{session.mode.toUpperCase()}</span>
+                  <div>
+                    <strong>{session.label}</strong>
+                    <small>{session.detail}</small>
+                  </div>
+                  <ButtonLink to={session.route} tone="primary">
+                    Resume {session.mode.toUpperCase()}
+                  </ButtonLink>
+                </div>
+              ))
+            : null}
+          {authStatus !== 'loading' && activeSolo.length === 0 ? (
+            <p className="empty-state">
+              No resumable Solo sessions exist in this identity namespace. Start a Daily or Practice
+              game above.
+            </p>
+          ) : null}
+        </RuledList>
+      </div>
       <Disclosure label="Recent Solo results" meta="Newest first">
         <p>
           Your completed local results remain in History. Active answers never appear in overview

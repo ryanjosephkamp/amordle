@@ -1,14 +1,24 @@
+import { useMemo } from 'react';
 import { ButtonLink } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { PageHeader, RuledList, SectionHeading, StatusDot } from '../../components/Surface';
 import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
 import { levelForXp } from '../../domain/progression';
+import { readLocalSoloProjections } from '../supporting/local-solo-projections';
 
 export function HomePage() {
-  const { status: authStatus } = useAuth();
+  const { identity, status: authStatus } = useAuth();
   const { progression } = usePlayerState();
   const level = levelForXp(progression.xp);
+  const activeSolo = useMemo(
+    () =>
+      authStatus === 'loading'
+        ? []
+        : readLocalSoloProjections(identity).filter((session) => session.status === 'playing'),
+    [authStatus, identity],
+  );
+  const resume = activeSolo[0];
   return (
     <div className="page page--home">
       <PageHeader title="Home" eyebrow="Local launch" />
@@ -34,15 +44,19 @@ export function HomePage() {
 
           <SectionHeading title="Local resume" />
           <RuledList>
-            {import.meta.env.DEV ? (
+            {authStatus === 'loading' ? (
+              <p className="support-state" role="status">
+                Checking the identity namespace before reading local sessions…
+              </p>
+            ) : resume ? (
               <div className="record-row record-row--resume">
-                <span className="mode-mark">GO</span>
+                <span className="mode-mark">{resume.mode.toUpperCase()}</span>
                 <div>
-                  <strong>Practice Solo · GO · 5L</strong>
-                  <small>Puzzle 2/3 · 0/6 guesses · 1 prior answer carried</small>
+                  <strong>{resume.label}</strong>
+                  <small>{resume.detail}</small>
                 </div>
-                <ButtonLink to="/play/practice/go" tone="primary">
-                  Resume GO
+                <ButtonLink to={resume.route} tone="primary">
+                  Resume {resume.mode.toUpperCase()}
                 </ButtonLink>
               </div>
             ) : (
@@ -94,17 +108,23 @@ export function HomePage() {
         <aside className="home-ledger__context" aria-label="Local guest context">
           <section className="progress-block">
             <h2>Local progress</h2>
-            <strong>Level {level.level}</strong>
-            <progress
-              max={level.nextLevelCost}
-              value={level.currentLevelXp}
-              aria-label={`${level.currentLevelXp} of ${level.nextLevelCost} XP`}
-            />
-            <p>
-              {level.currentLevelXp} / {level.nextLevelCost} XP
-            </p>
-            <p>{progression.coins} coins</p>
-            <small>Saved on this device.</small>
+            {authStatus === 'loading' ? (
+              <p role="status">Checking the account namespace…</p>
+            ) : (
+              <>
+                <strong>Level {level.level}</strong>
+                <progress
+                  max={level.nextLevelCost}
+                  value={level.currentLevelXp}
+                  aria-label={`${level.currentLevelXp} of ${level.nextLevelCost} XP`}
+                />
+                <p>
+                  {level.currentLevelXp} / {level.nextLevelCost} XP
+                </p>
+                <p>{progression.coins} coins</p>
+                <small>Saved in this identity namespace.</small>
+              </>
+            )}
           </section>
           <div className="privacy-note">
             <Icon name="info" />

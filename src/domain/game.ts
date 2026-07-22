@@ -392,11 +392,12 @@ export function continueOgSession(
   operationId: string,
   now?: string,
 ): OgSession {
-  if (session.appliedContinuationIds.includes(operationId)) return session;
+  const id = operationId.trim();
+  if (!id || id.length > 200)
+    throw new RangeError('A valid continuation operation id is required.');
+  if (session.appliedContinuationIds.includes(id)) return session;
   if (session.scope !== 'practice' || session.status !== 'lost' || session.revealedAnswer)
     return session;
-  const id = operationId.trim();
-  if (!id) throw new RangeError('Continuation operation id is required.');
   return {
     ...session,
     maxAttempts: session.maxAttempts + 1,

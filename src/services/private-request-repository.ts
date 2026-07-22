@@ -31,6 +31,28 @@ const requestSchema = z
     }
   });
 
+const preferenceSchema = z.object({
+  accept_private_practice_requests: z.boolean(),
+  updated_at: z.iso.datetime(),
+});
+const blockSchema = z.object({
+  public_profile_id: z.string().uuid(),
+  display_name: z.string().trim().min(1).max(50),
+  accent_color: z.enum(['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber']),
+  flair_key: z.literal('none'),
+  avatar_url: z.url().max(2048).nullable(),
+  blocked_at: z.iso.datetime(),
+});
+const blockMutationSchema = z.object({
+  blocked: z.boolean(),
+  public_profile_id: z.string().uuid(),
+  updated_at: z.iso.datetime(),
+});
+
+export type PrivateRequestPreference = z.infer<typeof preferenceSchema>;
+export type PrivateRequestBlock = z.infer<typeof blockSchema>;
+export type PrivateRequestBlockMutation = z.infer<typeof blockMutationSchema>;
+
 export class PrivateRequestRepository {
   constructor(private readonly client: AmordleSupabaseClient) {}
 
@@ -85,32 +107,32 @@ export class PrivateRequestRepository {
     return data?.[0] ?? null;
   }
 
-  async preference(): Promise<unknown> {
+  async preference(): Promise<PrivateRequestPreference> {
     const { data, error } = await this.client.rpc('get_private_multiplayer_request_preference');
     throwIfServiceError(error, 'Load private request preference');
-    return data?.[0] ?? null;
+    return preferenceSchema.parse(data?.[0]);
   }
 
-  async updatePreference(accept: boolean): Promise<unknown> {
+  async updatePreference(accept: boolean): Promise<PrivateRequestPreference> {
     const { data, error } = await this.client.rpc('update_private_multiplayer_request_preference', {
       p_accept: accept,
     });
     throwIfServiceError(error, 'Update private request preference');
-    return data?.[0] ?? null;
+    return preferenceSchema.parse(data?.[0]);
   }
 
-  async blocks(): Promise<unknown[]> {
+  async blocks(): Promise<PrivateRequestBlock[]> {
     const { data, error } = await this.client.rpc('get_private_multiplayer_request_blocks');
     throwIfServiceError(error, 'Load private request blocks');
-    return data ?? [];
+    return z.array(blockSchema).parse(data ?? []);
   }
 
-  async setBlock(publicProfileId: string, blocked: boolean): Promise<unknown> {
+  async setBlock(publicProfileId: string, blocked: boolean): Promise<PrivateRequestBlockMutation> {
     const { data, error } = await this.client.rpc('set_private_multiplayer_request_block', {
       p_target_public_profile_id: z.string().uuid().parse(publicProfileId),
       p_blocked: blocked,
     });
     throwIfServiceError(error, 'Update private request block');
-    return data?.[0] ?? null;
+    return blockMutationSchema.parse(data?.[0]);
   }
 }

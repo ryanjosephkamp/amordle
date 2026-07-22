@@ -68,12 +68,12 @@ export function applyEconomyOperation(
   let coins = state.coins;
   const inventory = { ...state.inventory };
   if (operation.type === 'credit') {
-    if (!Number.isInteger(operation.amount) || operation.amount <= 0) {
+    if (!Number.isInteger(operation.amount) || operation.amount <= 0 || operation.amount > 10_000) {
       return { ok: false, code: 'invalid_operation', state };
     }
     coins += operation.amount;
   } else if (operation.type === 'spend') {
-    if (!Number.isInteger(operation.amount) || operation.amount <= 0) {
+    if (!Number.isInteger(operation.amount) || operation.amount <= 0 || operation.amount > 10_000) {
       return { ok: false, code: 'invalid_operation', state };
     }
     if (coins < operation.amount) return { ok: false, code: 'insufficient_coins', state };
@@ -108,11 +108,22 @@ export function continuationCost(input: {
   readonly completionPercentage: number;
   readonly continuationCount: number;
 }): number {
-  const wordLength = Math.max(2, Math.floor(input.wordLength));
-  const percentage = Math.min(100, Math.max(0, input.completionPercentage));
-  const multiplier = Math.max(1, Math.floor(input.continuationCount) + 1);
-  const halfLength = Math.ceil(wordLength / 2);
-  const completed = Math.floor((percentage / 100) * halfLength);
+  if (!Number.isInteger(input.wordLength) || input.wordLength < 2 || input.wordLength > 35) {
+    throw new RangeError('Continuation word length must be an integer from 2 through 35.');
+  }
+  if (
+    !Number.isFinite(input.completionPercentage) ||
+    input.completionPercentage < 0 ||
+    input.completionPercentage > 100
+  ) {
+    throw new RangeError('Continuation completion percentage must be from 0 through 100.');
+  }
+  if (!Number.isInteger(input.continuationCount) || input.continuationCount < 0) {
+    throw new RangeError('Continuation count must be a non-negative integer.');
+  }
+  const multiplier = input.continuationCount + 1;
+  const halfLength = Math.ceil(input.wordLength / 2);
+  const completed = Math.floor((input.completionPercentage / 100) * halfLength);
   return Math.max(1, (halfLength - completed + 3) * multiplier);
 }
 
@@ -120,6 +131,19 @@ export interface PaidContinuationState {
   readonly maxAttempts: number;
   readonly continuationCount: number;
   readonly appliedOperationIds: readonly string[];
+  /** Cost is retained so retries never recalculate against the incremented continuation count. */
+  readonly operationCosts?: Readonly<Record<string, number>> | undefined;
+  /** Inputs are retained so one operation id cannot be reused for a different continuation. */
+  readonly operationFingerprints?: Readonly<Record<string, string>> | undefined;
+}
+
+function paidContinuationFingerprint(input: {
+  readonly wordLength: number;
+  readonly completionPercentage: number;
+  readonly continuationCount: number;
+  readonly cost: number;
+}): string {
+  return JSON.stringify(input);
 }
 
 export function applyPaidContinuation(input: {
@@ -138,21 +162,50 @@ export function applyPaidContinuation(input: {
     }
   | {
       readonly ok: false;
-      readonly code: 'insufficient_coins' | 'idempotency_conflict';
+      readonly code: 'invalid_operation' | 'insufficient_coins' | 'idempotency_conflict';
       readonly cost: number;
     } {
-  const cost = continuationCost({
+  const operationId = input.operationId.trim();
+  if (!operationId || operationId.length > 200) {
+    return { ok: false, code: 'invalid_operation', cost: 0 };
+  }
+  const priorIndex = input.continuation.appliedOperationIds.indexOf(operationId);
+  const effectiveContinuationCount =
+    priorIndex >= 0 ? priorIndex : input.continuation.continuationCount;
+  let calculatedCost: number;
+  try {
+    calculatedCost = continuationCost({
+      wordLength: input.wordLength,
+      completionPercentage: input.completionPercentage,
+      continuationCount: effectiveContinuationCount,
+    });
+  } catch {
+    return { ok: false, code: 'invalid_operation', cost: 0 };
+  }
+  const cost =
+    priorIndex >= 0
+      ? (input.continuation.operationCosts?.[operationId] ?? calculatedCost)
+      : calculatedCost;
+  const fingerprint = paidContinuationFingerprint({
     wordLength: input.wordLength,
     completionPercentage: input.completionPercentage,
-    continuationCount: input.continuation.continuationCount,
+    continuationCount: effectiveContinuationCount,
+    cost,
   });
-  if (input.continuation.appliedOperationIds.includes(input.operationId)) {
+  if (priorIndex >= 0) {
+    const existingContinuationFingerprint = input.continuation.operationFingerprints?.[operationId];
+    if (
+      existingContinuationFingerprint !== undefined &&
+      existingContinuationFingerprint !== fingerprint
+    ) {
+      return { ok: false, code: 'idempotency_conflict', cost };
+    }
     const expectedFingerprint = operationFingerprint({
       type: 'spend',
-      operationId: input.operationId,
+      operationId,
       amount: cost,
     });
-    if (input.economy.operations[input.operationId] !== expectedFingerprint) {
+    if (input.economy.operations[operationId] !== expectedFingerprint) {
       return { ok: false, code: 'idempotency_conflict', cost };
     }
     return {
@@ -165,7 +218,7 @@ export function applyPaidContinuation(input: {
   }
   const economyResult = applyEconomyOperation(input.economy, {
     type: 'spend',
-    operationId: input.operationId,
+    operationId,
     amount: cost,
   });
   if (!economyResult.ok) {
@@ -174,7 +227,9 @@ export function applyPaidContinuation(input: {
       code:
         economyResult.code === 'idempotency_conflict'
           ? 'idempotency_conflict'
-          : 'insufficient_coins',
+          : economyResult.code === 'invalid_operation'
+            ? 'invalid_operation'
+            : 'insufficient_coins',
       cost,
     };
   }
@@ -186,7 +241,12 @@ export function applyPaidContinuation(input: {
     continuation: {
       maxAttempts: input.continuation.maxAttempts + 1,
       continuationCount: input.continuation.continuationCount + 1,
-      appliedOperationIds: [...input.continuation.appliedOperationIds, input.operationId],
+      appliedOperationIds: [...input.continuation.appliedOperationIds, operationId],
+      operationCosts: { ...input.continuation.operationCosts, [operationId]: cost },
+      operationFingerprints: {
+        ...input.continuation.operationFingerprints,
+        [operationId]: fingerprint,
+      },
     },
   };
 }

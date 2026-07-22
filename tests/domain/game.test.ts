@@ -164,6 +164,8 @@ describe('validation and OG state', () => {
     session = continueOgSession(session, 'continue-1', at);
     expect(session).toMatchObject({ status: 'playing', maxAttempts: 2, continuationCount: 1 });
     expect(continueOgSession(session, 'continue-1', at)).toBe(session);
+    expect(continueOgSession(session, '  continue-1  ', at)).toBe(session);
+    expect(() => continueOgSession(session, ' ', at)).toThrow(/operation id/);
     const restored = restoreOgSession(serializeOgSession(session));
     expect(restored).toEqual(session);
   });

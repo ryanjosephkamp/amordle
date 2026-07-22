@@ -20,24 +20,45 @@
       "capability": "All product routes and protected Admin remain reachable.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-02",
       "capability": "Refresh preserves persisted game state for explicit re-entry.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-03",
       "capability": "Back, Forward, and in-app navigation do not corrupt route or game state.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-04",
@@ -56,8 +77,15 @@
       "capability": "Manual scrolling remains responsive and auto-scroll stays narrowly scoped.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-06",
@@ -84,16 +112,32 @@
       "capability": "Progression HUD and Marketplace share authoritative coin and progression state.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-09",
       "capability": "Notifications, account menus, dialogs, and private-request actions dismiss and route predictably.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/notifications.test.ts",
+          "tests/browser/notification-center.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-10",
@@ -116,8 +160,16 @@
       "capability": "Selected subtab numeric and Ready badges remain readable and accessible.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
 
     {
@@ -161,40 +213,74 @@
       "capability": "Solo Daily is deterministic for the local date and preserves current and past access rules.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-05",
       "capability": "Guest Solo remains local and separate from signed-in cloud history.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ]
+      }
     },
     {
       "id": "GAME-06",
       "capability": "Signed-in Solo guesses, completion, continuation, inventory, and consumables persist and resume.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-07",
       "capability": "New Practice games supersede resume lanes without resurrecting completed sessions.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-08",
       "capability": "Completion, final green rows, definitions, and GO transition evidence survive re-entry.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-09",
@@ -235,16 +321,28 @@
       "capability": "Definitions use curated metadata or explicit fallback without duplicate final GO definitions.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-13",
       "capability": "Sharing is accurate and privacy-safe without premature answer disclosure.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-14",
@@ -263,104 +361,191 @@
       "capability": "Create account, sign in, sign out, restore, recover, and auth errors are functional.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/auth-service.test.ts",
+          "tests/domain/identity-transition-machine.test.ts",
+          "tests/domain/account-repository.test.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-02",
       "capability": "One validated public player name is used consistently.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ]
+      }
     },
     {
       "id": "ACC-03",
       "capability": "Avatar, accent, and account badge remain responsive and privacy-safe.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-04",
       "capability": "Public profiles expose only sanctioned metadata and preserve return and private-match actions.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ]
+      }
     },
     {
       "id": "ACC-05",
       "capability": "Settings preserve notification, private-request, block, sound, account, and reset boundaries.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/account-repository.test.ts",
+          "tests/domain/sound.test.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-06",
       "capability": "Local state is account-scoped, versioned, migration-safe, and isolated on account switch.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/auth-service.test.ts",
+          "tests/domain/identity-transition-machine.test.ts",
+          "tests/domain/account-repository.test.ts"
+        ]
+      }
     },
     {
       "id": "ACC-07",
       "capability": "Automatic sync, explicit status, retry, and authoritative economy recovery coexist.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-08",
       "capability": "Coins, XP, level, continuation, past Daily, purchases, and consumables are deterministic and idempotent.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-09",
       "capability": "History displays accurate retained Solo and COMBAT records within privacy boundaries.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-10",
       "capability": "Calendar exposes current and eligible past Dailies with payment and routing state.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-11",
       "capability": "Private Stats preserve provenance, Solo, COMBAT, progression, and aggregates.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "ACC-12",
       "capability": "Public site stats and leaderboard metadata are sanitized, labeled, and fresh.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ]
+      }
     },
     {
       "id": "ACC-13",
       "capability": "Marketplace sells only 25-coin Reveal and 40-coin Remove with authoritative state.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
 
     {
@@ -537,32 +722,60 @@
       "capability": "Home summarizes real actionable state and routes to core areas.",
       "checkpoint": 2,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "SUP-02",
       "capability": "Word Explorer loads, filters, paginates, copies, and defines sanctioned answer-safe data.",
       "checkpoint": 2,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "SUP-03",
       "capability": "Help and About are reachable and accurately separate instructions and rating explanation.",
       "checkpoint": 2,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.checkpoint-2.spec.ts"],
+        "manual": ["quality/checkpoint-2-visual-comparison.md"]
+      }
     },
     {
       "id": "SUP-04",
       "capability": "Feedback produces a previewable sanitized GitHub issue handoff without silent submission.",
       "checkpoint": 2,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts"
+        ]
+      }
     },
     {
       "id": "SUP-05",

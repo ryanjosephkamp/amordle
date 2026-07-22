@@ -86,17 +86,22 @@ test('Checkpoint 1 calendar and Word Explorer treatments remain readable and ali
   await expect(
     page.getByRole('img', { name: /Solo OG: (available|locked)/ }).first(),
   ).toBeVisible();
-  await expect(page.getByRole('img', { name: 'Combat OG: recorded' }).first()).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Combat OG: unavailable' }).first()).toBeVisible();
   await expect(
     page.locator('button.calendar-day').filter({ hasText: 'S-OG' }).first(),
-  ).toHaveAccessibleName(/Solo OG: (available|locked).*Combat OG: recorded/);
-  await expect(page.getByText('●Recorded', { exact: true })).toBeVisible();
+  ).toHaveAccessibleName(/Solo OG: (available|locked|completed).*Combat OG: unavailable/);
+  await expect(page.getByText('—Unavailable', { exact: true })).toBeVisible();
 
   await page.goto('/word-explorer');
   await expect(page.locator('.search-metadata')).toContainText(
-    /^\d+ visible .* 5-letter bundled data/,
+    /^\d+ matching valid words .* page 1 of \d+/,
   );
   await expect(page.locator('.ruled-list .word-row').first()).toBeVisible();
+  await expect(page.getByText('Answer & valid guess')).toHaveCount(0);
+  await expect(page.getByText('Casual', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Standard', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Expert', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
   const searchGap = await page.evaluate(() => {
     const input = document.querySelector('.search-control input')?.getBoundingClientRect();
     const metadata = document.querySelector('.search-metadata')?.getBoundingClientRect();

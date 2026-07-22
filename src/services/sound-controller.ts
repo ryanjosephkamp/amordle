@@ -1,4 +1,11 @@
 import type { IdentityScope } from '../persistence/local-repository';
+import {
+  loadPlayerSettings,
+  settingsStorageKey,
+  updatePlayerSettings,
+} from './settings-repository';
+
+export { settingsStorageKey } from './settings-repository';
 
 export type SoundCue =
   'keyboard-click' | 'tile-submit' | 'invalid' | 'solve' | 'win' | 'loss' | 'notification';
@@ -43,22 +50,8 @@ const profiles: Readonly<Record<SoundCue, readonly OscillatorProfile[]>> = {
   ],
 };
 
-export function settingsStorageKey(identity: IdentityScope): string {
-  return `amordle:settings:${
-    identity.kind === 'guest' ? 'guest' : `account:${encodeURIComponent(identity.userId)}`
-  }`;
-}
-
 export function readSoundEnabled(identity: IdentityScope, storage?: Storage): boolean {
-  if (!storage) return true;
-  try {
-    const value = JSON.parse(storage.getItem(settingsStorageKey(identity)) ?? '{}') as {
-      sound?: unknown;
-    };
-    return typeof value.sound === 'boolean' ? value.sound : true;
-  } catch {
-    return true;
-  }
+  return loadPlayerSettings(identity, storage).settings.sound;
 }
 
 export function writeSoundEnabled(
@@ -67,15 +60,7 @@ export function writeSoundEnabled(
   storage?: Storage,
 ): void {
   const storageKey = settingsStorageKey(identity);
-  if (storage) {
-    let existing: Record<string, unknown> = {};
-    try {
-      existing = JSON.parse(storage.getItem(storageKey) ?? '{}') as Record<string, unknown>;
-    } catch {
-      // A corrupt settings object is replaced by a valid, minimal envelope.
-    }
-    storage.setItem(storageKey, JSON.stringify({ ...existing, sound: enabled }));
-  }
+  if (storage) updatePlayerSettings(identity, { sound: enabled }, storage);
   soundEngine.setEnabled(enabled);
   if (typeof window !== 'undefined') {
     window.dispatchEvent(

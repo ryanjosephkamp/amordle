@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { Icon, type IconName } from '../components/Icon';
+import { useNotificationProjection } from '../features/supporting/use-notification-projection';
 import { useAuth } from './auth-context';
 
 const primaryNav: Array<{ to: string; label: string; icon: IconName; end?: boolean }> = [
@@ -118,18 +119,22 @@ function MobileDock({ onMore }: { onMore: () => void }) {
 export function AppShell() {
   const [accountOpenAt, setAccountOpenAt] = useState<string | null>(null);
   const [moreOpenAt, setMoreOpenAt] = useState<string | null>(null);
+  const [notificationsOpenAt, setNotificationsOpenAt] = useState<string | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
   const focus = new URLSearchParams(location.search).get('focus') === '1';
-  const { service: authService, status: authStatus, user } = useAuth();
+  const { service: authService, status: authStatus, user, identity } = useAuth();
   const authenticated = authStatus === 'authenticated';
   const accountOpen = accountOpenAt === location.pathname;
   const moreOpen = moreOpenAt === location.pathname;
+  const notificationsOpen = notificationsOpenAt === location.pathname;
+  const notifications = useNotificationProjection(identity, authStatus !== 'loading');
 
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        if (moreOpen) setMoreOpenAt(null);
+        if (notificationsOpen) setNotificationsOpenAt(null);
+        else if (moreOpen) setMoreOpenAt(null);
         else if (accountOpen) setAccountOpenAt(null);
         else if (focus) {
           const search = new URLSearchParams(location.search);
@@ -140,7 +145,15 @@ export function AppShell() {
     };
     window.addEventListener('keydown', close);
     return () => window.removeEventListener('keydown', close);
-  }, [accountOpen, focus, location.pathname, location.search, moreOpen, navigate]);
+  }, [
+    accountOpen,
+    focus,
+    location.pathname,
+    location.search,
+    moreOpen,
+    navigate,
+    notificationsOpen,
+  ]);
 
   return (
     <div className={`app-shell ${focus ? 'app-shell--focus' : ''}`}>
@@ -166,8 +179,31 @@ export function AppShell() {
             <Icon name="settings" />
             <span>Settings</span>
           </Link>
+          <button
+            className="top-action notification-button"
+            type="button"
+            aria-label={`Notifications${notifications.unreadCount ? `, ${notifications.unreadCount} unread` : ''}`}
+            aria-expanded={notificationsOpen}
+            onClick={() => {
+              setAccountOpenAt(null);
+              setMoreOpenAt(null);
+              setNotificationsOpenAt((value) => (value ? null : location.pathname));
+            }}
+          >
+            <Icon name="bell" />
+            <span>Alerts</span>
+            {notifications.unreadCount > 0 ? (
+              <span className="notification-count" aria-hidden="true">
+                {notifications.unreadCount}
+              </span>
+            ) : null}
+          </button>
           <HeaderAccount
-            onOpen={() => setAccountOpenAt((value) => (value ? null : location.pathname))}
+            onOpen={() => {
+              setMoreOpenAt(null);
+              setNotificationsOpenAt(null);
+              setAccountOpenAt((value) => (value ? null : location.pathname));
+            }}
             authenticated={authenticated}
             loading={authStatus === 'loading'}
           />
@@ -177,43 +213,153 @@ export function AppShell() {
       <main id="main-content" className="main-content" tabIndex={-1}>
         <Outlet />
       </main>
-      {!focus ? <MobileDock onMore={() => setMoreOpenAt(location.pathname)} /> : null}
+      {!focus ? (
+        <MobileDock
+          onMore={() => {
+            setAccountOpenAt(null);
+            setNotificationsOpenAt(null);
+            setMoreOpenAt(location.pathname);
+          }}
+        />
+      ) : null}
 
       {accountOpen ? (
-        <div className="popover account-popover" role="dialog" aria-label="Guest account">
-          <button
-            className="popover__close"
-            type="button"
-            onClick={() => setAccountOpenAt(null)}
-            aria-label="Close account menu"
+        <div
+          className="popover-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setAccountOpenAt(null);
+          }}
+        >
+          <div
+            className="popover account-popover"
+            role="dialog"
+            aria-label={authenticated ? 'Account menu' : 'Guest account'}
           >
-            <Icon name="close" />
-          </button>
-          <span className="avatar avatar--large">{authenticated ? 'A' : 'G'}</span>
-          <h2>{authenticated ? 'Signed-in account' : 'Guest play'}</h2>
-          <p>
-            {authenticated
-              ? `Account session verified${user?.email ? ` for ${user.email}` : ''}. Account data remains private.`
-              : 'Solo progress stays in the guest namespace on this device. Sign in to sync and enter authenticated COMBAT.'}
-          </p>
-          {authenticated ? (
+            <Button
+              className="popover__close"
+              type="button"
+              onClick={() => setAccountOpenAt(null)}
+              aria-label="Close account menu"
+            >
+              <Icon name="close" />
+            </Button>
+            <span className="avatar avatar--large">{authenticated ? 'A' : 'G'}</span>
+            <h2>{authenticated ? 'Signed-in account' : 'Guest play'}</h2>
+            <p>
+              {authenticated
+                ? `Account session verified${user?.email ? ` for ${user.email}` : ''}. Account data remains private.`
+                : 'Solo progress stays in the guest namespace on this device. Sign in to sync and enter authenticated COMBAT.'}
+            </p>
+            {authenticated ? (
+              <Button
+                type="button"
+                tone="primary"
+                onClick={() => {
+                  void authService?.signOut().finally(() => setAccountOpenAt(null));
+                }}
+              >
+                Sign out
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                tone="primary"
+                onClick={() =>
+                  navigate(
+                    `/auth?returnTo=${encodeURIComponent(`${location.pathname}${location.search}`)}`,
+                  )
+                }
+              >
+                Sign in
+              </Button>
+            )}
             <Button
               type="button"
-              tone="primary"
               onClick={() => {
-                void authService?.signOut().finally(() => setAccountOpenAt(null));
+                setAccountOpenAt(null);
+                navigate('/profile');
               }}
             >
-              Sign out
+              Open profile
             </Button>
-          ) : (
-            <Button type="button" tone="primary" onClick={() => navigate('/auth')}>
-              Sign in
-            </Button>
-          )}
-          <Button type="button" onClick={() => navigate('/profile')}>
-            Open profile
-          </Button>
+          </div>
+        </div>
+      ) : null}
+
+      {notificationsOpen ? (
+        <div
+          className="popover-backdrop"
+          role="presentation"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) setNotificationsOpenAt(null);
+          }}
+        >
+          <section
+            className="popover notification-popover"
+            role="dialog"
+            aria-modal="true"
+            aria-label="Notifications"
+          >
+            <header>
+              <div>
+                <p className="eyebrow">Source-derived events</p>
+                <h2>Notifications</h2>
+              </div>
+              <button
+                className="popover__close"
+                type="button"
+                onClick={() => setNotificationsOpenAt(null)}
+                aria-label="Close notifications"
+              >
+                <Icon name="close" />
+              </button>
+            </header>
+            {notifications.visible.length > 0 ? (
+              <>
+                <div className="notification-list" aria-live="polite">
+                  {notifications.visible.map((event) => {
+                    const unread = !notifications.read.has(event.id);
+                    return (
+                      <article
+                        className={`notification-row ${unread ? 'is-unread' : ''}`}
+                        key={event.id}
+                      >
+                        <div>
+                          <strong>{event.title}</strong>
+                          <p>{event.body}</p>
+                          <small>{new Date(event.createdAt).toLocaleString()}</small>
+                        </div>
+                        <div className="notification-actions">
+                          <Button
+                            tone="primary"
+                            onClick={() => {
+                              notifications.markRead(event.id);
+                              setNotificationsOpenAt(null);
+                              navigate(event.target);
+                            }}
+                          >
+                            Open
+                          </Button>
+                          {unread ? (
+                            <Button onClick={() => notifications.markRead(event.id)}>
+                              Mark read
+                            </Button>
+                          ) : null}
+                          <Button tone="quiet" onClick={() => notifications.hide(event.id)}>
+                            Hide
+                          </Button>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+                <Button onClick={() => notifications.markAllRead()}>Mark all read</Button>
+              </>
+            ) : (
+              <p className="empty-state">No source-derived notifications are available.</p>
+            )}
+          </section>
         </div>
       ) : null}
 

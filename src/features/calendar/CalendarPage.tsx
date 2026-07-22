@@ -1,19 +1,21 @@
 import { useMemo, useState } from 'react';
+import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
 import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
 import { Icon } from '../../components/Icon';
 import { PageHeader, SectionHeading } from '../../components/Surface';
 import { canAccessDaily, localDateKey } from '../../domain/daily';
+import { readLocalSoloProjections } from '../supporting/local-solo-projections';
 
 const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
-type CalendarLaneState = 'available' | 'locked' | 'recorded' | 'unavailable';
+type CalendarLaneState = 'available' | 'locked' | 'completed' | 'unavailable';
 
 const laneMarks: Record<CalendarLaneState, string> = {
   available: '○',
   locked: '◇',
-  recorded: '●',
+  completed: '✓',
   unavailable: '—',
 };
 
@@ -49,7 +51,19 @@ function CalendarLane({
 
 export function CalendarPage() {
   const todayKey = localDateKey();
+  const { identity, status: authStatus } = useAuth();
   const { progression, unlockDaily } = usePlayerState();
+  const dailyEntitlements = [
+    ...progression.unlockedDailies,
+    ...Object.keys(progression.pendingDailyUnlocks ?? {}),
+  ];
+  const localSolo = useMemo(
+    () => (authStatus === 'loading' ? [] : readLocalSoloProjections(identity)),
+    [authStatus, identity],
+  );
+  const completedDaily = localSolo.filter(
+    (session) => session.scope === 'daily' && session.status !== 'playing' && session.dateKey,
+  );
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState(todayKey);
   const [unlockMessage, setUnlockMessage] = useState('');
@@ -123,17 +137,31 @@ export function CalendarPage() {
                 mode: 'og',
                 dateKey,
                 todayKey,
-                unlocked: progression.unlockedDailies,
+                unlocked: dailyEntitlements,
               });
               const soloGoAvailable = canAccessDaily({
                 mode: 'go',
                 dateKey,
                 todayKey,
-                unlocked: progression.unlockedDailies,
+                unlocked: dailyEntitlements,
               });
-              const soloOgState: CalendarLaneState = soloOgAvailable ? 'available' : 'locked';
-              const soloGoState: CalendarLaneState = soloGoAvailable ? 'available' : 'locked';
-              const combatOgState: CalendarLaneState = 'recorded';
+              const soloOgCompleted = completedDaily.some(
+                (session) => session.mode === 'og' && session.dateKey === dateKey,
+              );
+              const soloGoCompleted = completedDaily.some(
+                (session) => session.mode === 'go' && session.dateKey === dateKey,
+              );
+              const soloOgState: CalendarLaneState = soloOgCompleted
+                ? 'completed'
+                : soloOgAvailable
+                  ? 'available'
+                  : 'locked';
+              const soloGoState: CalendarLaneState = soloGoCompleted
+                ? 'completed'
+                : soloGoAvailable
+                  ? 'available'
+                  : 'locked';
+              const combatOgState: CalendarLaneState = 'unavailable';
               const combatGoState: CalendarLaneState = 'unavailable';
               return (
                 <button
@@ -169,8 +197,8 @@ export function CalendarPage() {
           </div>
         </section>
         <aside className="calendar-rail">
-          <strong>{progression.coins} coins</strong>
-          <span>Available</span>
+          <strong>{authStatus === 'loading' ? '— coins' : `${progression.coins} coins`}</strong>
+          <span>{authStatus === 'loading' ? 'Checking identity' : 'Available'}</span>
           <hr />
           <h2>
             {selectedDate === todayKey ? 'Today’s Solo Daily' : `Past Solo Daily · ${selectedDate}`}
@@ -182,7 +210,7 @@ export function CalendarPage() {
               mode,
               dateKey: selectedDate,
               todayKey,
-              unlocked: progression.unlockedDailies,
+              unlocked: dailyEntitlements,
             });
             return allowed ? (
               <ButtonLink
@@ -195,18 +223,19 @@ export function CalendarPage() {
             ) : (
               <Button
                 key={mode}
-                disabled={progression.coins < 60}
+                disabled={authStatus === 'loading' || progression.coins < 60}
                 onClick={() => {
-                  const result = unlockDaily(mode, selectedDate, todayKey);
-                  setUnlockMessage(
-                    result === 'unlocked'
-                      ? `${mode.toUpperCase()} unlocked for ${selectedDate}.`
-                      : result === 'insufficient'
-                        ? 'Not enough coins. Earn coins by completing puzzles.'
-                        : result === 'already'
-                          ? 'This puzzle was already unlocked.'
-                          : 'That date cannot be unlocked.',
-                  );
+                  void unlockDaily(mode, selectedDate, todayKey).then((result) => {
+                    setUnlockMessage(
+                      result === 'unlocked'
+                        ? `${mode.toUpperCase()} entitlement saved for ${selectedDate}. It becomes permanent after the first saved guess.`
+                        : result === 'insufficient'
+                          ? 'Not enough coins. Earn coins by completing puzzles.'
+                          : result === 'already'
+                            ? 'This puzzle was already unlocked.'
+                            : 'That date cannot be unlocked.',
+                    );
+                  });
                 }}
               >
                 Unlock {mode.toUpperCase()} · 60 coins
@@ -223,17 +252,23 @@ export function CalendarPage() {
               <span>◇</span>Locked
             </li>
             <li>
-              <span className="state-green">●</span>Recorded
+              <span className="state-green">✓</span>Completed locally
             </li>
             <li>
               <span>—</span>Unavailable
             </li>
           </ul>
-          <Disclosure label="OG streaks" meta="Open">
-            <p>Current 3 · Best 8</p>
+          <Disclosure
+            label="OG Daily records"
+            meta={`${completedDaily.filter((session) => session.mode === 'og').length} local`}
+          >
+            <p>Only completed Daily OG sessions found in this identity namespace are counted.</p>
           </Disclosure>
-          <Disclosure label="GO streaks" meta="Open">
-            <p>Current 1 · Best 4</p>
+          <Disclosure
+            label="GO Daily records"
+            meta={`${completedDaily.filter((session) => session.mode === 'go').length} local`}
+          >
+            <p>Only completed Daily GO sessions found in this identity namespace are counted.</p>
           </Disclosure>
         </aside>
       </div>

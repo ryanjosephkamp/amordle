@@ -144,8 +144,13 @@ describe('interactive Solo proof', () => {
                 appliedUnlockIds: [],
               },
               persistenceAvailable: true,
-              reward: () => undefined,
-              unlockDaily: () => 'invalid',
+              economyPending: false,
+              reward: async () => false,
+              unlockDaily: async () => 'invalid',
+              promoteDailyUnlock: () => false,
+              purchaseConsumable: async () => ({ ok: false, code: 'unavailable' }),
+              consumeConsumable: async () => ({ ok: false, code: 'unavailable' }),
+              spendCoins: async () => ({ ok: false, code: 'unavailable' }),
             }}
           >
             <RouterProvider router={router} />

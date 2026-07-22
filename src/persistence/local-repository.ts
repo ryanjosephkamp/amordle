@@ -109,7 +109,9 @@ export function createVersionedLocalRepository<T>(
     const safeScope = assertScope(scope);
     let raw: string | null;
     try {
-      raw = getStorage()?.getItem(storageKey(safeScope)) ?? null;
+      const storage = getStorage();
+      if (!storage) return { status: 'unavailable', error: new Error('Storage is unavailable.') };
+      raw = storage.getItem(storageKey(safeScope));
     } catch (error) {
       return { status: 'unavailable', error };
     }

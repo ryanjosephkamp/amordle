@@ -45,7 +45,7 @@ test('captures Checkpoint 1 Solo, Calendar, Word Explorer, and centered COMBAT e
   await capture(page, testInfo.outputPath('calendar-readable-lanes.png'));
 
   await page.goto('/word-explorer');
-  await expect(page.locator('.search-metadata')).toContainText(/^\d+ visible/);
+  await expect(page.locator('.search-metadata')).toContainText(/^\d+ matching valid words/);
   await expect(page.locator('.ruled-list .word-row').first()).toBeVisible();
   await expect(page.locator('.word-actions .button')).toHaveCount(2);
   await page.locator('.word-actions .button').nth(1).scrollIntoViewIfNeeded();
