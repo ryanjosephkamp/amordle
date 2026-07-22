@@ -35,7 +35,7 @@ test('captures Checkpoint 1 Solo, Calendar, Word Explorer, and centered COMBAT e
   await page.keyboard.press('Enter');
   await expect(page.getByText(/holding solved evidence/i)).toBeVisible();
   await capture(page, testInfo.outputPath('practice-go-solved-hold.png'));
-  await expect(page.getByRole('row', { name: 'P1 seeded evidence row' })).toBeVisible({
+  await expect(page.getByRole('row', { name: /P1 seeded evidence row/ })).toBeVisible({
     timeout: 3_500,
   });
   await capture(page, testInfo.outputPath('practice-go-prior-evidence.png'));

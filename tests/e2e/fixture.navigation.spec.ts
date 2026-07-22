@@ -219,7 +219,7 @@ test('Daily GO is canonical five-letter play and Practice GO auto-advances with 
   await page.keyboard.press('Enter');
   await expect(page.getByText(/holding solved evidence/i)).toBeVisible();
   await expect(page.getByText(/puzzle 2 \/ 5/i)).toBeVisible({ timeout: 3_500 });
-  await expect(page.getByRole('row', { name: 'P1 seeded evidence row' })).toBeVisible();
+  await expect(page.getByRole('row', { name: /P1 seeded evidence row/ })).toBeVisible();
   await expect(page.getByText('P1', { exact: true })).toBeVisible();
 });
 

@@ -385,6 +385,7 @@ function SoloRuntime({
   const [soundEnabled, setSoundEnabled] = useState(() =>
     readSoundEnabled(identity, typeof localStorage === 'undefined' ? undefined : localStorage),
   );
+  const [pressedKey, setPressedKey] = useState<string>();
   const navigate = useNavigate();
   const location = useLocation();
   const focus = new URLSearchParams(location.search).get('focus') === '1';
@@ -670,21 +671,28 @@ function SoloRuntime({
         session.status !== 'playing' ||
         (session.mode === 'go' && session.pendingAdvance)
       )
-        return;
+        return false;
       if (key === 'ENTER') {
         submit();
-        return;
+        return true;
       }
       const nextPuzzle = key === 'BACKSPACE' ? deleteLetter(current) : enterLetter(current, key);
-      if (nextPuzzle === current) return;
+      if (nextPuzzle === current) return false;
       if (persist(session.mode === 'go' ? updateGoPuzzle(session, nextPuzzle) : nextPuzzle)) {
         void soundEngine.play('keyboard-click', soundEnabled);
+        return true;
       }
+      return false;
     },
     [persist, session, soloActionsBlocked, soundEnabled, submit],
   );
 
   useEffect(() => {
+    const normalizedKey = (event: KeyboardEvent): string | undefined => {
+      if (event.key === 'Enter') return 'ENTER';
+      if (event.key === 'Backspace' || event.key === 'Delete') return 'BACKSPACE';
+      return /^[a-z]$/i.test(event.key) ? event.key.toUpperCase() : undefined;
+    };
     const listener = (event: KeyboardEvent) => {
       if (
         event.metaKey ||
@@ -694,19 +702,24 @@ function SoloRuntime({
         event.target instanceof HTMLTextAreaElement
       )
         return;
-      if (event.key === 'Enter') {
-        event.preventDefault();
-        onKey('ENTER');
-      } else if (event.key === 'Backspace' || event.key === 'Delete') {
-        event.preventDefault();
-        onKey('BACKSPACE');
-      } else if (/^[a-z]$/i.test(event.key)) {
-        event.preventDefault();
-        onKey(event.key.toUpperCase());
-      }
+      const key = normalizedKey(event);
+      if (!key) return;
+      event.preventDefault();
+      if (onKey(key)) setPressedKey(key);
     };
+    const release = (event: KeyboardEvent) => {
+      const key = normalizedKey(event);
+      if (key) setPressedKey((current) => (current === key ? undefined : current));
+    };
+    const clearPressed = () => setPressedKey(undefined);
     window.addEventListener('keydown', listener);
-    return () => window.removeEventListener('keydown', listener);
+    window.addEventListener('keyup', release);
+    window.addEventListener('blur', clearPressed);
+    return () => {
+      window.removeEventListener('keydown', listener);
+      window.removeEventListener('keyup', release);
+      window.removeEventListener('blur', clearPressed);
+    };
   }, [onKey]);
 
   useEffect(() => {
@@ -1258,7 +1271,11 @@ function SoloRuntime({
         </div>
         {session.status === 'playing' && !(session.mode === 'go' && session.pendingAdvance) ? (
           <>
-            <Keyboard evidence={keyboardEvidence as Record<string, TileState>} onKey={onKey} />
+            <Keyboard
+              evidence={keyboardEvidence as Record<string, TileState>}
+              pressedKey={pressedKey}
+              onKey={onKey}
+            />
             <TileLegend />
           </>
         ) : null}

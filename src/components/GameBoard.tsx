@@ -107,13 +107,16 @@ function normalizeKeyboardEvidence(
 export function Keyboard({
   evidence = {},
   disabled = false,
+  pressedKey,
   onKey,
 }: {
   evidence?: Record<string, TileState>;
   disabled?: boolean;
+  pressedKey?: string | undefined;
   onKey: (key: string) => void;
 }) {
   const normalizedEvidence = normalizeKeyboardEvidence(evidence);
+  const normalizedPressedKey = pressedKey?.toUpperCase();
   return (
     <div className="keyboard" role="group" aria-label="Game keyboard">
       {rows.map((letters, index) => (
@@ -123,9 +126,11 @@ export function Keyboard({
               type="button"
               onClick={() => onKey('ENTER')}
               disabled={disabled}
-              className="key key--wide"
+              className={`key key--wide ${normalizedPressedKey === 'ENTER' ? 'is-pressed' : ''}`}
+              data-key="ENTER"
+              data-pressed={normalizedPressedKey === 'ENTER' ? 'true' : undefined}
             >
-              Enter
+              <span className="key__legend">Enter</span>
             </button>
           ) : null}
           {[...letters].map((letter) => {
@@ -136,11 +141,13 @@ export function Keyboard({
                 type="button"
                 onClick={() => onKey(letter)}
                 disabled={disabled || state === 'removed'}
-                className={`key key--${state}`}
+                className={`key key--${state} ${normalizedPressedKey === letter ? 'is-pressed' : ''}`}
                 data-state={state}
+                data-key={letter}
+                data-pressed={normalizedPressedKey === letter ? 'true' : undefined}
                 aria-label={`${letter}${state !== 'empty' ? `, ${state}` : ''}`}
               >
-                {letter}
+                <span className="key__legend">{letter}</span>
               </button>
             );
           })}
@@ -149,10 +156,14 @@ export function Keyboard({
               type="button"
               onClick={() => onKey('BACKSPACE')}
               disabled={disabled}
-              className="key key--wide"
+              className={`key key--wide ${normalizedPressedKey === 'BACKSPACE' ? 'is-pressed' : ''}`}
+              data-key="BACKSPACE"
+              data-pressed={normalizedPressedKey === 'BACKSPACE' ? 'true' : undefined}
               aria-label="Backspace"
             >
-              <Icon name="backspace" />
+              <span className="key__legend key__legend--icon">
+                <Icon name="backspace" />
+              </span>
             </button>
           ) : null}
         </div>

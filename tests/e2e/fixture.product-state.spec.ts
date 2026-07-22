@@ -128,6 +128,19 @@ test('GO carry-over evidence consumes playable rows across the five-puzzle chain
   await expect(page.getByText('2 attempts remaining')).toBeVisible({ timeout: 5_000 });
   await expect(page.getByRole('row')).toHaveCount(6);
   await expect(page.getByRole('row', { name: /P4 seeded evidence row/ })).toBeVisible();
+
+  await page.goto('/play/practice/go?length=2&count=10');
+  await expect(page.getByRole('grid', { name: '2-letter word board' })).toBeVisible();
+  const tenPuzzleBudgets = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((candidate) =>
+      candidate.startsWith('amordle:solo:practice:go:active:2l:expert:normal:10p'),
+    );
+    const envelope = key ? JSON.parse(localStorage.getItem(key) ?? '{}') : {};
+    return Array.isArray(envelope?.payload?.puzzles)
+      ? envelope.payload.puzzles.map((puzzle: { maxAttempts?: unknown }) => puzzle.maxAttempts)
+      : [];
+  });
+  expect(tenPuzzleBudgets).toEqual([6, 5, 4, 3, 2, 2, 2, 2, 2, 2]);
 });
 
 test('terminal Solo is excluded from active lanes and retained in local History', async ({

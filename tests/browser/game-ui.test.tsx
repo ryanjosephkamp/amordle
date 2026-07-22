@@ -64,6 +64,26 @@ describe('code-native game controls', () => {
     }
   });
 
+  it('renders sculpted keycaps without changing evidence palette semantics', () => {
+    render(
+      <Keyboard
+        onKey={() => undefined}
+        pressedKey="A"
+        evidence={{ A: 'correct', B: 'present', C: 'absent', D: 'removed' }}
+      />,
+    );
+    const correct = screen.getByRole('button', { name: 'A, correct' });
+    const present = screen.getByRole('button', { name: 'B, present' });
+    const absent = screen.getByRole('button', { name: 'C, absent' });
+    expect(correct).toHaveAttribute('data-pressed', 'true');
+    expect(getComputedStyle(correct).getPropertyValue('--key-face').trim()).toBe('#176435');
+    expect(getComputedStyle(present).getPropertyValue('--key-face').trim()).toBe('#7b5209');
+    expect(getComputedStyle(absent).getPropertyValue('--key-face').trim()).toBe('#202527');
+    expect(Number.parseFloat(getComputedStyle(correct).borderRadius)).toBeGreaterThanOrEqual(5);
+    expect(getComputedStyle(correct).boxShadow).not.toBe('none');
+    expect(screen.getByRole('button', { name: 'D, removed' })).toBeDisabled();
+  });
+
   it('keeps attributed and open board rows on one centered tile matrix', () => {
     render(
       <div style={{ width: 480 }}>
@@ -249,6 +269,9 @@ describe('interactive Solo proof', () => {
       await screen.findByText(/\d+ attempts remaining/i, {}, { timeout: 5_000 })
     ).textContent;
     fireEvent.keyDown(window, { key: 'x' });
+    expect(screen.getByRole('button', { name: 'X' })).toHaveAttribute('data-pressed', 'true');
+    fireEvent.keyUp(window, { key: 'x' });
+    expect(screen.getByRole('button', { name: 'X' })).not.toHaveAttribute('data-pressed');
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(await screen.findByRole('status')).toHaveTextContent('exactly 5 letters');
     expect(screen.getByText(initialAttempts ?? '')).toBeInTheDocument();
