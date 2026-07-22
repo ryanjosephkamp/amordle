@@ -5,15 +5,12 @@ import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
 import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
-import {
-  GameBoard,
-  Keyboard,
-  TileLegend,
-  type Tile,
-  type TileState,
-} from '../../components/GameBoard';
+import { GameBoard, TileLegend, type Tile, type TileState } from '../../components/GameBoard';
 import { emptyRow } from '../../components/gameBoardData';
 import { Icon } from '../../components/Icon';
+import { Keyboard } from '../../components/keyboard/Keyboard';
+import type { KeyboardCommand } from '../../components/keyboard/keyboard-model';
+import { useKeyboardInput } from '../../components/keyboard/useKeyboardInput';
 import { StatusDot } from '../../components/Surface';
 import { canAccessDaily, dailyDateKey, isDateKey } from '../../domain/daily';
 import {
@@ -387,7 +384,6 @@ function SoloRuntime({
   const [soundEnabled, setSoundEnabled] = useState(() =>
     readSoundEnabled(identity, typeof localStorage === 'undefined' ? undefined : localStorage),
   );
-  const [pressedKey, setPressedKey] = useState<string>();
   const navigate = useNavigate();
   const location = useLocation();
   const focus = new URLSearchParams(location.search).get('focus') === '1';
@@ -665,7 +661,7 @@ function SoloRuntime({
   ]);
 
   const onKey = useCallback(
-    (key: string) => {
+    (key: KeyboardCommand) => {
       const current = activePuzzle(session);
       if (
         soloActionsBlocked ||
@@ -689,40 +685,14 @@ function SoloRuntime({
     [persist, session, soloActionsBlocked, soundEnabled, submit],
   );
 
-  useEffect(() => {
-    const normalizedKey = (event: KeyboardEvent): string | undefined => {
-      if (event.key === 'Enter') return 'ENTER';
-      if (event.key === 'Backspace' || event.key === 'Delete') return 'BACKSPACE';
-      return /^[a-z]$/i.test(event.key) ? event.key.toUpperCase() : undefined;
-    };
-    const listener = (event: KeyboardEvent) => {
-      if (
-        event.metaKey ||
-        event.ctrlKey ||
-        event.altKey ||
-        event.target instanceof HTMLInputElement ||
-        event.target instanceof HTMLTextAreaElement
-      )
-        return;
-      const key = normalizedKey(event);
-      if (!key) return;
-      event.preventDefault();
-      if (onKey(key)) setPressedKey(key);
-    };
-    const release = (event: KeyboardEvent) => {
-      const key = normalizedKey(event);
-      if (key) setPressedKey((current) => (current === key ? undefined : current));
-    };
-    const clearPressed = () => setPressedKey(undefined);
-    window.addEventListener('keydown', listener);
-    window.addEventListener('keyup', release);
-    window.addEventListener('blur', clearPressed);
-    return () => {
-      window.removeEventListener('keydown', listener);
-      window.removeEventListener('keyup', release);
-      window.removeEventListener('blur', clearPressed);
-    };
-  }, [onKey]);
+  const pressedKeys = useKeyboardInput({
+    disabled:
+      soloActionsBlocked ||
+      session.status !== 'playing' ||
+      puzzle.status !== 'playing' ||
+      (session.mode === 'go' && session.pendingAdvance !== undefined),
+    onCommand: onKey,
+  });
 
   useEffect(() => {
     if (session.mode !== 'go' || !session.pendingAdvance || session.status !== 'playing') return;
@@ -1351,8 +1321,8 @@ function SoloRuntime({
           <>
             <Keyboard
               evidence={keyboardEvidence as Record<string, TileState>}
-              pressedKey={pressedKey}
-              onKey={onKey}
+              pressedKeys={pressedKeys}
+              onCommand={onKey}
             />
             <TileLegend />
           </>

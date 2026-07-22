@@ -6,8 +6,14 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 
 import { AuthContext } from '../../src/app/auth-context';
 import { PlayerStateContext } from '../../src/app/player-state-context';
-import { GameBoard, Keyboard } from '../../src/components/GameBoard';
+import { GameBoard } from '../../src/components/GameBoard';
 import { emptyRow, tiles } from '../../src/components/gameBoardData';
+import { Keyboard } from '../../src/components/keyboard/Keyboard';
+import {
+  defineKeyboardLayout,
+  qwertyLayout,
+  type KeyboardCommand,
+} from '../../src/components/keyboard/keyboard-model';
 import { mergeKeyboardEvidence, scoreGuess } from '../../src/domain/game';
 import { createGoSession } from '../../src/domain/go';
 import { SoloGamePage } from '../../src/features/play/SoloGamePage';
@@ -40,7 +46,13 @@ describe('code-native game controls', () => {
     const received: string[] = [];
     const user = userEvent.setup();
     render(
-      <Keyboard onKey={(key) => received.push(key)} evidence={{ A: 'correct', B: 'removed' }} />,
+      <Keyboard
+        onCommand={(key) => {
+          received.push(key);
+          return true;
+        }}
+        evidence={{ A: 'correct', B: 'removed' }}
+      />,
     );
     await user.click(screen.getByRole('button', { name: 'A, correct' }));
     await user.click(screen.getByRole('button', { name: 'Enter' }));
@@ -54,7 +66,7 @@ describe('code-native game controls', () => {
       { tiles: scoreGuess('array', 'cigar') },
       { tiles: scoreGuess('cigar', 'cigar') },
     ]);
-    render(<Keyboard onKey={() => undefined} evidence={{ ...domainEvidence, A: 'absent' }} />);
+    render(<Keyboard onCommand={() => true} evidence={{ ...domainEvidence, A: 'absent' }} />);
 
     for (const letter of 'CIGAR') {
       expect(screen.getByRole('button', { name: `${letter}, correct` })).toHaveAttribute(
@@ -67,15 +79,15 @@ describe('code-native game controls', () => {
   it('renders sculpted keycaps without changing evidence palette semantics', () => {
     render(
       <Keyboard
-        onKey={() => undefined}
-        pressedKey="A"
+        onCommand={() => true}
+        pressedKeys={new Set<KeyboardCommand>(['A'])}
         evidence={{ A: 'correct', B: 'present', C: 'absent', D: 'removed' }}
       />,
     );
     const correct = screen.getByRole('button', { name: 'A, correct' });
     const present = screen.getByRole('button', { name: 'B, present' });
     const absent = screen.getByRole('button', { name: 'C, absent' });
-    expect(correct).toHaveAttribute('data-pressed', 'true');
+    expect(correct).toHaveAttribute('data-physical-pressed', 'true');
     expect(getComputedStyle(correct).getPropertyValue('--key-face').trim()).toBe('#176435');
     expect(getComputedStyle(present).getPropertyValue('--key-face').trim()).toBe('#7b5209');
     expect(getComputedStyle(absent).getPropertyValue('--key-face').trim()).toBe('#202527');
@@ -118,7 +130,7 @@ describe('code-native game controls', () => {
   it('keeps the touch keyboard bounded at 320px with practical key height', () => {
     render(
       <div data-testid="narrow-keyboard" style={{ width: 320 }}>
-        <Keyboard onKey={() => undefined} />
+        <Keyboard onCommand={() => true} />
       </div>,
     );
 
@@ -127,6 +139,48 @@ describe('code-native game controls', () => {
     expect(wrapper.scrollWidth).toBeLessThanOrEqual(wrapper.clientWidth + 1);
     expect(letter.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
     expect(getComputedStyle(letter).touchAction).toBe('manipulation');
+  });
+});
+
+describe('modular keyboard model', () => {
+  it('keeps command identity stable when a valid layout reorders key objects', async () => {
+    const reordered = defineKeyboardLayout({
+      ...qwertyLayout,
+      id: 'reordered-test-v1',
+      label: 'Reordered test layout',
+      rows: qwertyLayout.rows.map((row) => ({ ...row, keys: [...row.keys].reverse() })),
+    });
+    const received: KeyboardCommand[] = [];
+    const user = userEvent.setup();
+    render(
+      <Keyboard
+        layout={reordered}
+        onCommand={(command) => {
+          received.push(command);
+          return true;
+        }}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: 'Q' }));
+    expect(received).toEqual(['Q']);
+    expect(
+      screen.getByRole('group', { name: 'Reordered test layout game keyboard' }),
+    ).toHaveAttribute('data-keyboard-layout', 'reordered-test-v1');
+    expect(screen.getByRole('button', { name: 'Q' })).toHaveAttribute('data-key-id', 'letter-q');
+  });
+
+  it('provides inert visual effect surfaces without changing accessible names', () => {
+    render(
+      <Keyboard
+        cues={[{ id: 'cue-a', effect: 'press-glint', targets: ['letter-a'], sequenceIndex: 2 }]}
+        onCommand={() => true}
+      />,
+    );
+
+    const key = screen.getByRole('button', { name: 'A' });
+    expect(key).toHaveAttribute('data-effect', 'press-glint');
+    expect(key.querySelector('[data-effect-surface]')).toHaveAttribute('aria-hidden', 'true');
   });
 });
 
@@ -269,9 +323,12 @@ describe('interactive Solo proof', () => {
       await screen.findByText(/\d+ attempts remaining/i, {}, { timeout: 5_000 })
     ).textContent;
     fireEvent.keyDown(window, { key: 'x' });
-    expect(screen.getByRole('button', { name: 'X' })).toHaveAttribute('data-pressed', 'true');
+    expect(screen.getByRole('button', { name: 'X' })).toHaveAttribute(
+      'data-physical-pressed',
+      'true',
+    );
     fireEvent.keyUp(window, { key: 'x' });
-    expect(screen.getByRole('button', { name: 'X' })).not.toHaveAttribute('data-pressed');
+    expect(screen.getByRole('button', { name: 'X' })).not.toHaveAttribute('data-physical-pressed');
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(await screen.findByRole('status')).toHaveTextContent('exactly 5 letters');
     expect(screen.getByText(initialAttempts ?? '')).toBeInTheDocument();

@@ -1,10 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
-import { GameBoard, Keyboard, TileLegend, type TileState } from '../../components/GameBoard';
+import { GameBoard, TileLegend, type TileState } from '../../components/GameBoard';
 import { emptyRow, tiles } from '../../components/gameBoardData';
 import { Icon } from '../../components/Icon';
+import { Keyboard } from '../../components/keyboard/Keyboard';
+import type { KeyboardCommand } from '../../components/keyboard/keyboard-model';
+import { useKeyboardInput } from '../../components/keyboard/useKeyboardInput';
 import { Metric, StatusDot } from '../../components/Surface';
 
 const defaultSharedRows = [
@@ -69,18 +72,28 @@ export function CombatMatchPage() {
     }
     return values;
   }, [sharedRows]);
-  const onKey = (key: string) => {
-    if (daily || submitted) return;
-    if (key === 'BACKSPACE') setDraft((value) => value.slice(0, -1));
-    else if (key === 'ENTER') {
-      if (draft.length !== length)
-        setMessage(`Guess must contain exactly ${length} letters. Attempt not consumed.`);
-      else {
-        setSubmitted(true);
-        setMessage('Move accepted and saved. Waiting for rival.');
+  const onKey = useCallback(
+    (key: KeyboardCommand) => {
+      if (daily || submitted) return false;
+      if (key === 'BACKSPACE') {
+        if (draft.length === 0) return false;
+        setDraft((value) => value.slice(0, -1));
+      } else if (key === 'ENTER') {
+        if (draft.length !== length)
+          setMessage(`Guess must contain exactly ${length} letters. Attempt not consumed.`);
+        else {
+          setSubmitted(true);
+          setMessage('Move accepted and saved. Waiting for rival.');
+        }
+      } else {
+        if (draft.length >= length) return false;
+        setDraft((value) => `${value}${key}`);
       }
-    } else setDraft((value) => (value.length < length ? `${value}${key}` : value));
-  };
+      return true;
+    },
+    [daily, draft.length, length, submitted],
+  );
+  const pressedKeys = useKeyboardInput({ disabled: daily || submitted, onCommand: onKey });
 
   return (
     <div className="combat-match">
@@ -114,7 +127,12 @@ export function CombatMatchPage() {
         <p className="game-message" role="status">
           {message}
         </p>
-        <Keyboard evidence={evidence} disabled={daily || submitted} onKey={onKey} />
+        <Keyboard
+          evidence={evidence}
+          disabled={daily || submitted}
+          pressedKeys={pressedKeys}
+          onCommand={onKey}
+        />
         <TileLegend />
         <Disclosure label="Match details" meta={daily ? 'Ranked Daily · UTC' : 'Ranked Practice'}>
           <p>

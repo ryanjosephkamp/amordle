@@ -4,6 +4,9 @@ import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   plugins: [react()],
+  optimizeDeps: {
+    include: ['react-aria-components'],
+  },
   test: {
     include: ['tests/browser/**/*.test.tsx'],
     setupFiles: ['./tests/browser/setup.ts'],
