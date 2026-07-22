@@ -80,7 +80,6 @@ function Keycap({
       data-key-id={spec.id}
       data-key-kind={spec.kind}
       data-state={state}
-      data-pressed={physicallyPressed ? 'true' : undefined}
       data-physical-pressed={physicallyPressed ? 'true' : undefined}
       data-effect={cue?.effect}
       data-effect-sequence={cue?.sequenceIndex}
@@ -89,7 +88,9 @@ function Keycap({
       <span className={styles.face} aria-hidden="true" />
       <span className={styles.legend} aria-hidden="true">
         {spec.kind === 'backspace' ? <Icon name="backspace" /> : spec.legend}
-        {spec.tactileMarker === 'home' ? <span className={styles.tactileMarker} /> : null}
+        {spec.tactileMarker === 'home' ? (
+          <span className={styles.tactileMarker} data-tactile-marker="home" />
+        ) : null}
       </span>
       <span className={styles.effectSurface} aria-hidden="true" data-effect-surface="true" />
     </AriaButton>

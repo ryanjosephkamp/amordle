@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { cleanup, fireEvent, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { createMemoryRouter, RouterProvider } from 'react-router';
@@ -19,6 +19,7 @@ import { createGoSession } from '../../src/domain/go';
 import { SoloGamePage } from '../../src/features/play/SoloGamePage';
 import { soundEngine } from '../../src/services/sound-controller';
 import { wordListProvider } from '../../src/services/word-list-provider';
+import { KeyboardInputLab, KeyboardLab } from './KeyboardLab';
 import '../../src/styles/global.css';
 
 afterEach(() => {
@@ -181,6 +182,85 @@ describe('modular keyboard model', () => {
     const key = screen.getByRole('button', { name: 'A' });
     expect(key).toHaveAttribute('data-effect', 'press-glint');
     expect(key.querySelector('[data-effect-surface]')).toHaveAttribute('aria-hidden', 'true');
+  });
+
+  it('renders the test-only Keyboard Lab state sheet and alternate layout', () => {
+    render(<KeyboardLab />);
+
+    const stateSheet = within(screen.getByRole('region', { name: 'Keyboard state sheet' }));
+    expect(stateSheet.getByRole('button', { name: 'A, correct' })).toHaveAttribute(
+      'data-state',
+      'correct',
+    );
+    expect(stateSheet.getByRole('button', { name: 'B, present' })).toHaveAttribute(
+      'data-state',
+      'present',
+    );
+    expect(stateSheet.getByRole('button', { name: 'C, absent' })).toHaveAttribute(
+      'data-state',
+      'absent',
+    );
+    expect(stateSheet.getByRole('button', { name: 'D, removed' })).toBeDisabled();
+    expect(stateSheet.getByRole('button', { name: 'E' })).toHaveAttribute(
+      'data-physical-pressed',
+      'true',
+    );
+    expect(stateSheet.getByRole('button', { name: 'F' })).toHaveAttribute(
+      'data-effect',
+      'press-glint',
+    );
+    expect(
+      stateSheet.getByRole('button', { name: 'F' }).querySelector('[data-tactile-marker]'),
+    ).toBeTruthy();
+    expect(
+      within(screen.getByRole('region', { name: 'Disabled keyboard state' })).getByRole('button', {
+        name: 'Enter',
+      }),
+    ).toBeDisabled();
+    expect(
+      within(screen.getByRole('region', { name: 'Alternate keyboard layout' })).getByRole('group'),
+    ).toHaveAttribute('data-keyboard-layout', 'reordered-lab-v1');
+  });
+
+  it('clears physical key objects on keyup, blur, and disabled transitions', async () => {
+    const onCommand = vi.fn(() => true);
+    const { rerender } = render(<KeyboardInputLab onCommand={onCommand} />);
+
+    fireEvent.keyDown(window, { key: 'a' });
+    expect(screen.getByRole('button', { name: 'A' })).toHaveAttribute(
+      'data-physical-pressed',
+      'true',
+    );
+    fireEvent.keyUp(window, { key: 'a' });
+    expect(screen.getByRole('button', { name: 'A' })).not.toHaveAttribute('data-physical-pressed');
+
+    fireEvent.keyDown(window, { key: 'b' });
+    fireEvent(window, new Event('blur'));
+    expect(screen.getByRole('button', { name: 'B' })).not.toHaveAttribute('data-physical-pressed');
+
+    fireEvent.keyDown(window, { key: 'c' });
+    rerender(<KeyboardInputLab disabled onCommand={onCommand} />);
+    expect(screen.getByRole('button', { name: 'C' })).not.toHaveAttribute('data-physical-pressed');
+    rerender(<KeyboardInputLab onCommand={onCommand} />);
+    await waitFor(() =>
+      expect(screen.getByRole('button', { name: 'C' })).not.toHaveAttribute(
+        'data-physical-pressed',
+      ),
+    );
+  });
+
+  it('exposes React Aria focus and pointer commands on each key object', async () => {
+    const onCommand = vi.fn(() => true);
+    render(<Keyboard onCommand={onCommand} />);
+    const key = screen.getByRole('button', { name: 'Q' });
+    const user = userEvent.setup();
+
+    await user.click(key);
+    expect(onCommand).toHaveBeenCalledWith('Q');
+
+    key.blur();
+    await user.tab();
+    expect(key).toHaveAttribute('data-focus-visible', 'true');
   });
 });
 

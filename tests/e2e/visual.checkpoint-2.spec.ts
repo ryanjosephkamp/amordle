@@ -88,7 +88,7 @@ test('captures the sculpted keyboard and corrected GO attempt budget', async ({
 
   await page.goto('/play/practice/og?length=5');
   await expect(page.locator('.keyboard')).toBeVisible({ timeout: 15_000 });
-  await expect(page.locator('.key').first()).toHaveCSS('border-radius', /5px|7px/);
+  await expect(page.locator('.key').first()).toHaveCSS('border-radius', '6px');
   if ((page.viewportSize()?.width ?? 1_000) <= 760) {
     const enter = page.locator('.key[data-key="ENTER"]');
     await enter.scrollIntoViewIfNeeded();
@@ -101,10 +101,10 @@ test('captures the sculpted keyboard and corrected GO attempt budget', async ({
   await captureGameplay('keyboard-neutral');
 
   await page.keyboard.down('a');
-  await expect(page.locator('.key[data-key="A"]')).toHaveAttribute('data-pressed', 'true');
+  await expect(page.locator('.key[data-key="A"]')).toHaveAttribute('data-physical-pressed', 'true');
   await captureGameplay('keyboard-physical-press');
   await page.keyboard.up('a');
-  await expect(page.locator('.key[data-key="A"]')).not.toHaveAttribute('data-pressed');
+  await expect(page.locator('.key[data-key="A"]')).not.toHaveAttribute('data-physical-pressed');
 
   await page.goto('/play/daily/go');
   await expect(page.getByText('6 attempts remaining')).toBeVisible({ timeout: 15_000 });

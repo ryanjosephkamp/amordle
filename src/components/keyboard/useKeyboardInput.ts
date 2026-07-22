@@ -32,8 +32,7 @@ export function useKeyboardInput({
 
   useEffect(() => {
     if (!disabled) return;
-    const timer = window.setTimeout(() => setPressedKeys(emptyPressedKeys), 0);
-    return () => window.clearTimeout(timer);
+    queueMicrotask(() => setPressedKeys(emptyPressedKeys));
   }, [disabled]);
 
   useEffect(() => {
