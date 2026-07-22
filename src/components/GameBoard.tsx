@@ -43,7 +43,7 @@ export function GameBoard({
                 actor
                   ? `${actor} guess ${rowIndex + 1}`
                   : rowLabel
-                    ? `${rowLabel} seeded evidence row`
+                    ? `${rowLabel} seeded evidence row; consumes one GO attempt slot`
                     : `Guess ${rowIndex + 1}`
               }
             >

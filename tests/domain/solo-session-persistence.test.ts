@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { createOgSession } from '../../src/domain/game';
-import { createGoSession, submitGoGuess } from '../../src/domain/go';
+import { createGoSession, needsGoAttemptPolicyRestart, submitGoGuess } from '../../src/domain/go';
 import { createMemoryStorage } from '../../src/persistence/local-repository';
 import { createSoloSessionRepository } from '../../src/features/play/solo-session-repository';
 
@@ -62,8 +62,10 @@ describe('Solo session persistence', () => {
     const submitted = submitGoGuess(created, 'apple', new Set(answers), at);
     if (!submitted.ok) throw new Error('GO persistence fixture failed.');
     const legacy = structuredClone(submitted.session) as unknown as {
+      attemptPolicyVersion?: string;
       pendingAdvance: Record<string, unknown>;
     };
+    delete legacy.attemptPolicyVersion;
     legacy.pendingAdvance = { solvedPuzzleIndex: 0, nextPuzzleIndex: 1, solvedAt: at };
 
     const storage = createMemoryStorage();
@@ -89,9 +91,16 @@ describe('Solo session persistence', () => {
             holdStartedAt: at,
             autoAdvanceAt: '2026-07-22T12:00:02.000Z',
           },
+          attemptPolicyVersion: 'fixed-v0',
         },
       },
     });
+    const loaded = repository.load(guest);
+    expect(
+      loaded.status === 'ok' &&
+        loaded.envelope.payload.mode === 'go' &&
+        needsGoAttemptPolicyRestart(loaded.envelope.payload),
+    ).toBe(true);
   });
 
   it('reports unavailable storage distinctly from an empty lane', () => {

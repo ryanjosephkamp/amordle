@@ -84,6 +84,52 @@ test('a real local Solo lane appears in Home and Play without exposing its answe
   await expect(page.locator('main')).not.toContainText(answer.toUpperCase());
 });
 
+test('GO carry-over evidence consumes playable rows across the five-puzzle chain', async ({
+  page,
+}) => {
+  test.setTimeout(45_000);
+  await page.goto('/play/practice/go?length=2&count=5');
+  await expect(page.getByRole('grid', { name: '2-letter word board' })).toBeVisible({
+    timeout: 15_000,
+  });
+
+  const solveCurrentPuzzle = async () => {
+    await expect(page.locator('.keyboard')).toBeVisible();
+    const answer = await page.evaluate(() => {
+      const key = Object.keys(localStorage).find((candidate) =>
+        candidate.startsWith('amordle:solo:practice:go:active:2l'),
+      );
+      const envelope = key ? JSON.parse(localStorage.getItem(key) ?? '{}') : {};
+      const index = envelope?.payload?.currentPuzzleIndex;
+      return typeof index === 'number' && typeof envelope?.payload?.answers?.[index] === 'string'
+        ? envelope.payload.answers[index]
+        : '';
+    });
+    expect(answer).toMatch(/^[a-z]{2}$/);
+    await page.keyboard.type(answer);
+    await page.keyboard.press('Enter');
+    await expect(page.locator('.game-transition-band.is-active')).toBeVisible();
+  };
+
+  await expect(page.getByText('6 attempts remaining')).toBeVisible();
+  await solveCurrentPuzzle();
+  await expect(page.getByText('5 attempts remaining')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('row', { name: /P1 seeded evidence row/ })).toBeVisible();
+
+  await solveCurrentPuzzle();
+  await expect(page.getByText('4 attempts remaining')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('row')).toHaveCount(6);
+  await expect(page.getByRole('row', { name: /P2 seeded evidence row/ })).toBeVisible();
+
+  await solveCurrentPuzzle();
+  await expect(page.getByText('3 attempts remaining')).toBeVisible({ timeout: 5_000 });
+
+  await solveCurrentPuzzle();
+  await expect(page.getByText('2 attempts remaining')).toBeVisible({ timeout: 5_000 });
+  await expect(page.getByRole('row')).toHaveCount(6);
+  await expect(page.getByRole('row', { name: /P4 seeded evidence row/ })).toBeVisible();
+});
+
 test('terminal Solo is excluded from active lanes and retained in local History', async ({
   page,
 }) => {

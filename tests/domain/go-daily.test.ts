@@ -1,14 +1,17 @@
 import { describe, expect, it } from 'vitest';
 import fc from 'fast-check';
 
+import { scoreGuess } from '../../src/domain/game';
 import {
   advanceGoSession,
   autoAdvanceGoSession,
   createGoSession,
   dailyGoStreamKey,
+  goAttemptBudget,
   goAutoAdvanceRemainingDelay,
   goAnswerGenerationVersion,
   goPriorSeededEvidence,
+  needsGoAttemptPolicyRestart,
   revealGoAnswer,
   restoreGoSession,
   selectDailyGoAnswers,
@@ -32,6 +35,39 @@ const at = '2026-07-21T12:00:00.000Z';
 const answers = ['apple', 'baker', 'cider', 'delta', 'ember'];
 
 describe('GO state and selection', () => {
+  it.each([
+    [5, [6, 5, 4, 3, 2]],
+    [7, [6, 5, 4, 3, 2, 2, 2]],
+    [10, [6, 5, 4, 3, 2, 2, 2, 2, 2, 2]],
+  ] as const)(
+    'allocates the canonical playable attempt budget for %i puzzles',
+    (count, expected) => {
+      const chain = Array.from({ length: count }, (_, index) => {
+        const first = String.fromCharCode(97 + Math.floor(index / 26));
+        const second = String.fromCharCode(97 + (index % 26));
+        return `${first}${second}aaa`;
+      });
+      const session = createGoSession({
+        id: `go-budget-${count}`,
+        answers: chain,
+        scope: 'practice',
+        now: at,
+      });
+      expect(session.puzzles.map((puzzle) => puzzle.maxAttempts)).toEqual(expected);
+    },
+  );
+
+  it('keeps the GO attempt budget non-increasing with a two-attempt floor', () => {
+    fc.assert(
+      fc.property(fc.integer({ min: 0, max: 1_000 }), (index) => {
+        expect(goAttemptBudget(index)).toBeGreaterThanOrEqual(2);
+        expect(goAttemptBudget(index + 1)).toBeLessThanOrEqual(goAttemptBudget(index));
+      }),
+    );
+    expect(() => goAttemptBudget(-1)).toThrow(RangeError);
+    expect(() => goAttemptBudget(1.5)).toThrow(RangeError);
+  });
+
   it('persists a solved hold and auto-advances exactly when its deadline arrives', () => {
     const session = createGoSession({ id: 'go-1', answers, scope: 'practice', now: at });
     const result = submitGoGuess(session, 'apple', new Set(answers), at);
@@ -162,7 +198,7 @@ describe('GO state and selection', () => {
     ).toEqual({ answers: stored, answerGenerationVersion: 'v1', source: 'stored' });
   });
 
-  it('projects prior answers as scored, non-attempt seeded evidence', () => {
+  it('projects prior answers as scored slot-consuming evidence, not player guesses', () => {
     const first = createGoSession({ id: 'seeded', answers, scope: 'practice', now: at });
     const solved = submitGoGuess(first, 'apple', new Set(answers), at);
     if (!solved.ok) throw new Error('seeded fixture failed');
@@ -171,11 +207,62 @@ describe('GO state and selection', () => {
       expect.objectContaining({
         kind: 'prior-answer',
         sourcePuzzleIndex: 0,
-        countsAsAttempt: false,
+        consumesAttemptSlot: true,
+        countsAsPlayerGuess: false,
         guess: 'apple',
       }),
     ]);
     expect(advanced.puzzles[1]?.guesses).toHaveLength(0);
+    expect(advanced.puzzles[1]?.maxAttempts).toBe(5);
+  });
+
+  it('recognizes legacy fixed-budget active chains without corrupting terminal history', () => {
+    const current = createGoSession({
+      id: 'go-attempt-migration',
+      answers,
+      scope: 'practice',
+      now: at,
+    });
+    const legacy = structuredClone(current) as unknown as { attemptPolicyVersion?: string };
+    delete legacy.attemptPolicyVersion;
+    const restored = restoreGoSession(legacy);
+    expect(restored?.attemptPolicyVersion).toBe('fixed-v0');
+    expect(restored && needsGoAttemptPolicyRestart(restored)).toBe(true);
+
+    const completed = {
+      ...restored!,
+      status: 'won' as const,
+      currentPuzzleIndex: restored!.puzzles.length - 1,
+      priorAnswers: restored!.answers.slice(0, -1),
+      puzzles: restored!.puzzles.map((puzzle) => ({
+        ...puzzle,
+        guesses: [
+          {
+            guess: puzzle.answer,
+            tiles: scoreGuess(puzzle.answer, puzzle.answer),
+            submittedAt: at,
+          },
+        ],
+        status: 'won' as const,
+      })),
+    };
+    expect(needsGoAttemptPolicyRestart(completed)).toBe(false);
+  });
+
+  it('rejects a current-policy session whose stored puzzle budgets were tampered with', () => {
+    const session = createGoSession({
+      id: 'go-budget-tamper',
+      answers,
+      scope: 'practice',
+      now: at,
+    });
+    const tampered = {
+      ...structuredClone(session),
+      puzzles: session.puzzles.map((puzzle, index) =>
+        index === 2 ? { ...puzzle, maxAttempts: 6 } : puzzle,
+      ),
+    };
+    expect(restoreGoSession(tampered)).toBeUndefined();
   });
 
   it('applies carried prior-answer evidence to GO Hard Mode', () => {

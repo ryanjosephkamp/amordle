@@ -23,8 +23,19 @@ import {
 
 export type GoPuzzleCount = 5 | 7 | 10;
 export type GoAnswerGenerationVersion = 'v1' | 'v2';
+export type GoAttemptPolicyVersion = 'fixed-v0' | 'carryover-consumes-v1';
 export const GO_DAILY_V2_CUTOFF_DATE_KEY = '2026-07-14';
 export const GO_SOLVED_HOLD_MS = 2_000;
+export const GO_ATTEMPT_POLICY_VERSION = 'carryover-consumes-v1' as const;
+export const GO_INITIAL_ATTEMPTS = 6;
+export const GO_MINIMUM_ATTEMPTS = 2;
+
+export function goAttemptBudget(puzzleIndex: number): number {
+  if (!Number.isInteger(puzzleIndex) || puzzleIndex < 0) {
+    throw new RangeError('GO puzzle index must be a non-negative integer.');
+  }
+  return Math.max(GO_MINIMUM_ATTEMPTS, GO_INITIAL_ATTEMPTS - puzzleIndex);
+}
 
 export interface GoAdvance {
   readonly solvedPuzzleIndex: number;
@@ -36,7 +47,8 @@ export interface GoAdvance {
 export interface GoSeededEvidenceRow extends ScoredGuess {
   readonly kind: 'prior-answer';
   readonly sourcePuzzleIndex: number;
-  readonly countsAsAttempt: false;
+  readonly consumesAttemptSlot: true;
+  readonly countsAsPlayerGuess: false;
 }
 
 export interface GoSession {
@@ -46,6 +58,7 @@ export interface GoSession {
   readonly scope: GameScope;
   readonly difficulty: Difficulty;
   readonly hardMode: boolean;
+  readonly attemptPolicyVersion: GoAttemptPolicyVersion;
   readonly answerGenerationVersion: GoAnswerGenerationVersion;
   readonly answers: readonly string[];
   readonly puzzles: readonly OgSession[];
@@ -101,7 +114,10 @@ export function createGoSession(input: CreateGoSessionInput): GoSession {
       scope: input.scope,
       ...(input.difficulty !== undefined ? { difficulty: input.difficulty } : {}),
       ...(input.hardMode !== undefined ? { hardMode: input.hardMode } : {}),
-      ...(input.maxAttempts !== undefined ? { maxAttempts: input.maxAttempts } : {}),
+      maxAttempts:
+        input.maxAttempts !== undefined
+          ? Math.max(GO_MINIMUM_ATTEMPTS, input.maxAttempts - index)
+          : goAttemptBudget(index),
       ...(input.now !== undefined ? { now: input.now } : {}),
     };
     return createOgSession(puzzleInput);
@@ -115,6 +131,7 @@ export function createGoSession(input: CreateGoSessionInput): GoSession {
     scope: input.scope,
     difficulty: input.difficulty ?? 'expert',
     hardMode: input.hardMode ?? false,
+    attemptPolicyVersion: GO_ATTEMPT_POLICY_VERSION,
     answerGenerationVersion: input.answerGenerationVersion ?? 'v2',
     answers,
     puzzles,
@@ -138,7 +155,8 @@ export function goPriorSeededEvidence(session: GoSession): readonly GoSeededEvid
   return session.priorAnswers.map((answer, index) => ({
     kind: 'prior-answer',
     sourcePuzzleIndex: index,
-    countsAsAttempt: false,
+    consumesAttemptSlot: true,
+    countsAsPlayerGuess: false,
     guess: answer,
     tiles: scoreGuess(answer, puzzle.answer),
     submittedAt: session.puzzles[index]?.updatedAt ?? session.createdAt,
@@ -470,6 +488,10 @@ const goSessionSchema = z.object({
   scope: z.enum(['daily', 'practice']),
   difficulty: z.enum(['casual', 'standard', 'expert']),
   hardMode: z.boolean(),
+  attemptPolicyVersion: z
+    .enum(['fixed-v0', GO_ATTEMPT_POLICY_VERSION])
+    .optional()
+    .default('fixed-v0'),
   answerGenerationVersion: z.enum(['v1', 'v2']),
   answers: z.array(z.string()).min(1),
   puzzles: z.array(z.unknown()).min(1),
@@ -523,7 +545,12 @@ export function restoreGoSession(value: unknown): GoSession | undefined {
     puzzles: puzzles as OgSession[],
     ...(pendingAdvance ? { pendingAdvance } : {}),
   } as GoSession;
+  const attemptPolicyIsValid = session.puzzles.every((puzzle, index) => {
+    if (session.attemptPolicyVersion === 'fixed-v0') return true;
+    return puzzle.maxAttempts === goAttemptBudget(index) + puzzle.continuationCount;
+  });
   if (
+    !attemptPolicyIsValid ||
     session.answers.length !== session.puzzles.length ||
     session.currentPuzzleIndex >= session.puzzles.length ||
     session.answers.some((answer, index) => answer !== session.puzzles[index]?.answer) ||
@@ -543,6 +570,14 @@ export function restoreGoSession(value: unknown): GoSession | undefined {
   }
   // Legacy serialized answers are deliberately accepted unchanged; only new-chain creation enforces uniqueness.
   return session;
+}
+
+export function needsGoAttemptPolicyRestart(session: GoSession): boolean {
+  return (
+    session.attemptPolicyVersion === 'fixed-v0' &&
+    (session.status === 'playing' ||
+      (session.scope === 'practice' && session.status === 'lost' && !session.revealedAnswer))
+  );
 }
 
 export function serializeGoSession(session: GoSession): string {

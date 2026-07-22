@@ -37,6 +37,7 @@ import {
   goAnswerGenerationVersion,
   goKeyboardEvidence,
   goPriorSeededEvidence,
+  needsGoAttemptPolicyRestart,
   revealGoAnswer,
   selectDailyGoAnswers,
   selectDeterministicChain,
@@ -319,6 +320,7 @@ function SoloRuntime({
     const restored = fromCloud && cloudSession ? cloudSession : localSession;
     if (restored) {
       const puzzle = activePuzzle(restored);
+      const legacyRestartNeeded = restored.mode === 'go' && needsGoAttemptPolicyRestart(restored);
       const dailyConfigurationLocked =
         config.scope === 'daily' && (puzzle.guesses.length > 0 || restored.status !== 'playing');
       if (
@@ -334,6 +336,7 @@ function SoloRuntime({
           restored: true,
           fromCloud,
           generation: practiceGeneration,
+          legacyRestartNeeded,
         };
       }
       return {
@@ -342,6 +345,7 @@ function SoloRuntime({
         restored: false,
         fromCloud: false,
         generation: practiceGeneration,
+        legacyRestartNeeded: false,
       };
     }
     return {
@@ -350,6 +354,7 @@ function SoloRuntime({
       restored: false,
       fromCloud: false,
       generation: practiceGeneration,
+      legacyRestartNeeded: false,
     };
   }, [cloud, config, generationLane, identity, repository, wordList]);
   const [session, setSession] = useState(initial.session);
@@ -357,9 +362,11 @@ function SoloRuntime({
   const continuationRecoveryInFlight = useRef(false);
   const consumableRecoveryInFlight = useRef(false);
   const [message, setMessage] = useState(
-    initial.restored
-      ? 'Saved session restored from this account namespace.'
-      : 'Enter a valid word. Attempts are not consumed by rejected guesses.',
+    initial.legacyRestartNeeded
+      ? 'GO attempt rules were updated. This active chain will restart after durable actions recover.'
+      : initial.restored
+        ? 'Saved session restored from this account namespace.'
+        : 'Enter a valid word. Attempts are not consumed by rejected guesses.',
   );
   const [confirmReveal, setConfirmReveal] = useState(false);
   const [terminalFinalized, setTerminalFinalized] = useState(() =>
@@ -373,7 +380,8 @@ function SoloRuntime({
     const pending = consumableIntentCoordinator.pending();
     return !pending.ok || pending.value !== undefined;
   });
-  const soloActionsBlocked = continuationBlocked || consumableBlocked;
+  const [legacyRestartPending, setLegacyRestartPending] = useState(initial.legacyRestartNeeded);
+  const soloActionsBlocked = continuationBlocked || consumableBlocked || legacyRestartPending;
   const [soundEnabled, setSoundEnabled] = useState(() =>
     readSoundEnabled(identity, typeof localStorage === 'undefined' ? undefined : localStorage),
   );
@@ -979,6 +987,58 @@ function SoloRuntime({
     if (economyPending || continuationBlocked) return;
     void reconcileConsumableIntent();
   }, [consumableIntentCoordinator, continuationBlocked, economyPending, reconcileConsumableIntent]);
+
+  useEffect(() => {
+    if (
+      !legacyRestartPending ||
+      session.mode !== 'go' ||
+      !needsGoAttemptPolicyRestart(session) ||
+      continuationBlocked ||
+      consumableBlocked ||
+      economyPending
+    ) {
+      return;
+    }
+    let restartGeneration = initial.generation;
+    if (config.scope === 'practice') {
+      const currentGeneration = currentPracticeGeneration(identity, generationLane);
+      restartGeneration = currentGeneration + 1;
+      if (
+        !commitPracticeGeneration(identity, generationLane, currentGeneration, restartGeneration)
+      ) {
+        setMessage(
+          'The corrected GO chain could not reserve a new Practice generation. Reload to retry; the saved chain is unchanged.',
+        );
+        return;
+      }
+    }
+    const restarted = createSession(config, wordList, restartGeneration);
+    if (!persist(restarted)) {
+      setMessage(
+        'The corrected GO chain could not replace the saved lane. Reload to retry; no reward or history entry was created.',
+      );
+      return;
+    }
+    setLegacyRestartPending(false);
+    setTerminalFinalized(false);
+    setMessage(
+      config.scope === 'daily'
+        ? 'GO attempt rules updated. This Daily chain restarted with its canonical answers.'
+        : 'GO attempt rules updated. A new deterministic Practice chain is ready.',
+    );
+  }, [
+    config,
+    consumableBlocked,
+    continuationBlocked,
+    economyPending,
+    generationLane,
+    identity,
+    initial.generation,
+    legacyRestartPending,
+    persist,
+    session,
+    wordList,
+  ]);
 
   const continueAfterLoss = async () => {
     if (

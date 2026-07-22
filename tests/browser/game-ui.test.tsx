@@ -9,6 +9,7 @@ import { PlayerStateContext } from '../../src/app/player-state-context';
 import { GameBoard, Keyboard } from '../../src/components/GameBoard';
 import { emptyRow, tiles } from '../../src/components/gameBoardData';
 import { mergeKeyboardEvidence, scoreGuess } from '../../src/domain/game';
+import { createGoSession } from '../../src/domain/go';
 import { SoloGamePage } from '../../src/features/play/SoloGamePage';
 import { soundEngine } from '../../src/services/sound-controller';
 import { wordListProvider } from '../../src/services/word-list-provider';
@@ -110,6 +111,92 @@ describe('code-native game controls', () => {
 });
 
 describe('interactive Solo proof', () => {
+  it('restarts an active legacy GO lane with the corrected budgets', async () => {
+    const answers = ['crane', 'stare', 'cider', 'delta', 'ember'];
+    const legacy = {
+      ...createGoSession({
+        id: 'legacy-practice-go',
+        answers,
+        scope: 'practice',
+        now: '2026-07-22T12:00:00.000Z',
+      }),
+      puzzles: createGoSession({
+        id: 'legacy-practice-go',
+        answers,
+        scope: 'practice',
+        now: '2026-07-22T12:00:00.000Z',
+      }).puzzles.map((puzzle) => ({ ...puzzle, maxAttempts: 6 })),
+    } as Record<string, unknown>;
+    delete legacy.attemptPolicyVersion;
+    localStorage.setItem(
+      'amordle:solo:practice:go:active:5l:expert:normal:5p:guest',
+      JSON.stringify({
+        schemaVersion: 1,
+        owner: { kind: 'guest' },
+        revision: 3,
+        updatedAt: '2026-07-22T12:00:00.000Z',
+        payload: legacy,
+      }),
+    );
+    vi.spyOn(wordListProvider, 'load').mockResolvedValue({
+      schemaVersion: 1,
+      revision: 'browser-go-restart-v1',
+      wordLength: 5,
+      answers: { casual: answers, standard: answers, expert: answers },
+      validGuesses: answers,
+    });
+    const router = createMemoryRouter([{ path: '/play/:scope/:mode', Component: SoloGamePage }], {
+      initialEntries: ['/play/practice/go'],
+    });
+    const queryClient = new QueryClient({ defaultOptions: { queries: { retry: false } } });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <AuthContext.Provider
+          value={{
+            client: null,
+            service: null,
+            user: null,
+            status: 'unconfigured',
+            identity: { kind: 'guest' },
+          }}
+        >
+          <PlayerStateContext.Provider
+            value={{
+              progression: {
+                xp: 0,
+                coins: 0,
+                rewardedGameIds: [],
+                unlockedDailies: [],
+                appliedUnlockIds: [],
+              },
+              persistenceAvailable: true,
+              economyPending: false,
+              reward: async () => false,
+              unlockDaily: async () => 'invalid',
+              promoteDailyUnlock: () => false,
+              purchaseConsumable: async () => ({ ok: false, code: 'unavailable' }),
+              consumeConsumable: async () => ({ ok: false, code: 'unavailable' }),
+              spendCoins: async () => ({ ok: false, code: 'unavailable' }),
+            }}
+          >
+            <RouterProvider router={router} />
+          </PlayerStateContext.Provider>
+        </AuthContext.Provider>
+      </QueryClientProvider>,
+    );
+
+    expect(
+      await screen.findByText(
+        'GO attempt rules updated. A new deterministic Practice chain is ready.',
+      ),
+    ).toBeInTheDocument();
+    const saved = JSON.parse(
+      localStorage.getItem('amordle:solo:practice:go:active:5l:expert:normal:5p:guest') ?? '{}',
+    ) as { payload?: { attemptPolicyVersion?: string; puzzles?: { maxAttempts: number }[] } };
+    expect(saved.payload?.attemptPolicyVersion).toBe('carryover-consumes-v1');
+    expect(saved.payload?.puzzles?.map((puzzle) => puzzle.maxAttempts)).toEqual([6, 5, 4, 3, 2]);
+  });
+
   it('uses domain validation and does not consume an invalid attempt', async () => {
     const sound = vi.spyOn(soundEngine, 'play').mockResolvedValue(true);
     vi.spyOn(wordListProvider, 'load').mockResolvedValue({
