@@ -13,6 +13,7 @@ import {
   serializeOgSession,
   setDraftWord,
   submitOgGuess,
+  validateHardMode,
   validateGuess,
 } from '../../src/domain/game';
 
@@ -73,10 +74,44 @@ describe('validation and OG state', () => {
     const wrongLength = submitOgGuess(first.session, 'bad', valid, { now: at });
     expect(wrongLength.ok).toBe(false);
     if (!wrongLength.ok) expect(wrongLength.error.code).toBe('wrong_length');
-    const hardViolation = submitOgGuess(first.session, 'algae', valid, { now: at });
-    expect(hardViolation.ok).toBe(false);
-    if (!hardViolation.ok) expect(hardViolation.error.code).toBe('hard_mode_present_position');
+    const yellowSamePosition = submitOgGuess(first.session, 'algae', valid, { now: at });
+    expect(yellowSamePosition.ok).toBe(true);
     expect(JSON.stringify(first.session)).toBe(before);
+  });
+
+  it('matches retained Hard Mode authority for multiplicity, gray letters, and yellow positions', () => {
+    const duplicateEvidence = [
+      { guess: 'allee', tiles: scoreGuess('allee', 'apple'), submittedAt: at },
+    ];
+    // The first L is positive and the second L is gray, so L remains required rather than forbidden.
+    expect(validateHardMode('ample', duplicateEvidence)).toBeUndefined();
+    // Retained authority does not forbid a yellow from remaining in its old position.
+    expect(validateHardMode('algae', duplicateEvidence)).toBeUndefined();
+    expect(validateHardMode('abide', duplicateEvidence)).toMatchObject({
+      code: 'hard_mode_missing_letter',
+      letter: 'l',
+    });
+
+    const multiplicityEvidence = [
+      { guess: 'poppy', tiles: scoreGuess('poppy', 'apple'), submittedAt: at },
+    ];
+    expect(validateHardMode('maple', multiplicityEvidence)).toMatchObject({
+      code: 'hard_mode_missing_letter',
+      letter: 'p',
+    });
+
+    const purelyGray = [{ guess: 'zzzzz', tiles: scoreGuess('zzzzz', 'apple'), submittedAt: at }];
+    expect(validateHardMode('zebra', purelyGray)).toMatchObject({
+      code: 'hard_mode_absent_letter',
+      letter: 'z',
+    });
+
+    const green = [{ guess: 'cigar', tiles: scoreGuess('cigar', 'couch'), submittedAt: at }];
+    expect(validateHardMode('bough', green)).toMatchObject({
+      code: 'hard_mode_correct_position',
+      letter: 'c',
+      position: 0,
+    });
   });
 
   it('checks dictionary and Hard Mode before terminal state', () => {

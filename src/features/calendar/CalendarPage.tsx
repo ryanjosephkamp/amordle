@@ -8,6 +8,45 @@ import { canAccessDaily, localDateKey } from '../../domain/daily';
 
 const weekday = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+type CalendarLaneState = 'available' | 'locked' | 'recorded' | 'unavailable';
+
+const laneMarks: Record<CalendarLaneState, string> = {
+  available: '○',
+  locked: '◇',
+  recorded: '●',
+  unavailable: '—',
+};
+
+function laneDescription(label: string, state: CalendarLaneState): string {
+  return `${label}: ${state}`;
+}
+
+function CalendarLane({
+  code,
+  label,
+  state,
+}: {
+  code: 'S-OG' | 'S-GO' | 'C-OG' | 'C-GO';
+  label: string;
+  state: CalendarLaneState;
+}) {
+  return (
+    <span
+      className="day-state"
+      data-state={state}
+      role="img"
+      aria-label={laneDescription(label, state)}
+    >
+      <span className="day-state__label" aria-hidden="true">
+        {code}
+      </span>
+      <span className="day-state__mark" aria-hidden="true">
+        {laneMarks[state]}
+      </span>
+    </span>
+  );
+}
+
 export function CalendarPage() {
   const todayKey = localDateKey();
   const { progression, unlockDaily } = usePlayerState();
@@ -79,6 +118,23 @@ export function CalendarPage() {
                 year === today.getFullYear();
               const date = new Date(year, month, day);
               const inRange = date >= new Date(2025, 0, 1) && date <= today;
+              const dateKey = localDateKey(date);
+              const soloOgAvailable = canAccessDaily({
+                mode: 'og',
+                dateKey,
+                todayKey,
+                unlocked: progression.unlockedDailies,
+              });
+              const soloGoAvailable = canAccessDaily({
+                mode: 'go',
+                dateKey,
+                todayKey,
+                unlocked: progression.unlockedDailies,
+              });
+              const soloOgState: CalendarLaneState = soloOgAvailable ? 'available' : 'locked';
+              const soloGoState: CalendarLaneState = soloGoAvailable ? 'available' : 'locked';
+              const combatOgState: CalendarLaneState = 'recorded';
+              const combatGoState: CalendarLaneState = 'unavailable';
               return (
                 <button
                   type="button"
@@ -90,35 +146,22 @@ export function CalendarPage() {
                     setSelectedDate(localDateKey(date));
                     setUnlockMessage('');
                   }}
-                  aria-label={`${date.toDateString()}${isToday ? ', today' : ''}`}
+                  aria-label={`${date.toDateString()}${isToday ? ', today' : ''}. ${[
+                    laneDescription('Solo OG', soloOgState),
+                    laneDescription('Solo GO', soloGoState),
+                    laneDescription('Combat OG', combatOgState),
+                    laneDescription('Combat GO', combatGoState),
+                  ].join('; ')}`}
                 >
                   <span>
                     {day}
                     {isToday ? <small>Today</small> : null}
                   </span>
                   <span className="day-states">
-                    <i aria-label="Solo OG access">
-                      {canAccessDaily({
-                        mode: 'og',
-                        dateKey: localDateKey(date),
-                        todayKey,
-                        unlocked: progression.unlockedDailies,
-                      })
-                        ? '○'
-                        : '⌑'}
-                    </i>
-                    <i aria-label="Solo GO access">
-                      {canAccessDaily({
-                        mode: 'go',
-                        dateKey: localDateKey(date),
-                        todayKey,
-                        unlocked: progression.unlockedDailies,
-                      })
-                        ? '○'
-                        : '⌑'}
-                    </i>
-                    <i aria-label="Combat OG recorded">○</i>
-                    <i aria-label="Combat GO unavailable">—</i>
+                    <CalendarLane code="S-OG" label="Solo OG" state={soloOgState} />
+                    <CalendarLane code="S-GO" label="Solo GO" state={soloGoState} />
+                    <CalendarLane code="C-OG" label="Combat OG" state={combatOgState} />
+                    <CalendarLane code="C-GO" label="Combat GO" state={combatGoState} />
                   </span>
                 </button>
               );
@@ -174,13 +217,13 @@ export function CalendarPage() {
           <SectionHeading title="Legend" />
           <ul className="legend-list">
             <li>
-              <span className="state-green">✓</span>Completed
+              <span>○</span>Available
             </li>
             <li>
-              <span>⌑</span>Locked
+              <span>◇</span>Locked
             </li>
             <li>
-              <span>○</span>Recorded
+              <span className="state-green">●</span>Recorded
             </li>
             <li>
               <span>—</span>Unavailable

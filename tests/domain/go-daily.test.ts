@@ -3,11 +3,17 @@ import fc from 'fast-check';
 
 import {
   advanceGoSession,
+  autoAdvanceGoSession,
   createGoSession,
   dailyGoStreamKey,
+  goAutoAdvanceRemainingDelay,
   goAnswerGenerationVersion,
+  goPriorSeededEvidence,
+  revealGoAnswer,
   restoreGoSession,
+  selectDailyGoAnswers,
   selectDeterministicChain,
+  selectLegacyDailyGoChain,
   selectSeparatedDailyCombatChains,
   serializeGoSession,
   submitGoGuess,
@@ -26,16 +32,74 @@ const at = '2026-07-21T12:00:00.000Z';
 const answers = ['apple', 'baker', 'cider', 'delta', 'ember'];
 
 describe('GO state and selection', () => {
-  it('holds a solved row before explicitly advancing', () => {
+  it('persists a solved hold and auto-advances exactly when its deadline arrives', () => {
     const session = createGoSession({ id: 'go-1', answers, scope: 'practice', now: at });
     const result = submitGoGuess(session, 'apple', new Set(answers), at);
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     expect(result.session.currentPuzzleIndex).toBe(0);
-    expect(result.session.pendingAdvance).toMatchObject({ nextPuzzleIndex: 1 });
-    const advanced = advanceGoSession(result.session, at);
+    expect(result.session.pendingAdvance).toEqual({
+      solvedPuzzleIndex: 0,
+      nextPuzzleIndex: 1,
+      holdStartedAt: at,
+      autoAdvanceAt: '2026-07-21T12:00:02.000Z',
+    });
+    expect(goAutoAdvanceRemainingDelay(result.session, '2026-07-21T12:00:00.750Z')).toBe(1_250);
+    expect(autoAdvanceGoSession(result.session, '2026-07-21T12:00:01.999Z')).toBe(result.session);
+    const serializedDuringHold = serializeGoSession(result.session);
+    const reloaded = restoreGoSession(serializedDuringHold);
+    expect(reloaded).toEqual(result.session);
+    if (!reloaded) throw new Error('hold fixture failed to restore');
+    const advanced = autoAdvanceGoSession(reloaded, '2026-07-21T12:00:02.000Z');
     expect(advanced.currentPuzzleIndex).toBe(1);
     expect(advanced.priorAnswers).toEqual(['apple']);
+    expect(advanced.pendingAdvance).toBeUndefined();
+    expect(autoAdvanceGoSession(advanced, '2026-07-21T12:00:03.000Z')).toBe(advanced);
+  });
+
+  it('cannot reveal or corrupt a solved hold or terminal chain', () => {
+    const session = createGoSession({ id: 'go-reveal-guard', answers, scope: 'practice', now: at });
+    const result = submitGoGuess(session, 'apple', new Set(answers), at);
+    if (!result.ok) throw new Error('reveal guard fixture failed');
+    expect(result.session.pendingAdvance).toBeDefined();
+    expect(revealGoAnswer(result.session, true)).toBe(result.session);
+
+    let completed = result.session;
+    for (let index = 1; index < answers.length; index += 1) {
+      completed = advanceGoSession(completed, at);
+      const submitted = submitGoGuess(completed, answers[index] ?? '', new Set(answers), at);
+      if (!submitted.ok) throw new Error('terminal reveal guard fixture failed');
+      completed = submitted.session;
+    }
+    expect(completed.status).toBe('won');
+    expect(revealGoAnswer(completed, true)).toBe(completed);
+  });
+
+  it('migrates the earlier solvedAt hold envelope and rejects a poisoned deadline', () => {
+    const session = createGoSession({
+      id: 'go-hold-migration',
+      answers,
+      scope: 'practice',
+      now: at,
+    });
+    const result = submitGoGuess(session, 'apple', new Set(answers), at);
+    if (!result.ok) throw new Error('hold migration fixture failed');
+    const legacy = JSON.parse(serializeGoSession(result.session)) as {
+      pendingAdvance: Record<string, unknown>;
+    };
+    legacy.pendingAdvance = { solvedPuzzleIndex: 0, nextPuzzleIndex: 1, solvedAt: at };
+    expect(restoreGoSession(legacy)?.pendingAdvance).toEqual({
+      solvedPuzzleIndex: 0,
+      nextPuzzleIndex: 1,
+      holdStartedAt: at,
+      autoAdvanceAt: '2026-07-21T12:00:02.000Z',
+    });
+
+    const poisoned = JSON.parse(serializeGoSession(result.session)) as {
+      pendingAdvance: { autoAdvanceAt: string };
+    };
+    poisoned.pendingAdvance.autoAdvanceAt = '2099-01-01T00:00:00.000Z';
+    expect(restoreGoSession(poisoned)).toBeUndefined();
   });
 
   it('completes the chain and preserves serialization', () => {
@@ -62,6 +126,74 @@ describe('GO state and selection', () => {
     expect(goAnswerGenerationVersion('2026-07-13', 'go')).toBe('v1');
     expect(goAnswerGenerationVersion('2026-07-14', 'go')).toBe('v2');
     expect(goAnswerGenerationVersion('2099-01-01', 'og')).toBe('v1');
+  });
+
+  it('uses legacy contiguous Daily GO selection before the cutoff and v2 afterward', () => {
+    const catalog = [...answers, 'fable', 'grape', 'hotel', 'ivory', 'joker', 'karma', 'lemon'];
+    const legacy = selectDailyGoAnswers({ catalog, dateKey: '2026-07-13' });
+    expect(legacy).toEqual({
+      answers: selectLegacyDailyGoChain(catalog, '2026-07-13', 5),
+      answerGenerationVersion: 'v1',
+      source: 'generated',
+    });
+    expect(
+      legacy.answers.every(
+        (answer, index) =>
+          index === 0 ||
+          catalog.indexOf(answer) ===
+            (catalog.indexOf(legacy.answers[index - 1] ?? '') + 1) % catalog.length,
+      ),
+    ).toBe(true);
+
+    const current = selectDailyGoAnswers({ catalog, dateKey: '2026-07-14' });
+    expect(current.answerGenerationVersion).toBe('v2');
+    expect(current.answers).toHaveLength(5);
+    expect(new Set(current.answers).size).toBe(5);
+  });
+
+  it('treats stored GO answer arrays as authoritative, including legacy duplicates and order', () => {
+    const stored = ['zebra', 'apple', 'zebra', 'delta'];
+    expect(
+      selectDailyGoAnswers({
+        catalog: [...answers].reverse(),
+        dateKey: '2099-01-01',
+        stored: { answers: stored },
+      }),
+    ).toEqual({ answers: stored, answerGenerationVersion: 'v1', source: 'stored' });
+  });
+
+  it('projects prior answers as scored, non-attempt seeded evidence', () => {
+    const first = createGoSession({ id: 'seeded', answers, scope: 'practice', now: at });
+    const solved = submitGoGuess(first, 'apple', new Set(answers), at);
+    if (!solved.ok) throw new Error('seeded fixture failed');
+    const advanced = advanceGoSession(solved.session, '2026-07-21T12:00:02.000Z');
+    expect(goPriorSeededEvidence(advanced)).toEqual([
+      expect.objectContaining({
+        kind: 'prior-answer',
+        sourcePuzzleIndex: 0,
+        countsAsAttempt: false,
+        guess: 'apple',
+      }),
+    ]);
+    expect(advanced.puzzles[1]?.guesses).toHaveLength(0);
+  });
+
+  it('applies carried prior-answer evidence to GO Hard Mode', () => {
+    const hard = createGoSession({
+      id: 'seeded-hard',
+      answers,
+      scope: 'practice',
+      hardMode: true,
+      now: at,
+    });
+    const solved = submitGoGuess(hard, 'apple', new Set([...answers, 'paper']), at);
+    if (!solved.ok) throw new Error('hard seeded fixture failed');
+    const advanced = advanceGoSession(solved.session, '2026-07-21T12:00:02.000Z');
+    const rejected = submitGoGuess(advanced, 'paper', new Set([...answers, 'paper']), at);
+    expect(rejected.ok).toBe(false);
+    if (!rejected.ok) {
+      expect(rejected.error).toMatchObject({ code: 'hard_mode_absent_letter', letter: 'p' });
+    }
   });
 
   it('separates ranked and unranked Daily chains', () => {

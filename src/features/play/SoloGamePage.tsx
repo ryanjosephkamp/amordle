@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useLocation, useNavigate, useParams } from 'react-router';
+import { Navigate, useLocation, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
 import { Button, ButtonLink } from '../../components/Button';
@@ -15,7 +15,7 @@ import {
 import { emptyRow } from '../../components/gameBoardData';
 import { Icon } from '../../components/Icon';
 import { StatusDot } from '../../components/Surface';
-import { canAccessDaily, dailyDateKey, dailySeedNamespace, isDateKey } from '../../domain/daily';
+import { canAccessDaily, dailyDateKey, isDateKey } from '../../domain/daily';
 import {
   createOgSession,
   deleteLetter,
@@ -27,19 +27,39 @@ import {
   type OgSession,
 } from '../../domain/game';
 import {
-  advanceGoSession,
+  autoAdvanceGoSession,
   createGoSession,
   currentGoPuzzle,
-  dailyGoStreamKey,
+  goAutoAdvanceRemainingDelay,
   goAnswerGenerationVersion,
   goKeyboardEvidence,
+  goPriorSeededEvidence,
   revealGoAnswer,
+  selectDailyGoAnswers,
   selectDeterministicChain,
   submitGoGuess,
   type GoSession,
 } from '../../domain/go';
-import { answerPoolForDifficulty, type Difficulty, type WordList } from '../../domain/words';
+import {
+  answerPoolForDifficulty,
+  selectDailyOgAnswer,
+  type Difficulty,
+  type WordList,
+} from '../../domain/words';
+import {
+  readSoundEnabled,
+  settingsStorageKey,
+  SOUND_PREFERENCE_EVENT,
+  soundEngine,
+} from '../../services/sound-controller';
 import { wordListProvider } from '../../services/word-list-provider';
+import {
+  commitPracticeGeneration,
+  currentPracticeGeneration,
+  type PracticeGenerationLane,
+} from './practice-generation-repository';
+import { ownerStorageSegment } from '../../persistence/local-repository';
+import { normalizeSoloLaunch, type SoloLaunchSpec } from './solo-launch';
 import { soloSessionRepository, type SoloSession } from './solo-session-repository';
 
 type SoloConfig = {
@@ -52,36 +72,64 @@ type SoloConfig = {
   dateKey: string;
 };
 
-function integerParam(search: URLSearchParams, name: string, fallback: number): number {
-  const raw = search.get(name);
-  if (raw === null || raw.trim() === '') return fallback;
-  const value = Number(raw);
-  return Number.isInteger(value) ? value : fallback;
-}
+type SoloRouteResolution =
+  | { readonly ok: false; readonly message: string }
+  | { readonly ok: true; readonly config: SoloConfig; readonly canonicalSearch?: string };
 
-function configuration(mode: 'og' | 'go', scope: 'daily' | 'practice', search: string): SoloConfig {
+function resolveSoloRoute(
+  mode: 'og' | 'go',
+  scope: 'daily' | 'practice',
+  search: string,
+): SoloRouteResolution {
   const params = new URLSearchParams(search);
-  const requestedLength = integerParam(params, 'length', mode === 'go' ? 7 : 5);
-  const requestedCount = integerParam(params, 'count', 5);
-  const difficultyValue = params.get('difficulty');
-  const dateValue = params.get('date');
-  return {
+  const normalized = normalizeSoloLaunch({
     mode,
     scope,
-    length: Math.min(35, Math.max(2, requestedLength)),
-    difficulty:
-      difficultyValue === 'casual' || difficultyValue === 'standard' ? difficultyValue : 'expert',
-    hardMode: params.get('hard') === '1',
-    count: requestedCount === 7 || requestedCount === 10 ? requestedCount : 5,
-    dateKey: dateValue && isDateKey(dateValue) ? dateValue : dailyDateKey('local'),
+    wordLength: params.get('length'),
+    goPuzzleCount: params.get('count'),
+    difficulty: params.get('difficulty'),
+    hardMode: params.get('hard'),
+  });
+  if (!normalized.ok) return { ok: false, message: normalized.message };
+  const dateValue = params.get('date');
+  const dateKey = dateValue && isDateKey(dateValue) ? dateValue : dailyDateKey('local');
+  const spec: SoloLaunchSpec = normalized.spec;
+  const config: SoloConfig = {
+    mode: spec.mode,
+    scope: spec.scope,
+    length: spec.wordLength,
+    difficulty: spec.difficulty,
+    hardMode: spec.hardMode,
+    count: spec.mode === 'go' ? spec.goPuzzleCount : 5,
+    dateKey,
+  };
+
+  const canonical = new URLSearchParams();
+  if (scope === 'practice' && params.has('length')) {
+    canonical.set('length', String(spec.wordLength));
+  }
+  if (scope === 'practice' && spec.mode === 'go' && params.has('count')) {
+    canonical.set('count', String(spec.goPuzzleCount));
+  }
+  if (spec.difficulty !== 'expert') canonical.set('difficulty', spec.difficulty);
+  if (spec.hardMode) canonical.set('hard', '1');
+  if (scope === 'daily' && dateValue && isDateKey(dateValue)) canonical.set('date', dateValue);
+  if (params.get('focus') === '1') canonical.set('focus', '1');
+  const canonicalSearch = canonical.toString();
+  const currentSearch = new URLSearchParams(search).toString();
+  return {
+    ok: true,
+    config,
+    ...(canonicalSearch !== currentSearch ? { canonicalSearch } : {}),
   };
 }
 
 function sessionKey(config: SoloConfig): string {
+  if (config.scope === 'daily') return ['daily', config.mode, config.dateKey].join(':');
   return [
     config.scope,
     config.mode,
-    config.scope === 'daily' ? config.dateKey : 'active',
+    'active',
     `${config.length}l`,
     config.difficulty,
     config.hardMode ? 'hard' : 'normal',
@@ -95,26 +143,22 @@ function selectAnswers(
   generation: number,
 ): readonly string[] {
   const pool = answerPoolForDifficulty(wordList, config.difficulty);
-  const count = config.mode === 'go' ? (config.scope === 'daily' ? 5 : config.count) : 1;
-  const stream =
-    config.scope === 'daily'
-      ? config.mode === 'go'
-        ? dailyGoStreamKey({
-            player: 'solo',
-            lane: 'unranked',
-            dateKey: config.dateKey,
-            wordLength: config.length,
-            difficulty: config.difficulty,
-            puzzleCount: count,
-          })
-        : dailySeedNamespace({
-            player: 'solo',
-            mode: config.mode,
-            dateKey: config.dateKey,
-            version: wordList.revision,
-          })
-      : `solo-practice:${config.mode}:${config.length}:${config.difficulty}:${generation}:${wordList.revision}`;
-  return selectDeterministicChain(pool, count, stream);
+  if (config.scope === 'daily') {
+    if (config.mode === 'go') {
+      return selectDailyGoAnswers({
+        catalog: pool,
+        dateKey: config.dateKey,
+        difficulty: config.difficulty,
+      }).answers;
+    }
+    return [selectDailyOgAnswer(pool, config.dateKey)];
+  }
+  const count = config.mode === 'go' ? config.count : 1;
+  return selectDeterministicChain(
+    pool,
+    count,
+    `solo-practice:${config.mode}:${config.length}:${config.difficulty}:${config.hardMode ? 'hard' : 'normal'}:${config.count}:${generation}:${wordList.revision}`,
+  );
 }
 
 function createSession(config: SoloConfig, wordList: WordList, generation: number): SoloSession {
@@ -151,15 +195,29 @@ function updateGoPuzzle(session: GoSession, puzzle: OgSession): GoSession {
   return { ...session, puzzles, updatedAt: puzzle.updatedAt };
 }
 
-function sessionRows(session: SoloSession): Tile[][] {
+function sessionRows(session: SoloSession): {
+  readonly rows: Tile[][];
+  readonly seededCount: number;
+} {
   const puzzle = activePuzzle(session);
+  const seeded =
+    session.mode === 'go'
+      ? goPriorSeededEvidence(session).map((guess) =>
+          guess.tiles.map((tile) => ({ letter: tile.letter, state: tile.state as TileState })),
+        )
+      : [];
   const submitted = puzzle.guesses.map((guess) =>
     guess.tiles.map((tile) => ({ letter: tile.letter, state: tile.state as TileState })),
   );
-  const rows: Tile[][] = [...submitted];
-  if (puzzle.status === 'playing') rows.push(emptyRow(puzzle.wordLength, draftWord(puzzle)));
-  while (rows.length < puzzle.maxAttempts) rows.push(emptyRow(puzzle.wordLength));
-  return rows.slice(0, Math.max(puzzle.maxAttempts, submitted.length + 1));
+  const playableRows: Tile[][] = [...submitted];
+  if (puzzle.status === 'playing') {
+    playableRows.push(emptyRow(puzzle.wordLength, draftWord(puzzle)));
+  }
+  while (playableRows.length < puzzle.maxAttempts) playableRows.push(emptyRow(puzzle.wordLength));
+  return {
+    rows: [...seeded, ...playableRows.slice(0, Math.max(puzzle.maxAttempts, submitted.length + 1))],
+    seededCount: seeded.length,
+  };
 }
 
 function LoadingGame({ message }: { message: string }) {
@@ -176,25 +234,53 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
   const { identity } = useAuth();
   const { reward } = usePlayerState();
   const repository = useMemo(() => soloSessionRepository(sessionKey(config)), [config]);
+  const generationLane = useMemo<PracticeGenerationLane>(
+    () => ({
+      mode: config.mode,
+      wordLength: config.length,
+      difficulty: config.difficulty,
+      goPuzzleCount: config.mode === 'go' ? config.count : 1,
+    }),
+    [config],
+  );
   const initial = useMemo(() => {
+    const practiceGeneration =
+      config.scope === 'practice' ? currentPracticeGeneration(identity, generationLane) : 0;
     const loaded = repository.load(identity);
     if (loaded.status === 'ok') {
       const restored = loaded.envelope.payload;
       const puzzle = activePuzzle(restored);
+      const dailyConfigurationLocked =
+        config.scope === 'daily' && (puzzle.guesses.length > 0 || restored.status !== 'playing');
       if (
         restored.mode === config.mode &&
         restored.scope === config.scope &&
         puzzle.wordLength === config.length &&
-        restored.difficulty === config.difficulty &&
-        restored.hardMode === config.hardMode
+        (dailyConfigurationLocked || restored.difficulty === config.difficulty) &&
+        (dailyConfigurationLocked || restored.hardMode === config.hardMode)
       ) {
-        return { session: restored, revision: loaded.envelope.revision, restored: true };
+        return {
+          session: restored,
+          revision: loaded.envelope.revision,
+          restored: true,
+          generation: practiceGeneration,
+        };
       }
+      return {
+        session: createSession(config, wordList, practiceGeneration),
+        revision: loaded.envelope.revision,
+        restored: false,
+        generation: practiceGeneration,
+      };
     }
-    return { session: createSession(config, wordList, 0), revision: 0, restored: false };
-  }, [config, identity, repository, wordList]);
+    return {
+      session: createSession(config, wordList, practiceGeneration),
+      revision: 0,
+      restored: false,
+      generation: practiceGeneration,
+    };
+  }, [config, generationLane, identity, repository, wordList]);
   const [session, setSession] = useState(initial.session);
-  const [generation, setGeneration] = useState(0);
   const revision = useRef(initial.revision);
   const [message, setMessage] = useState(
     initial.restored
@@ -202,6 +288,9 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
       : 'Enter a valid word. Attempts are not consumed by rejected guesses.',
   );
   const [confirmReveal, setConfirmReveal] = useState(false);
+  const [soundEnabled, setSoundEnabled] = useState(() =>
+    readSoundEnabled(identity, typeof localStorage === 'undefined' ? undefined : localStorage),
+  );
   const navigate = useNavigate();
   const location = useLocation();
   const focus = new URLSearchParams(location.search).get('focus') === '1';
@@ -245,7 +334,12 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
         mode: completed.mode,
         scope: completed.scope,
         wordLength: activePuzzle(completed).wordLength,
-        puzzleCount: completed.mode === 'go' ? puzzles.length : 1,
+        puzzleCount:
+          completed.mode === 'go'
+            ? completed.status === 'lost'
+              ? completed.currentPuzzleIndex + 1
+              : puzzles.length
+            : 1,
         unusedAttempts:
           completed.status === 'won'
             ? puzzles.reduce(
@@ -260,9 +354,24 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
 
   useEffect(() => {
     if (initial.restored) return;
-    const result = repository.save(identity, initial.session, { replaceCorrupt: true });
+    const result = repository.save(identity, initial.session, {
+      expectedRevision: initial.revision,
+      replaceCorrupt: true,
+    });
     if (result.ok) revision.current = result.envelope.revision;
   }, [identity, initial, repository]);
+
+  useEffect(() => {
+    const storageKey = settingsStorageKey(identity);
+    const listener = (event: Event) => {
+      const custom = event as CustomEvent<{ storageKey?: string; enabled?: boolean }>;
+      if (custom.detail?.storageKey === storageKey && typeof custom.detail.enabled === 'boolean') {
+        setSoundEnabled(custom.detail.enabled);
+      }
+    };
+    window.addEventListener(SOUND_PREFERENCE_EVENT, listener);
+    return () => window.removeEventListener(SOUND_PREFERENCE_EVENT, listener);
+  }, [identity]);
 
   const submit = useCallback(() => {
     const current = activePuzzle(session);
@@ -270,6 +379,7 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
       const result = submitGoGuess(session, draftWord(current), validWords);
       if (!result.ok) {
         setMessage(result.error.message);
+        void soundEngine.play('invalid', soundEnabled);
         return;
       }
       const solved = result.session.pendingAdvance !== undefined;
@@ -280,15 +390,28 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
           : result.session.status === 'lost'
             ? 'No attempts remain. The chain result was saved.'
             : solved
-              ? 'Puzzle solved and saved. Advance when ready.'
+              ? 'Puzzle solved and saved. The next puzzle opens in two seconds.'
               : 'Guess accepted and saved.',
       );
-      if (saved) rewardTerminal(result.session);
+      if (saved) {
+        rewardTerminal(result.session);
+        void soundEngine.play(
+          result.session.status === 'won'
+            ? 'win'
+            : result.session.status === 'lost'
+              ? 'loss'
+              : solved
+                ? 'solve'
+                : 'tile-submit',
+          soundEnabled,
+        );
+      }
       return;
     }
     const result = submitOgGuess(session, draftWord(session), validWords);
     if (!result.ok) {
       setMessage(result.error.message);
+      void soundEngine.play('invalid', soundEnabled);
       return;
     }
     const saved = persist(
@@ -299,21 +422,39 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
           ? 'No attempts remain. The result was saved.'
           : 'Guess accepted and saved.',
     );
-    if (saved) rewardTerminal(result.session);
-  }, [persist, rewardTerminal, session, validWords]);
+    if (saved) {
+      rewardTerminal(result.session);
+      void soundEngine.play(
+        result.session.status === 'won'
+          ? 'win'
+          : result.session.status === 'lost'
+            ? 'loss'
+            : 'tile-submit',
+        soundEnabled,
+      );
+    }
+  }, [persist, rewardTerminal, session, soundEnabled, validWords]);
 
   const onKey = useCallback(
     (key: string) => {
+      const current = activePuzzle(session);
+      if (
+        current.status !== 'playing' ||
+        session.status !== 'playing' ||
+        (session.mode === 'go' && session.pendingAdvance)
+      )
+        return;
       if (key === 'ENTER') {
         submit();
         return;
       }
-      const current = activePuzzle(session);
       const nextPuzzle = key === 'BACKSPACE' ? deleteLetter(current) : enterLetter(current, key);
       if (nextPuzzle === current) return;
-      persist(session.mode === 'go' ? updateGoPuzzle(session, nextPuzzle) : nextPuzzle);
+      if (persist(session.mode === 'go' ? updateGoPuzzle(session, nextPuzzle) : nextPuzzle)) {
+        void soundEngine.play('keyboard-click', soundEnabled);
+      }
     },
-    [persist, session, submit],
+    [persist, session, soundEnabled, submit],
   );
 
   useEffect(() => {
@@ -326,16 +467,37 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
         event.target instanceof HTMLTextAreaElement
       )
         return;
-      if (event.key === 'Enter') onKey('ENTER');
-      else if (event.key === 'Backspace' || event.key === 'Delete') onKey('BACKSPACE');
-      else if (/^[a-z]$/i.test(event.key)) onKey(event.key.toUpperCase());
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        onKey('ENTER');
+      } else if (event.key === 'Backspace' || event.key === 'Delete') {
+        event.preventDefault();
+        onKey('BACKSPACE');
+      } else if (/^[a-z]$/i.test(event.key)) {
+        event.preventDefault();
+        onKey(event.key.toUpperCase());
+      }
     };
     window.addEventListener('keydown', listener);
     return () => window.removeEventListener('keydown', listener);
   }, [onKey]);
 
-  const rows = sessionRows(session);
-  const activeRow = puzzle.status === 'playing' ? puzzle.guesses.length : undefined;
+  useEffect(() => {
+    if (session.mode !== 'go' || !session.pendingAdvance || session.status !== 'playing') return;
+    const remaining = goAutoAdvanceRemainingDelay(session);
+    if (remaining === undefined) return;
+    const timer = window.setTimeout(() => {
+      const advanced = autoAdvanceGoSession(session);
+      if (advanced !== session) {
+        persist(advanced, 'Next puzzle ready. Prior-answer evidence carried forward.');
+      }
+    }, remaining);
+    return () => window.clearTimeout(timer);
+  }, [persist, session]);
+
+  const board = sessionRows(session);
+  const activeRow =
+    puzzle.status === 'playing' ? board.seededCount + puzzle.guesses.length : undefined;
   const resultVisible = session.status !== 'playing';
   const goCount = session.mode === 'go' ? session.puzzles.length : 1;
   const puzzleIndex = session.mode === 'go' ? session.currentPuzzleIndex : 0;
@@ -348,9 +510,31 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
   };
 
   const newSession = () => {
-    const nextGeneration = generation + 1;
-    const next = createSession(config, wordList, nextGeneration);
-    if (persist(next, 'New deterministic session saved.')) setGeneration(nextGeneration);
+    if (config.scope !== 'practice') return;
+    let currentGeneration = currentPracticeGeneration(identity, generationLane);
+    let nextGeneration = currentGeneration + 1;
+    let next = createSession(config, wordList, nextGeneration);
+
+    // If a prior session save succeeded but its counter commit was interrupted,
+    // reconcile that exact generation before moving to the next deterministic seed.
+    if (next.id === session.id) {
+      if (!commitPracticeGeneration(identity, generationLane, currentGeneration, nextGeneration)) {
+        setMessage(
+          'The Practice generation could not be reconciled. The current game is unchanged.',
+        );
+        return;
+      }
+      currentGeneration = nextGeneration;
+      nextGeneration += 1;
+      next = createSession(config, wordList, nextGeneration);
+    }
+
+    if (!persist(next, 'New deterministic session saved.')) return;
+    if (!commitPracticeGeneration(identity, generationLane, currentGeneration, nextGeneration)) {
+      setMessage(
+        'New deterministic session saved. Its generation counter will reconcile before the next game.',
+      );
+    }
   };
 
   return (
@@ -409,7 +593,7 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
         <div className="game-stage__top">
           <p id="game-context">
             <span>Solo</span> · {config.scope} {config.mode} · {puzzle.wordLength} letters ·{' '}
-            <span>{config.difficulty}</span>
+            <span>{session.difficulty}</span>
             {session.mode === 'go' ? ` · puzzle ${puzzleIndex + 1} / ${goCount}` : ''}
           </p>
           <Button tone="quiet" className="focus-button" onClick={() => setFocus(!focus)}>
@@ -417,36 +601,36 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
             {focus ? 'Exit focus' : 'Focus'}
           </Button>
         </div>
-        <GameBoard rows={rows} length={puzzle.wordLength} activeRow={activeRow} />
+        <GameBoard
+          rows={board.rows}
+          length={puzzle.wordLength}
+          activeRow={activeRow}
+          rowLabels={board.rows.map((_, index) =>
+            index < board.seededCount ? `P${index + 1}` : undefined,
+          )}
+        />
         <p className="game-message" role="status" aria-live="polite">
           {message}
         </p>
         <p className="attempts">
           {Math.max(0, puzzle.maxAttempts - puzzle.guesses.length)} attempts remaining
         </p>
-        <Keyboard
-          evidence={keyboardEvidence as Record<string, TileState>}
-          disabled={
-            puzzle.status !== 'playing' || Boolean(session.mode === 'go' && session.pendingAdvance)
-          }
-          onKey={onKey}
-        />
-        <TileLegend />
-        {session.mode === 'go' && session.pendingAdvance ? (
-          <div className="game-result">
+        <div
+          className={`game-transition-band ${session.mode === 'go' && session.pendingAdvance ? 'is-active' : ''}`}
+          aria-live="polite"
+        >
+          {session.mode === 'go' && session.pendingAdvance ? (
             <StatusDot>Puzzle {puzzleIndex + 1} saved</StatusDot>
-            <Button
-              tone="primary"
-              onClick={() =>
-                persist(
-                  advanceGoSession(session),
-                  'Next puzzle ready. Prior-answer evidence carried forward.',
-                )
-              }
-            >
-              Continue to puzzle {puzzleIndex + 2}
-            </Button>
-          </div>
+          ) : null}
+          {session.mode === 'go' && session.pendingAdvance ? (
+            <span>Holding solved evidence · puzzle {puzzleIndex + 2} opens automatically</span>
+          ) : null}
+        </div>
+        {session.status === 'playing' && !(session.mode === 'go' && session.pendingAdvance) ? (
+          <>
+            <Keyboard evidence={keyboardEvidence as Record<string, TileState>} onKey={onKey} />
+            <TileLegend />
+          </>
         ) : null}
         {resultVisible ? (
           <section className="game-result" aria-labelledby="result-title">
@@ -464,9 +648,11 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
                 : `The active answer was ${puzzle.answer.toUpperCase()}.`}
             </p>
             <div className="button-row">
-              <Button tone="primary" onClick={newSession}>
-                New {config.mode.toUpperCase()} {session.mode === 'go' ? 'chain' : 'game'}
-              </Button>
+              {config.scope === 'practice' ? (
+                <Button tone="primary" onClick={newSession}>
+                  New {config.mode.toUpperCase()} {session.mode === 'go' ? 'chain' : 'game'}
+                </Button>
+              ) : null}
               <Button
                 onClick={() =>
                   void navigator.clipboard?.writeText(
@@ -505,7 +691,10 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
             <dd>{identity.kind === 'guest' ? 'Guest local' : 'Account local'}</dd>
           </div>
         </dl>
-        {config.scope === 'practice' ? (
+        {config.scope === 'practice' &&
+        session.status === 'playing' &&
+        puzzle.status === 'playing' &&
+        !(session.mode === 'go' && session.pendingAdvance) ? (
           <>
             <h2>Practice tools</h2>
             <ButtonLink to="/marketplace">
@@ -516,71 +705,56 @@ function SoloRuntime({ config, wordList }: { config: SoloConfig; wordList: WordL
             </ButtonLink>
           </>
         ) : null}
-        <Disclosure label="Game controls" meta="Setup locked after first guess">
-          <Button tone="danger" onClick={() => setConfirmReveal(true)}>
-            Give up / reveal answer
-          </Button>
-          {confirmReveal ? (
-            <div className="confirmation-bar" role="alertdialog" aria-label="Confirm reveal answer">
-              <p>This records a loss. Reveal the answer?</p>
-              <Button
-                tone="danger"
-                onClick={() => {
-                  const next =
-                    session.mode === 'go'
-                      ? revealGoAnswer(session, true)
-                      : revealOgAnswer(session, true);
-                  if (persist(next, 'Answer revealed. Loss recorded locally.'))
-                    rewardTerminal(next);
-                  setConfirmReveal(false);
-                }}
+        {config.scope === 'practice' ? (
+          <Disclosure label="Game controls" meta="Setup locked after first guess">
+            <Button tone="danger" onClick={() => setConfirmReveal(true)}>
+              Give up / reveal answer
+            </Button>
+            {confirmReveal ? (
+              <div
+                className="confirmation-bar"
+                role="alertdialog"
+                aria-label="Confirm reveal answer"
               >
-                Reveal answer
-              </Button>
-              <Button onClick={() => setConfirmReveal(false)}>Keep playing</Button>
-            </div>
-          ) : null}
-        </Disclosure>
+                <p>This records a loss. Reveal the answer?</p>
+                <Button
+                  tone="danger"
+                  onClick={() => {
+                    const next =
+                      session.mode === 'go'
+                        ? revealGoAnswer(session, true)
+                        : revealOgAnswer(session, true);
+                    if (next === session) {
+                      setConfirmReveal(false);
+                      return;
+                    }
+                    if (persist(next, 'Answer revealed. Loss recorded locally.')) {
+                      rewardTerminal(next);
+                      void soundEngine.play('loss', soundEnabled);
+                    }
+                    setConfirmReveal(false);
+                  }}
+                >
+                  Reveal answer
+                </Button>
+                <Button onClick={() => setConfirmReveal(false)}>Keep playing</Button>
+              </div>
+            ) : null}
+          </Disclosure>
+        ) : null}
       </aside>
     </div>
   );
 }
 
-export function SoloGamePage() {
-  const params = useParams();
-  const location = useLocation();
-  const mode = params.mode === 'go' ? 'go' : 'og';
-  const scope = params.scope === 'daily' ? 'daily' : 'practice';
-  const config = useMemo(
-    () => configuration(mode, scope, location.search),
-    [location.search, mode, scope],
-  );
-  const { progression } = usePlayerState();
-  const todayKey = dailyDateKey('local');
+function SoloWordListLoader({ config }: { config: SoloConfig }) {
+  const { identity } = useAuth();
   const wordList = useQuery({
     queryKey: ['word-list', config.length],
     queryFn: ({ signal }) => wordListProvider.load(config.length, signal),
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
   });
-  if (
-    config.scope === 'daily' &&
-    !canAccessDaily({
-      mode: config.mode,
-      dateKey: config.dateKey,
-      todayKey,
-      unlocked: progression.unlockedDailies,
-    })
-  ) {
-    return (
-      <section className="route-error" role="alert">
-        <p className="eyebrow">Daily access</p>
-        <h1>Past puzzle locked</h1>
-        <p>Unlock this exact mode and local date from the Daily calendar before play.</p>
-        <ButtonLink to="/calendar">Open Daily calendar</ButtonLink>
-      </section>
-    );
-  }
   if (wordList.isPending)
     return <LoadingGame message={`Loading ${config.length}-letter word data…`} />;
   if (wordList.isError || !wordList.data) {
@@ -601,9 +775,73 @@ export function SoloGamePage() {
   }
   return (
     <SoloRuntime
-      key={`${sessionKey(config)}:${wordList.data.revision}`}
+      key={`${ownerStorageSegment(identity)}:${sessionKey(config)}:${wordList.data.revision}:${config.difficulty}:${config.hardMode ? 'hard' : 'normal'}`}
       config={config}
       wordList={wordList.data}
     />
   );
+}
+
+export function SoloGamePage() {
+  const params = useParams();
+  const location = useLocation();
+  const validSegments =
+    (params.mode === 'og' || params.mode === 'go') &&
+    (params.scope === 'daily' || params.scope === 'practice');
+  const mode = params.mode === 'go' ? 'go' : 'og';
+  const scope = params.scope === 'daily' ? 'daily' : 'practice';
+  const route = useMemo(
+    () =>
+      validSegments
+        ? resolveSoloRoute(mode, scope, location.search)
+        : {
+            ok: false as const,
+            message: 'The requested Solo mode or scope does not exist.',
+          },
+    [location.search, mode, scope, validSegments],
+  );
+  const { progression } = usePlayerState();
+
+  if (!route.ok) {
+    return (
+      <section className="route-error" role="alert">
+        <p className="eyebrow">Practice setup</p>
+        <h1>Invalid game configuration</h1>
+        <p>{route.message}</p>
+        <p className="continuity-note">No word list was requested and no session was changed.</p>
+        <ButtonLink to="/play">Choose a valid setup</ButtonLink>
+      </section>
+    );
+  }
+
+  if (route.canonicalSearch !== undefined) {
+    return (
+      <Navigate
+        replace
+        to={`${location.pathname}${route.canonicalSearch ? `?${route.canonicalSearch}` : ''}`}
+      />
+    );
+  }
+
+  const todayKey = dailyDateKey('local');
+  if (
+    route.config.scope === 'daily' &&
+    !canAccessDaily({
+      mode: route.config.mode,
+      dateKey: route.config.dateKey,
+      todayKey,
+      unlocked: progression.unlockedDailies,
+    })
+  ) {
+    return (
+      <section className="route-error" role="alert">
+        <p className="eyebrow">Daily access</p>
+        <h1>Past puzzle locked</h1>
+        <p>Unlock this exact mode and local date from the Daily calendar before play.</p>
+        <ButtonLink to="/calendar">Open Daily calendar</ButtonLink>
+      </section>
+    );
+  }
+
+  return <SoloWordListLoader config={route.config} />;
 }

@@ -11,6 +11,8 @@ import { EconomyRepository } from '../../services/economy-repository';
 import { AccountRepository } from '../../services/account-repository';
 import { PublicRepository } from '../../services/public-repository';
 import { levelForXp } from '../../domain/progression';
+import type { IdentityScope } from '../../persistence/local-repository';
+import { settingsStorageKey, writeSoundEnabled } from '../../services/sound-controller';
 import { wordListProvider } from '../../services/word-list-provider';
 
 type HistoryRow = readonly [string, string, string, string, string];
@@ -588,18 +590,20 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
       />
       <div className="explorer-layout">
         <section>
-          <label className="search-control">
-            <Icon name="search" />
-            <span className="sr-only">Search words</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search words"
-            />
-          </label>
-          <p>
-            {words.isPending ? 'Loading' : filtered.length} visible · {length}-letter bundled data
-          </p>
+          <div className="word-search">
+            <label className="search-control">
+              <Icon name="search" />
+              <span className="sr-only">Search words</span>
+              <input
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search words"
+              />
+            </label>
+            <p className="search-metadata" aria-live="polite">
+              {words.isPending ? 'Loading' : filtered.length} visible · {length}-letter bundled data
+            </p>
+          </div>
           <RuledList>
             {filtered.map((word) => (
               <button
@@ -644,17 +648,20 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
               No bundled definition is available. Use the explicit search fallback below.
             </p>
           )}
-          <Button onClick={() => void navigator.clipboard?.writeText(selectedWord)}>
-            Copy word
-          </Button>
-          <a
-            className="button button--secondary"
-            href={`https://www.google.com/search?q=define+${encodeURIComponent(selectedWord)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Icon name="external" /> Search Google for “{selectedWord}”
-          </a>
+          <div className="word-actions">
+            <Button onClick={() => void navigator.clipboard?.writeText(selectedWord)}>
+              Copy word
+            </Button>
+            <a
+              className="button button--secondary"
+              href={`https://www.google.com/search?q=define+${encodeURIComponent(selectedWord)}`}
+              target="_blank"
+              rel="noreferrer"
+            >
+              <Icon name="external" /> Search Google{' '}
+              <span className="word-action-query">for “{selectedWord}”</span>
+            </a>
+          </div>
         </section>
       </div>
       <p className="privacy-band">
@@ -665,11 +672,12 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
 }
 
 export function SettingsPage() {
-  const { client, user } = useAuth();
+  const { client, identity, user } = useAuth();
   return (
     <SettingsForm
       key={user?.id ?? 'guest'}
       client={client}
+      identity={identity}
       {...(user ? { userId: user.id } : {})}
     />
   );
@@ -677,12 +685,14 @@ export function SettingsPage() {
 
 function SettingsForm({
   client,
+  identity,
   userId,
 }: {
   client: ReturnType<typeof useAuth>['client'];
+  identity: IdentityScope;
   userId?: string;
 }) {
-  const storageKey = `amordle:settings:${userId ? `account:${encodeURIComponent(userId)}` : 'guest'}`;
+  const storageKey = settingsStorageKey(identity);
   const initial = useMemo(() => {
     try {
       const parsed = JSON.parse(localStorage.getItem(storageKey) ?? '{}') as Record<
@@ -697,7 +707,7 @@ function SettingsForm({
   const [difficulty, setDifficulty] = useState(String(initial.difficulty ?? 'Expert'));
   const [chain, setChain] = useState(Number(initial.chain ?? 5));
   const [hard, setHard] = useState(Boolean(initial.hard));
-  const [sound, setSound] = useState(Boolean(initial.sound));
+  const [sound, setSound] = useState(typeof initial.sound === 'boolean' ? initial.sound : true);
   const [motion, setMotion] = useState(Boolean(initial.motion));
   const [saveStatus, setSaveStatus] = useState('');
   const save = async () => {
@@ -788,7 +798,10 @@ function SettingsForm({
                 <input
                   type="checkbox"
                   checked={sound}
-                  onChange={(e) => setSound(e.target.checked)}
+                  onChange={(event) => {
+                    setSound(event.target.checked);
+                    writeSoundEnabled(identity, event.target.checked, localStorage);
+                  }}
                 />
                 <span>{sound ? 'On' : 'Off'}</span>
               </label>

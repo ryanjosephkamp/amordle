@@ -44,8 +44,12 @@
       "capability": "Supported desktop and mobile layouts avoid overflow, clipping, and blocked controls.",
       "checkpoint": 1,
       "evidenceProfile": "visual",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/e2e/fixture.navigation.spec.ts required-width overflow matrix"],
+        "visual": ["tests/e2e/visual.shell-parity.spec.ts desktop and mobile captures"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-05",
@@ -68,8 +72,12 @@
       "capability": "Focus Mode reduces chrome without hiding required gameplay state or controls.",
       "checkpoint": 1,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/e2e/fixture.navigation.spec.ts Solo focus recovery"],
+        "visual": ["tests/e2e/visual.gallery.spec.ts solo-focus"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-08",
@@ -117,24 +125,36 @@
       "capability": "OG validation, duplicate scoring, keyboard precedence, attempts, outcomes, and Hard Mode are exact.",
       "checkpoint": 1,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/domain/game.test.ts", "tests/browser/game-ui.test.tsx"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md keyboard evidence and sound"]
+      }
     },
     {
       "id": "GAME-02",
       "capability": "GO chain count, automatic advancement, prior evidence, terminal completion, and Hard Mode are exact.",
       "checkpoint": 1,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/go-daily.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts GO auto-advance"
+        ],
+        "manual": ["quality/checkpoint-1-visual-comparison.md GO solved hold and prior evidence"]
+      }
     },
     {
       "id": "GAME-03",
       "capability": "Practice configuration supports lengths 2-35, difficulty, Hard Mode, and GO counts without changing Daily.",
       "checkpoint": 1,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/domain/solo-launch.test.ts", "tests/domain/words.test.ts"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md Daily GO fixed-five launch"]
+      }
     },
     {
       "id": "GAME-04",
@@ -181,16 +201,26 @@
       "capability": "Draft, invalid, submitted, consumable, solved, transition, and completion feedback is perceivable.",
       "checkpoint": 1,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/browser/game-ui.test.tsx", "tests/e2e/fixture.navigation.spec.ts"],
+        "visual": ["tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md"]
+      }
     },
     {
       "id": "GAME-10",
       "capability": "Sound preferences and gameplay or notification cues are user-controlled and correctly triggered.",
       "checkpoint": 1,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/sound.test.ts",
+          "tests/browser/game-ui.test.tsx sound cue dispatch"
+        ],
+        "manual": ["quality/checkpoint-1-visual-comparison.md keyboard evidence and sound"]
+      }
     },
     {
       "id": "GAME-11",
@@ -221,8 +251,11 @@
       "capability": "GO selection is versioned, deterministic, no-replacement, cutoff-aware, and preserves stored chains.",
       "checkpoint": 1,
       "evidenceProfile": "domain-ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/domain/go-daily.test.ts cutoff and stored-answer vectors"],
+        "manual": ["quality/checkpoint-1-visual-comparison.md Daily GO fixed-five launch"]
+      }
     },
 
     {
@@ -569,8 +602,13 @@
       "capability": "Word refresh uses lease and conditional promotion; failure preserves the prior manifest.",
       "checkpoint": 4,
       "evidenceProfile": "operations",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/server/word-list-atomicity.test.ts concurrency and precondition matrix",
+          "tests/server/word-list-publication-store.test.ts strongly consistent public snapshot retry"
+        ]
+      }
     },
     {
       "id": "AM-CLEANUP-01",

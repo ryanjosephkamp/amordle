@@ -1053,6 +1053,15 @@
     width: 100%;
     padding-left: 42px;
   }
+  .word-search {
+    display: grid;
+    gap: var(--space-2);
+    margin-bottom: var(--space-3);
+  }
+  .search-metadata {
+    margin: 0;
+    color: var(--muted);
+  }
   .word-row {
     width: 100%;
     display: grid;
@@ -1089,6 +1098,16 @@
   .definition-copy {
     font-size: 1.2rem;
     color: var(--ink);
+  }
+  .word-actions {
+    display: flex;
+    align-items: stretch;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+  .word-actions .button {
+    min-height: 48px;
+    margin: 0;
   }
   .settings-layout {
     grid-template-columns: 170px minmax(0, 1fr);
@@ -1292,14 +1311,43 @@
   .day-states {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 0.2rem;
+    gap: 0.25rem;
   }
-  .day-states i {
-    font-style: normal;
+  .day-state {
+    min-width: 0;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 0.2rem;
+    border: 1px solid var(--rule);
+    padding: 0.12rem 0.2rem;
+    color: var(--muted);
+    font: 500 0.62rem/1.2 var(--display);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+  .day-state__label {
+    overflow: hidden;
+    text-overflow: clip;
+    white-space: nowrap;
+  }
+  .day-state__mark {
+    font-family: var(--mono);
+  }
+  .day-state[data-state='available'] {
+    border-color: rgba(71, 214, 110, 0.55);
+    color: var(--green);
+  }
+  .day-state[data-state='recorded'] {
+    border-style: dotted;
+    color: var(--ink);
+  }
+  .day-state[data-state='locked'] {
     color: var(--muted);
   }
-  .day-states i:first-child {
-    color: var(--green);
+  .day-state[data-state='unavailable'] {
+    border-color: transparent;
+    color: var(--dim);
   }
   .calendar-rail {
     border: 1px solid var(--rule-strong);
@@ -1520,24 +1568,45 @@
     min-width: calc(var(--word-length) * 30px);
     margin-inline: auto;
   }
+  .game-board--attributed {
+    width: min(100%, calc((min(8.5vw, 68px) + 7px) * var(--word-length) + 68px));
+  }
   .board-row {
     display: grid;
     grid-template-columns: repeat(var(--word-length), minmax(26px, 1fr));
     gap: inherit;
     position: relative;
   }
-  .board-row:has(.actor-mark) {
-    grid-template-columns: 34px repeat(var(--word-length), minmax(26px, 1fr));
+  .board-row--attributed {
+    grid-template-columns: 34px repeat(var(--word-length), minmax(26px, 1fr)) 34px;
     align-items: center;
   }
-  .actor-mark {
+  .actor-gutter {
     display: grid;
     place-items: center;
     width: 30px;
     aspect-ratio: 1;
-    border: 1px solid var(--green);
+    border: 1px solid var(--rule-strong);
     border-radius: 50%;
+    color: var(--muted);
     font-size: 0.65rem;
+  }
+  .actor-mark {
+    border: 1px solid var(--green);
+    color: var(--ink);
+  }
+  .evidence-mark {
+    border-color: var(--ice);
+    border-radius: 2px;
+    color: var(--ice);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+  }
+  .actor-gutter--balance {
+    visibility: hidden;
+  }
+  .actor-gutter--empty {
+    visibility: hidden;
   }
   .tile {
     display: grid;
@@ -1584,6 +1653,23 @@
     text-align: center;
     text-transform: uppercase;
   }
+  .game-transition-band {
+    min-height: 46px;
+    width: min(100%, 680px);
+    margin: 0.55rem auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.8rem;
+    border: 1px solid transparent;
+    padding: 0.55rem 0.75rem;
+    color: var(--muted);
+    text-align: center;
+  }
+  .game-transition-band.is-active {
+    border-color: var(--green);
+    background: rgba(22, 100, 53, 0.12);
+  }
   .keyboard {
     width: min(100%, 680px);
     margin-inline: auto;
@@ -1605,6 +1691,24 @@
     color: var(--ink);
     font: 500 clamp(0.75rem, 1.5vw, 1.15rem) var(--display);
     text-transform: uppercase;
+    touch-action: manipulation;
+    user-select: none;
+    cursor: pointer;
+    transition:
+      border-color 120ms ease,
+      background-color 120ms ease,
+      color 120ms ease,
+      transform 80ms ease;
+  }
+  .key:hover:not(:disabled) {
+    border-color: var(--green);
+  }
+  .key:active:not(:disabled) {
+    transform: translateY(1px);
+    filter: brightness(1.12);
+  }
+  .key:disabled {
+    cursor: not-allowed;
   }
   .key--wide {
     flex-basis: 1.5rem;
@@ -2445,6 +2549,19 @@
       border: 1px solid var(--rule);
       padding: 1rem;
     }
+    .word-actions {
+      display: grid;
+      grid-template-columns: minmax(0, 0.75fr) minmax(0, 1.25fr);
+      gap: 0.4rem;
+    }
+    .word-actions .button {
+      width: 100%;
+      padding-inline: 0.45rem;
+      font-size: 0.68rem;
+    }
+    .word-action-query {
+      display: none;
+    }
     .settings-index {
       display: flex;
       overflow-x: auto;
@@ -2481,19 +2598,38 @@
     }
     .calendar-panel {
       padding: 0.5rem;
+      overflow-x: auto;
+      overscroll-behavior-inline: contain;
+    }
+    .calendar-panel > header {
+      position: sticky;
+      left: 0;
+      min-width: calc(100vw - 40px);
+    }
+    .calendar-grid {
+      min-width: 680px;
     }
     .calendar-grid > [role='columnheader'] {
       font-size: 0.65rem;
       padding: 0.3rem;
     }
     .calendar-day {
-      min-height: 72px;
+      min-height: 88px;
       padding: 0.35rem;
       font-size: 0.72rem;
     }
     .calendar-day small {
       display: block;
       margin: 0;
+    }
+    .day-states {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.2rem;
+    }
+    .day-state {
+      min-height: 20px;
+      padding: 0.12rem 0.18rem;
+      font-size: 0.62rem;
     }
     .calendar-rail {
       display: block;
@@ -2606,6 +2742,9 @@
     .board-row {
       grid-template-columns: repeat(var(--word-length), minmax(0, 1fr));
     }
+    .board-row--attributed {
+      grid-template-columns: 30px repeat(var(--word-length), minmax(0, 1fr)) 30px;
+    }
     .tile {
       font-size: clamp(0.8rem, 7vw, 1.8rem);
     }
@@ -2616,7 +2755,8 @@
       gap: 3px;
     }
     .key {
-      height: 40px;
+      height: 44px;
+      min-height: 44px;
       padding: 0;
     }
     .key--wide {
@@ -2652,8 +2792,8 @@
     .shared-board .game-board {
       max-width: 430px;
     }
-    .shared-board .board-row:has(.actor-mark) {
-      grid-template-columns: 30px repeat(var(--word-length), minmax(0, 1fr));
+    .shared-board .board-row--attributed {
+      grid-template-columns: 30px repeat(var(--word-length), minmax(0, 1fr)) 30px;
     }
     .turn-line {
       font-size: 0.72rem;
@@ -2761,16 +2901,14 @@
       font-size: 0.6rem;
     }
     .calendar-day {
-      min-height: 62px;
-    }
-    .day-states {
-      gap: 0.1rem;
+      min-height: 88px;
     }
     .game-stage {
       padding-inline: 10px;
     }
     .key {
-      height: 42px;
+      height: 44px;
+      min-height: 44px;
     }
     .tile-legend {
       gap: 0.5rem;

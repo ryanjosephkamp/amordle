@@ -1,6 +1,7 @@
 import {
   createCachedWordListProvider,
   createWordList,
+  partitionAnswerPools,
   type Difficulty,
   type WordList,
   type WordListProvider,
@@ -14,14 +15,8 @@ import { ManifestService } from './manifest-service';
  */
 export function partitionAnswers(
   answers: readonly string[],
-): Record<Difficulty, readonly string[]> {
-  const casualEnd = Math.max(1, Math.ceil(answers.length * 0.35));
-  const standardEnd = Math.max(casualEnd, Math.ceil(answers.length * 0.7));
-  return {
-    casual: answers.slice(0, casualEnd),
-    standard: answers.slice(0, standardEnd),
-    expert: answers,
-  };
+): Readonly<Record<Difficulty, readonly string[]>> {
+  return partitionAnswerPools(answers);
 }
 
 export class ManifestWordListProvider implements WordListProvider {

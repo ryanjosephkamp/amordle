@@ -8,64 +8,101 @@ export function GameBoard({
   length,
   activeRow,
   actors,
+  rowLabels,
   compact = false,
 }: {
   rows: Tile[][];
   length: number;
   activeRow?: number | undefined;
   actors?: string[] | undefined;
+  rowLabels?: (string | undefined)[] | undefined;
   compact?: boolean;
 }) {
+  const attributed = actors !== undefined || rowLabels?.some(Boolean) === true;
   return (
     <div
       className={`board-viewport ${compact ? 'board-viewport--compact' : ''}`}
       data-length={length}
     >
       <div
-        className="game-board"
+        className={`game-board ${attributed ? 'game-board--attributed' : ''}`}
         role="grid"
         aria-label={`${length}-letter word board`}
         style={{ '--word-length': length } as React.CSSProperties}
       >
-        {rows.map((row, rowIndex) => (
-          <div
-            className="board-row"
-            role="row"
-            key={`${rowIndex}-${row.map((tile) => tile.letter).join('')}`}
-            aria-label={
-              actors?.[rowIndex]
-                ? `${actors[rowIndex]} guess ${rowIndex + 1}`
-                : `Guess ${rowIndex + 1}`
-            }
-          >
-            {actors?.[rowIndex] ? (
-              <span className="actor-mark" aria-hidden="true">
-                {actors[rowIndex]}
-              </span>
-            ) : null}
-            {row.map((tile, colIndex) => {
-              const letter = tile.letter?.toUpperCase() ?? '';
-              return (
-                <div
-                  role="gridcell"
-                  key={colIndex}
-                  className={`tile tile--${tile.state} ${activeRow === rowIndex ? 'tile--active-row' : ''}`}
-                  aria-label={
-                    letter ? `${letter}, ${tile.state}` : `empty position ${colIndex + 1}`
-                  }
+        {rows.map((row, rowIndex) => {
+          const actor = actors?.[rowIndex];
+          const rowLabel = rowLabels?.[rowIndex];
+          const attribution = actor ?? rowLabel;
+          return (
+            <div
+              className={`board-row ${attributed ? 'board-row--attributed' : ''}`}
+              role="row"
+              key={`${rowIndex}-${row.map((tile) => tile.letter).join('')}`}
+              aria-label={
+                actor
+                  ? `${actor} guess ${rowIndex + 1}`
+                  : rowLabel
+                    ? `${rowLabel} seeded evidence row`
+                    : `Guess ${rowIndex + 1}`
+              }
+            >
+              {attributed ? (
+                <span
+                  className={`actor-gutter ${actor ? 'actor-mark' : ''} ${rowLabel ? 'evidence-mark' : ''} ${attribution ? '' : 'actor-gutter--empty'}`}
+                  aria-hidden="true"
                 >
-                  <span aria-hidden="true">{letter}</span>
-                </div>
-              );
-            })}
-          </div>
-        ))}
+                  {attribution ?? ''}
+                </span>
+              ) : null}
+              {row.map((tile, colIndex) => {
+                const letter = tile.letter?.toUpperCase() ?? '';
+                return (
+                  <div
+                    role="gridcell"
+                    key={colIndex}
+                    className={`tile tile--${tile.state} ${activeRow === rowIndex ? 'tile--active-row' : ''}`}
+                    aria-label={
+                      letter ? `${letter}, ${tile.state}` : `empty position ${colIndex + 1}`
+                    }
+                  >
+                    <span aria-hidden="true">{letter}</span>
+                  </div>
+                );
+              })}
+              {attributed ? (
+                <span className="actor-gutter actor-gutter--balance" aria-hidden="true" />
+              ) : null}
+            </div>
+          );
+        })}
       </div>
     </div>
   );
 }
 
 const rows = ['QWERTYUIOP', 'ASDFGHJKL', 'ZXCVBNM'];
+
+const keyboardStatePriority: Record<TileState, number> = {
+  empty: 0,
+  draft: 0,
+  absent: 1,
+  present: 2,
+  correct: 3,
+  removed: 4,
+};
+
+function normalizeKeyboardEvidence(
+  evidence: Readonly<Record<string, TileState>>,
+): Readonly<Record<string, TileState>> {
+  const normalized: Record<string, TileState> = {};
+  for (const [rawLetter, state] of Object.entries(evidence)) {
+    const letter = rawLetter.toUpperCase();
+    const prior = normalized[letter] ?? 'empty';
+    if (keyboardStatePriority[state] > keyboardStatePriority[prior]) normalized[letter] = state;
+  }
+  return normalized;
+}
 
 export function Keyboard({
   evidence = {},
@@ -76,6 +113,7 @@ export function Keyboard({
   disabled?: boolean;
   onKey: (key: string) => void;
 }) {
+  const normalizedEvidence = normalizeKeyboardEvidence(evidence);
   return (
     <div className="keyboard" role="group" aria-label="Game keyboard">
       {rows.map((letters, index) => (
@@ -91,7 +129,7 @@ export function Keyboard({
             </button>
           ) : null}
           {[...letters].map((letter) => {
-            const state = evidence[letter] ?? 'empty';
+            const state = normalizedEvidence[letter] ?? 'empty';
             return (
               <button
                 key={letter}
@@ -99,6 +137,7 @@ export function Keyboard({
                 onClick={() => onKey(letter)}
                 disabled={disabled || state === 'removed'}
                 className={`key key--${state}`}
+                data-state={state}
                 aria-label={`${letter}${state !== 'empty' ? `, ${state}` : ''}`}
               >
                 {letter}

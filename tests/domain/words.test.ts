@@ -5,8 +5,12 @@ import {
   assertWordLength,
   createCachedWordListProvider,
   createWordList,
+  dailyAnswerIndex,
   normalizeWord,
   normalizeBundledWordPayload,
+  partitionAnswerPools,
+  scoreWordsByQuality,
+  selectDailyOgAnswer,
   WordListValidationError,
 } from '../../src/domain/words';
 
@@ -90,5 +94,62 @@ describe('word-list authority', () => {
       source: 'english-openlist',
       generatedAt: '2026-07-20T00:29:14.000Z',
     });
+  });
+
+  it('derives deterministic quality-ranked 35/70/100 answer pools without reordering members', () => {
+    const catalog = [
+      'abbes',
+      'abets',
+      'apple',
+      'baker',
+      'cider',
+      'delta',
+      'ember',
+      'fable',
+      'grape',
+      'hotel',
+      'ivory',
+      'joker',
+      'karma',
+      'lemon',
+      'mango',
+      'noble',
+      'ocean',
+      'piano',
+      'queen',
+      'river',
+    ];
+    const pools = partitionAnswerPools(catalog);
+    expect(pools.casual).toHaveLength(7);
+    expect(pools.standard).toHaveLength(14);
+    expect(pools.expert).toEqual(catalog);
+    expect(pools.casual.every((word) => pools.standard.includes(word))).toBe(true);
+    expect(pools.standard.every((word) => pools.expert.includes(word))).toBe(true);
+    expect(pools.casual.map((word) => catalog.indexOf(word))).toEqual(
+      [...pools.casual.map((word) => catalog.indexOf(word))].sort((left, right) => left - right),
+    );
+    expect(scoreWordsByQuality(catalog)).toEqual(scoreWordsByQuality([...catalog].reverse()));
+    // Quality selection is not the former alphabetical-prefix slice.
+    expect(pools.casual).not.toEqual(catalog.slice(0, 7));
+  });
+
+  it('keeps quality pools nested and correctly sized for every supported length', () => {
+    for (let length = 2; length <= 35; length += 1) {
+      const catalog = 'abcdefghijklmnopqrst'
+        .split('')
+        .map((letter) => `${letter}${'a'.repeat(length - 1)}`);
+      const pools = partitionAnswerPools(catalog);
+      expect(pools.casual).toHaveLength(7);
+      expect(pools.standard).toHaveLength(14);
+      expect(pools.expert).toHaveLength(20);
+      expect(pools.casual.every((word) => pools.standard.includes(word))).toBe(true);
+      expect(pools.standard.every((word) => pools.expert.includes(word))).toBe(true);
+    }
+  });
+
+  it('preserves the retained OG date-index selector', () => {
+    expect(dailyAnswerIndex('2026-05-26', 3)).toBe(1);
+    expect(selectDailyOgAnswer(['crane', 'slate', 'brisk'], '2026-05-26')).toBe('slate');
+    expect(() => dailyAnswerIndex('2026-02-30', 3)).toThrow(RangeError);
   });
 });

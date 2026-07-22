@@ -8,8 +8,11 @@ import { AuthContext } from '../../src/app/auth-context';
 import { PlayerStateContext } from '../../src/app/player-state-context';
 import { GameBoard, Keyboard } from '../../src/components/GameBoard';
 import { emptyRow, tiles } from '../../src/components/gameBoardData';
+import { mergeKeyboardEvidence, scoreGuess } from '../../src/domain/game';
 import { SoloGamePage } from '../../src/features/play/SoloGamePage';
+import { soundEngine } from '../../src/services/sound-controller';
 import { wordListProvider } from '../../src/services/word-list-provider';
+import '../../src/styles/global.css';
 
 afterEach(() => {
   cleanup();
@@ -44,10 +47,71 @@ describe('code-native game controls', () => {
     expect(received).toEqual(['A', 'ENTER', 'BACKSPACE']);
     expect(screen.getByRole('button', { name: 'B, removed' })).toBeDisabled();
   });
+
+  it('normalizes lowercase domain evidence without allowing a weaker casing duplicate to win', () => {
+    const domainEvidence = mergeKeyboardEvidence([
+      { tiles: scoreGuess('array', 'cigar') },
+      { tiles: scoreGuess('cigar', 'cigar') },
+    ]);
+    render(<Keyboard onKey={() => undefined} evidence={{ ...domainEvidence, A: 'absent' }} />);
+
+    for (const letter of 'CIGAR') {
+      expect(screen.getByRole('button', { name: `${letter}, correct` })).toHaveAttribute(
+        'data-state',
+        'correct',
+      );
+    }
+  });
+
+  it('keeps attributed and open board rows on one centered tile matrix', () => {
+    render(
+      <div style={{ width: 480 }}>
+        <GameBoard
+          length={5}
+          rows={[
+            tiles('CRANE', ['absent', 'present', 'absent', 'correct', 'correct']),
+            tiles('MIGHT', ['correct', 'absent', 'present', 'correct', 'absent']),
+            emptyRow(5),
+            emptyRow(5),
+          ]}
+          actors={['CL', 'KI']}
+        />
+      </div>,
+    );
+
+    const board = screen.getByRole('grid', { name: '5-letter word board' });
+    const boardCenter =
+      board.getBoundingClientRect().left + board.getBoundingClientRect().width / 2;
+    const rowStarts = screen.getAllByRole('row').map((row) => {
+      const cells = row.querySelectorAll<HTMLElement>('[role="gridcell"]');
+      const first = cells.item(0).getBoundingClientRect();
+      const last = cells.item(cells.length - 1).getBoundingClientRect();
+      expect(row.querySelectorAll('.actor-gutter')).toHaveLength(2);
+      expect(Math.abs((first.left + last.right) / 2 - boardCenter)).toBeLessThanOrEqual(2);
+      return first.left;
+    });
+
+    expect(Math.max(...rowStarts) - Math.min(...rowStarts)).toBeLessThanOrEqual(1);
+  });
+
+  it('keeps the touch keyboard bounded at 320px with practical key height', () => {
+    render(
+      <div data-testid="narrow-keyboard" style={{ width: 320 }}>
+        <Keyboard onKey={() => undefined} />
+      </div>,
+    );
+
+    const wrapper = screen.getByTestId('narrow-keyboard');
+    const letter = screen.getByRole('button', { name: 'A' });
+    expect(wrapper.scrollWidth).toBeLessThanOrEqual(wrapper.clientWidth + 1);
+    expect(letter.getBoundingClientRect().height).toBeGreaterThanOrEqual(44);
+    expect(getComputedStyle(letter).touchAction).toBe('manipulation');
+  });
 });
 
 describe('interactive Solo proof', () => {
   it('uses domain validation and does not consume an invalid attempt', async () => {
+    const sound = vi.spyOn(soundEngine, 'play').mockResolvedValue(true);
     vi.spyOn(wordListProvider, 'load').mockResolvedValue({
       schemaVersion: 1,
       revision: 'browser-fixture-v1',
@@ -96,5 +160,7 @@ describe('interactive Solo proof', () => {
     fireEvent.keyDown(window, { key: 'Enter' });
     expect(await screen.findByRole('status')).toHaveTextContent('exactly 5 letters');
     expect(screen.getByText(initialAttempts ?? '')).toBeInTheDocument();
+    expect(sound).toHaveBeenCalledWith('keyboard-click', true);
+    expect(sound).toHaveBeenCalledWith('invalid', true);
   });
 });
