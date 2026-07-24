@@ -499,7 +499,15 @@ export function CombatResultPage() {
     queryFn: () => repository!.loadLegacyReadOnlySummary(matchId),
     staleTime: 30_000,
   });
-  if (status !== 'authenticated' || summary.isPending) {
+  if (status !== 'authenticated' || !user) {
+    return (
+      <MatchGate
+        title="Sign in to open this participant result"
+        description="Practice COMBAT results remain participant-only."
+      />
+    );
+  }
+  if (summary.isPending) {
     return (
       <div className="route-loading" role="status" aria-live="polite">
         <p>Loading participant result…</p>
