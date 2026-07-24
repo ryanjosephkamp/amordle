@@ -63,6 +63,26 @@ describe('account persistence boundaries', () => {
     expect(fixture.replaceTimestamp).toHaveBeenCalledWith('updated_at', currentAt);
   });
 
+  it('hydrates settings returned with a PostgreSQL UTC offset', async () => {
+    const offsetTimestamp = '2026-07-24T12:00:00+00:00';
+    const readMaybeSingle = vi.fn(async () => ({
+      data: { settings: { sound: true }, updated_at: offsetTimestamp },
+      error: null,
+    }));
+    const readOwner = vi.fn(() => ({ maybeSingle: readMaybeSingle }));
+    const readSelect = vi.fn(() => ({ eq: readOwner }));
+    const from = vi.fn(() => ({ select: readSelect }));
+
+    await expect(
+      new AccountRepository({ from } as unknown as AmordleSupabaseClient).loadSettingsSnapshot(
+        userId,
+      ),
+    ).resolves.toEqual({
+      value: { sound: true },
+      updatedAt: '2026-07-24T12:00:00.000Z',
+    });
+  });
+
   it('never reports a settings save after three lost compare-and-swap races', async () => {
     const fixture = settingsClient({
       current: { settings: { sound: true }, updated_at: currentAt },

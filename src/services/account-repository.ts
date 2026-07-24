@@ -1,16 +1,17 @@
 import { z } from 'zod';
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json, Tables } from '../types/database';
+import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
 
 const accountIdSchema = z.string().uuid();
-const timestampSchema = z.iso.datetime();
+const applicationTimestampSchema = z.iso.datetime();
 const historyIdSchema = z.string().trim().min(1).max(200);
 const jsonDocumentSchema = z.record(z.string(), z.json());
 const historyRowSchema = z.object({
   id: historyIdSchema,
   user_id: accountIdSchema,
-  completed_at: timestampSchema,
+  completed_at: postgresTimestamptzSchema,
   entry: jsonDocumentSchema,
 });
 
@@ -33,7 +34,7 @@ function accountId(value: string): string {
 }
 
 function updateTimestamp(value: string): string {
-  const parsed = timestampSchema.safeParse(value);
+  const parsed = applicationTimestampSchema.safeParse(value);
   if (!parsed.success) {
     throw new ServiceError('validation', 'Account persistence requires a valid update timestamp.');
   }
@@ -106,7 +107,11 @@ export class AccountRepository {
       .eq('user_id', safeUserId)
       .maybeSingle();
     throwIfServiceError(error, 'Load progress snapshot');
-    return data ? { progress: data.progress, updatedAt: data.updated_at } : null;
+    if (!data) return null;
+    return {
+      progress: jsonDocument(data.progress, 'Account progress'),
+      updatedAt: postgresTimestamptzSchema.parse(data.updated_at),
+    };
   }
 
   async saveProgress(
@@ -127,7 +132,12 @@ export class AccountRepository {
           .maybeSingle();
         if (insertConflict(created.error)) continue;
         throwIfServiceError(created.error, 'Create progress');
-        if (created.data) return { status: 'saved', updatedAt: created.data.updated_at };
+        if (created.data) {
+          return {
+            status: 'saved',
+            updatedAt: postgresTimestamptzSchema.parse(created.data.updated_at),
+          };
+        }
         continue;
       }
       if (canonicalJson(current.progress) === canonicalJson(safeProgress)) {
@@ -142,7 +152,12 @@ export class AccountRepository {
         .select('updated_at')
         .maybeSingle();
       throwIfServiceError(replaced.error, 'Save progress');
-      if (replaced.data) return { status: 'saved', updatedAt: replaced.data.updated_at };
+      if (replaced.data) {
+        return {
+          status: 'saved',
+          updatedAt: postgresTimestamptzSchema.parse(replaced.data.updated_at),
+        };
+      }
     }
     throw new ServiceError('conflict', 'Progress reconciliation did not converge.');
   }
@@ -166,7 +181,10 @@ export class AccountRepository {
         progression: safeProgression,
       };
       if (current.data && canonicalJson(current.data.progress) === canonicalJson(progress)) {
-        return { status: 'current', updatedAt: current.data.updated_at };
+        return {
+          status: 'current',
+          updatedAt: postgresTimestamptzSchema.parse(current.data.updated_at),
+        };
       }
       if (!current.data) {
         const timestamp = nextTimestamp(updatedAt);
@@ -177,7 +195,12 @@ export class AccountRepository {
           .maybeSingle();
         if (insertConflict(created.error)) continue;
         throwIfServiceError(created.error, 'Create progression');
-        if (created.data) return { status: 'saved', updatedAt: created.data.updated_at };
+        if (created.data) {
+          return {
+            status: 'saved',
+            updatedAt: postgresTimestamptzSchema.parse(created.data.updated_at),
+          };
+        }
         continue;
       }
       const timestamp = nextTimestamp(updatedAt, current.data.updated_at);
@@ -189,7 +212,12 @@ export class AccountRepository {
         .select('updated_at')
         .maybeSingle();
       throwIfServiceError(replaced.error, 'Save progression');
-      if (replaced.data) return { status: 'saved', updatedAt: replaced.data.updated_at };
+      if (replaced.data) {
+        return {
+          status: 'saved',
+          updatedAt: postgresTimestamptzSchema.parse(replaced.data.updated_at),
+        };
+      }
     }
     throw new ServiceError(
       'conflict',
@@ -213,7 +241,7 @@ export class AccountRepository {
     if (!data) return null;
     return {
       value: jsonDocument(data.settings, 'Account settings'),
-      updatedAt: timestampSchema.parse(data.updated_at),
+      updatedAt: postgresTimestamptzSchema.parse(data.updated_at),
     };
   }
 
@@ -239,7 +267,12 @@ export class AccountRepository {
           .maybeSingle();
         if (insertConflict(created.error)) continue;
         throwIfServiceError(created.error, 'Create settings');
-        if (created.data) return { status: 'saved', updatedAt: created.data.updated_at };
+        if (created.data) {
+          return {
+            status: 'saved',
+            updatedAt: postgresTimestamptzSchema.parse(created.data.updated_at),
+          };
+        }
         continue;
       }
       const replaced = await this.client
@@ -250,7 +283,12 @@ export class AccountRepository {
         .select('updated_at')
         .maybeSingle();
       throwIfServiceError(replaced.error, 'Save settings');
-      if (replaced.data) return { status: 'saved', updatedAt: replaced.data.updated_at };
+      if (replaced.data) {
+        return {
+          status: 'saved',
+          updatedAt: postgresTimestamptzSchema.parse(replaced.data.updated_at),
+        };
+      }
     }
     throw new ServiceError(
       'conflict',

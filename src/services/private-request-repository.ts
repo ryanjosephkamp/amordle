@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json } from '../types/database';
+import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { throwIfServiceError } from './service-error';
 
 export type PrivateRequestInput = {
@@ -33,7 +34,7 @@ const requestSchema = z
 
 const preferenceSchema = z.object({
   accept_private_practice_requests: z.boolean(),
-  updated_at: z.iso.datetime(),
+  updated_at: postgresTimestamptzSchema,
 });
 const blockSchema = z.object({
   public_profile_id: z.string().uuid(),
@@ -41,12 +42,12 @@ const blockSchema = z.object({
   accent_color: z.enum(['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber']),
   flair_key: z.literal('none'),
   avatar_url: z.url().max(2048).nullable(),
-  blocked_at: z.iso.datetime(),
+  blocked_at: postgresTimestamptzSchema,
 });
 const blockMutationSchema = z.object({
   blocked: z.boolean(),
   public_profile_id: z.string().uuid(),
-  updated_at: z.iso.datetime(),
+  updated_at: postgresTimestamptzSchema,
 });
 
 export type PrivateRequestPreference = z.infer<typeof preferenceSchema>;

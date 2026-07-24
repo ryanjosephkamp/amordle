@@ -3,6 +3,11 @@ import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { Button } from '../components/Button';
 import { getBrowserSupabaseClient } from '../lib/supabase-browser';
 import { AccountRepository } from '../services/account-repository';
+import {
+  AccountHydrationError,
+  hydrateAccountScope,
+  type AccountHydrationStage,
+} from '../services/account-hydration';
 import { AuthService } from '../services/auth-service';
 import {
   IdentityTransitionMachine,
@@ -26,6 +31,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     epoch: 0,
   });
   const [user, setUser] = useState<User | null>(null);
+  const [hydrationFailureStage, setHydrationFailureStage] = useState<AccountHydrationStage | null>(
+    null,
+  );
 
   useEffect(() => {
     if (!service || !accountRepository) {
@@ -39,12 +47,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const runEffects = (effects: readonly IdentityTransitionEffect[]) => {
       for (const effect of effects) {
         if (effect.type !== 'hydrate-account') continue;
-        void Promise.all([
-          accountRepository.loadProgress(effect.identity.userId),
-          accountRepository.loadSettings(effect.identity.userId),
-        ])
+        setHydrationFailureStage(null);
+        void hydrateAccountScope(accountRepository, effect.identity.userId)
           .then(() => {
             if (!active) return;
+            setHydrationFailureStage(null);
             apply(
               machine.current.dispatch({
                 type: 'account-hydrated',
@@ -53,8 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
               }),
             );
           })
-          .catch(() => {
+          .catch((error: unknown) => {
             if (!active) return;
+            setHydrationFailureStage(
+              error instanceof AccountHydrationError ? error.stage : 'progress',
+            );
             apply(
               machine.current.dispatch({
                 type: 'account-hydration-failed',
@@ -109,11 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     effect: Extract<IdentityTransitionEffect, { type: 'hydrate-account' }>,
   ) => {
     if (!accountRepository) return;
-    void Promise.all([
-      accountRepository.loadProgress(effect.identity.userId),
-      accountRepository.loadSettings(effect.identity.userId),
-    ]).then(
+    setHydrationFailureStage(null);
+    void hydrateAccountScope(accountRepository, effect.identity.userId).then(
       () => {
+        setHydrationFailureStage(null);
         const completed = machine.current.dispatch({
           type: 'account-hydrated',
           userId: effect.identity.userId,
@@ -121,7 +130,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         if (completed.accepted) setTransition(completed.state);
       },
-      () => {
+      (error: unknown) => {
+        setHydrationFailureStage(error instanceof AccountHydrationError ? error.stage : 'progress');
         const failed = machine.current.dispatch({
           type: 'account-hydration-failed',
           userId: effect.identity.userId,
@@ -186,7 +196,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return (
       <main className="route-loading" aria-live="polite" aria-busy={!failed}>
         <span aria-hidden="true" />
-        <p>{failed ? 'Account hydration could not be verified.' : 'Restoring account scope…'}</p>
+        <p>
+          {failed
+            ? hydrationFailureStage === 'settings'
+              ? 'Account settings could not be restored.'
+              : hydrationFailureStage === 'progress'
+                ? 'Account progress could not be restored.'
+                : 'Account hydration could not be verified.'
+            : 'Restoring account scope…'}
+        </p>
         <small>
           {failed
             ? 'No guest or previous-account data has been substituted.'

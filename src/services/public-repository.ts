@@ -6,11 +6,10 @@ import type {
   PublicProfileProjection,
   PublicSiteStatsProjection,
 } from '../types/services';
+import { nullablePostgresTimestamptzSchema, postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
 
 const publicProfileIdSchema = z.string().uuid();
-const timestampSchema = z.iso.datetime();
-const nullableTimestampSchema = timestampSchema.nullable();
 const accentSchema = z.enum(['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber']);
 const flairSchema = z.literal('none');
 const containsNoControlCharacters = (value: string) =>
@@ -28,29 +27,33 @@ const avatarSchema = z
   .nullable();
 const bioSchema = safeText(160).nullable();
 
-const publicProfileRowSchema = z.object({
-  public_profile_id: publicProfileIdSchema,
-  display_name: displayNameSchema,
-  accent_color: accentSchema,
-  flair_key: flairSchema,
-  avatar_url: avatarSchema,
-  bio: bioSchema,
-  created_at: timestampSchema,
-  updated_at: timestampSchema,
-});
+const publicProfileRowSchema = z
+  .object({
+    public_profile_id: publicProfileIdSchema,
+    display_name: displayNameSchema,
+    accent_color: accentSchema,
+    flair_key: flairSchema,
+    avatar_url: avatarSchema,
+    bio: bioSchema,
+    created_at: postgresTimestamptzSchema,
+    updated_at: postgresTimestamptzSchema,
+  })
+  .strict();
 
-const ownedProfileRowSchema = z.object({
-  public_profile_id: publicProfileIdSchema,
-  visibility: z.enum(['private', 'public']),
-  display_name: displayNameSchema.nullable(),
-  accent_color: accentSchema,
-  flair_key: flairSchema,
-  avatar_url: avatarSchema,
-  bio: bioSchema,
-  moderation_status: z.enum(['active', 'hidden', 'suspended']),
-  created_at: timestampSchema,
-  updated_at: timestampSchema,
-});
+const ownedProfileRowSchema = z
+  .object({
+    public_profile_id: publicProfileIdSchema,
+    visibility: z.enum(['private', 'public']),
+    display_name: displayNameSchema.nullable(),
+    accent_color: accentSchema,
+    flair_key: flairSchema,
+    avatar_url: avatarSchema,
+    bio: bioSchema,
+    moderation_status: z.enum(['active', 'hidden', 'suspended']),
+    created_at: postgresTimestamptzSchema,
+    updated_at: postgresTimestamptzSchema,
+  })
+  .strict();
 
 const leaderboardBucketSchema = z.enum([
   'multiplayer:og',
@@ -58,51 +61,85 @@ const leaderboardBucketSchema = z.enum([
   'multiplayer:og:daily:v1',
   'multiplayer:go:daily:v1',
 ]);
-const leaderboardRowSchema = z.object({
-  leaderboard_key: z.enum(['ranked-practice-v1', 'ranked-daily-v1']),
-  rank: z.number().int().positive(),
-  bucket: leaderboardBucketSchema,
-  public_profile_id: publicProfileIdSchema,
-  display_name: displayNameSchema,
-  accent_color: accentSchema,
-  flair_key: flairSchema,
-  avatar_url: avatarSchema,
-  rating: z.number().int().nonnegative(),
-  games_played: z.number().int().positive(),
-  wins: z.number().int().nonnegative(),
-  losses: z.number().int().nonnegative(),
-  draws: z.number().int().nonnegative(),
-  provisional: z.boolean(),
-  latest_rating_delta: z.number().int(),
-  latest_rating_movement_at: nullableTimestampSchema,
-  peak_rating: z.number().int().nonnegative(),
-  profile_updated_at: timestampSchema,
-  leaderboard_updated_at: timestampSchema,
-});
+const leaderboardRowSchema = z
+  .object({
+    leaderboard_key: z.enum(['ranked-practice-v1', 'ranked-daily-v1']),
+    rank: z.number().int().positive(),
+    bucket: leaderboardBucketSchema,
+    public_profile_id: publicProfileIdSchema,
+    display_name: displayNameSchema,
+    accent_color: accentSchema,
+    flair_key: flairSchema,
+    avatar_url: avatarSchema,
+    rating: z.number().int().nonnegative(),
+    games_played: z.number().int().positive(),
+    wins: z.number().int().nonnegative(),
+    losses: z.number().int().nonnegative(),
+    draws: z.number().int().nonnegative(),
+    provisional: z.boolean(),
+    latest_rating_delta: z.number().int(),
+    latest_rating_movement_at: nullablePostgresTimestamptzSchema,
+    peak_rating: z.number().int().nonnegative(),
+    profile_updated_at: postgresTimestamptzSchema,
+    leaderboard_updated_at: postgresTimestamptzSchema,
+  })
+  .strict();
 
-const siteStatsRowSchema = z.object({
-  stats_key: z.literal('site-stats-v1'),
-  generated_at: timestampSchema,
-  public_profiles_active: z.number().int().nonnegative(),
-  ranked_practice_public_players: z.number().int().nonnegative(),
-  ranked_practice_public_player_results: z.number().int().nonnegative(),
-  ranked_practice_public_og_players: z.number().int().nonnegative(),
-  ranked_practice_public_go_players: z.number().int().nonnegative(),
-  leaderboard_updated_at: nullableTimestampSchema,
-  public_profiles_updated_at: nullableTimestampSchema,
-});
+const siteStatsRowSchema = z
+  .object({
+    stats_key: z.literal('site-stats-v1'),
+    generated_at: postgresTimestamptzSchema,
+    public_profiles_active: z.number().int().nonnegative(),
+    ranked_practice_public_players: z.number().int().nonnegative(),
+    ranked_practice_public_player_results: z.number().int().nonnegative(),
+    ranked_practice_public_og_players: z.number().int().nonnegative(),
+    ranked_practice_public_go_players: z.number().int().nonnegative(),
+    leaderboard_updated_at: nullablePostgresTimestamptzSchema,
+    public_profiles_updated_at: nullablePostgresTimestamptzSchema,
+  })
+  .strict();
 
 const profileUpdateSchema = z.object({
   displayName: safeText(50).optional(),
   visibility: z.enum(['private', 'public']).optional(),
   accentColor: accentSchema.optional(),
   flairKey: flairSchema.optional(),
-  avatarUrl: z.union([z.literal(''), z.url().max(2048)]).optional(),
+  avatarUrl: z
+    .union([
+      z.literal(''),
+      z
+        .url()
+        .max(2048)
+        .refine((value) => new URL(value).protocol === 'https:'),
+    ])
+    .optional(),
   bio: safeText(160).optional(),
 });
 
 function invalidProjection(name: string): ServiceError {
   return new ServiceError('validation', `${name} returned an invalid public projection.`);
+}
+
+function normalizedOptionalText(value: string | undefined): string | null | undefined {
+  if (value === undefined) return undefined;
+  const normalized = value.trim();
+  return normalized === '' ? null : normalized;
+}
+
+function profileMatchesUpdate(
+  profile: OwnedPublicProfileProjection,
+  update: z.infer<typeof profileUpdateSchema>,
+): boolean {
+  return (
+    (update.displayName === undefined ||
+      profile.displayName === normalizedOptionalText(update.displayName)) &&
+    (update.visibility === undefined || profile.visibility === update.visibility) &&
+    (update.accentColor === undefined || profile.accentColor === update.accentColor) &&
+    (update.flairKey === undefined || profile.flairKey === update.flairKey) &&
+    (update.avatarUrl === undefined ||
+      profile.avatarUrl === normalizedOptionalText(update.avatarUrl)) &&
+    (update.bio === undefined || profile.bio === normalizedOptionalText(update.bio))
+  );
 }
 
 function mapProfile(input: unknown): PublicProfileProjection {
@@ -187,7 +224,16 @@ export class PublicRepository {
       ...(safe.avatarUrl === undefined ? {} : { p_avatar_url: safe.avatarUrl }),
       ...(safe.bio === undefined ? {} : { p_bio: safe.bio }),
     });
-    throwIfServiceError(error, 'Update public profile');
+    if (error) {
+      try {
+        const reconciled = await this.getMyProfile();
+        if (reconciled && profileMatchesUpdate(reconciled, safe)) return reconciled;
+      } catch {
+        // The original mutation error remains authoritative unless the approved
+        // owner projection proves that the requested state was durably saved.
+      }
+      throwIfServiceError(error, 'Update public profile');
+    }
     const row = data?.[0];
     if (!row) throw invalidProjection('Account profile service');
     return mapOwnedProfile(row);

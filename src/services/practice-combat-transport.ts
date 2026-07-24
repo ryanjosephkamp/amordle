@@ -9,6 +9,7 @@ import {
 } from '../domain/practice-combat-preview';
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json } from '../types/database';
+import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
 
 const opaqueIdSchema = z
@@ -18,7 +19,7 @@ const opaqueIdSchema = z
   .max(200)
   .regex(/^[A-Za-z0-9._:-]+$/);
 const uuidSchema = z.string().uuid();
-const timestampSchema = z.iso.datetime({ offset: true });
+const timestampSchema = postgresTimestamptzSchema;
 const seatSchema = z.enum(['player-one', 'player-two']);
 const actorSchema = z.enum(['left', 'right']);
 const sourceKindSchema = z.enum(['public-lobby', 'private-request', 'rematch']);

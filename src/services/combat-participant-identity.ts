@@ -1,6 +1,7 @@
 import { z } from 'zod';
 
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
+import { nullablePostgresTimestamptzSchema } from './postgres-timestamp';
 import { throwIfServiceError } from './service-error';
 
 const participantIdentitySchema = z
@@ -13,7 +14,7 @@ const participantIdentitySchema = z
     accent_color: z.string().nullable(),
     flair_key: z.string().nullable(),
     avatar_url: z.url().nullable(),
-    updated_at: z.iso.datetime().nullable(),
+    updated_at: nullablePostgresTimestamptzSchema,
   })
   .strict()
   .superRefine((row, context) => {

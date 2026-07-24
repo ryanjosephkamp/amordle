@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { nullablePostgresTimestamptzSchema, postgresTimestamptzSchema } from './postgres-timestamp';
 
 const opaqueIdSchema = z.string().trim().min(1).max(200);
-const isoTimestampSchema = z.iso.datetime({ offset: true });
-const nullableTimestampSchema = isoTimestampSchema.nullable();
+const isoTimestampSchema = postgresTimestamptzSchema;
+const nullableTimestampSchema = nullablePostgresTimestamptzSchema;
 const dateKeySchema = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)

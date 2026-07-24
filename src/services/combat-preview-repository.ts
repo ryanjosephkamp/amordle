@@ -15,10 +15,11 @@ import {
   type RankedDailyQueueProjection,
   type RematchProjection,
 } from './combat-preview-projections';
+import { nullablePostgresTimestamptzSchema, postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
 
 const opaqueIdSchema = z.string().trim().min(1).max(200);
-const isoTimestampSchema = z.iso.datetime({ offset: true });
+const isoTimestampSchema = postgresTimestamptzSchema;
 const uuidSchema = z.string().uuid();
 
 const legacySummarySelection =
@@ -39,11 +40,11 @@ const projectionRowSchema = z
     ranked: z.boolean(),
     rating_bucket: z.string().nullable(),
     custom_game_code: z.string().nullable(),
-    deadline_at: z.string().nullable(),
-    ended_at: z.string().nullable(),
+    deadline_at: nullablePostgresTimestamptzSchema,
+    ended_at: nullablePostgresTimestamptzSchema,
     winner_player_id: z.string().nullable(),
-    created_at: z.string(),
-    updated_at: z.string(),
+    created_at: postgresTimestamptzSchema,
+    updated_at: postgresTimestamptzSchema,
     projection: z.unknown().nullable(),
   })
   .strict();

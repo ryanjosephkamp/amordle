@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
@@ -20,6 +20,7 @@ import {
 } from '../../services/settings-repository';
 import { wordListProvider } from '../../services/word-list-provider';
 import type { Json } from '../../types/database';
+import type { OwnedPublicProfileProjection } from '../../types/services';
 import {
   readLocalSoloProjections,
   type LocalSoloProjection,
@@ -38,6 +39,32 @@ type HistoryProjection = {
 };
 
 const profileAccents = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber'] as const;
+
+type ProfileDraft = {
+  readonly displayName: string;
+  readonly visibility: 'private' | 'public';
+  readonly accentColor: (typeof profileAccents)[number];
+  readonly avatarUrl: string;
+  readonly bio: string;
+};
+
+const emptyProfileDraft: ProfileDraft = {
+  displayName: '',
+  visibility: 'private',
+  accentColor: 'aurora',
+  avatarUrl: '',
+  bio: '',
+};
+
+function profileDraftFromProjection(profile: OwnedPublicProfileProjection): ProfileDraft {
+  return {
+    displayName: profile.displayName ?? '',
+    visibility: profile.visibility,
+    accentColor: profileAccent(profile.accentColor),
+    avatarUrl: profile.avatarUrl ?? '',
+    bio: profile.bio ?? '',
+  };
+}
 
 function profileAccent(value: unknown): (typeof profileAccents)[number] {
   return typeof value === 'string' &&
@@ -596,9 +623,15 @@ export function MarketplacePage() {
 export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
   const { publicProfileId } = useParams();
   const { client, status: authStatus, user } = useAuth();
+  const queryClient = useQueryClient();
   const repository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
+  const profileQueryKey = [
+    publicView ? 'public-profile' : 'my-public-profile',
+    publicProfileId,
+    user?.id,
+  ] as const;
   const profile = useQuery({
-    queryKey: [publicView ? 'public-profile' : 'my-public-profile', publicProfileId, user?.id],
+    queryKey: profileQueryKey,
     enabled: Boolean(repository && (publicView ? publicProfileId : user)),
     queryFn: () =>
       publicView ? repository!.getProfile(publicProfileId ?? '') : repository!.getMyProfile(),
@@ -619,6 +652,17 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
       ? String(raw.avatarUrl ?? raw.avatar_url)
       : null;
   const [saveStatus, setSaveStatus] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState<ProfileDraft>(emptyProfileDraft);
+  const [baseline, setBaseline] = useState<ProfileDraft>(emptyProfileDraft);
+
+  useEffect(() => {
+    if (publicView) return;
+    const ownerProjection = profile.data as OwnedPublicProfileProjection | null | undefined;
+    const next = ownerProjection ? profileDraftFromProjection(ownerProjection) : emptyProfileDraft;
+    setDraft(next);
+    setBaseline(next);
+  }, [profile.data, publicView, user?.id]);
   if ((!publicView && authStatus === 'loading') || (profile.isPending && (publicView || user))) {
     return (
       <div className="page page--narrow">
@@ -691,27 +735,26 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
       ) : (
         <form
           className="profile-form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             setSaveStatus('');
             if (!repository || !user) {
               setSaveStatus('Sign in before saving an account-owned public projection.');
               return;
             }
-            const form = new FormData(event.currentTarget);
-            void repository
-              .updateMyProfile({
-                displayName: String(form.get('displayName') ?? ''),
-                visibility: form.get('visibility') === 'public' ? 'public' : 'private',
-                accentColor: String(form.get('accent') ?? ''),
-                avatarUrl: String(form.get('avatarUrl') ?? ''),
-                bio: String(form.get('bio') ?? ''),
-              })
-              .then(() => profile.refetch())
-              .then(() => setSaveStatus('Player profile saved by account authority.'))
-              .catch((error: unknown) =>
-                setSaveStatus(error instanceof Error ? error.message : 'Profile save failed.'),
-              );
+            setSaving(true);
+            try {
+              const saved = await repository.updateMyProfile(draft);
+              const savedDraft = profileDraftFromProjection(saved);
+              queryClient.setQueryData(profileQueryKey, saved);
+              setDraft(savedDraft);
+              setBaseline(savedDraft);
+              setSaveStatus('Player profile saved by account authority.');
+            } catch (error: unknown) {
+              setSaveStatus(error instanceof Error ? error.message : 'Profile save failed.');
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <label>
@@ -719,13 +762,27 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
             <input
               name="displayName"
               maxLength={50}
-              defaultValue={displayName === 'Profile not created' || !user ? '' : displayName}
+              value={draft.displayName}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, displayName: event.target.value }))
+              }
               required
+              disabled={saving}
             />
           </label>
           <label>
             Public visibility
-            <select name="visibility" defaultValue={String(raw.visibility ?? 'private')}>
+            <select
+              name="visibility"
+              value={draft.visibility}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  visibility: event.target.value === 'public' ? 'public' : 'private',
+                }))
+              }
+              disabled={saving}
+            >
               <option value="private">Private</option>
               <option value="public">Public</option>
             </select>
@@ -738,7 +795,14 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
                   type="radio"
                   name="accent"
                   value={value.toLowerCase()}
-                  defaultChecked={value.toLowerCase() === accent}
+                  checked={value.toLowerCase() === draft.accentColor}
+                  onChange={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      accentColor: profileAccent(value.toLowerCase()),
+                    }))
+                  }
+                  disabled={saving}
                 />
                 <span>{value}</span>
               </label>
@@ -751,17 +815,34 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
               type="url"
               maxLength={2048}
               placeholder="https://…"
-              defaultValue={avatarUrl ?? ''}
+              value={draft.avatarUrl}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, avatarUrl: event.target.value }))
+              }
+              disabled={saving}
             />
           </label>
           <label>
             Public bio
-            <textarea name="bio" maxLength={160} defaultValue={bio} />
+            <textarea
+              name="bio"
+              maxLength={160}
+              value={draft.bio}
+              onChange={(event) => setDraft((current) => ({ ...current, bio: event.target.value }))}
+              disabled={saving}
+            />
           </label>
-          <Button type="submit" tone="primary">
-            Save player profile
+          <Button type="submit" tone="primary" disabled={saving}>
+            {saving ? 'Saving player profile…' : 'Save player profile'}
           </Button>
-          <Button type="reset" onClick={() => setSaveStatus('')}>
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              setDraft(baseline);
+              setSaveStatus('');
+            }}
+          >
             Discard changes
           </Button>
           {saveStatus ? <p role="status">{saveStatus}</p> : null}

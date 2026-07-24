@@ -4,6 +4,7 @@ import { PublicRepository } from '../../src/services/public-repository';
 
 const publicProfileId = '00000000-0000-4000-8000-000000000111';
 const timestamp = '2026-07-22T12:00:00.000Z';
+const postgresTimestamp = '2026-07-22T12:00:00+00:00';
 
 function clientWithRpc(handler: (name: string, args: unknown) => unknown): {
   client: AmordleSupabaseClient;
@@ -26,9 +27,6 @@ function publicProfileRow() {
     bio: 'Public bio',
     created_at: timestamp,
     updated_at: timestamp,
-    user_id: 'raw-auth-id-must-not-pass',
-    email: 'private@example.test',
-    answer: 'crane',
   };
 }
 
@@ -74,6 +72,83 @@ describe('sanitized public projections', () => {
     expect(projection).not.toHaveProperty('email');
   });
 
+  it('fails closed when a profile boundary includes sensitive fields', async () => {
+    const { client } = clientWithRpc(() => [
+      {
+        ...publicProfileRow(),
+        email: 'private@example.test',
+        answer: 'crane',
+      },
+    ]);
+
+    await expect(new PublicRepository(client).getProfile(publicProfileId)).rejects.toMatchObject({
+      failure: { code: 'validation' },
+    });
+  });
+
+  it('accepts owner RPC timestamps in PostgreSQL offset form and canonicalizes them', async () => {
+    const { client } = clientWithRpc(() => [
+      {
+        ...publicProfileRow(),
+        visibility: 'public',
+        moderation_status: 'active',
+        created_at: postgresTimestamp,
+        updated_at: postgresTimestamp,
+      },
+    ]);
+
+    await expect(new PublicRepository(client).getMyProfile()).resolves.toMatchObject({
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    });
+  });
+
+  it('rejects a non-HTTPS avatar before issuing a profile mutation', async () => {
+    const { client, rpc } = clientWithRpc(() => []);
+    await expect(
+      new PublicRepository(client).updateMyProfile({
+        displayName: 'Ember Player',
+        avatarUrl: 'http://example.test/avatar.png',
+      }),
+    ).rejects.toThrow();
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
+  it('reconciles an ambiguous profile mutation only when the owner projection matches', async () => {
+    const savedRow = {
+      ...publicProfileRow(),
+      visibility: 'public',
+      moderation_status: 'active',
+      created_at: postgresTimestamp,
+      updated_at: postgresTimestamp,
+    };
+    const rpc = vi
+      .fn()
+      .mockResolvedValueOnce({
+        data: null,
+        error: { message: 'connection closed after commit', code: '500' },
+      })
+      .mockResolvedValueOnce({ data: [savedRow], error: null });
+    const repository = new PublicRepository({
+      rpc,
+    } as unknown as AmordleSupabaseClient);
+
+    await expect(
+      repository.updateMyProfile({
+        displayName: 'Ember Player',
+        visibility: 'public',
+        accentColor: 'aurora',
+        avatarUrl: '',
+        bio: 'Public bio',
+      }),
+    ).resolves.toMatchObject({
+      displayName: 'Ember Player',
+      visibility: 'public',
+      updatedAt: timestamp,
+    });
+    expect(rpc).toHaveBeenCalledTimes(2);
+  });
+
   it('allows only the sanctioned ranked leaderboard wire shape', async () => {
     const { client, rpc } = clientWithRpc(() => [
       {
@@ -96,8 +171,6 @@ describe('sanitized public projections', () => {
         peak_rating: 1210,
         profile_updated_at: timestamp,
         leaderboard_updated_at: timestamp,
-        user_id: 'raw-auth-id-must-not-pass',
-        private_projection: { answer: 'crane' },
       },
     ]);
     const rows = await new PublicRepository(client).getLeaderboard('multiplayer:og', 25, 0);
@@ -171,7 +244,6 @@ describe('sanitized public projections', () => {
         ranked_practice_public_go_players: 1,
         leaderboard_updated_at: null,
         public_profiles_updated_at: timestamp,
-        emails: ['private@example.test'],
       },
     ]);
     const projection = await new PublicRepository(valid.client).getSiteStats();
