@@ -9,7 +9,6 @@ import { PageHeader, RuledList, SectionHeading, StatusDot } from '../../componen
 import { answerPoolForDifficulty } from '../../domain/words';
 import { parsePracticeCombatPreviewConfig } from '../../domain/practice-combat-preview';
 import { CombatPreviewRepository } from '../../services/combat-preview-repository';
-import { CombatParticipantIdentityRepository } from '../../services/combat-participant-identity';
 import {
   clearPendingPracticeLobbyCreation,
   createPendingPracticeLobbyCreation,
@@ -83,10 +82,6 @@ export function CombatPage() {
   );
   const previewRepository = useMemo(
     () => (client ? new CombatPreviewRepository(client) : null),
-    [client],
-  );
-  const identityRepository = useMemo(
-    () => (client ? new CombatParticipantIdentityRepository(client) : null),
     [client],
   );
   const publicRepository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
@@ -282,19 +277,15 @@ export function CombatPage() {
   };
 
   const joinLobby = async (lobby: PracticeWaitingProjection) => {
-    if (!requireAccount() || !user || !transport || !identityRepository || !publicRepository)
-      return;
+    if (!requireAccount() || !user || !transport || !publicRepository) return;
     setBusy(true);
     try {
-      const [list, identities, ownerProfile] = await Promise.all([
+      const [list, ownerProfile] = await Promise.all([
         wordListProvider.load(lobby.wordLength),
-        identityRepository.forGame(lobby.id),
         publicRepository.getMyProfile(),
       ]);
       const count = lobby.mode === 'go' ? lobby.goPuzzleCount! : 1;
       const answers = choosePracticeAnswers(answerPoolForDifficulty(list, lobby.difficulty), count);
-      const hostName =
-        identities.find((identity) => identity.seat === 'player-one')?.displayName ?? 'Player One';
       const joinerName =
         ownerProfile?.visibility === 'public' && ownerProfile.displayName
           ? ownerProfile.displayName
@@ -303,7 +294,7 @@ export function CombatPage() {
         gameId: lobby.id,
         joinerUserId: user.id,
         expectedUpdatedAt: lobby.updatedAt,
-        displayNames: [hostName, joinerName],
+        displayNames: ['Player One', joinerName],
         answers,
         wordRevision: list.revision,
         now: new Date().toISOString(),

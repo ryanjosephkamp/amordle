@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { unlockProtectedPreview } from './protected-preview';
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? '';
 const enabled =
@@ -16,8 +17,9 @@ test.describe('protected preview API contracts', () => {
   test.skip(!enabled, 'Requires an explicitly authorized non-production HTTPS preview base URL.');
   test.describe.configure({ mode: 'serial' });
 
-  test('serves safe public manifest metadata with bounded caching', async ({ request }) => {
-    const response = await request.get('/api/word-lists/manifest');
+  test('serves safe public manifest metadata with bounded caching', async ({ page }) => {
+    await unlockProtectedPreview(page);
+    const response = await page.request.get('/api/word-lists/manifest');
     expect([200, 502]).toContain(response.status());
     expect(response.headers()['content-type']).toContain('application/json');
     const body = await response.text();
@@ -30,7 +32,8 @@ test.describe('protected preview API contracts', () => {
     }
   });
 
-  test('enforces method and missing-bearer behavior on all three APIs', async ({ request }) => {
+  test('enforces method and missing-bearer behavior on all three APIs', async ({ page }) => {
+    await unlockProtectedPreview(page);
     const cases = [
       { method: 'get', path: '/api/admin-refresh', status: 405 },
       { method: 'post', path: '/api/admin-refresh', status: 401 },
@@ -39,7 +42,7 @@ test.describe('protected preview API contracts', () => {
       { method: 'post', path: '/api/word-lists/manifest', status: 405 },
     ] as const;
     for (const scenario of cases) {
-      const response = await request[scenario.method](scenario.path);
+      const response = await page.request[scenario.method](scenario.path);
       expect(response.status(), `${scenario.method.toUpperCase()} ${scenario.path}`).toBe(
         scenario.status,
       );
@@ -50,6 +53,7 @@ test.describe('protected preview API contracts', () => {
   test('renders the protected mobile preview within visual stability budgets', async ({
     page,
   }, testInfo) => {
+    await unlockProtectedPreview(page);
     await page.setViewportSize({ width: 390, height: 844 });
     await page.addInitScript(() => {
       const metrics = { cls: 0, lcp: 0 };
