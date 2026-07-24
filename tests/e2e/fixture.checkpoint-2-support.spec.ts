@@ -2,9 +2,9 @@ import { expect, test } from '@playwright/test';
 
 test('APP-01 reaches dynamic, auth, support, and protected Admin routes', async ({ page }) => {
   const routes = [
-    '/combat/match/proof',
-    '/combat/match/proof/result',
-    '/combat/live/proof',
+    '/combat/match/unavailable-example',
+    '/combat/match/unavailable-example/result',
+    '/combat/live/unavailable-example',
     '/players/11111111-1111-4111-8111-111111111111',
     '/auth',
     '/auth/callback',
@@ -156,17 +156,15 @@ test('SUP-03 separates instructions and rating explanation from About product no
   await expect(page.getByText(/does not claim production promotion/)).toBeVisible();
 });
 
-test('truthful Admin visual states omit fixture metrics and unverified receipts', async ({
-  page,
-}) => {
+test('truthful Admin route has no query-driven fixture metrics or receipts', async ({ page }) => {
   await page.goto('/admin?visual=ready');
-  await expect(page.getByText('No authorized snapshot', { exact: true })).toBeVisible();
-  await expect(page.getByText(/counts and timestamps are intentionally omitted/)).toBeVisible();
+  await expect(page).toHaveURL(/\/admin\?visual=ready$/);
+  await expect(page.getByRole('heading', { name: 'Developer operations locked' })).toBeVisible();
   await expect(page.locator('.operations-matrix')).toHaveCount(0);
   await expect(page.locator('main')).not.toContainText('Attention');
   await expect(page.locator('main')).not.toContainText('Jul 21, 2026');
 
   await page.goto('/admin?visual=success');
-  await expect(page.getByText(/Success is not claimed/)).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Developer operations locked' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Refresh succeeded.' })).toHaveCount(0);
 });

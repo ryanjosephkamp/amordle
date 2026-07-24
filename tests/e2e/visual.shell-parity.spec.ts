@@ -52,16 +52,8 @@ test('captures Checkpoint 1 Solo, Calendar, Word Explorer, and centered COMBAT e
   await expect(page.locator('.word-actions .button').nth(1)).toBeVisible();
   await capture(page, testInfo.outputPath('word-explorer-alignment.png'));
 
-  await page.goto('/combat/match/proof');
-  const centering = await page.locator('.shared-board .game-board').evaluate((board) => {
-    const box = board.getBoundingClientRect();
-    return [...board.querySelectorAll<HTMLElement>('.board-row')].map((row) => {
-      const cells = row.querySelectorAll<HTMLElement>('[role="gridcell"]');
-      const first = cells.item(0).getBoundingClientRect();
-      const last = cells.item(cells.length - 1).getBoundingClientRect();
-      return Math.abs((first.left + last.right) / 2 - (box.left + box.width / 2));
-    });
-  });
-  expect(Math.max(...centering)).toBeLessThanOrEqual(2);
-  await capture(page, testInfo.outputPath('combat-centered-board.png'));
+  await page.goto('/combat/lobby');
+  await expect(page.getByRole('heading', { name: 'Open public Practice lobbies' })).toBeVisible();
+  await expect(page.locator('main')).not.toContainText(/MAYAR|LEXI_99|proof match/i);
+  await capture(page, testInfo.outputPath('combat-real-lobby-surface.png'));
 });

@@ -5,6 +5,19 @@
     "amordleStart": "d92bfc710d693fbb1740ef65a350f589591a2fbe",
     "productionReleaseIncluded": false
   },
+  "previewContract": {
+    "mode": "protected-development-preview",
+    "productionReady": false,
+    "requiredLimits": [
+      "Unranked Practice is a participant-writable cooperative preview and is not cheat-resistant.",
+      "Ranked Practice and Practice rating mutation are disabled.",
+      "Public Live and exact-ID spectator access are disabled because source visibility cannot be proven from the retained schema.",
+      "Ranked Daily continues through retained private authority.",
+      "Unranked Daily is not exposed until its lane can be proven distinct from Ranked Daily without client-authored answer authority.",
+      "Private-request and rematch summaries are safe, but their full routed mutation handoffs are not claimed.",
+      "Production promotion, merge, and default-branch changes are outside this checkpoint."
+    ]
+  },
   "evidenceProfiles": {
     "domain-ui": ["automated", "manual"],
     "ui": ["automated", "visual", "manual"],
@@ -92,8 +105,16 @@
       "capability": "Keyboard navigation, focus, dialogs, status, and controls remain accessible.",
       "checkpoint": 5,
       "evidenceProfile": "ui",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-07",
@@ -144,16 +165,28 @@
       "capability": "PWA registration and prompted updates remain non-blocking.",
       "checkpoint": 4,
       "evidenceProfile": "operations",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": ["tests/browser/runtime-status.test.tsx", "scripts/check-build.mjs"],
+        "hosted": ["scripts/require-preview-environment.mjs"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-11",
       "capability": "The redesign may replace decoration while preserving state and accessibility meaning.",
       "checkpoint": 5,
       "evidenceProfile": "visual",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts", "tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "APP-12",
@@ -313,8 +346,16 @@
       "capability": "Word lists validate, cache, refresh, cover every length, and do not expose answers.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/words.test.ts",
+          "tests/server/word-list-atomicity.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "service": ["tests/e2e/services.amordle.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"]
+      }
     },
     {
       "id": "GAME-12",
@@ -553,63 +594,139 @@
       "capability": "Practice COMBAT OG and GO create, join, alternate, persist, resume, complete, and clean up.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Practice state is participant-writable cooperative preview data, not private server authority.",
+        "Practice results never mutate ratings."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/browser/combat-preview-components.test.tsx"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-02",
       "capability": "Unranked and ranked Daily COMBAT use distinct fixed-five UTC, claim-safe, no-clock lanes.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Ranked Daily is routed through the retained private authority.",
+        "Unranked Daily is not exposed until its lane can be proven distinct without client-authored answer authority."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-03",
       "capability": "Player-owned canonical sessions remain authoritative over rival display projections.",
       "checkpoint": 3,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Practice clients can author shared cooperative state under participant RLS.",
+        "Ranked Daily remains private-authority and answerless at the browser boundary."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-projections.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"]
+      }
     },
     {
       "id": "MP-04",
       "capability": "Shared rows and keyboard evidence converge for both participants without replay.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/browser/combat-preview-components.test.tsx"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-05",
       "capability": "COMBAT GO holds, transitions, prior answers, definitions, and turn ownership synchronize.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/go-daily.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-06",
       "capability": "Practice settings and clocks and ranked Daily restrictions are server-enforced.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Practice rule enforcement is participant-writable and cannot be represented as cheat-resistant.",
+        "Ranked Daily restrictions are enforced by retained private authority."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/combat-preview-projections.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-07",
       "capability": "Cancel, forfeit, timeout, completion, winner precedence, and conflicts are durable and idempotent.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Practice precedence and idempotency use participant compare-and-swap rather than trusted server reconstruction."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/practice-combat-transport.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-08",
       "capability": "Ranked Practice FIFO supports compatible repeat opponents and finalizes once.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
+      "status": "disabled",
+      "decision": "Ranked Practice queue and finalization controls are absent because the retained Practice projection is participant-writable.",
       "evidence": {}
     },
     {
@@ -617,7 +734,8 @@
       "capability": "Ratings, bands, points, and trusted settlement are deterministic by bucket.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
+      "status": "deferred",
+      "decision": "Practice rating mutation is deferred with Ranked Practice authority; retained Ranked Daily settlement remains enabled.",
       "evidence": {}
     },
     {
@@ -625,31 +743,61 @@
       "capability": "Private Practice requests implement eligible settings and their full durable lifecycle.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Preferences, blocking, safe request summaries, and retained RPC adapters are present.",
+        "The full create, accept, decline, cancel, and created-game handoff is not claimed as routed preview behavior."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ],
+        "service": ["tests/e2e/services.amordle.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-11",
       "capability": "Active Games lists participant-owned games, turn cues, resume, and sanctioned profile links.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-repository.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-12",
       "capability": "Lobby lists joinable public games and enforces join and cancel without identity expansion.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/browser/combat-preview-components.test.tsx"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-13",
       "capability": "Live lists sanctioned games and participant-only identity links.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
+      "status": "disabled",
+      "decision": "Public Live lists are disabled because the retained schema cannot prove source visibility for every Practice row.",
       "evidence": {}
     },
     {
@@ -657,7 +805,8 @@
       "capability": "Spectators are read-only and receive sanitized answerless projections.",
       "checkpoint": 3,
       "evidenceProfile": "privacy",
-      "status": "planned",
+      "status": "disabled",
+      "decision": "Exact-ID spectator access is disabled fail-closed; no answerless projection is exposed when source visibility cannot be proven.",
       "evidence": {}
     },
     {
@@ -665,56 +814,114 @@
       "capability": "Realtime refocus and polling converge without stale flashes, resets, or auth noise.",
       "checkpoint": 3,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "tests/browser/combat-preview-components.test.tsx"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-16",
       "capability": "Private-request notifications deduplicate, honor preferences, and route to exact state.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/notifications.test.ts",
+          "tests/browser/notification-center.test.tsx"
+        ],
+        "service": ["tests/e2e/services.amordle.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-17",
       "capability": "Postgame rematches and actions preserve eligibility, result state, and privacy.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Safe rematch eligibility and request summaries are parsed and displayed.",
+        "The full request, accept, decline, cancel, and created-game handoff is not claimed as routed preview behavior."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-18",
       "capability": "Ranked Daily has four independent FIFO lanes with distinct answer and rating namespaces.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"]
+      }
     },
     {
       "id": "MP-19",
       "capability": "Private opt-out, blocking, uniqueness, locks, anti-spam, visibility, and mutations are server-enforced.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx"
+        ],
+        "service": ["tests/e2e/services.amordle.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"]
+      }
     },
     {
       "id": "MP-20",
       "capability": "Same-tab provisional COMBAT projection is same-account only and yields to repository authority within five seconds.",
       "checkpoint": 4,
       "evidenceProfile": "service",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-repository.test.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "MP-21",
       "capability": "Participant startup reads coalesce, reject stale generations, and load only required word banks.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"]
+      }
     },
 
     {
@@ -782,16 +989,33 @@
       "capability": "Admin diagnostics and refresh are role-first, protected, and non-public.",
       "checkpoint": 4,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/server/api-contract.test.ts"
+        ],
+        "service": ["tests/e2e/services.hosted.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"]
+      }
     },
     {
       "id": "SUP-06",
       "capability": "Refresh and update failures remain visible without blocking gameplay.",
       "checkpoint": 4,
       "evidenceProfile": "operations",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/browser/runtime-status.test.tsx",
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/server/word-list-atomicity.test.ts"
+        ],
+        "hosted": ["tests/e2e/services.hosted.spec.ts"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
 
     {
@@ -799,16 +1023,37 @@
       "capability": "No answer, email, raw auth identifier, seed, private schema field, or secret crosses an unapproved boundary.",
       "checkpoint": 5,
       "evidenceProfile": "privacy",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Answer-bearing unranked Practice state is readable by its two participants under retained RLS.",
+        "No public or nonparticipant projection receives Practice answers, raw auth ids, email, seeds, or private-schema fields."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-projections.test.ts",
+          "scripts/scan-boundaries.mjs"
+        ],
+        "service": ["tests/e2e/services.practice-combat.spec.ts"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"]
+      }
     },
     {
       "id": "AM-BACKEND-01",
       "capability": "Exactly 42 immutable migrations and exactly three HTTP APIs remain in the release candidate.",
       "checkpoint": 5,
       "evidenceProfile": "operations",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "scripts/verify-migrations.mjs",
+          "scripts/scan-boundaries.mjs",
+          "tests/server/api-contract.test.ts"
+        ],
+        "hosted": ["scripts/require-preview-environment.mjs"],
+        "cleanup": ["tests/e2e/services.amordle.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "AM-BLOB-01",
@@ -828,24 +1073,56 @@
       "capability": "Every hosted run records exact resources and proves zero residue with fail-closed cleanup.",
       "checkpoint": 5,
       "evidenceProfile": "cleanup",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts"
+        ]
+      }
     },
     {
       "id": "AM-VISUAL-01",
       "capability": "All L01-L64 concepts retain composition, density, hierarchy, responsive behavior, and fire or ice identity.",
       "checkpoint": 5,
       "evidenceProfile": "visual",
-      "status": "planned",
-      "evidence": {}
+      "status": "partial-preview",
+      "limitations": [
+        "Enabled routes have runtime desktop and mobile captures.",
+        "Disabled ranked-Practice and public-Live states retain test-harness composition evidence but are not represented as working production interactions."
+      ],
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts", "tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": ["quality/existing-backend-preview-visual-comparison.md"]
+      }
     },
     {
       "id": "AM-RELEASE-01",
       "capability": "The candidate is protected, non-production, immutable, rollback-ready, and not merged.",
       "checkpoint": 5,
       "evidenceProfile": "operations",
-      "status": "planned",
-      "evidence": {}
+      "status": "implemented",
+      "evidence": {
+        "automated": [
+          "scripts/require-preview-environment.mjs",
+          "scripts/verify-preview-parity.mjs"
+        ],
+        "hosted": ["protected preview identity recorded in ignored completion evidence"],
+        "cleanup": ["tests/e2e/services.practice-combat.spec.ts"],
+        "manual": ["AMORDLE-EXISTING-BACKEND-PREVIEW-MANUAL-CHECKLIST.md"]
+      }
     }
   ]
 }

@@ -51,8 +51,11 @@ export class RealtimeReconciler {
         if (status === 'SUBSCRIBED') this.schedule('reconnect');
       });
 
-    this.pollTimer = setInterval(() => this.schedule('poll'), interval);
+    this.pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible' && navigator.onLine) this.schedule('poll');
+    }, interval);
     document.addEventListener('visibilitychange', this.onVisibilityChange);
+    window.addEventListener('online', this.onReconnect);
     this.schedule('initial');
   }
 
@@ -66,12 +69,17 @@ export class RealtimeReconciler {
     this.activeRequest?.abort();
     this.activeRequest = null;
     document.removeEventListener('visibilitychange', this.onVisibilityChange);
+    window.removeEventListener('online', this.onReconnect);
     if (this.channel) void this.client.removeChannel(this.channel);
     this.channel = null;
   }
 
   private readonly onVisibilityChange = (): void => {
     if (document.visibilityState === 'visible') this.schedule('visibility');
+  };
+
+  private readonly onReconnect = (): void => {
+    this.schedule('reconnect');
   };
 
   private schedule(reason: ReconcileReason): void {

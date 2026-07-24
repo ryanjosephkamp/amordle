@@ -4,6 +4,14 @@ import process from 'node:process';
 const registryPath = new URL('../quality/shell-parity-registry.json', import.meta.url);
 const registry = JSON.parse(await readFile(registryPath, 'utf8'));
 const mode = process.argv.includes('--complete') ? 'complete' : 'structure';
+const allowedStatuses = [
+  'planned',
+  'implemented',
+  'partial-preview',
+  'disabled',
+  'deferred',
+  'accepted',
+];
 
 const expectedShellIds = [
   ...Array.from({ length: 12 }, (_, index) => `APP-${String(index + 1).padStart(2, '0')}`),
@@ -25,7 +33,7 @@ const invalid = items.filter(
     !item.capability ||
     !Number.isInteger(item.checkpoint) ||
     !registry.evidenceProfiles?.[item.evidenceProfile] ||
-    !['planned', 'implemented', 'accepted'].includes(item.status),
+    !allowedStatuses.includes(item.status),
 );
 
 if (duplicates.length || missing.length || unexpected.length || invalid.length) {

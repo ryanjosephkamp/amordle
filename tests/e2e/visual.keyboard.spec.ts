@@ -49,17 +49,9 @@ test('captures the modular thermal-deck keyboard across real route states', asyn
   await page.locator('.keyboard').scrollIntoViewIfNeeded();
   await captureViewport(page, testInfo, 'solo-focus');
 
-  await page.goto('/combat/match/proof');
-  await assertKeyboardReady(page);
-  await expect(page.locator('.key[data-state="correct"]')).not.toHaveCount(0);
-  await page.locator('.keyboard').scrollIntoViewIfNeeded();
-  await captureViewport(page, testInfo, 'combat-evidence');
-
-  await page.goto('/combat/match/daily-proof');
-  await assertKeyboardReady(page);
-  await expect(page.locator('.key[data-disabled]')).toHaveCount(28);
-  await page.locator('.keyboard').scrollIntoViewIfNeeded();
-  await captureViewport(page, testInfo, 'combat-disabled');
+  // COMBAT keyboard evidence and disabled states are rendered with an injected
+  // repository in browser-component tests. Production routes do not expose a
+  // proof id or query-string fixture switch.
 });
 
 test('keeps keyboard geometry, motion preferences, and forced colors bounded', async ({ page }) => {

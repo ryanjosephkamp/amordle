@@ -7,8 +7,8 @@ const visualStates = [
   ['combat-lobby', '/combat/lobby'],
   ['solo-regular', '/play/practice/go'],
   ['solo-focus', '/play/practice/go?focus=1'],
-  ['combat-active', '/combat/match/proof'],
-  ['combat-live', '/combat/live/proof'],
+  ['combat-active', '/combat/active'],
+  ['combat-live', '/combat/live'],
   ['history', '/history'],
   ['stats', '/stats'],
   ['marketplace', '/marketplace'],
@@ -16,14 +16,11 @@ const visualStates = [
   ['settings', '/settings'],
   ['help', '/help'],
   ['admin-locked', '/admin'],
-  ['combat-result', '/combat/match/proof/result'],
+  ['combat-result-unavailable', '/combat/match/unavailable-example/result'],
   ['solo-result', '/play/practice/og'],
-  ['combat-eight-letter-go', '/combat/match/proof?length=8'],
-  ['combat-three-letter-timed', '/combat/match/proof?length=3&timed=1'],
-  ['combat-daily-async', '/combat/match/daily-proof'],
-  ['combat-timeout', '/combat/match/proof/result?outcome=timeout'],
-  ['combat-forfeit', '/combat/match/proof/result?outcome=forfeit'],
-  ['combat-cancelled', '/combat/match/proof/result?outcome=cancelled'],
+  ['combat-practice-config', '/combat/practice'],
+  ['combat-ranked-daily', '/combat/daily'],
+  ['combat-privacy-boundary', '/combat/live'],
   ['system-recovery', '/route-that-does-not-exist'],
 ] as const;
 
@@ -48,7 +45,7 @@ for (const [name, route] of visualStates) {
   });
 }
 
-test('captures local Admin visual-state family without external calls', async ({
+test('Admin ignores visual query switches and stays on its real role-first state', async ({
   page,
 }, testInfo) => {
   for (const state of [
@@ -63,6 +60,7 @@ test('captures local Admin visual-state family without external calls', async ({
   ]) {
     await page.goto(`/admin?visual=${state}`);
     await expect(page.locator('main')).toBeVisible();
+    await expect(page.getByRole('heading', { name: 'Developer operations locked' })).toBeVisible();
     await page.screenshot({ path: testInfo.outputPath(`admin-${state}.png`), fullPage: true });
   }
 });

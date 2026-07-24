@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useLocation } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { Metric, PageHeader, RuledList, StatusDot } from '../../components/Surface';
 
-type AdminState =
+export type AdminState =
   | 'unconfigured'
   | 'anonymous'
   | 'denied'
@@ -16,7 +15,7 @@ type AdminState =
   | 'success'
   | 'failure';
 
-function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied' }) {
+export function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied' }) {
   const title = 'Developer operations locked';
   const message =
     state === 'unconfigured'
@@ -39,15 +38,13 @@ function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied'
 }
 
 export function AdminPage() {
-  const location = useLocation();
-  const visual = new URLSearchParams(location.search).get('visual') as AdminState | null;
   const { client, service, status: authStatus, user } = useAuth();
   const [state, setState] = useState<AdminState>('ready');
   const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
   const isAdmin = user?.app_metadata.role === 'admin';
   const dashboard = useQuery({
     queryKey: ['admin-operational-dashboard'],
-    enabled: Boolean(client && isAdmin && !(import.meta.env.DEV && visual)),
+    enabled: Boolean(client && isAdmin),
     queryFn: async () => {
       if (!client) throw new Error('Admin client is unavailable.');
       const { data, error } = await client.rpc('get_admin_operational_dashboard_v1');
@@ -58,13 +55,6 @@ export function AdminPage() {
     retry: false,
   });
 
-  if (import.meta.env.DEV && visual) {
-    if (visual === 'unconfigured' || visual === 'anonymous' || visual === 'denied') {
-      return <LockedAdmin state={visual} />;
-    }
-    if (visual === 'ready') return <Dashboard onConfirm={() => setState('confirm')} />;
-    return <RefreshOperation state={visual} onState={setState} receipt={receipt} />;
-  }
   if (authStatus === 'unconfigured') return <LockedAdmin state="unconfigured" />;
   if (authStatus === 'loading') return <p role="status">Verifying developer authorization…</p>;
   if (!user) return <LockedAdmin state="anonymous" />;
@@ -81,7 +71,7 @@ export function AdminPage() {
   }
   if (state === 'ready') {
     return (
-      <Dashboard
+      <AdminDashboard
         onConfirm={() => setState('confirm')}
         onReload={() => void dashboard.refetch()}
         {...(dashboard.data ? { data: dashboard.data as Record<string, unknown> } : {})}
@@ -113,7 +103,7 @@ export function AdminPage() {
     }
   };
   return (
-    <RefreshOperation
+    <AdminRefreshOperation
       state={state as Exclude<AdminState, 'unconfigured' | 'anonymous' | 'denied' | 'ready'>}
       onState={setState}
       onExecute={execute}
@@ -122,7 +112,7 @@ export function AdminPage() {
   );
 }
 
-function Dashboard({
+export function AdminDashboard({
   onConfirm,
   onReload,
   data,
@@ -200,7 +190,7 @@ function Dashboard({
   );
 }
 
-function RefreshOperation({
+export function AdminRefreshOperation({
   state,
   onState,
   onExecute,
@@ -339,12 +329,6 @@ function RefreshOperation({
         <div className="support-state" role="status">
           No service failure receipt is attached to this local visual state. A server error is not
           claimed.
-        </div>
-      ) : null}
-      {import.meta.env.DEV && inFlight ? (
-        <div className="visual-state-controls" aria-label="Local visual-state controls">
-          <Button onClick={() => onState('success')}>Show success</Button>
-          <Button onClick={() => onState('failure')}>Show failure</Button>
         </div>
       ) : null}
     </div>

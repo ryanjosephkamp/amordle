@@ -25,9 +25,12 @@
     "test:visual": "playwright test --project=visual-desktop --project=visual-mobile",
     "verify:build": "node scripts/check-build.mjs",
     "verify:parity": "node scripts/verify-parity-registry.mjs --structure",
+    "verify:preview-parity": "node scripts/verify-preview-parity.mjs",
     "verify:parity:complete": "node scripts/verify-parity-registry.mjs --complete",
+    "verify:preview-environment": "node scripts/require-preview-environment.mjs",
     "verify:rc-environment": "node scripts/require-rc-environment.mjs",
     "test:acceptance:local": "pnpm check && pnpm test && pnpm test:browser && pnpm test:e2e:fixture && pnpm test:visual && pnpm build && pnpm verify:build && pnpm verify:migrations && pnpm verify:parity",
+    "test:preview-acceptance": "pnpm verify:preview-environment && pnpm check && pnpm test && pnpm test:browser && pnpm test:e2e:fixture && pnpm test:e2e:services && pnpm test:visual && pnpm build && pnpm verify:build && pnpm verify:migrations && pnpm verify:preview-parity",
     "test:acceptance": "pnpm verify:rc-environment && pnpm check && pnpm test && pnpm test:browser && pnpm test:e2e:fixture && pnpm test:e2e:services && pnpm test:visual && pnpm build && pnpm verify:build && pnpm verify:migrations && pnpm verify:parity:complete",
     "verify:migrations": "node scripts/verify-migrations.mjs"
   },
