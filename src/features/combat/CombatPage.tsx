@@ -9,6 +9,15 @@ import { PageHeader, RuledList, SectionHeading, StatusDot } from '../../componen
 import { answerPoolForDifficulty } from '../../domain/words';
 import { parsePracticeCombatPreviewConfig } from '../../domain/practice-combat-preview';
 import { CombatPreviewRepository } from '../../services/combat-preview-repository';
+import { CombatParticipantIdentityRepository } from '../../services/combat-participant-identity';
+import {
+  clearPendingPracticeLobbyCreation,
+  createPendingPracticeLobbyCreation,
+  practiceLobbyConfigurationFingerprint,
+  readPendingPracticeLobbyCreation,
+  writePendingPracticeLobbyCreation,
+} from '../../services/pending-practice-lobby';
+import { PublicRepository } from '../../services/public-repository';
 import {
   PracticeCombatTransportRepository,
   type PracticeWaitingProjection,
@@ -76,6 +85,11 @@ export function CombatPage() {
     () => (client ? new CombatPreviewRepository(client) : null),
     [client],
   );
+  const identityRepository = useMemo(
+    () => (client ? new CombatParticipantIdentityRepository(client) : null),
+    [client],
+  );
+  const publicRepository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'og' | 'go'>('og');
@@ -123,7 +137,7 @@ export function CombatPage() {
   });
   const rankedQueue = useQuery({
     queryKey: ['combat', 'ranked-daily-queue', rankedRequestId],
-    enabled: Boolean(previewRepository && user && rankedRequestId),
+    enabled: Boolean(previewRepository && user && rankedRequestId && section === 'daily'),
     queryFn: () => previewRepository!.loadRankedDailyQueue(rankedRequestId!),
     refetchInterval: 5_000,
     refetchIntervalInBackground: false,
@@ -131,7 +145,29 @@ export function CombatPage() {
   });
 
   useEffect(() => {
-    if (!previewRepository || rankedQueue.data?.status !== 'queued' || !rankedRequestId || busy)
+    if (
+      section !== 'daily' ||
+      !rankedRequestId ||
+      !rankedQueue.isSuccess ||
+      (rankedQueue.data !== null &&
+        rankedQueue.data.status !== 'cancelled' &&
+        rankedQueue.data.status !== 'expired')
+    ) {
+      return;
+    }
+    sessionStorage.removeItem('amordle:ranked-daily-request');
+    setRankedRequestId(null);
+    setMessage('The stored Ranked Daily request is no longer active and has been cleared.');
+  }, [rankedQueue.data, rankedQueue.isSuccess, rankedRequestId, section]);
+
+  useEffect(() => {
+    if (
+      section !== 'daily' ||
+      !previewRepository ||
+      rankedQueue.data?.status !== 'queued' ||
+      !rankedRequestId ||
+      busy
+    )
       return;
     const timer = window.setTimeout(() => {
       setBusy(true);
@@ -151,11 +187,12 @@ export function CombatPage() {
         .finally(() => setBusy(false));
     }, 750);
     return () => window.clearTimeout(timer);
-  }, [busy, previewRepository, queryClient, rankedQueue.data?.status, rankedRequestId]);
+  }, [busy, previewRepository, queryClient, rankedQueue.data?.status, rankedRequestId, section]);
 
   useEffect(() => {
     if (
       !previewRepository ||
+      section !== 'daily' ||
       rankedQueue.data?.status !== 'matched' ||
       finalizingDaily ||
       !rankedRequestId
@@ -173,7 +210,7 @@ export function CombatPage() {
         setMessage(error instanceof Error ? error.message : 'Ranked Daily finalization failed.'),
       )
       .finally(() => setFinalizingDaily(false));
-  }, [finalizingDaily, navigate, previewRepository, rankedQueue.data, rankedRequestId]);
+  }, [finalizingDaily, navigate, previewRepository, rankedQueue.data, rankedRequestId, section]);
 
   const requireAccount = (): boolean => {
     if (status === 'authenticated' && user && transport && previewRepository) return true;
@@ -193,16 +230,50 @@ export function CombatPage() {
         puzzleCount: mode === 'go' ? puzzleCount : 1,
         timeLimitMs,
       });
+      const fingerprint = practiceLobbyConfigurationFingerprint(config);
+      const pending = readPendingPracticeLobbyCreation(sessionStorage, user.id);
+      if (pending) {
+        const recovered = await transport.recoverPublicLobby({
+          gameId: pending.gameId,
+          ownerUserId: user.id,
+          configurationFingerprint: pending.configurationFingerprint,
+        });
+        if (recovered) {
+          queryClient.setQueryData(
+            ['combat', 'match', recovered.id, 'cooperative-preview', user.id],
+            recovered,
+          );
+          await Promise.all([lobbies.refetch(), active.refetch()]);
+          navigate(`/combat/match/${recovered.id}`);
+          clearPendingPracticeLobbyCreation(sessionStorage, user.id);
+          setMessage('Previously committed Practice lobby recovered without creating a duplicate.');
+          return;
+        }
+      }
+      const intent =
+        pending && pending.configurationFingerprint === fingerprint
+          ? pending
+          : createPendingPracticeLobbyCreation({
+              gameId: pending?.gameId ?? `amordle-practice-${crypto.randomUUID()}`,
+              ownerNamespace: user.id,
+              config,
+              requestedAt: new Date().toISOString(),
+            });
+      writePendingPracticeLobbyCreation(sessionStorage, intent);
       const lobby = await transport.createPublicLobby({
-        id: `amordle-practice-${crypto.randomUUID()}`,
+        id: intent.gameId,
         hostUserId: user.id,
         config,
-        now: new Date().toISOString(),
+        now: intent.requestedAt,
       });
-      await lobbies.refetch();
-      await active.refetch();
+      queryClient.setQueryData(
+        ['combat', 'match', lobby.id, 'cooperative-preview', user.id],
+        lobby,
+      );
+      await Promise.all([lobbies.refetch(), active.refetch()]);
       setMessage('Answerless public lobby created. Waiting for a second signed-in account.');
       navigate(`/combat/match/${lobby.id}`);
+      clearPendingPracticeLobbyCreation(sessionStorage, user.id);
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Practice lobby creation failed.');
     } finally {
@@ -211,17 +282,28 @@ export function CombatPage() {
   };
 
   const joinLobby = async (lobby: PracticeWaitingProjection) => {
-    if (!requireAccount() || !user || !transport) return;
+    if (!requireAccount() || !user || !transport || !identityRepository || !publicRepository)
+      return;
     setBusy(true);
     try {
-      const list = await wordListProvider.load(lobby.wordLength);
+      const [list, identities, ownerProfile] = await Promise.all([
+        wordListProvider.load(lobby.wordLength),
+        identityRepository.forGame(lobby.id),
+        publicRepository.getMyProfile(),
+      ]);
       const count = lobby.mode === 'go' ? lobby.goPuzzleCount! : 1;
       const answers = choosePracticeAnswers(answerPoolForDifficulty(list, lobby.difficulty), count);
+      const hostName =
+        identities.find((identity) => identity.seat === 'player-one')?.displayName ?? 'Player One';
+      const joinerName =
+        ownerProfile?.visibility === 'public' && ownerProfile.displayName
+          ? ownerProfile.displayName
+          : 'Player Two';
       const joined = await transport.joinPublicLobby({
         gameId: lobby.id,
         joinerUserId: user.id,
         expectedUpdatedAt: lobby.updatedAt,
-        displayNames: ['Player One', 'Player Two'],
+        displayNames: [hostName, joinerName],
         answers,
         wordRevision: list.revision,
         now: new Date().toISOString(),
@@ -366,13 +448,21 @@ export function CombatPage() {
             />
           ) : null}
           {section === 'active' ? (
-            <ActivePanel games={activeGames} loading={active.isPending} />
+            <ActivePanel
+              games={activeGames}
+              loading={active.isPending}
+              error={active.isError ? 'Participant games could not be loaded.' : null}
+              onRetry={() => void active.refetch()}
+            />
           ) : null}
           {section === 'lobby' ? (
             <LobbyList
               lobbies={lobbies.data ?? []}
               participant={participant}
               busy={busy}
+              loading={lobbies.isPending}
+              error={lobbies.isError ? 'Practice lobbies could not be loaded safely.' : null}
+              onRetry={() => void lobbies.refetch()}
               onJoin={(lobby) => void joinLobby(lobby)}
               onCancel={(lobby) => void cancelLobby(lobby)}
             />
@@ -645,6 +735,8 @@ function PracticeForm({
 function ActivePanel({
   games,
   loading,
+  error,
+  onRetry,
 }: {
   games: readonly {
     id: string;
@@ -655,12 +747,20 @@ function ActivePanel({
     ranked: boolean;
   }[];
   loading: boolean;
+  error: string | null;
+  onRetry: () => void;
 }) {
   return (
     <>
       <SectionHeading title="Participant games" />
       <RuledList>
         {loading ? <p role="status">Loading safe game summaries…</p> : null}
+        {error ? (
+          <div className="support-state" role="alert">
+            <strong>{error}</strong>
+            <Button onClick={onRetry}>Retry Active games</Button>
+          </div>
+        ) : null}
         {games.map((game) => (
           <div className="active-game-row" key={game.id}>
             <StatusDot tone={game.status === 'playing' ? 'green' : 'ice'}>{game.status}</StatusDot>
@@ -677,7 +777,7 @@ function ActivePanel({
             </ButtonLink>
           </div>
         ))}
-        {games.length === 0 && !loading ? (
+        {games.length === 0 && !loading && !error ? (
           <p className="empty-state">No participant games currently require attention.</p>
         ) : null}
       </RuledList>
@@ -689,18 +789,31 @@ function LobbyList({
   lobbies,
   participant,
   busy,
+  loading,
+  error,
+  onRetry,
   onJoin,
   onCancel,
 }: {
   lobbies: readonly PracticeWaitingProjection[];
   participant: CombatPreviewParticipant;
   busy: boolean;
+  loading: boolean;
+  error: string | null;
+  onRetry: () => void;
   onJoin: (lobby: PracticeWaitingProjection) => void;
   onCancel: (lobby: PracticeWaitingProjection) => void;
 }) {
   return (
     <>
       <SectionHeading title="Open public Practice lobbies" />
+      {loading ? <p role="status">Loading answerless public lobbies…</p> : null}
+      {error ? (
+        <div className="support-state" role="alert">
+          <strong>{error}</strong>
+          <Button onClick={onRetry}>Retry Practice lobbies</Button>
+        </div>
+      ) : null}
       {lobbies.map((lobby) => (
         <CombatLobbyPanel
           key={lobby.id}
@@ -728,7 +841,7 @@ function LobbyList({
           ]}
         />
       ))}
-      {lobbies.length === 0 ? (
+      {lobbies.length === 0 && !loading && !error ? (
         <p className="empty-state">No answerless public Practice lobbies are open.</p>
       ) : null}
     </>

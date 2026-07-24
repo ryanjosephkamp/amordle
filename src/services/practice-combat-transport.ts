@@ -9,6 +9,7 @@ import {
 } from '../domain/practice-combat-preview';
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json } from '../types/database';
+import { practiceLobbyConfigurationFingerprint } from './pending-practice-lobby';
 import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
 
@@ -687,6 +688,54 @@ export class PracticeCombatTransportRepository {
     return cooperativeProjectionSchema.parse(row.projection);
   }
 
+  async recoverPublicLobby(input: {
+    gameId: string;
+    ownerUserId: string;
+    configurationFingerprint: string;
+  }): Promise<PracticeWaitingProjection | null> {
+    const ownerUserId = uuidSchema.parse(input.ownerUserId);
+    const expectedFingerprint = z
+      .string()
+      .trim()
+      .min(1)
+      .max(500)
+      .parse(input.configurationFingerprint);
+    const raw = await this.loadRawProjection(input.gameId);
+    if (raw === null) return null;
+    if (
+      raw.schema !== 'amordle-practice-waiting-v1' ||
+      raw.playerUserIds['player-one'] !== ownerUserId
+    ) {
+      throw new ServiceError(
+        'conflict',
+        'The pending Practice lobby identifier belongs to different durable state.',
+        { retryable: false },
+      );
+    }
+    const actualFingerprint = practiceLobbyConfigurationFingerprint({
+      mode: raw.mode,
+      wordLength: raw.wordLength,
+      difficulty: raw.difficulty,
+      hardMode: raw.hardMode,
+      puzzleCount: raw.mode === 'go' ? raw.goPuzzleCount! : 1,
+      timeLimitMs: raw.timeLimitMs,
+    });
+    if (actualFingerprint !== expectedFingerprint) {
+      throw new ServiceError(
+        'conflict',
+        'The pending Practice lobby configuration conflicts with the durable lobby.',
+        { retryable: false },
+      );
+    }
+    const recovered = parsePracticeTransportProjection(raw, ownerUserId);
+    if (recovered.kind !== 'waiting') {
+      throw new ServiceError('conflict', 'The durable Practice lobby is no longer waiting.', {
+        retryable: false,
+      });
+    }
+    return recovered;
+  }
+
   async createPublicLobby(input: {
     id: string;
     hostUserId: string;
@@ -694,6 +743,13 @@ export class PracticeCombatTransportRepository {
     now: string;
   }): Promise<PracticeWaitingProjection> {
     const projection = buildWaitingPracticeProjection(input);
+    const fingerprint = practiceLobbyConfigurationFingerprint(input.config);
+    const existing = await this.recoverPublicLobby({
+      gameId: projection.id,
+      ownerUserId: projection.playerUserIds['player-one'],
+      configurationFingerprint: fingerprint,
+    });
+    if (existing) return existing;
     const { data, error } = await this.client
       .from('async_multiplayer_games')
       .insert({
@@ -722,7 +778,20 @@ export class PracticeCombatTransportRepository {
       })
       .select(projectionSelection)
       .single();
-    throwIfServiceError(error, 'Create public Practice lobby');
+    if (error) {
+      try {
+        const recovered = await this.recoverPublicLobby({
+          gameId: projection.id,
+          ownerUserId: projection.playerUserIds['player-one'],
+          configurationFingerprint: fingerprint,
+        });
+        if (recovered) return recovered;
+      } catch {
+        // The original persistence failure remains authoritative unless the
+        // exact pending identifier proves the requested lobby was committed.
+      }
+      throwIfServiceError(error, 'Create public Practice lobby');
+    }
     const accepted = validateRow(data, projection.playerUserIds['player-one']);
     if (accepted.kind !== 'waiting') {
       throw new ServiceError('conflict', 'Practice lobby was not created in waiting state.');
@@ -746,7 +815,27 @@ export class PracticeCombatTransportRepository {
       try {
         const projection = validateRow(row, userId);
         return projection.kind === 'waiting' ? [projection] : [];
-      } catch {
+      } catch (error) {
+        const rawProjection =
+          typeof row === 'object' && row !== null && 'projection' in row
+            ? row.projection
+            : undefined;
+        const playerOneUserId =
+          typeof rawProjection === 'object' &&
+          rawProjection !== null &&
+          'playerUserIds' in rawProjection &&
+          typeof rawProjection.playerUserIds === 'object' &&
+          rawProjection.playerUserIds !== null &&
+          'player-one' in rawProjection.playerUserIds
+            ? rawProjection.playerUserIds['player-one']
+            : null;
+        if (playerOneUserId === userId) {
+          throw new ServiceError(
+            'validation',
+            'An owned Practice lobby contains inconsistent durable evidence.',
+            { cause: error, retryable: false },
+          );
+        }
         return [];
       }
     });

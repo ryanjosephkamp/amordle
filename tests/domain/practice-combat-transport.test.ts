@@ -1,11 +1,13 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
   buildCooperativePracticeProjection,
   buildWaitingPracticeProjection,
   parsePracticeTransportProjection,
+  PracticeCombatTransportRepository,
 } from '../../src/services/practice-combat-transport';
 import { createPracticeCombatPreview } from '../../src/domain/practice-combat-preview';
+import type { AmordleSupabaseClient } from '../../src/lib/supabase-browser';
 
 const hostId = '00000000-0000-4000-8000-000000000101';
 const joinerId = '00000000-0000-4000-8000-000000000202';
@@ -98,5 +100,54 @@ describe('Practice COMBAT transport boundary', () => {
     expect(() => parsePracticeTransportProjection({ ...raw, wordLength: 3 }, hostId)).toThrow(
       /disagree/i,
     );
+  });
+
+  it('accepts equivalent PostgreSQL and JSON timestamp representations after lobby insert', async () => {
+    const projection = buildWaitingPracticeProjection({
+      id: 'practice-offset-1',
+      hostUserId: hostId,
+      config,
+      now,
+    });
+    const row = {
+      id: projection.id,
+      scope: 'practice',
+      mode: projection.mode,
+      status: projection.status,
+      current_turn: projection.currentTurn,
+      word_length: projection.wordLength,
+      difficulty: projection.difficulty,
+      go_puzzle_count: projection.goPuzzleCount,
+      ranked: false,
+      deadline_at: null,
+      ended_at: null,
+      winner_player_id: null,
+      created_at: '2026-07-23T12:00:00+00:00',
+      updated_at: '2026-07-23T12:00:00+00:00',
+      projection,
+    };
+    const readMaybeSingle = vi.fn(async () => ({ data: null, error: null }));
+    const readEq = vi.fn(() => ({ maybeSingle: readMaybeSingle }));
+    const readSelect = vi.fn(() => ({ eq: readEq }));
+    const insertSingle = vi.fn(async () => ({ data: row, error: null }));
+    const insertSelect = vi.fn(() => ({ single: insertSingle }));
+    const insert = vi.fn(() => ({ select: insertSelect }));
+    const from = vi.fn(() => ({ select: readSelect, insert }));
+
+    const result = await new PracticeCombatTransportRepository({
+      from,
+    } as unknown as AmordleSupabaseClient).createPublicLobby({
+      id: projection.id,
+      hostUserId: hostId,
+      config,
+      now,
+    });
+
+    expect(result).toMatchObject({
+      id: projection.id,
+      kind: 'waiting',
+      updatedAt: now,
+    });
+    expect(insert).toHaveBeenCalledTimes(1);
   });
 });

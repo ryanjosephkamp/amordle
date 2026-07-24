@@ -146,6 +146,27 @@ describe('COMBAT preview repository', () => {
     ).rejects.toBeInstanceOf(CombatPreviewConflictError);
   });
 
+  it('recovers a projection when table and JSON timestamps describe the same instant', async () => {
+    const row = {
+      ...returnedRow(),
+      updated_at: '2026-07-22T12:02:00+00:00',
+      created_at: '2026-07-22T12:00:00+00:00',
+    };
+    const maybeSingle = vi.fn(async () => ({ data: row, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+
+    await expect(
+      new CombatPreviewRepository({
+        from,
+      } as unknown as AmordleSupabaseClient).loadProjection('practice-1', playerOne),
+    ).resolves.toMatchObject({
+      id: 'practice-1',
+      updatedAt: nextAt,
+    });
+  });
+
   it('rejects ranked Practice mutations before opening a table request', async () => {
     const from = vi.fn();
     const rankedPractice = {
