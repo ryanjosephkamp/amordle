@@ -99,10 +99,10 @@ export function CombatMatchPage() {
   }
   if (summary.isPending) {
     return (
-      <main className="route-loading" aria-live="polite" aria-busy="true">
+      <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
         <p>Resolving the safe match lane…</p>
-      </main>
+      </div>
     );
   }
   if (summary.isError || !summary.data) {
@@ -202,10 +202,10 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
 
   if (match.projection.isPending) {
     return (
-      <main className="route-loading" aria-live="polite" aria-busy="true">
+      <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
         <p>Loading durable Practice COMBAT state…</p>
-      </main>
+      </div>
     );
   }
 
@@ -371,9 +371,9 @@ function RankedDailyMatchView({ matchId }: { matchId: string }) {
   });
   if (match.projection.isPending) {
     return (
-      <main className="route-loading" aria-live="polite" aria-busy="true">
+      <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <p>Loading server-authoritative Ranked Daily…</p>
-      </main>
+      </div>
     );
   }
   if (!current || match.projection.isError) {
@@ -501,9 +501,9 @@ export function CombatResultPage() {
   });
   if (status !== 'authenticated' || summary.isPending) {
     return (
-      <main className="route-loading" aria-live="polite">
+      <div className="route-loading" role="status" aria-live="polite">
         <p>Loading participant result…</p>
-      </main>
+      </div>
     );
   }
   if (summary.data?.scope === 'daily' && summary.data.ranked) {
@@ -520,9 +520,9 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
 
   if (match.projection.isPending) {
     return (
-      <main className="route-loading" aria-live="polite">
+      <div className="route-loading" role="status" aria-live="polite">
         <p>Loading participant result…</p>
-      </main>
+      </div>
     );
   }
   if (!state || (state.status !== 'terminal' && state.status !== 'cancelled')) {
@@ -607,9 +607,9 @@ function RankedDailyResultView({ matchId }: { matchId: string }) {
   const participants = participantPair(match.identities.data);
   if (match.projection.isPending) {
     return (
-      <main className="route-loading" aria-live="polite">
+      <div className="route-loading" role="status" aria-live="polite">
         <p>Loading trusted Ranked Daily result…</p>
-      </main>
+      </div>
     );
   }
   if (!current || !['won', 'lost', 'expired', 'cancelled'].includes(current.status)) {
