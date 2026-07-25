@@ -38,8 +38,8 @@ if (!previewUrl?.startsWith('https://') || new URL(previewUrl).hostname === 'amo
 if (target.protected !== true) {
   errors.push('Preview protection is not recorded as verified');
 }
-if (target.migrationCount !== 42) {
-  errors.push('the recorded migration count is not exactly 42');
+if (target.migrationCount !== 45) {
+  errors.push('the recorded migration count is not exactly 45');
 }
 for (const name of ['AMORDLE_ENABLE_REAL_SERVICE_E2E', 'AMORDLE_CLEANUP_AUTHORITY_VERIFIED']) {
   if (process.env[name] !== '1' || target.flags?.[name] !== '1') {
@@ -58,7 +58,7 @@ console.log(
     supabaseProjectRef: actual.supabaseProjectRef,
     vercelProjectId: actual.vercelProjectId,
     protected: true,
-    migrationCount: 42,
+    migrationCount: 45,
     releaseClass: 'development-preview',
     productionReady: false,
   }),

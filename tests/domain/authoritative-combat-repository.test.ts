@@ -132,6 +132,22 @@ describe('authoritative COMBAT repository', () => {
     expect(JSON.stringify(result)).not.toContain('answer');
   });
 
+  it('canonicalizes omitted nullable OG and untimed projection fields', () => {
+    const wire = structuredClone(participantProjection()) as Record<string, unknown>;
+    delete wire.goPuzzleCount;
+    delete wire.timeLimitMs;
+    const playerState = wire.playerState as Record<string, Record<string, unknown>>;
+    delete playerState['player-one']!.timeRemainingMs;
+    delete playerState['player-two']!.timeRemainingMs;
+
+    const result = authoritativeCombatProjectionSchema.parse(wire);
+
+    expect(result.goPuzzleCount).toBeNull();
+    expect(result.timeLimitMs).toBeNull();
+    expect(result.playerState['player-one'].timeRemainingMs).toBeNull();
+    expect(result.playerState['player-two'].timeRemainingMs).toBeNull();
+  });
+
   it('rejects unexpected answer and raw identity fields before they reach React', async () => {
     const answerFixture = mockClient({
       ...participantProjection(),

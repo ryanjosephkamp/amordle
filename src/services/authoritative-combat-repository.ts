@@ -22,6 +22,14 @@ const difficultySchema = z.enum(['casual', 'standard', 'expert']);
 const statusSchema = z.enum(['waiting', 'playing', 'holding', 'completed', 'cancelled']);
 const tileStateSchema = z.enum(['correct', 'present', 'absent']);
 const puzzleCountSchema = z.union([z.literal(5), z.literal(7), z.literal(10)]);
+const nullablePuzzleCountSchema = puzzleCountSchema
+  .nullable()
+  .optional()
+  .transform((value) => value ?? null);
+const nullableRankedClockSchema = z
+  .union([z.literal(300_000), z.null()])
+  .optional()
+  .transform((value) => value ?? null);
 const canonicalWordSchema = z.string().regex(/^[a-z]{2,35}$/);
 const renderedWordSchema = z.string().regex(/^[A-Z]{2,35}$/);
 const appRatingBucketSchema = z.enum([
@@ -127,7 +135,13 @@ const playerProgressSchema = z
     points: z.number().int().min(0),
     attemptsThisPuzzle: z.number().int().min(0).max(6),
     puzzlesSolved: z.number().int().min(0).max(10),
-    timeRemainingMs: z.number().int().min(0).nullable(),
+    timeRemainingMs: z
+      .number()
+      .int()
+      .min(0)
+      .nullable()
+      .optional()
+      .transform((value) => value ?? null),
   })
   .strict();
 
@@ -168,8 +182,8 @@ export const authoritativeCombatProjectionSchema = z
     wordLength: z.number().int().min(2).max(35),
     difficulty: difficultySchema,
     hardMode: z.boolean(),
-    goPuzzleCount: puzzleCountSchema.nullable(),
-    timeLimitMs: z.union([z.literal(300_000), z.null()]),
+    goPuzzleCount: nullablePuzzleCountSchema,
+    timeLimitMs: nullableRankedClockSchema,
     ranked: z.boolean(),
     ratingBucket: appRatingBucketSchema.nullable(),
     status: statusSchema,

@@ -39,7 +39,7 @@ if (!preview?.startsWith('https://') || new URL(preview).hostname === 'amordle.v
   errors.push('PLAYWRIGHT_BASE_URL is not a non-production HTTPS preview');
 }
 if (target.protected !== true) errors.push('preview protection is not recorded as verified');
-if (target.migrationCount !== 42) errors.push('the recorded migration count is not 42');
+if (target.migrationCount !== 45) errors.push('the recorded migration count is not 45');
 
 if (errors.length) throw new Error(`RC environment rejected: ${errors.join('; ')}.`);
 console.log(
@@ -50,7 +50,7 @@ console.log(
     vercelProjectId: actual.vercelProjectId,
     previewBlobStoreId: actual.previewBlobStoreId,
     protected: true,
-    migrationCount: 42,
+    migrationCount: 45,
     serviceLayers: 'required',
   }),
 );
