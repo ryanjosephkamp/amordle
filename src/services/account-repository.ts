@@ -121,10 +121,11 @@ export class AccountRepository {
   ): Promise<AccountWriteResult> {
     const safeUserId = accountId(userId);
     const safeProgress = jsonDocument(progress, 'Account progress');
+    const candidateUpdatedAt = updateTimestamp(updatedAt);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const current = await this.loadProgressSnapshot(safeUserId);
       if (!current) {
-        const timestamp = nextTimestamp(updatedAt);
+        const timestamp = nextTimestamp(candidateUpdatedAt);
         const created = await this.client
           .from('progress_snapshots')
           .insert({ user_id: safeUserId, progress: safeProgress, updated_at: timestamp })
@@ -143,7 +144,10 @@ export class AccountRepository {
       if (canonicalJson(current.progress) === canonicalJson(safeProgress)) {
         return { status: 'current', updatedAt: current.updatedAt };
       }
-      const timestamp = nextTimestamp(updatedAt, current.updatedAt);
+      if (Date.parse(candidateUpdatedAt) < Date.parse(current.updatedAt)) {
+        return { status: 'current', updatedAt: current.updatedAt };
+      }
+      const timestamp = nextTimestamp(candidateUpdatedAt, current.updatedAt);
       const replaced = await this.client
         .from('progress_snapshots')
         .update({ progress: safeProgress, updated_at: timestamp })
@@ -169,6 +173,7 @@ export class AccountRepository {
   ): Promise<AccountWriteResult> {
     const safeUserId = accountId(userId);
     const safeProgression = jsonDocument(progression, 'Account progression');
+    const candidateUpdatedAt = updateTimestamp(updatedAt);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const current = await this.client
         .from('progress_snapshots')
@@ -186,8 +191,14 @@ export class AccountRepository {
           updatedAt: postgresTimestamptzSchema.parse(current.data.updated_at),
         };
       }
+      const currentUpdatedAt = current.data
+        ? postgresTimestamptzSchema.parse(current.data.updated_at)
+        : undefined;
+      if (currentUpdatedAt && Date.parse(candidateUpdatedAt) < Date.parse(currentUpdatedAt)) {
+        return { status: 'current', updatedAt: currentUpdatedAt };
+      }
       if (!current.data) {
-        const timestamp = nextTimestamp(updatedAt);
+        const timestamp = nextTimestamp(candidateUpdatedAt);
         const created = await this.client
           .from('progress_snapshots')
           .insert({ user_id: safeUserId, progress, updated_at: timestamp })
@@ -203,7 +214,7 @@ export class AccountRepository {
         }
         continue;
       }
-      const timestamp = nextTimestamp(updatedAt, current.data.updated_at);
+      const timestamp = nextTimestamp(candidateUpdatedAt, currentUpdatedAt);
       const replaced = await this.client
         .from('progress_snapshots')
         .update({ progress, updated_at: timestamp })
@@ -252,13 +263,17 @@ export class AccountRepository {
   ): Promise<AccountWriteResult> {
     const safeUserId = accountId(userId);
     const safeSettings = jsonDocument(settings, 'Account settings');
+    const candidateUpdatedAt = updateTimestamp(updatedAt);
     for (let attempt = 0; attempt < 3; attempt += 1) {
       const current = await this.loadSettingsSnapshot(safeUserId);
       const merged = { ...jsonObject(current?.value ?? null), ...safeSettings };
       if (current && canonicalJson(current.value) === canonicalJson(merged)) {
         return { status: 'current', updatedAt: current.updatedAt };
       }
-      const timestamp = nextTimestamp(updatedAt, current?.updatedAt);
+      if (current && Date.parse(candidateUpdatedAt) < Date.parse(current.updatedAt)) {
+        return { status: 'current', updatedAt: current.updatedAt };
+      }
+      const timestamp = nextTimestamp(candidateUpdatedAt, current?.updatedAt);
       if (!current) {
         const created = await this.client
           .from('settings')

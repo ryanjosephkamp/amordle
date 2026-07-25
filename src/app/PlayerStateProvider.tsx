@@ -77,12 +77,18 @@ function mergeProgression(
   const unique = (left: readonly string[], right: readonly string[]) => [
     ...new Set([...left, ...right]),
   ];
+  const unlockedDailies = unique(local.unlockedDailies, remote.unlockedDailies);
+  const pendingDailyUnlocks = {
+    ...remote.pendingDailyUnlocks,
+    ...local.pendingDailyUnlocks,
+  };
+  for (const unlockedDaily of unlockedDailies) delete pendingDailyUnlocks[unlockedDaily];
   return {
     ...local,
     xp: Math.max(local.xp, remote.xp),
     coins: economy?.coins ?? (cloud ? remote.coins : local.coins),
     rewardedGameIds: unique(local.rewardedGameIds, remote.rewardedGameIds),
-    unlockedDailies: unique(local.unlockedDailies, remote.unlockedDailies),
+    unlockedDailies,
     appliedUnlockIds: unique(local.appliedUnlockIds, remote.appliedUnlockIds),
     rewardOperations: { ...remote.rewardOperations, ...local.rewardOperations },
     unlockOperations: { ...remote.unlockOperations, ...local.unlockOperations },
@@ -95,7 +101,7 @@ function mergeProgression(
     economyRevision:
       economy?.revision ?? Math.max(local.economyRevision ?? 0, remote.economyRevision ?? 0),
     economyOperations: { ...remote.economyOperations, ...local.economyOperations },
-    pendingDailyUnlocks: { ...remote.pendingDailyUnlocks, ...local.pendingDailyUnlocks },
+    pendingDailyUnlocks,
   };
 }
 

@@ -132,6 +132,40 @@ describe('account persistence boundaries', () => {
     expect(replaceTimestamp).toHaveBeenCalledWith('updated_at', currentAt);
   });
 
+  it('does not let an older progression snapshot resurrect a promoted Daily entitlement', async () => {
+    const promotedAt = '2025-07-22T12:02:00.000Z';
+    const readMaybeSingle = vi.fn(async () => ({
+      data: {
+        progress: {
+          progression: {
+            pendingDailyUnlocks: {},
+            unlockedDailies: ['og:2025-07-21'],
+          },
+        },
+        updated_at: promotedAt,
+      },
+      error: null,
+    }));
+    const readOwner = vi.fn(() => ({ maybeSingle: readMaybeSingle }));
+    const readSelect = vi.fn(() => ({ eq: readOwner }));
+    const update = vi.fn();
+    const from = vi.fn(() => ({ select: readSelect, update }));
+
+    await expect(
+      new AccountRepository({ from } as unknown as AmordleSupabaseClient).saveProgression(
+        userId,
+        {
+          pendingDailyUnlocks: {
+            'og:2025-07-21': 'past-daily:og:2025-07-21',
+          },
+          unlockedDailies: [],
+        },
+        candidateAt,
+      ),
+    ).resolves.toEqual({ status: 'current', updatedAt: promotedAt });
+    expect(update).not.toHaveBeenCalled();
+  });
+
   it('fails closed when an account history response contains another owner', async () => {
     const limit = vi.fn(async () => ({
       data: [
