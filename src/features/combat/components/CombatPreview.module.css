@@ -441,6 +441,11 @@
     display: grid;
   }
 
+  .boardShell[data-read-only='true'] .boardViewport {
+    width: min(100%, calc((min(11vw, 54px) + 4px) * var(--combat-word-length) + 68px));
+    margin-inline: auto;
+  }
+
   .settingGrid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

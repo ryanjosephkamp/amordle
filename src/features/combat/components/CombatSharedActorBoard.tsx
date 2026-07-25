@@ -1,3 +1,5 @@
+import type { CSSProperties } from 'react';
+
 import { GameBoard, TileLegend, type Tile, type TileState } from '../../../components/GameBoard';
 import { Keyboard, type KeyboardProps } from '../../../components/keyboard/Keyboard';
 import styles from './CombatPreview.module.css';
@@ -65,7 +67,11 @@ export function CombatSharedActorBoard({
           ))}
         </ul>
       ) : null}
-      <div className={styles.boardViewport} data-testid="combat-board-viewport">
+      <div
+        className={styles.boardViewport}
+        data-testid="combat-board-viewport"
+        style={{ '--combat-word-length': length } as CSSProperties}
+      >
         <GameBoard
           rows={rows.map((row) => [...row])}
           length={length}
