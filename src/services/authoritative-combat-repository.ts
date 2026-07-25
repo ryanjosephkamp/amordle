@@ -38,6 +38,10 @@ const appRatingBucketSchema = z.enum([
   'multiplayer:og:timed:v1',
   'multiplayer:go:timed:v1',
 ]);
+const nullableAppRatingBucketSchema = appRatingBucketSchema
+  .nullable()
+  .optional()
+  .transform((value) => value ?? null);
 
 const scoredTileSchema = z
   .object({
@@ -185,7 +189,7 @@ export const authoritativeCombatProjectionSchema = z
     goPuzzleCount: nullablePuzzleCountSchema,
     timeLimitMs: nullableRankedClockSchema,
     ranked: z.boolean(),
-    ratingBucket: appRatingBucketSchema.nullable(),
+    ratingBucket: nullableAppRatingBucketSchema,
     status: statusSchema,
     version: z.number().int().min(0),
     moveCount: z.number().int().min(0),

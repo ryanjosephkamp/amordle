@@ -160,9 +160,30 @@ test.describe('protected Preview full multiplayer parity', () => {
       for (const page of [playerOnePage, playerTwoPage]) {
         await page.getByLabel('Word length').fill('2');
         await page.getByLabel('Difficulty').selectOption('casual');
+        await expect(page.getByRole('button', { name: 'Find ranked opponent' })).toBeEnabled();
       }
       await playerOnePage.getByRole('button', { name: 'Find ranked opponent' }).click();
+      await expect(
+        playerOnePage.getByText(
+          'Ranked Practice search accepted by the server-owned reservation service.',
+          { exact: true },
+        ),
+      ).toBeVisible({ timeout: 30_000 });
       await playerTwoPage.getByRole('button', { name: 'Find ranked opponent' }).click();
+      await expect
+        .poll(
+          async () => {
+            if (/\/combat\/match\/amordle-combat-v2-/i.test(playerTwoPage.url())) return 'matched';
+            return (
+              (await playerTwoPage
+                .locator('.game-message')
+                .textContent()
+                .catch(() => null)) ?? ''
+            );
+          },
+          { timeout: 30_000 },
+        )
+        .toMatch(/Ranked Practice search accepted|matched|finalizing/i);
       await harness.discoverAndRegisterAuthoritativeCombatForUsers(
         users.map(({ userId }) => userId),
       );

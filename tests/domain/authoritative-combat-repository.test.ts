@@ -132,10 +132,20 @@ describe('authoritative COMBAT repository', () => {
     expect(JSON.stringify(result)).not.toContain('answer');
   });
 
-  it('canonicalizes omitted nullable OG and untimed projection fields', () => {
-    const wire = structuredClone(participantProjection()) as Record<string, unknown>;
+  it('canonicalizes omitted nullable Daily OG and untimed projection fields', () => {
+    const wire = structuredClone(
+      participantProjection({
+        scope: 'daily',
+        sourceKind: 'daily-lobby',
+        visibilityKind: 'restricted',
+        dailyDateKey: '2026-07-24',
+        ranked: false,
+        ratingBucket: null,
+      }),
+    ) as Record<string, unknown>;
     delete wire.goPuzzleCount;
     delete wire.timeLimitMs;
+    delete wire.ratingBucket;
     const playerState = wire.playerState as Record<string, Record<string, unknown>>;
     delete playerState['player-one']!.timeRemainingMs;
     delete playerState['player-two']!.timeRemainingMs;
@@ -144,6 +154,7 @@ describe('authoritative COMBAT repository', () => {
 
     expect(result.goPuzzleCount).toBeNull();
     expect(result.timeLimitMs).toBeNull();
+    expect(result.ratingBucket).toBeNull();
     expect(result.playerState['player-one'].timeRemainingMs).toBeNull();
     expect(result.playerState['player-two'].timeRemainingMs).toBeNull();
   });
