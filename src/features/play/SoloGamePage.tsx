@@ -713,6 +713,10 @@ function SoloRuntime({
   const resultVisible = session.status !== 'playing';
   const goCount = session.mode === 'go' ? session.puzzles.length : 1;
   const puzzleIndex = session.mode === 'go' ? session.currentPuzzleIndex : 0;
+  const activeGameplay =
+    session.status === 'playing' &&
+    puzzle.status === 'playing' &&
+    !(session.mode === 'go' && session.pendingAdvance);
   const resultDefinitions = buildSoloDefinitionResults({
     session,
     definitions: wordList.definitions,
@@ -1280,7 +1284,10 @@ function SoloRuntime({
         )}
       </aside>
 
-      <section className="game-stage" aria-labelledby="game-context">
+      <section
+        className={`game-stage ${activeGameplay ? 'game-stage--active' : ''}`}
+        aria-labelledby="game-context"
+      >
         <div className="game-stage__top">
           <p id="game-context">
             <span>Solo</span> · {config.scope} {config.mode} · {puzzle.wordLength} letters ·{' '}

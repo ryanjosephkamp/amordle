@@ -20,7 +20,7 @@ export function GameBoard({
   const attributed = actors !== undefined || rowLabels?.some(Boolean) === true;
   return (
     <div
-      className={`board-viewport ${compact ? 'board-viewport--compact' : ''}`}
+      className={`board-viewport ${attributed ? 'board-viewport--attributed' : ''} ${compact ? 'board-viewport--compact' : ''}`}
       data-length={length}
     >
       <div

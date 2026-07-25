@@ -90,13 +90,17 @@ test('captures the sculpted keyboard and corrected GO attempt budget', async ({
   await expect(page.locator('.keyboard')).toBeVisible({ timeout: 15_000 });
   await expect(page.locator('.key').first()).toHaveCSS('border-radius', '6px');
   if ((page.viewportSize()?.width ?? 1_000) <= 760) {
-    const enter = page.locator('.key[data-key="ENTER"]');
-    await enter.scrollIntoViewIfNeeded();
-    const enterBox = await enter.boundingBox();
+    const keyboardBox = await page.getByRole('group', { name: /game keyboard/i }).boundingBox();
+    const stageBox = await page.locator('.game-stage--active').boundingBox();
     const dockBox = await page.locator('.mobile-dock').boundingBox();
-    expect(enterBox).not.toBeNull();
+    expect(keyboardBox).not.toBeNull();
+    expect(stageBox).not.toBeNull();
     expect(dockBox).not.toBeNull();
-    expect(enterBox!.y + enterBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+    expect(keyboardBox!.y + keyboardBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+    expect(stageBox!.y + stageBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+    expect(await page.evaluate(() => document.scrollingElement?.scrollTop ?? window.scrollY)).toBe(
+      0,
+    );
   }
   await captureGameplay('keyboard-neutral');
 

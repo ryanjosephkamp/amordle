@@ -84,10 +84,22 @@ async function expectSixRowsAndVisibleKeyboard(page: Page): Promise<void> {
   await expect(board.getByRole('row')).toHaveCount(6);
   const keyboard = page.getByRole('group', { name: /game keyboard/i });
   await expect(keyboard).toBeVisible();
-  const [box, viewport] = await Promise.all([keyboard.boundingBox(), page.viewportSize()]);
+  const [box, viewport, dockBox, matchBox, scrollTop] = await Promise.all([
+    keyboard.boundingBox(),
+    page.viewportSize(),
+    page.locator('.mobile-dock').boundingBox(),
+    page.locator('.page--combat-match').boundingBox(),
+    page.evaluate(() => document.scrollingElement?.scrollTop ?? window.scrollY),
+  ]);
   if (!box || !viewport) throw new Error('Keyboard viewport evidence was unavailable.');
   expect(box.y).toBeGreaterThanOrEqual(0);
   expect(box.y + box.height).toBeLessThanOrEqual(viewport.height + 1);
+  if (dockBox) {
+    expect(box.y + box.height).toBeLessThanOrEqual(dockBox.y + 1);
+    expect(matchBox).not.toBeNull();
+    expect(matchBox!.y + matchBox!.height).toBeLessThanOrEqual(dockBox.y + 1);
+    expect(scrollTop).toBe(0);
+  }
 }
 
 async function inspectAnswer(

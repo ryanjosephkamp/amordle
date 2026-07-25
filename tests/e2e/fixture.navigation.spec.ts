@@ -1,5 +1,26 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function expectMobileGameplayAboveDock(page: Page) {
+  const keyboard = page.getByRole('group', { name: /game keyboard/i });
+  const stage = page.locator('.game-stage--active');
+  const dock = page.locator('.mobile-dock');
+  await expect(keyboard).toBeVisible();
+  await expect(stage).toBeVisible();
+  await expect(dock).toBeVisible();
+  const [keyboardBox, stageBox, dockBox, scrollTop] = await Promise.all([
+    keyboard.boundingBox(),
+    stage.boundingBox(),
+    dock.boundingBox(),
+    page.evaluate(() => document.scrollingElement?.scrollTop ?? window.scrollY),
+  ]);
+  expect(keyboardBox).not.toBeNull();
+  expect(stageBox).not.toBeNull();
+  expect(dockBox).not.toBeNull();
+  expect(scrollTop).toBe(0);
+  expect(keyboardBox!.y + keyboardBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+  expect(stageBox!.y + stageBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+}
 
 const canonicalRoutes = [
   '/',
@@ -266,6 +287,32 @@ test('physical-key input reaches a tile below the 100ms p95 budget', async ({ pa
   });
   console.info(JSON.stringify({ keyToTileP95Ms: p95 }));
 });
+
+for (const width of [320, 360, 390, 412]) {
+  test(`active Solo keeps its complete keyboard above the mobile dock at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/play/practice/og?length=5');
+    await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectMobileGameplayAboveDock(page);
+  });
+}
+
+for (const length of [2, 7, 35]) {
+  test(`active Solo length ${length} keeps its complete keyboard above the mobile dock`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/play/practice/og?length=${length}`);
+    await expect(page.getByRole('grid', { name: `${length}-letter word board` })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectMobileGameplayAboveDock(page);
+  });
+}
 
 for (const width of [320, 360, 390, 412, 768, 960, 1440, 1920]) {
   test(`has no page overflow at ${width}px`, async ({ page }) => {
