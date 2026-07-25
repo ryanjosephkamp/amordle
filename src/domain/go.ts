@@ -474,6 +474,60 @@ export function selectSeparatedDailyCombatChains(
   return { unranked, ranked };
 }
 
+function shellCompatibleDailyCombatIndex(
+  catalog: readonly string[],
+  dateKey: string,
+  family: 'og' | 'go',
+  baseIndex: number,
+): number {
+  if (catalog.length < 2) {
+    if (catalog.length === 1) return 0;
+    throw new RangeError('Daily COMBAT requires at least one answer.');
+  }
+  const offset = 1 + (fnv1a32(`${dateKey}:${family}:multiplayer`) % (catalog.length - 1));
+  return (baseIndex + offset) % catalog.length;
+}
+
+/**
+ * Selects the retained shell's unranked Daily Multiplayer lane without
+ * conflating it with Solo Daily or the separately seeded ranked lane.
+ */
+export function selectUnrankedDailyCombatAnswers(input: {
+  readonly catalog: readonly string[];
+  readonly dateKey: string;
+  readonly mode: 'og' | 'go';
+}): readonly string[] {
+  const catalog = [...new Set(input.catalog.map(normalizeWord))].filter(isAcceptedAlphabeticWord);
+  if (catalog.length === 0) throw new RangeError('Daily COMBAT answer catalog is empty.');
+  if (input.mode === 'og') {
+    const index = shellCompatibleDailyCombatIndex(
+      catalog,
+      input.dateKey,
+      'og',
+      dailyAnswerIndex(input.dateKey, catalog.length),
+    );
+    const answer = catalog[index];
+    if (!answer) throw new RangeError('Daily COMBAT OG selection failed.');
+    return [answer];
+  }
+  if (goAnswerGenerationVersion(input.dateKey, 'go') === 'v2') {
+    return selectSeparatedDailyCombatChains(catalog, input.dateKey).unranked;
+  }
+  const legacy = selectLegacyDailyGoChain(catalog, input.dateKey, 5);
+  const baseIndex = catalog.indexOf(legacy[0] ?? '');
+  const seedIndex = shellCompatibleDailyCombatIndex(
+    catalog,
+    input.dateKey,
+    'go',
+    Math.max(baseIndex, 0),
+  );
+  return Array.from({ length: 5 }, (_, offset) => {
+    const answer = catalog[(seedIndex + offset) % catalog.length];
+    if (!answer) throw new RangeError('Daily COMBAT GO selection failed.');
+    return answer;
+  });
+}
+
 export function goAnswerGenerationVersion(
   dateKey: string,
   mode: 'og' | 'go',

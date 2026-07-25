@@ -17,9 +17,9 @@ const expected = new Map(
 );
 const files = (await readdir(migrationsDirectory)).filter((file) => file.endsWith('.sql')).sort();
 
-if (files.length !== 42 || expected.size !== 42) {
+if (files.length !== 45 || expected.size !== 45) {
   throw new Error(
-    `Expected 42 migrations, found ${files.length} files and ${expected.size} hashes.`,
+    `Expected 45 migrations, found ${files.length} files and ${expected.size} hashes.`,
   );
 }
 

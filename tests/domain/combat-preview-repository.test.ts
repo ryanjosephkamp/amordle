@@ -230,6 +230,67 @@ describe('COMBAT preview repository', () => {
     expect(JSON.stringify(result)).not.toContain(playerTwo);
   });
 
+  it('does not expose the legacy browser-authored Ranked Practice queue surface', () => {
+    const repository = new CombatPreviewRepository({
+      rpc: vi.fn(),
+    } as unknown as AmordleSupabaseClient);
+
+    expect('loadRankedPracticeQueue' in repository).toBe(false);
+    expect('createRankedPracticeQueue' in repository).toBe(false);
+    expect('claimRankedPracticeQueue' in repository).toBe(false);
+    expect('settleRankedPractice' in repository).toBe(false);
+  });
+
+  it('creates Ranked Daily with the exact fixed-five no-clock RPC contract', async () => {
+    const rpc = vi.fn(async (name: string) => {
+      if (name === 'create_ranked_async_matchmaking_request_v2') {
+        return { data: [{ request_id: 'daily-queue-1' }], error: null };
+      }
+      return {
+        data: [
+          {
+            request_id: 'daily-queue-1',
+            request_status: 'queued',
+            matched_game_id: null,
+            opponent_request_id: null,
+            viewer_seat: null,
+            player_one_user_id: null,
+            player_two_user_id: null,
+            mode: 'go',
+            scope: 'daily',
+            daily_date_key: '2026-07-24',
+            rating_bucket: 'async:go:daily:v1',
+            word_length: 5,
+            hard_mode: true,
+            time_limit_ms: null,
+            queued_at: createdAt,
+            matched_at: null,
+          },
+        ],
+        error: null,
+      };
+    });
+    const repository = new CombatPreviewRepository({
+      rpc,
+    } as unknown as AmordleSupabaseClient);
+
+    await repository.createRankedDailyQueue({
+      mode: 'go',
+      dailyDateKey: '2026-07-24',
+      hardMode: true,
+      idempotencyKey: 'ranked-daily-create-1',
+    });
+
+    expect(rpc).toHaveBeenCalledWith('create_ranked_async_matchmaking_request_v2', {
+      p_mode: 'go',
+      p_scope: 'daily',
+      p_word_length: 5,
+      p_hard_mode: true,
+      p_daily_date_key: '2026-07-24',
+      p_idempotency_key: 'ranked-daily-create-1',
+    });
+  });
+
   it('maps authoritative Ranked Daily stale writes to retryable conflicts', async () => {
     const rpc = vi.fn(async () => ({
       data: null,

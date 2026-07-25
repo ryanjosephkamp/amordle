@@ -57,14 +57,16 @@ export function CombatSharedActorBoard({
           </li>
         ))}
       </ul>
-      <GameBoard
-        rows={rows.map((row) => [...row])}
-        length={length}
-        actors={actorLabels}
-        rowLabels={evidenceLabels}
-        compact={compact}
-        {...(activeRow === undefined ? {} : { activeRow })}
-      />
+      <div className={styles.boardViewport} data-testid="combat-board-viewport">
+        <GameBoard
+          rows={rows.map((row) => [...row])}
+          length={length}
+          actors={actorLabels}
+          rowLabels={evidenceLabels}
+          compact={compact}
+          {...(activeRow === undefined ? {} : { activeRow })}
+        />
+      </div>
       <p className={styles.message} role="status" aria-live="polite">
         {message}
       </p>

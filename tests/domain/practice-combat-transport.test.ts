@@ -102,6 +102,76 @@ describe('Practice COMBAT transport boundary', () => {
     );
   });
 
+  it('builds a shell-compatible ranked projection without exposing ids in the mapped view', () => {
+    const state = createPracticeCombatPreview({
+      id: 'ranked-practice-1',
+      config: { ...config, mode: 'og', puzzleCount: 1, timeLimitMs: 300_000 },
+      players: [{ displayName: 'Player One' }, { displayName: 'Player Two' }],
+      answers: ['aa'],
+      now,
+    });
+    const raw = buildCooperativePracticeProjection({
+      sourceKind: 'ranked-queue',
+      playerOneUserId: hostId,
+      playerTwoUserId: joinerId,
+      wordRevision: 'test-revision',
+      state,
+      ranked: true,
+      ratingBucket: 'multiplayer:og:timed:v1',
+      matchmakingRequestId: 'ranked-queue-1',
+    });
+    expect(raw).toMatchObject({
+      ranked: true,
+      ratingBucket: 'multiplayer:og:timed:v1',
+      timeRemainingMs: { 'player-one': 300_000, 'player-two': 300_000 },
+      turnStartedAt: now,
+    });
+    const mapped = parsePracticeTransportProjection(raw, hostId);
+    expect(mapped).toMatchObject({
+      ranked: true,
+      ratingBucket: 'multiplayer:og:timed:v1',
+      matchmakingRequestId: 'ranked-queue-1',
+    });
+    expect(JSON.stringify(mapped)).not.toContain(hostId);
+    expect(JSON.stringify(mapped)).not.toContain(joinerId);
+  });
+
+  it('keeps unranked Daily fixed to its UTC five-letter lane', () => {
+    const waiting = buildWaitingPracticeProjection({
+      id: 'daily-1',
+      hostUserId: hostId,
+      config: {
+        mode: 'go',
+        wordLength: 5,
+        difficulty: 'expert',
+        hardMode: false,
+        puzzleCount: 5,
+        timeLimitMs: null,
+      },
+      now,
+      scope: 'daily',
+      dailyDateKey: '2026-07-23',
+    });
+    expect(parsePracticeTransportProjection(waiting, joinerId)).toMatchObject({
+      kind: 'waiting',
+      scope: 'daily',
+      dailyDateKey: '2026-07-23',
+      sourceKind: 'daily-lobby',
+      wordLength: 5,
+      ranked: false,
+    });
+    expect(() =>
+      buildWaitingPracticeProjection({
+        id: 'daily-invalid',
+        hostUserId: hostId,
+        config,
+        now,
+        scope: 'daily',
+        dailyDateKey: '2026-07-23',
+      }),
+    ).toThrow(/scope metadata/i);
+  });
+
   it('accepts equivalent PostgreSQL and JSON timestamp representations after lobby insert', async () => {
     const projection = buildWaitingPracticeProjection({
       id: 'practice-offset-1',
@@ -113,6 +183,7 @@ describe('Practice COMBAT transport boundary', () => {
       id: projection.id,
       scope: 'practice',
       mode: projection.mode,
+      daily_date_key: null,
       status: projection.status,
       current_turn: projection.currentTurn,
       word_length: projection.wordLength,

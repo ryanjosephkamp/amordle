@@ -8,6 +8,7 @@ import {
   oldestCompatibleQueueRequest,
   playerCombatPoints,
   rankBandForRating,
+  sharedCombatRowCapacity,
   rankedQueueCompatible,
   ratingBucketFor,
   ratingEligibility,
@@ -17,6 +18,33 @@ import {
 import { scoreGuess } from '../../src/domain/game';
 
 describe('COMBAT points and outcome precedence', () => {
+  it('starts with one shared six-row board and grows only when shared evidence exceeds it', () => {
+    expect(
+      sharedCombatRowCapacity({
+        seededRows: 0,
+        acceptedMoves: 0,
+        hasActiveDraft: true,
+        attemptBudget: 6,
+      }),
+    ).toBe(6);
+    expect(
+      sharedCombatRowCapacity({
+        seededRows: 0,
+        acceptedMoves: 6,
+        hasActiveDraft: true,
+        attemptBudget: 6,
+      }),
+    ).toBe(7);
+    expect(
+      sharedCombatRowCapacity({
+        seededRows: 2,
+        acceptedMoves: 1,
+        hasActiveDraft: true,
+        attemptBudget: 4,
+      }),
+    ).toBe(6);
+  });
+
   it('calculates tile, solve, unused-attempt, and Hard Mode points', () => {
     expect(
       playerCombatPoints([

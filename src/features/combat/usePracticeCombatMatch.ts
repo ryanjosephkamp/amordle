@@ -92,6 +92,13 @@ export function usePracticeCombatMatch(gameId: string) {
   const [draft, setDraft] = useState(() => sessionStorage.getItem(storageKey) ?? '');
   const [message, setMessage] = useState('Loading the durable participant projection…');
   const [saving, setSaving] = useState(false);
+  const settlement = null as {
+    outcome: 'win' | 'loss' | 'draw';
+    oldRating: number;
+    newRating: number;
+    ratingDelta: number;
+    idempotent: boolean;
+  } | null;
   const soundEnabled = readSoundEnabled(
     identity,
     typeof localStorage === 'undefined' ? undefined : localStorage,
@@ -144,7 +151,9 @@ export function usePracticeCombatMatch(gameId: string) {
           reduced.state.status === 'holding'
             ? 'Puzzle solved and saved. Advancing after the evidence hold.'
             : reduced.state.status === 'terminal' || reduced.state.status === 'cancelled'
-              ? 'Terminal result saved. No rating mutation was attempted.'
+              ? current.ranked
+                ? 'Terminal result saved. Trusted shell settlement is reconciling.'
+                : 'Terminal result saved. No rating mutation was attempted.'
               : 'Move accepted and saved. Waiting for the other participant.',
         );
         return true;
@@ -278,6 +287,7 @@ export function usePracticeCombatMatch(gameId: string) {
     canEdit,
     saving,
     message,
+    settlement,
     setMessage,
     onCommand,
     saveAction,

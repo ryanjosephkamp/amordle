@@ -18,6 +18,7 @@ import {
   selectDeterministicChain,
   selectLegacyDailyGoChain,
   selectSeparatedDailyCombatChains,
+  selectUnrankedDailyCombatAnswers,
   serializeGoSession,
   submitGoGuess,
 } from '../../src/domain/go';
@@ -294,6 +295,34 @@ describe('GO state and selection', () => {
     expect(chains.ranked).toHaveLength(5);
     expect(chains.ranked.some((word) => chains.unranked.includes(word))).toBe(false);
     expect(catalog).toHaveLength(20);
+  });
+
+  it('selects a stable fixed-five unranked Daily COMBAT lane', () => {
+    const catalog = Array.from({ length: 40 }, (_, index) => {
+      const left = String.fromCharCode(97 + Math.floor(index / 26));
+      const right = String.fromCharCode(97 + (index % 26));
+      return `${left}${right}aaa`;
+    });
+    const og = selectUnrankedDailyCombatAnswers({
+      catalog,
+      dateKey: '2026-07-24',
+      mode: 'og',
+    });
+    const go = selectUnrankedDailyCombatAnswers({
+      catalog,
+      dateKey: '2026-07-24',
+      mode: 'go',
+    });
+    expect(og).toHaveLength(1);
+    expect(go).toHaveLength(5);
+    expect(new Set(go).size).toBe(5);
+    expect(
+      selectUnrankedDailyCombatAnswers({
+        catalog,
+        dateKey: '2026-07-24',
+        mode: 'go',
+      }),
+    ).toEqual(go);
   });
 
   it('selects requested sizes over broad catalogs', () => {

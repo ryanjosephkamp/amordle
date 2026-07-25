@@ -137,6 +137,8 @@ export interface PracticeCombatPreviewState {
   readonly moves: readonly PracticeCombatPreviewMove[];
   readonly hold: PracticeCombatPreviewHold | null;
   readonly deadlineAt: string | null;
+  readonly timeRemainingMs?: Readonly<Record<PracticeCombatActor, number>>;
+  readonly turnStartedAt?: string | null;
   readonly outcome: CombatOutcome | null;
   readonly revision: number;
   readonly appliedActionIds: readonly string[];
@@ -170,6 +172,39 @@ function opponentOf(actor: PracticeCombatActor): PracticeCombatActor {
 
 function deadlineFrom(now: string, timeLimitMs: PracticeCombatClockMs | null): string | null {
   return timeLimitMs === null ? null : new Date(timestampMs(now) + timeLimitMs).toISOString();
+}
+
+function clockRemaining(
+  state: PracticeCombatPreviewState,
+  actor: PracticeCombatActor,
+  now: string,
+): number | null {
+  if (state.config.timeLimitMs === null) return null;
+  const initial = state.timeRemainingMs?.[actor] ?? state.config.timeLimitMs;
+  if (state.activeActor !== actor || state.turnStartedAt == null) return initial;
+  return Math.max(0, initial - Math.max(0, timestampMs(now) - timestampMs(state.turnStartedAt)));
+}
+
+function switchedClockPatch(
+  state: PracticeCombatPreviewState,
+  actor: PracticeCombatActor | null,
+  now: string,
+): Partial<Pick<PracticeCombatPreviewState, 'deadlineAt' | 'timeRemainingMs' | 'turnStartedAt'>> {
+  if (state.config.timeLimitMs === null) {
+    return { deadlineAt: null, turnStartedAt: null };
+  }
+  const remaining = {
+    left: clockRemaining(state, 'left', now) ?? state.config.timeLimitMs,
+    right: clockRemaining(state, 'right', now) ?? state.config.timeLimitMs,
+  };
+  if (actor === null) {
+    return { deadlineAt: null, timeRemainingMs: remaining, turnStartedAt: null };
+  }
+  return {
+    deadlineAt: new Date(timestampMs(now) + remaining[actor]).toISOString(),
+    timeRemainingMs: remaining,
+    turnStartedAt: now,
+  };
 }
 
 function initialPuzzles(count: PracticeCombatPuzzleCount): PracticeCombatPreviewPlayer['puzzles'] {
@@ -220,6 +255,15 @@ export function createPracticeCombatPreview(input: {
     moves: [],
     hold: null,
     deadlineAt: deadlineFrom(createdAt, config.timeLimitMs),
+    ...(config.timeLimitMs === null
+      ? {}
+      : {
+          timeRemainingMs: {
+            left: config.timeLimitMs,
+            right: config.timeLimitMs,
+          },
+          turnStartedAt: createdAt,
+        }),
     outcome: null,
     revision: 0,
     appliedActionIds: [],
@@ -440,12 +484,13 @@ function outcomeFor(
 function terminalPatch(
   state: PracticeCombatPreviewState,
   outcome: CombatOutcome,
+  now = state.updatedAt,
 ): Partial<PracticeCombatPreviewState> {
   return {
     status: outcome.kind === 'cancelled' ? 'cancelled' : 'terminal',
     activeActor: null,
     hold: null,
-    deadlineAt: null,
+    ...switchedClockPatch(state, null, now),
     outcome,
   };
 }
@@ -478,7 +523,7 @@ function reduceSubmit(
     return failure(state, 'hold_pending', 'The solved GO evidence hold must finish first.');
   }
   if (state.activeActor !== action.actor) {
-    return failure(state, 'not_turn', 'Only the active preview participant can submit.');
+    return failure(state, 'not_turn', 'Only the active participant can submit.');
   }
   if (context === undefined) {
     return failure(
@@ -491,7 +536,7 @@ function reduceSubmit(
     return failure(
       state,
       'timeout_pending',
-      'The participant-writable preview clock expired before this guess.',
+      'The active participant clock expired before this guess.',
     );
   }
   const answer = state.answers[state.currentPuzzleIndex];
@@ -523,7 +568,7 @@ function reduceSubmit(
   const puzzles = [...player.puzzles];
   const priorProgress = puzzles[state.currentPuzzleIndex];
   if (priorProgress === undefined) {
-    return failure(state, 'terminal', 'The preview participant has no active puzzle.');
+    return failure(state, 'terminal', 'The participant has no active puzzle.');
   }
   puzzles[state.currentPuzzleIndex] = {
     ...priorProgress,
@@ -539,7 +584,7 @@ function reduceSubmit(
     return result(
       commit(state, action, {
         ...moved,
-        ...terminalPatch(moved, outcomeFor(moved, { ogSolvedBy: action.actor })),
+        ...terminalPatch(moved, outcomeFor(moved, { ogSolvedBy: action.actor }), submittedAt),
       }),
     );
   }
@@ -549,7 +594,7 @@ function reduceSubmit(
       return result(
         commit(state, action, {
           ...moved,
-          ...terminalPatch(moved, outcomeFor(moved)),
+          ...terminalPatch(moved, outcomeFor(moved), submittedAt),
         }),
       );
     }
@@ -559,7 +604,7 @@ function reduceSubmit(
         ...moved,
         status: 'holding',
         activeActor: null,
-        deadlineAt: null,
+        ...switchedClockPatch(moved, null, submittedAt),
         hold: {
           solvedPuzzleIndex: state.currentPuzzleIndex,
           solvedBy: action.actor,
@@ -575,7 +620,7 @@ function reduceSubmit(
     return result(
       commit(state, action, {
         ...moved,
-        ...terminalPatch(moved, outcomeFor(moved)),
+        ...terminalPatch(moved, outcomeFor(moved), submittedAt),
       }),
     );
   }
@@ -583,7 +628,7 @@ function reduceSubmit(
     commit(state, action, {
       ...moved,
       activeActor: nextActor,
-      deadlineAt: deadlineFrom(submittedAt, state.config.timeLimitMs),
+      ...switchedClockPatch(moved, nextActor, submittedAt),
     }),
   );
 }
@@ -604,7 +649,7 @@ export function reducePracticeCombatPreview(
     return failure(
       state,
       'invalid_action',
-      'Preview actions cannot move cooperative state backward in time.',
+      'COMBAT actions cannot move shared state backward in time.',
     );
   }
   if (!actionId.success) {
@@ -644,7 +689,7 @@ export function reducePracticeCombatPreview(
         activeActor: state.hold.nextActor,
         currentPuzzleIndex: state.currentPuzzleIndex + 1,
         hold: null,
-        deadlineAt: deadlineFrom(now, state.config.timeLimitMs),
+        ...switchedClockPatch(state, state.hold.nextActor, now),
       }),
     );
   }
@@ -660,7 +705,7 @@ export function reducePracticeCombatPreview(
       commit(
         state,
         normalizedAction,
-        terminalPatch(state, outcomeFor(state, { forfeitingActor: normalizedAction.actor })),
+        terminalPatch(state, outcomeFor(state, { forfeitingActor: normalizedAction.actor }), now),
       ),
     );
   }
@@ -669,7 +714,7 @@ export function reducePracticeCombatPreview(
       commit(
         state,
         normalizedAction,
-        terminalPatch(state, outcomeFor(state, { forfeitingActor: normalizedAction.actor })),
+        terminalPatch(state, outcomeFor(state, { forfeitingActor: normalizedAction.actor }), now),
       ),
     );
   }
@@ -677,7 +722,7 @@ export function reducePracticeCombatPreview(
     return failure(state, 'not_timed', 'This Practice COMBAT preview has no clock.');
   }
   if (state.activeActor !== normalizedAction.actor) {
-    return failure(state, 'not_turn', 'Only the active preview participant can time out.');
+    return failure(state, 'not_turn', 'Only the active participant can time out.');
   }
   if (timestampMs(now) < timestampMs(state.deadlineAt)) {
     return failure(state, 'timeout_pending', 'The preview turn clock has not expired.');
@@ -686,7 +731,7 @@ export function reducePracticeCombatPreview(
     commit(
       state,
       normalizedAction,
-      terminalPatch(state, outcomeFor(state, { timedOutActor: normalizedAction.actor })),
+      terminalPatch(state, outcomeFor(state, { timedOutActor: normalizedAction.actor }), now),
     ),
   );
 }

@@ -178,6 +178,16 @@ describe('shared moves, turns, scoring, and conflicts', () => {
     expect(outOfTurn.state).toBe(state);
   });
 
+  it('debits only the active player match clock and preserves the opponent clock', () => {
+    const timed = create({ ...ogConfig, timeLimitMs: 60_000 });
+    expect(timed.timeRemainingMs).toEqual({ left: 60_000, right: 60_000 });
+    const next = submit(timed, 'left', 'bb', 'timed-move-1', '2026-07-23T12:00:10.000Z');
+    expect(next.timeRemainingMs).toEqual({ left: 50_000, right: 60_000 });
+    expect(next.activeActor).toBe('right');
+    expect(next.turnStartedAt).toBe('2026-07-23T12:00:10.000Z');
+    expect(next.deadlineAt).toBe('2026-07-23T12:01:10.000Z');
+  });
+
   it('treats the same action id as an idempotent retry before conflict checks', () => {
     const initial = create();
     const firstAction = action(initial, { type: 'submit', actor: 'left', guess: 'bb' }, 'move-1');

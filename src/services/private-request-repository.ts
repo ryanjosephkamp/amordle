@@ -3,6 +3,10 @@ import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json } from '../types/database';
 import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { throwIfServiceError } from './service-error';
+import {
+  parsePrivateRequestProjection,
+  type PrivateRequestProjection,
+} from './combat-preview-projections';
 
 export type PrivateRequestInput = {
   targetPublicProfileId: string;
@@ -57,7 +61,7 @@ export type PrivateRequestBlockMutation = z.infer<typeof blockMutationSchema>;
 export class PrivateRequestRepository {
   constructor(private readonly client: AmordleSupabaseClient) {}
 
-  async create(input: PrivateRequestInput): Promise<unknown> {
+  async create(input: PrivateRequestInput): Promise<PrivateRequestProjection> {
     const request = requestSchema.parse(input);
     const { data, error } = await this.client.rpc('create_private_multiplayer_match_request_v2', {
       p_target_public_profile_id: request.targetPublicProfileId,
@@ -70,42 +74,49 @@ export class PrivateRequestRepository {
       ...(request.expiresAt === undefined ? {} : { p_expires_at: request.expiresAt }),
     });
     throwIfServiceError(error, 'Create private match request');
-    return data?.[0] ?? null;
+    return parsePrivateRequestProjection(data?.[0]);
   }
 
-  async list(status?: string, limit = 50): Promise<unknown[]> {
+  async list(status?: string, limit = 50): Promise<PrivateRequestProjection[]> {
     const { data, error } = await this.client.rpc('get_private_multiplayer_match_requests', {
       p_limit: Math.min(Math.max(limit, 1), 100),
       ...(status ? { p_status: status } : {}),
     });
     throwIfServiceError(error, 'Load private match requests');
-    return data ?? [];
+    return z
+      .array(z.unknown())
+      .parse(data ?? [])
+      .map(parsePrivateRequestProjection);
   }
 
-  async accept(requestId: string, projection: Json, idempotencyKey: string): Promise<unknown> {
+  async accept(
+    requestId: string,
+    projection: Json,
+    idempotencyKey: string,
+  ): Promise<PrivateRequestProjection> {
     const { data, error } = await this.client.rpc('accept_private_multiplayer_match_request_v2', {
       p_request_id: requestId,
       p_game_projection: projection,
       p_idempotency_key: idempotencyKey,
     });
     throwIfServiceError(error, 'Accept private match request');
-    return data?.[0] ?? null;
+    return parsePrivateRequestProjection(data?.[0]);
   }
 
-  async decline(requestId: string): Promise<unknown> {
+  async decline(requestId: string): Promise<PrivateRequestProjection> {
     const { data, error } = await this.client.rpc('decline_private_multiplayer_match_request', {
       p_request_id: requestId,
     });
     throwIfServiceError(error, 'Decline private match request');
-    return data?.[0] ?? null;
+    return parsePrivateRequestProjection(data?.[0]);
   }
 
-  async cancel(requestId: string): Promise<unknown> {
+  async cancel(requestId: string): Promise<PrivateRequestProjection> {
     const { data, error } = await this.client.rpc('cancel_private_multiplayer_match_request', {
       p_request_id: requestId,
     });
     throwIfServiceError(error, 'Cancel private match request');
-    return data?.[0] ?? null;
+    return parsePrivateRequestProjection(data?.[0]);
   }
 
   async preference(): Promise<PrivateRequestPreference> {

@@ -741,6 +741,111 @@ export function parseRankedDailyQueueProjection(value: unknown): RankedDailyQueu
   };
 }
 
+const rankedPracticeQueueRawSchema = z
+  .object({
+    request_id: opaqueIdSchema,
+    request_status: z.enum(['queued', 'matched', 'cancelled', 'expired']),
+    matched_game_id: opaqueIdSchema.nullable(),
+    opponent_request_id: opaqueIdSchema.nullable(),
+    viewer_seat: combatSeatSchema.nullable(),
+    player_one_user_id: z.string().uuid().nullable(),
+    player_two_user_id: z.string().uuid().nullable(),
+    mode: combatModeSchema,
+    scope: z.literal('practice'),
+    daily_date_key: z.null(),
+    rating_bucket: z.enum(['async:og', 'async:go', 'async:og:timed:v1', 'async:go:timed:v1']),
+    word_length: z.number().int().min(2).max(35),
+    hard_mode: z.boolean(),
+    time_limit_ms: z.union([z.null(), z.literal(300_000)]),
+    queued_at: isoTimestampSchema,
+    matched_at: nullableTimestampSchema,
+  })
+  .strict()
+  .superRefine((row, context) => {
+    const matchedValues = [
+      row.matched_game_id,
+      row.opponent_request_id,
+      row.viewer_seat,
+      row.player_one_user_id,
+      row.player_two_user_id,
+      row.matched_at,
+    ];
+    if ((row.request_status === 'matched') !== matchedValues.every((item) => item !== null)) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Ranked Practice matched status is internally inconsistent.',
+      });
+    }
+    const expectedBucket =
+      row.time_limit_ms === 300_000
+        ? row.mode === 'og'
+          ? 'async:og:timed:v1'
+          : 'async:go:timed:v1'
+        : row.mode === 'og'
+          ? 'async:og'
+          : 'async:go';
+    if (row.rating_bucket !== expectedBucket) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Ranked Practice queue bucket does not match mode and clock.',
+      });
+    }
+  });
+
+export type RankedPracticeQueueProjection = Readonly<{
+  requestId: string;
+  status: z.infer<typeof rankedPracticeQueueRawSchema>['request_status'];
+  matchedGameId: string | null;
+  opponentRequestId: string | null;
+  viewerSeat: CombatSeat | null;
+  mode: 'og' | 'go';
+  ratingBucket:
+    'multiplayer:og' | 'multiplayer:go' | 'multiplayer:og:timed:v1' | 'multiplayer:go:timed:v1';
+  wordLength: number;
+  hardMode: boolean;
+  timeLimitMs: 300_000 | null;
+  queuedAt: string;
+  matchedAt: string | null;
+}>;
+
+export function parseRankedPracticeQueueProjection(value: unknown): RankedPracticeQueueProjection {
+  assertNoPrivateCombatFields(value);
+  const row = rankedPracticeQueueRawSchema.parse(value);
+  const ratingBucket =
+    row.time_limit_ms === 300_000
+      ? row.mode === 'og'
+        ? 'multiplayer:og:timed:v1'
+        : 'multiplayer:go:timed:v1'
+      : row.mode === 'og'
+        ? 'multiplayer:og'
+        : 'multiplayer:go';
+  return {
+    requestId: row.request_id,
+    status: row.request_status,
+    matchedGameId: row.matched_game_id,
+    opponentRequestId: row.opponent_request_id,
+    viewerSeat: row.viewer_seat,
+    mode: row.mode,
+    ratingBucket,
+    wordLength: row.word_length,
+    hardMode: row.hard_mode,
+    timeLimitMs: row.time_limit_ms,
+    queuedAt: row.queued_at,
+    matchedAt: row.matched_at,
+  };
+}
+
+export function parseRankedPracticeQueueParticipants(value: unknown): Readonly<{
+  playerOneUserId: string | null;
+  playerTwoUserId: string | null;
+}> {
+  const row = rankedPracticeQueueRawSchema.parse(value);
+  return {
+    playerOneUserId: row.player_one_user_id,
+    playerTwoUserId: row.player_two_user_id,
+  };
+}
+
 export function combatSessionDraftKey(input: {
   ownerNamespace: string;
   gameId: string;

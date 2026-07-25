@@ -9,9 +9,12 @@ import {
 } from '../domain/practice-combat-preview';
 import type { AmordleSupabaseClient } from '../lib/supabase-browser';
 import type { Json } from '../types/database';
+import { answerPoolForDifficulty } from '../domain/words';
+import { parseRematchProjection, type RematchProjection } from './combat-preview-projections';
 import { practiceLobbyConfigurationFingerprint } from './pending-practice-lobby';
 import { postgresTimestamptzSchema } from './postgres-timestamp';
 import { ServiceError, throwIfServiceError } from './service-error';
+import { wordListProvider } from './word-list-provider';
 
 const opaqueIdSchema = z
   .string()
@@ -23,7 +26,15 @@ const uuidSchema = z.string().uuid();
 const timestampSchema = postgresTimestamptzSchema;
 const seatSchema = z.enum(['player-one', 'player-two']);
 const actorSchema = z.enum(['left', 'right']);
-const sourceKindSchema = z.enum(['public-lobby', 'private-request', 'rematch']);
+const sourceKindSchema = z.enum([
+  'public-lobby',
+  'daily-lobby',
+  'ranked-queue',
+  'private-request',
+  'rematch',
+]);
+const scopeSchema = z.enum(['practice', 'daily']);
+const dateKeySchema = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 const tileSchema = z
   .object({
     letter: z.string().regex(/^[a-z]$/),
@@ -135,6 +146,14 @@ const practiceStateSchema = z
       .strict()
       .nullable(),
     deadlineAt: timestampSchema.nullable(),
+    timeRemainingMs: z
+      .object({
+        left: z.number().int().min(0),
+        right: z.number().int().min(0),
+      })
+      .strict()
+      .optional(),
+    turnStartedAt: timestampSchema.nullable().optional(),
     outcome: outcomeSchema.nullable(),
     revision: z.number().int().min(0),
     appliedActionIds: z.array(opaqueIdSchema).max(240),
@@ -189,13 +208,24 @@ const playerIdsSchema = z
   })
   .strict();
 
+const persistedMoveSchema = z
+  .object({
+    id: opaqueIdSchema,
+    playerId: seatSchema,
+    puzzleIndex: z.number().int().min(0).max(9),
+    guess: z.string().regex(/^[a-z]{2,35}$/),
+    tiles: z.array(tileSchema).min(2).max(35),
+    createdAt: timestampSchema,
+  })
+  .strict();
+
 const commonProjectionShape = {
   id: opaqueIdSchema,
   sourceKind: sourceKindSchema,
-  scope: z.literal('practice'),
+  scope: scopeSchema,
   mode: z.enum(['og', 'go']),
-  ranked: z.literal(false),
-  ratingBucket: z.null(),
+  ranked: z.boolean(),
+  ratingBucket: z.string().trim().min(1).max(100).nullable(),
   wordLength: z.number().int().min(2).max(35),
   difficulty: z.enum(['casual', 'standard', 'expert']),
   hardMode: z.boolean(),
@@ -211,12 +241,12 @@ const commonProjectionShape = {
     ])
     .nullable(),
   customGameCode: z.null(),
-  dailyDateKey: z.null(),
+  dailyDateKey: dateKeySchema.nullable(),
   goPuzzleCount: z.union([z.literal(5), z.literal(7), z.literal(10)]).nullable(),
   playerUserIds: playerIdsSchema,
-  matchmakingRequestId: z.null(),
+  matchmakingRequestId: opaqueIdSchema.nullable(),
   currentTurn: seatSchema,
-  moves: z.array(moveSchema).max(120),
+  moves: z.array(persistedMoveSchema).max(120),
   createdAt: timestampSchema,
   updatedAt: timestampSchema,
   deadlineAt: timestampSchema.nullable(),
@@ -224,13 +254,23 @@ const commonProjectionShape = {
   winnerId: seatSchema.nullable(),
   forfeitedPlayerId: seatSchema.nullable(),
   timedOutPlayerId: seatSchema.nullable(),
+  timeRemainingMs: z
+    .object({
+      'player-one': z.number().int().min(0),
+      'player-two': z.number().int().min(0),
+    })
+    .strict()
+    .optional(),
+  turnStartedAt: timestampSchema.nullable().optional(),
 };
 
 const waitingProjectionSchema = z
   .object({
-    schema: z.literal('amordle-practice-waiting-v1'),
+    schema: z.enum(['amordle-practice-waiting-v1', 'amordle-daily-waiting-v1']),
     ...commonProjectionShape,
-    sourceKind: z.literal('public-lobby'),
+    sourceKind: z.enum(['public-lobby', 'daily-lobby']),
+    ranked: z.literal(false),
+    ratingBucket: z.null(),
     status: z.literal('waiting'),
     playerUserIds: z
       .object({
@@ -240,19 +280,43 @@ const waitingProjectionSchema = z
       .strict(),
     currentTurn: z.literal('player-one'),
     moves: z.tuple([]),
+    matchmakingRequestId: z.null(),
     deadlineAt: z.null(),
     endedAt: z.null(),
     winnerId: z.null(),
     forfeitedPlayerId: z.null(),
     timedOutPlayerId: z.null(),
   })
-  .strict();
+  .strict()
+  .superRefine((projection, context) => {
+    const daily = projection.scope === 'daily';
+    if (
+      (daily &&
+        (projection.schema !== 'amordle-daily-waiting-v1' ||
+          projection.sourceKind !== 'daily-lobby' ||
+          projection.dailyDateKey === null ||
+          projection.wordLength !== 5 ||
+          projection.difficulty !== 'expert' ||
+          projection.timeLimitMs !== null)) ||
+      (!daily &&
+        (projection.schema !== 'amordle-practice-waiting-v1' ||
+          projection.sourceKind !== 'public-lobby' ||
+          projection.dailyDateKey !== null))
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Waiting COMBAT scope metadata is inconsistent.',
+      });
+    }
+  });
 
 const cancelledWaitingProjectionSchema = z
   .object({
-    schema: z.literal('amordle-practice-cancelled-v1'),
+    schema: z.enum(['amordle-practice-cancelled-v1', 'amordle-daily-cancelled-v1']),
     ...commonProjectionShape,
-    sourceKind: z.literal('public-lobby'),
+    sourceKind: z.enum(['public-lobby', 'daily-lobby']),
+    ranked: z.literal(false),
+    ratingBucket: z.null(),
     status: z.literal('cancelled'),
     playerUserIds: z
       .object({
@@ -262,17 +326,36 @@ const cancelledWaitingProjectionSchema = z
       .strict(),
     currentTurn: z.literal('player-one'),
     moves: z.tuple([]),
+    matchmakingRequestId: z.null(),
     deadlineAt: z.null(),
     endedAt: timestampSchema,
     winnerId: z.null(),
     forfeitedPlayerId: z.null(),
     timedOutPlayerId: z.null(),
   })
-  .strict();
+  .strict()
+  .superRefine((projection, context) => {
+    const daily = projection.scope === 'daily';
+    if (
+      (daily &&
+        (projection.schema !== 'amordle-daily-cancelled-v1' ||
+          projection.sourceKind !== 'daily-lobby' ||
+          projection.dailyDateKey === null)) ||
+      (!daily &&
+        (projection.schema !== 'amordle-practice-cancelled-v1' ||
+          projection.sourceKind !== 'public-lobby' ||
+          projection.dailyDateKey !== null))
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Cancelled COMBAT scope metadata is inconsistent.',
+      });
+    }
+  });
 
 const cooperativeProjectionSchema = z
   .object({
-    schema: z.literal('amordle-practice-coop-v1'),
+    schema: z.enum(['amordle-practice-coop-v1', 'amordle-daily-coop-v1']),
     ...commonProjectionShape,
     status: z.enum(['playing', 'won', 'lost', 'expired', 'cancelled']),
     playerUserIds: z
@@ -323,6 +406,37 @@ const cooperativeProjectionSchema = z
         message: 'Practice table projection and cooperative state disagree.',
       });
     }
+    const daily = projection.scope === 'daily';
+    if (
+      (daily &&
+        (projection.schema !== 'amordle-daily-coop-v1' ||
+          projection.sourceKind !== 'daily-lobby' ||
+          projection.dailyDateKey === null ||
+          projection.wordLength !== 5 ||
+          projection.difficulty !== 'expert' ||
+          projection.timeLimitMs !== null ||
+          projection.ranked)) ||
+      (!daily &&
+        (projection.schema !== 'amordle-practice-coop-v1' ||
+          projection.dailyDateKey !== null ||
+          projection.sourceKind === 'daily-lobby'))
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Participant COMBAT scope metadata is inconsistent.',
+      });
+    }
+    if (
+      projection.ranked !== (projection.sourceKind === 'ranked-queue') ||
+      (projection.ranked
+        ? projection.ratingBucket === null || projection.matchmakingRequestId === null
+        : projection.ratingBucket !== null || projection.matchmakingRequestId !== null)
+    ) {
+      context.addIssue({
+        code: 'custom',
+        message: 'Practice ranking metadata does not match its creation source.',
+      });
+    }
   });
 
 type RawWaitingProjection = z.infer<typeof waitingProjectionSchema>;
@@ -342,7 +456,12 @@ export type PracticeTransportCapabilities = Readonly<{
 
 type PracticeTransportBase = Readonly<{
   id: string;
-  sourceKind: 'public-lobby' | 'private-request' | 'rematch';
+  sourceKind: 'public-lobby' | 'daily-lobby' | 'ranked-queue' | 'private-request' | 'rematch';
+  scope: 'practice' | 'daily';
+  dailyDateKey: string | null;
+  ranked: boolean;
+  ratingBucket: string | null;
+  matchmakingRequestId: string | null;
   mode: 'og' | 'go';
   wordLength: number;
   difficulty: 'casual' | 'standard' | 'expert';
@@ -416,6 +535,11 @@ function mapBase(
   return {
     id: raw.id,
     sourceKind: raw.sourceKind,
+    scope: raw.scope,
+    dailyDateKey: raw.dailyDateKey,
+    ranked: raw.ranked,
+    ratingBucket: raw.ratingBucket,
+    matchmakingRequestId: raw.matchmakingRequestId,
     mode: raw.mode,
     wordLength: raw.wordLength,
     difficulty: raw.difficulty,
@@ -453,7 +577,10 @@ export function parsePracticeTransportProjection(
   ) {
     throw new ServiceError('validation', 'Practice COMBAT projection is not recognized.');
   }
-  if (value.schema === 'amordle-practice-waiting-v1') {
+  if (
+    value.schema === 'amordle-practice-waiting-v1' ||
+    value.schema === 'amordle-daily-waiting-v1'
+  ) {
     const raw = waitingProjectionSchema.parse(value);
     return {
       ...mapBase(raw, userId),
@@ -462,7 +589,10 @@ export function parsePracticeTransportProjection(
       wordRevision: null,
     };
   }
-  if (value.schema === 'amordle-practice-cancelled-v1') {
+  if (
+    value.schema === 'amordle-practice-cancelled-v1' ||
+    value.schema === 'amordle-daily-cancelled-v1'
+  ) {
     const raw = cancelledWaitingProjectionSchema.parse(value);
     if (raw.playerUserIds['player-one'] !== userId) {
       throw new ServiceError('authorization', 'Cancelled lobby is owner-only.');
@@ -495,14 +625,18 @@ export function buildWaitingPracticeProjection(input: {
   hostUserId: string;
   config: PracticeCombatPreviewConfig;
   now: string;
+  scope?: 'practice' | 'daily';
+  dailyDateKey?: string | null;
 }): RawWaitingProjection {
   const config = practiceCombatPreviewConfigSchema.parse(input.config);
   const now = timestampSchema.parse(input.now);
+  const scope = input.scope ?? 'practice';
+  const dailyDateKey = scope === 'daily' ? dateKeySchema.parse(input.dailyDateKey) : null;
   return waitingProjectionSchema.parse({
-    schema: 'amordle-practice-waiting-v1',
+    schema: scope === 'daily' ? 'amordle-daily-waiting-v1' : 'amordle-practice-waiting-v1',
     id: opaqueIdSchema.parse(input.id),
-    sourceKind: 'public-lobby',
-    scope: 'practice',
+    sourceKind: scope === 'daily' ? 'daily-lobby' : 'public-lobby',
+    scope,
     mode: config.mode,
     ranked: false,
     ratingBucket: null,
@@ -511,7 +645,7 @@ export function buildWaitingPracticeProjection(input: {
     hardMode: config.hardMode,
     timeLimitMs: config.timeLimitMs,
     customGameCode: null,
-    dailyDateKey: null,
+    dailyDateKey,
     goPuzzleCount: config.mode === 'go' ? config.puzzleCount : null,
     playerUserIds: {
       'player-one': uuidSchema.parse(input.hostUserId),
@@ -532,13 +666,20 @@ export function buildWaitingPracticeProjection(input: {
 }
 
 export function buildCooperativePracticeProjection(input: {
-  sourceKind: 'public-lobby' | 'private-request' | 'rematch';
+  sourceKind: 'public-lobby' | 'daily-lobby' | 'ranked-queue' | 'private-request' | 'rematch';
   playerOneUserId: string;
   playerTwoUserId: string;
   wordRevision: string;
   state: PracticeCombatPreviewState;
+  ranked?: boolean;
+  ratingBucket?: string | null;
+  matchmakingRequestId?: string | null;
+  scope?: 'practice' | 'daily';
+  dailyDateKey?: string | null;
 }): RawCooperativeProjection {
   const state = practiceStateSchema.parse(input.state);
+  const scope = input.scope ?? 'practice';
+  const dailyDateKey = scope === 'daily' ? dateKeySchema.parse(input.dailyDateKey) : null;
   const currentTurn = state.activeActor === 'right' ? 'player-two' : 'player-one';
   const status =
     state.status === 'playing' || state.status === 'holding'
@@ -557,28 +698,35 @@ export function buildCooperativePracticeProjection(input: {
   const actorSeat = (actor: 'left' | 'right') =>
     actor === 'left' ? ('player-one' as const) : ('player-two' as const);
   return cooperativeProjectionSchema.parse({
-    schema: 'amordle-practice-coop-v1',
+    schema: scope === 'daily' ? 'amordle-daily-coop-v1' : 'amordle-practice-coop-v1',
     id: state.id,
     sourceKind: input.sourceKind,
-    scope: 'practice',
+    scope,
     mode: state.config.mode,
-    ranked: false,
-    ratingBucket: null,
+    ranked: input.ranked ?? false,
+    ratingBucket: input.ratingBucket ?? null,
     wordLength: state.config.wordLength,
     difficulty: state.config.difficulty,
     hardMode: state.config.hardMode,
     timeLimitMs: state.config.timeLimitMs,
     customGameCode: null,
-    dailyDateKey: null,
+    dailyDateKey,
     goPuzzleCount: state.config.mode === 'go' ? state.config.puzzleCount : null,
     playerUserIds: {
       'player-one': uuidSchema.parse(input.playerOneUserId),
       'player-two': uuidSchema.parse(input.playerTwoUserId),
     },
-    matchmakingRequestId: null,
+    matchmakingRequestId: input.matchmakingRequestId ?? null,
     status,
     currentTurn,
-    moves: state.moves,
+    moves: state.moves.map((move) => ({
+      id: `practice-move-${move.sequence}`,
+      playerId: actorSeat(move.actor),
+      puzzleIndex: move.puzzleIndex,
+      guess: move.guess,
+      tiles: move.tiles,
+      createdAt: move.submittedAt,
+    })),
     createdAt: state.createdAt,
     updatedAt: state.updatedAt,
     deadlineAt: state.deadlineAt,
@@ -592,19 +740,29 @@ export function buildCooperativePracticeProjection(input: {
       state.outcome?.kind === 'win' && state.outcome.reason === 'timeout'
         ? actorSeat(state.outcome.loserId)
         : null,
+    ...(state.timeRemainingMs === undefined
+      ? {}
+      : {
+          timeRemainingMs: {
+            'player-one': state.timeRemainingMs.left,
+            'player-two': state.timeRemainingMs.right,
+          },
+        }),
+    ...(state.turnStartedAt === undefined ? {} : { turnStartedAt: state.turnStartedAt }),
     wordRevision: input.wordRevision,
     state,
   });
 }
 
 const projectionSelection =
-  'id,scope,mode,status,current_turn,word_length,difficulty,go_puzzle_count,ranked,deadline_at,ended_at,winner_player_id,created_at,updated_at,projection';
+  'id,scope,mode,daily_date_key,status,current_turn,word_length,difficulty,go_puzzle_count,ranked,deadline_at,ended_at,winner_player_id,created_at,updated_at,projection';
 
 const rowSchema = z
   .object({
     id: opaqueIdSchema,
-    scope: z.literal('practice'),
+    scope: scopeSchema,
     mode: z.enum(['og', 'go']),
+    daily_date_key: dateKeySchema.nullable(),
     status: z.enum(['waiting', 'playing', 'won', 'lost', 'expired', 'cancelled']),
     current_turn: seatSchema,
     word_length: z.number().int().min(2).max(35),
@@ -624,11 +782,24 @@ function json(value: unknown): Json {
   return value as Json;
 }
 
+function chooseRematchAnswers(pool: readonly string[], count: number): string[] {
+  if (pool.length < count) throw new RangeError('The rematch word pool cannot fill this chain.');
+  const available = [...pool];
+  const random = crypto.getRandomValues(new Uint32Array(count));
+  return Array.from({ length: count }, (_, index) => {
+    const selected = available.splice((random[index] ?? 0) % available.length, 1)[0];
+    if (!selected) throw new RangeError('Rematch answer selection failed.');
+    return selected;
+  });
+}
+
 function validateRow(value: unknown, viewerUserId: string): PracticeTransportProjection {
   const row = rowSchema.parse(value);
   const projection = parsePracticeTransportProjection(row.projection, viewerUserId);
   if (
     row.id !== projection.id ||
+    row.scope !== projection.scope ||
+    row.daily_date_key !== projection.dailyDateKey ||
     row.mode !== projection.mode ||
     row.status !== projection.status ||
     row.current_turn !== projection.currentTurn ||
@@ -679,10 +850,16 @@ export class PracticeCombatTransportRepository {
         'This legacy COMBAT record has no compatible cooperative projection.',
       );
     }
-    if (row.projection.schema === 'amordle-practice-waiting-v1') {
+    if (
+      row.projection.schema === 'amordle-practice-waiting-v1' ||
+      row.projection.schema === 'amordle-daily-waiting-v1'
+    ) {
       return waitingProjectionSchema.parse(row.projection);
     }
-    if (row.projection.schema === 'amordle-practice-cancelled-v1') {
+    if (
+      row.projection.schema === 'amordle-practice-cancelled-v1' ||
+      row.projection.schema === 'amordle-daily-cancelled-v1'
+    ) {
       return cancelledWaitingProjectionSchema.parse(row.projection);
     }
     return cooperativeProjectionSchema.parse(row.projection);
@@ -799,6 +976,102 @@ export class PracticeCombatTransportRepository {
     return accepted;
   }
 
+  async createDailyLobby(input: {
+    id: string;
+    hostUserId: string;
+    mode: 'og' | 'go';
+    dailyDateKey: string;
+    now: string;
+  }): Promise<PracticeWaitingProjection> {
+    const projection = buildWaitingPracticeProjection({
+      id: input.id,
+      hostUserId: input.hostUserId,
+      config: {
+        mode: input.mode,
+        wordLength: 5,
+        difficulty: 'expert',
+        hardMode: false,
+        puzzleCount: input.mode === 'go' ? 5 : 1,
+        timeLimitMs: null,
+      },
+      now: input.now,
+      scope: 'daily',
+      dailyDateKey: input.dailyDateKey,
+    });
+    const existing = await this.loadRawProjection(projection.id);
+    if (existing !== null) {
+      const recovered = parsePracticeTransportProjection(
+        existing,
+        projection.playerUserIds['player-one'],
+      );
+      if (
+        recovered.kind === 'waiting' &&
+        recovered.scope === 'daily' &&
+        recovered.dailyDateKey === projection.dailyDateKey &&
+        recovered.mode === projection.mode &&
+        recovered.viewerSeat === 'player-one'
+      ) {
+        return recovered;
+      }
+      throw new ServiceError(
+        'conflict',
+        'The pending Daily identifier belongs to different durable state.',
+        { retryable: false },
+      );
+    }
+    const { data, error } = await this.client
+      .from('async_multiplayer_games')
+      .insert({
+        id: projection.id,
+        scope: 'daily',
+        mode: projection.mode,
+        daily_date_key: projection.dailyDateKey,
+        status: 'waiting',
+        current_turn: 'player-one',
+        word_length: 5,
+        difficulty: 'expert',
+        go_puzzle_count: projection.goPuzzleCount,
+        host_user_id: projection.playerUserIds['player-one'],
+        player_one_user_id: projection.playerUserIds['player-one'],
+        player_two_user_id: null,
+        ranked: false,
+        rating_bucket: null,
+        matchmaking_request_id: null,
+        custom_game_code: null,
+        winner_player_id: null,
+        deadline_at: null,
+        ended_at: null,
+        projection: json(projection),
+        created_at: projection.createdAt,
+        updated_at: projection.updatedAt,
+      })
+      .select(projectionSelection)
+      .single();
+    if (error) {
+      const recovered = await this.loadRawProjection(projection.id).catch(() => null);
+      if (recovered !== null) {
+        const accepted = parsePracticeTransportProjection(
+          recovered,
+          projection.playerUserIds['player-one'],
+        );
+        if (
+          accepted.kind === 'waiting' &&
+          accepted.scope === 'daily' &&
+          accepted.dailyDateKey === projection.dailyDateKey &&
+          accepted.mode === projection.mode
+        ) {
+          return accepted;
+        }
+      }
+      throwIfServiceError(error, 'Create unranked Daily lobby');
+    }
+    const accepted = validateRow(data, projection.playerUserIds['player-one']);
+    if (accepted.kind !== 'waiting' || accepted.scope !== 'daily') {
+      throw new ServiceError('conflict', 'Daily lobby was not created in waiting state.');
+    }
+    return accepted;
+  }
+
   async listPublicLobbies(viewerUserId: string, limit = 50): Promise<PracticeWaitingProjection[]> {
     const userId = uuidSchema.parse(viewerUserId);
     const { data, error } = await this.client
@@ -841,6 +1114,37 @@ export class PracticeCombatTransportRepository {
     });
   }
 
+  async listDailyLobbies(input: {
+    viewerUserId: string;
+    dailyDateKey: string;
+    mode?: 'og' | 'go';
+    limit?: number;
+  }): Promise<PracticeWaitingProjection[]> {
+    const userId = uuidSchema.parse(input.viewerUserId);
+    const dailyDateKey = dateKeySchema.parse(input.dailyDateKey);
+    let query = this.client
+      .from('async_multiplayer_games')
+      .select(projectionSelection)
+      .eq('scope', 'daily')
+      .eq('daily_date_key', dailyDateKey)
+      .eq('ranked', false)
+      .eq('status', 'waiting')
+      .is('player_two_user_id', null)
+      .order('updated_at', { ascending: false })
+      .limit(Math.min(Math.max(input.limit ?? 50, 1), 100));
+    if (input.mode !== undefined) query = query.eq('mode', input.mode);
+    const { data, error } = await query;
+    throwIfServiceError(error, 'Load unranked Daily lobbies');
+    return (data ?? []).flatMap((row) => {
+      try {
+        const projection = validateRow(row, userId);
+        return projection.kind === 'waiting' && projection.scope === 'daily' ? [projection] : [];
+      } catch {
+        return [];
+      }
+    });
+  }
+
   async load(gameId: string, viewerUserId: string): Promise<PracticeTransportProjection | null> {
     const userId = uuidSchema.parse(viewerUserId);
     const raw = await this.loadRawProjection(gameId);
@@ -855,14 +1159,18 @@ export class PracticeCombatTransportRepository {
     answers: readonly string[];
     wordRevision: string;
     now: string;
+    scope?: 'practice' | 'daily';
   }): Promise<PracticeCooperativeProjection> {
     const gameId = opaqueIdSchema.parse(input.gameId);
     const joinerUserId = uuidSchema.parse(input.joinerUserId);
     const expectedUpdatedAt = timestampSchema.parse(input.expectedUpdatedAt);
     const waiting = await this.loadRawProjection(gameId);
+    const scope = input.scope ?? 'practice';
+    const waitingSchema =
+      scope === 'daily' ? 'amordle-daily-waiting-v1' : 'amordle-practice-waiting-v1';
     if (
       waiting === null ||
-      waiting.schema !== 'amordle-practice-waiting-v1' ||
+      waiting.schema !== waitingSchema ||
       waiting.updatedAt !== expectedUpdatedAt
     ) {
       throw new PracticeCombatConflictError();
@@ -885,11 +1193,13 @@ export class PracticeCombatTransportRepository {
       now: input.now,
     });
     const projection = buildCooperativePracticeProjection({
-      sourceKind: 'public-lobby',
+      sourceKind: scope === 'daily' ? 'daily-lobby' : 'public-lobby',
       playerOneUserId: waiting.playerUserIds['player-one'],
       playerTwoUserId: joinerUserId,
       wordRevision: input.wordRevision,
       state,
+      scope,
+      dailyDateKey: waiting.dailyDateKey,
     });
     const { data, error } = await this.client
       .from('async_multiplayer_games')
@@ -902,7 +1212,7 @@ export class PracticeCombatTransportRepository {
         updated_at: projection.updatedAt,
       })
       .eq('id', gameId)
-      .eq('scope', 'practice')
+      .eq('scope', scope)
       .eq('ranked', false)
       .eq('status', 'waiting')
       .eq('updated_at', expectedUpdatedAt)
@@ -910,7 +1220,10 @@ export class PracticeCombatTransportRepository {
       .neq('host_user_id', joinerUserId)
       .select(projectionSelection)
       .maybeSingle();
-    throwIfServiceError(error, 'Join public Practice lobby');
+    throwIfServiceError(
+      error,
+      scope === 'daily' ? 'Join unranked Daily lobby' : 'Join public Practice lobby',
+    );
     if (data === null) throw new PracticeCombatConflictError();
     const accepted = validateRow(data, joinerUserId);
     if (accepted.kind !== 'cooperative-participant') {
@@ -930,7 +1243,10 @@ export class PracticeCombatTransportRepository {
     const expectedUpdatedAt = timestampSchema.parse(input.expectedUpdatedAt);
     const expectedCurrentTurn = seatSchema.parse(input.expectedCurrentTurn);
     const current = await this.loadRawProjection(input.state.id);
-    if (current === null || current.schema !== 'amordle-practice-coop-v1') {
+    if (
+      current === null ||
+      (current.schema !== 'amordle-practice-coop-v1' && current.schema !== 'amordle-daily-coop-v1')
+    ) {
       throw new PracticeCombatConflictError();
     }
     if (
@@ -952,6 +1268,11 @@ export class PracticeCombatTransportRepository {
       playerTwoUserId: current.playerUserIds['player-two'],
       wordRevision: current.wordRevision,
       state: input.state,
+      ranked: current.ranked,
+      ratingBucket: current.ratingBucket,
+      matchmakingRequestId: current.matchmakingRequestId,
+      scope: current.scope,
+      dailyDateKey: current.dailyDateKey,
     });
     if (Date.parse(projection.updatedAt) <= Date.parse(expectedUpdatedAt)) {
       throw new ServiceError('validation', 'Practice update time must advance.');
@@ -968,8 +1289,8 @@ export class PracticeCombatTransportRepository {
         updated_at: projection.updatedAt,
       })
       .eq('id', projection.id)
-      .eq('scope', 'practice')
-      .eq('ranked', false)
+      .eq('scope', current.scope)
+      .eq('ranked', current.ranked)
       .eq('status', input.expectedStatus)
       .eq('updated_at', expectedUpdatedAt)
       .eq('current_turn', expectedCurrentTurn)
@@ -984,20 +1305,78 @@ export class PracticeCombatTransportRepository {
     return accepted;
   }
 
+  async acceptRematch(input: {
+    request: RematchProjection;
+    viewerUserId: string;
+    difficulty: 'casual' | 'standard' | 'expert';
+  }): Promise<RematchProjection> {
+    const viewerUserId = uuidSchema.parse(input.viewerUserId);
+    const source = await this.loadRawProjection(input.request.sourceGameId);
+    if (
+      source === null ||
+      source.schema !== 'amordle-practice-coop-v1' ||
+      (viewerUserId !== source.playerUserIds['player-one'] &&
+        viewerUserId !== source.playerUserIds['player-two'])
+    ) {
+      throw new ServiceError(
+        'authorization',
+        'Rematch acceptance requires the original participant projection.',
+      );
+    }
+    const list = await wordListProvider.load(input.request.wordLength);
+    const count = input.request.mode === 'go' ? input.request.goPuzzleCount! : 1;
+    const gameId = `amordle-rematch-${crypto.randomUUID()}`;
+    const state = createPracticeCombatPreview({
+      id: gameId,
+      config: {
+        mode: input.request.mode,
+        wordLength: input.request.wordLength,
+        difficulty: input.difficulty,
+        hardMode: input.request.hardMode,
+        puzzleCount: count,
+        timeLimitMs: input.request.timeLimitMs,
+      },
+      players: source.state.players.map(({ displayName }) => ({ displayName })) as [
+        { displayName: string },
+        { displayName: string },
+      ],
+      answers: chooseRematchAnswers(answerPoolForDifficulty(list, input.difficulty), count),
+      now: new Date().toISOString(),
+    });
+    const projection = buildCooperativePracticeProjection({
+      sourceKind: 'rematch',
+      playerOneUserId: source.playerUserIds['player-one'],
+      playerTwoUserId: source.playerUserIds['player-two'],
+      wordRevision: list.revision,
+      state,
+    });
+    const { data, error } = await this.client.rpc('accept_practice_multiplayer_rematch', {
+      p_request_id: input.request.requestId,
+      p_game_projection: json(projection),
+      p_idempotency_key: `amordle-rematch-accept:${input.request.requestId}:${gameId}`,
+    });
+    throwIfServiceError(error, 'Accept Practice rematch');
+    return parseRematchProjection(data?.[0]);
+  }
+
   async cancelWaitingLobby(input: {
     gameId: string;
     ownerUserId: string;
     expectedUpdatedAt: string;
     now: string;
+    scope?: 'practice' | 'daily';
   }): Promise<PracticeCancelledProjection> {
     const gameId = opaqueIdSchema.parse(input.gameId);
     const ownerUserId = uuidSchema.parse(input.ownerUserId);
     const expectedUpdatedAt = timestampSchema.parse(input.expectedUpdatedAt);
     const now = timestampSchema.parse(input.now);
     const waiting = await this.loadRawProjection(gameId);
+    const scope = input.scope ?? 'practice';
+    const expectedSchema =
+      scope === 'daily' ? 'amordle-daily-waiting-v1' : 'amordle-practice-waiting-v1';
     if (
       waiting === null ||
-      waiting.schema !== 'amordle-practice-waiting-v1' ||
+      waiting.schema !== expectedSchema ||
       waiting.playerUserIds['player-one'] !== ownerUserId ||
       waiting.updatedAt !== expectedUpdatedAt
     ) {
@@ -1005,7 +1384,7 @@ export class PracticeCombatTransportRepository {
     }
     const projection = cancelledWaitingProjectionSchema.parse({
       ...waiting,
-      schema: 'amordle-practice-cancelled-v1',
+      schema: scope === 'daily' ? 'amordle-daily-cancelled-v1' : 'amordle-practice-cancelled-v1',
       status: 'cancelled',
       updatedAt: now,
       endedAt: now,
@@ -1019,7 +1398,7 @@ export class PracticeCombatTransportRepository {
         updated_at: now,
       })
       .eq('id', gameId)
-      .eq('scope', 'practice')
+      .eq('scope', scope)
       .eq('ranked', false)
       .eq('status', 'waiting')
       .eq('updated_at', expectedUpdatedAt)
@@ -1027,7 +1406,10 @@ export class PracticeCombatTransportRepository {
       .is('player_two_user_id', null)
       .select(projectionSelection)
       .maybeSingle();
-    throwIfServiceError(error, 'Cancel public Practice lobby');
+    throwIfServiceError(
+      error,
+      scope === 'daily' ? 'Cancel unranked Daily lobby' : 'Cancel public Practice lobby',
+    );
     if (data === null) throw new PracticeCombatConflictError();
     const accepted = validateRow(data, ownerUserId);
     if (accepted.kind !== 'cancelled-waiting') throw new PracticeCombatConflictError();

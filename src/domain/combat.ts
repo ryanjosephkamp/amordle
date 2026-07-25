@@ -11,6 +11,25 @@ export const PROVISIONAL_K_FACTOR = 40;
 export const ESTABLISHED_K_FACTOR = 24;
 export const ELO_SCALE = 400;
 export const CANONICAL_RANKED_TIME_LIMIT_MS = 300_000;
+export const SHARED_COMBAT_BASE_ROWS = 6;
+
+export function sharedCombatRowCapacity(input: {
+  seededRows: number;
+  acceptedMoves: number;
+  hasActiveDraft: boolean;
+  attemptBudget: number;
+}): number {
+  for (const value of [input.seededRows, input.acceptedMoves, input.attemptBudget]) {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new RangeError('Shared COMBAT row evidence must use non-negative integers.');
+    }
+  }
+  return Math.max(
+    SHARED_COMBAT_BASE_ROWS,
+    input.seededRows + input.acceptedMoves + (input.hasActiveDraft ? 1 : 0),
+    input.seededRows + input.attemptBudget,
+  );
+}
 
 export type CombatMode = 'og' | 'go';
 export type CombatScope = 'practice' | 'daily';

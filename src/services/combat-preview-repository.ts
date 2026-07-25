@@ -180,6 +180,32 @@ export class CombatPreviewRepository {
       .map(parseRematchProjection);
   }
 
+  async requestRematch(sourceGameId: string): Promise<RematchProjection> {
+    const gameId = opaqueIdSchema.parse(sourceGameId);
+    const { data, error } = await this.client.rpc('request_practice_multiplayer_rematch', {
+      p_source_game_id: gameId,
+      p_idempotency_key: `amordle-rematch-request:${gameId}`,
+    });
+    throwIfServiceError(error, 'Request Practice rematch');
+    return parseRematchProjection(data?.[0]);
+  }
+
+  async cancelRematch(requestId: string): Promise<RematchProjection> {
+    const { data, error } = await this.client.rpc('cancel_practice_multiplayer_rematch', {
+      p_request_id: opaqueIdSchema.parse(requestId),
+    });
+    throwIfServiceError(error, 'Cancel Practice rematch');
+    return parseRematchProjection(data?.[0]);
+  }
+
+  async declineRematch(requestId: string): Promise<RematchProjection> {
+    const { data, error } = await this.client.rpc('decline_practice_multiplayer_rematch', {
+      p_request_id: opaqueIdSchema.parse(requestId),
+    });
+    throwIfServiceError(error, 'Decline Practice rematch');
+    return parseRematchProjection(data?.[0]);
+  }
+
   async loadRankedDailyQueue(requestId: string): Promise<RankedDailyQueueProjection | null> {
     const safeRequestId = opaqueIdSchema.parse(requestId);
     const { data, error } = await this.client.rpc('get_ranked_async_matchmaking_status_v2', {

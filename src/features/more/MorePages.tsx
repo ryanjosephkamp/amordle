@@ -729,7 +729,16 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
           </section>
           <section className="lane-panel">
             <h2>Eligible action</h2>
-            <ButtonLink to="/combat/practice">Request private Practice match</ButtonLink>
+            <ButtonLink
+              to={`/combat/practice?target=${encodeURIComponent(String(raw.publicProfileId ?? raw.public_profile_id ?? ''))}`}
+            >
+              Request private Practice match
+            </ButtonLink>
+            <ButtonLink
+              to={`/settings?block=${encodeURIComponent(String(raw.publicProfileId ?? raw.public_profile_id ?? ''))}#alerts`}
+            >
+              Manage private-request block
+            </ButtonLink>
           </section>
         </div>
       ) : (
@@ -1054,6 +1063,7 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
 }
 
 export function SettingsPage() {
+  const location = useLocation();
   const { client, identity, user } = useAuth();
   const repository = useMemo(() => (client ? new AccountRepository(client) : null), [client]);
   const accountSettings = useQuery({
@@ -1080,6 +1090,7 @@ export function SettingsPage() {
       identity={identity}
       accountSettings={accountSettings.data}
       accountSettingsError={accountSettings.isError}
+      blockTarget={(new URLSearchParams(location.search).get('block') ?? '').toLowerCase()}
       {...(user ? { userId: user.id } : {})}
     />
   );
@@ -1091,12 +1102,14 @@ function SettingsForm({
   userId,
   accountSettings,
   accountSettingsError,
+  blockTarget,
 }: {
   client: ReturnType<typeof useAuth>['client'];
   identity: IdentityScope;
   userId?: string;
   accountSettings?: Json | null | undefined;
   accountSettingsError: boolean;
+  blockTarget: string;
 }) {
   const initial = useMemo(() => {
     const local = loadPlayerSettings(
@@ -1112,7 +1125,6 @@ function SettingsForm({
   const [motion, setMotion] = useState(initial.motion);
   const [notifications, setNotifications] = useState(initial.notifications);
   const [saveStatus, setSaveStatus] = useState('');
-  const [blockId, setBlockId] = useState('');
   const [resetOpen, setResetOpen] = useState(false);
   const privateRepository = useMemo(
     () => (client && userId ? new PrivateRequestRepository(client) : null),
@@ -1130,6 +1142,22 @@ function SettingsForm({
     enabled: Boolean(privateRepository),
     queryFn: () => privateRepository!.blocks(),
     staleTime: 10_000,
+    retry: 1,
+  });
+  const publicRepository = useMemo(
+    () => (client && userId ? new PublicRepository(client) : null),
+    [client, userId],
+  );
+  const blockTargetProfile = useQuery({
+    queryKey: ['settings-block-target', blockTarget],
+    enabled: Boolean(
+      publicRepository &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(
+        blockTarget,
+      ),
+    ),
+    queryFn: () => publicRepository!.getProfile(blockTarget),
+    staleTime: 30_000,
     retry: 1,
   });
   const save = async () => {
@@ -1298,40 +1326,37 @@ function SettingsForm({
                 <div className="setting-group setting-group--stacked">
                   <div>
                     <h3>Blocked public players</h3>
-                    <p>Only sanctioned public profile identifiers are accepted.</p>
+                    <p>Choose players from sanctioned public profile cards.</p>
                   </div>
-                  <form
-                    className="button-row"
-                    onSubmit={(event) => {
-                      event.preventDefault();
-                      if (!privateRepository) return;
-                      void privateRepository
-                        .setBlock(blockId, true)
-                        .then(() => blocks.refetch())
-                        .then(() => {
-                          setBlockId('');
-                          setSaveStatus('Player added to the private-request block list.');
-                        })
-                        .catch((error: unknown) =>
-                          setSaveStatus(
-                            error instanceof Error ? error.message : 'Block update failed.',
-                          ),
-                        );
-                    }}
-                  >
-                    <label>
-                      Public profile ID
-                      <input
-                        value={blockId}
-                        onChange={(event) => setBlockId(event.target.value)}
-                        placeholder="00000000-0000-0000-0000-000000000000"
-                        required
-                      />
-                    </label>
-                    <Button type="submit" disabled={!privateRepository || blocks.isPending}>
-                      Block player
-                    </Button>
-                  </form>
+                  {blockTargetProfile.isPending && blockTarget ? (
+                    <p role="status">Loading the selected public player…</p>
+                  ) : null}
+                  {blockTargetProfile.data ? (
+                    <div className="button-row">
+                      <strong>{blockTargetProfile.data.displayName ?? 'Public player'}</strong>
+                      <Button
+                        disabled={!privateRepository || blocks.isPending}
+                        onClick={() => {
+                          if (!privateRepository) return;
+                          void privateRepository
+                            .setBlock(blockTargetProfile.data!.publicProfileId, true)
+                            .then(() => blocks.refetch())
+                            .then(() =>
+                              setSaveStatus('Player added to the private-request block list.'),
+                            )
+                            .catch((error: unknown) =>
+                              setSaveStatus(
+                                error instanceof Error ? error.message : 'Block update failed.',
+                              ),
+                            );
+                        }}
+                      >
+                        Block player
+                      </Button>
+                    </div>
+                  ) : (
+                    <ButtonLink to="/leaderboards">Choose a public player</ButtonLink>
+                  )}
                   {blocks.data?.length ? (
                     <ul className="legend-list" aria-label="Blocked players">
                       {blocks.data.map((block) => (

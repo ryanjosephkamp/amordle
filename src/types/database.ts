@@ -1679,6 +1679,32 @@ export type Database = {
           word_length: number;
         }[];
       };
+      get_authenticated_live_v1_spectator_games_v3: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
       get_live_multiplayer_server_time: { Args: never; Returns: string };
       get_multiplayer_participant_identity_summaries: {
         Args: { p_game_id?: string; p_ranked_request_id?: string };
@@ -1801,6 +1827,32 @@ export type Database = {
         }[];
       };
       get_public_live_v1_spectator_games_v1: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      get_public_live_v1_spectator_games_v2: {
         Args: {
           p_game_id?: string;
           p_limit?: number;
