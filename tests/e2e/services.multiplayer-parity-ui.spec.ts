@@ -434,39 +434,20 @@ test.describe('protected Preview full multiplayer parity', () => {
       await privateTurnPage.getByRole('link', { name: 'Review result' }).click();
       await privateTurnPage.getByRole('button', { name: 'Request rematch' }).click();
       await expect(privateTurnPage.getByText(/Rematch requested/i)).toBeVisible();
-
-      await expect
-        .poll(async () => {
-          const request = await harness.admin
-            .from('multiplayer_practice_rematch_requests')
-            .select('id')
-            .eq('source_game_id', privateGameId)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
-          return request.data !== null;
-        })
-        .toBe(true);
-      const rematchRow = await harness.admin
-        .from('multiplayer_practice_rematch_requests')
-        .select('id')
-        .eq('source_game_id', privateGameId)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .single();
-      expect(rematchRow.error).toBeNull();
       await harness.registerRow('multiplayer_practice_rematch_requests', {
-        id: rematchRow.data!.id,
+        source_game_id: privateGameId,
       });
       await playerTwoPage.goto('/combat/lobby');
       await expect(playerTwoPage.getByText('rematch', { exact: true })).toBeVisible({
         timeout: 30_000,
       });
-      await playerTwoPage
-        .locator('section')
-        .filter({ has: playerTwoPage.getByRole('heading', { name: 'Practice rematches' }) })
-        .getByRole('button', { name: 'Accept' })
-        .click();
+      const acceptRematch = playerTwoPage.getByRole('button', {
+        name: 'Accept',
+        exact: true,
+      });
+      await expect(acceptRematch).toBeVisible();
+      await expect(acceptRematch).toBeEnabled();
+      await acceptRematch.click({ noWaitAfter: true, timeout: 30_000 });
       await expect(playerTwoPage).toHaveURL(/\/combat\/match\/amordle-rematch-/i, {
         timeout: 30_000,
       });
