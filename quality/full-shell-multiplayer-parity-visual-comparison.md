@@ -109,8 +109,10 @@ acceptance command.
 
 ## July 25 mobile review corrections
 
-The four manual-review defects are now covered by assertion-before-capture
-checks. Hosted evidence is required before this section can be marked final.
+The four manual-review defects are covered by assertion-before-capture checks.
+Exact protected-Preview identity, hosted acceptance counts, screenshot paths,
+and cleanup receipts are recorded in the ignored canonical completion report
+for the release candidate built from this ledger revision.
 
 ### L27–L28 — board-first mobile spectation
 
