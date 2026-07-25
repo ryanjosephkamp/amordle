@@ -701,7 +701,19 @@ export function CombatPage() {
         attachRankedPracticeRequest(search, queue.requestId),
       );
       setRankedPracticeRequestId(queue.requestId);
-      setMessage('Ranked Practice search accepted by the server-owned reservation service.');
+      const claimed =
+        queue.status === 'queued'
+          ? await authoritativeRepository.claimRankedPractice({
+              requestId: queue.requestId,
+              actionId: crypto.randomUUID(),
+            })
+          : queue;
+      queryClient.setQueryData(['combat', 'ranked-practice-queue', queue.requestId], claimed);
+      setMessage(
+        claimed.status === 'matched'
+          ? 'Ranked Practice opponent matched. Finalizing the shared game…'
+          : 'Ranked Practice search accepted by the server-owned reservation service.',
+      );
     } catch (error) {
       setMessage(error instanceof Error ? error.message : 'Ranked Practice search failed.');
     } finally {

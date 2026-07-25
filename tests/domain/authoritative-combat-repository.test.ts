@@ -325,6 +325,25 @@ describe('authoritative COMBAT repository', () => {
         updatedAt: '2026-07-24T20:00:00+00:00',
         capabilities: { canJoin: true, canCancel: false },
       },
+      {
+        schemaVersion: 2,
+        authorityVersion: 2,
+        id: 'daily-lobby-v2-joiner-og',
+        scope: 'daily',
+        mode: 'og',
+        dailyDateKey: '2026-07-24',
+        status: 'waiting',
+        version: 0,
+        moveCount: 0,
+        wordLength: 5,
+        difficulty: 'expert',
+        hardMode: false,
+        ranked: false,
+        owner: { displayName: 'Frost' },
+        createdAt: '2026-07-24T20:00:00+00:00',
+        updatedAt: '2026-07-24T20:00:00+00:00',
+        capabilities: { canJoin: true, canCancel: false },
+      },
     ]);
     const result = await new AuthoritativeCombatRepository(fixture.client).listUnrankedDailyLobbies(
       { mode: 'go' },
@@ -334,6 +353,12 @@ describe('authoritative COMBAT repository', () => {
       {
         id: 'daily-lobby-v2',
         dailyDateKey: '2026-07-24',
+        createdAt: now,
+      },
+      {
+        id: 'daily-lobby-v2-joiner-og',
+        goPuzzleCount: null,
+        viewerSeat: null,
         createdAt: now,
       },
     ]);

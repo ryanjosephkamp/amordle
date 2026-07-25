@@ -30,6 +30,14 @@ const nullableRankedClockSchema = z
   .union([z.literal(300_000), z.null()])
   .optional()
   .transform((value) => value ?? null);
+const nullableDailyPuzzleCountSchema = z
+  .union([z.literal(5), z.null()])
+  .optional()
+  .transform((value) => value ?? null);
+const nullableOwnerSeatSchema = z
+  .union([z.literal('player-one'), z.null()])
+  .optional()
+  .transform((value) => value ?? null);
 const canonicalWordSchema = z.string().regex(/^[a-z]{2,35}$/);
 const renderedWordSchema = z.string().regex(/^[A-Z]{2,35}$/);
 const appRatingBucketSchema = z.enum([
@@ -377,9 +385,9 @@ export const unrankedDailyLobbySchema = z
     wordLength: z.literal(5),
     difficulty: z.literal('expert'),
     hardMode: z.boolean(),
-    goPuzzleCount: z.union([z.literal(5), z.null()]),
+    goPuzzleCount: nullableDailyPuzzleCountSchema,
     ranked: z.literal(false),
-    viewerSeat: z.literal('player-one').nullable(),
+    viewerSeat: nullableOwnerSeatSchema,
     owner: z
       .object({
         publicProfileId: publicProfileIdSchema.optional(),
