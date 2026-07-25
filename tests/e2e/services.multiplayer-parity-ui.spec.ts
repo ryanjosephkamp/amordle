@@ -115,6 +115,69 @@ async function attachScreenshot(testInfo: TestInfo, page: Page, name: string): P
   });
 }
 
+async function seedRankedPracticeCleanupIntent(
+  page: Page,
+  userId: string,
+  runId: string,
+  suffix: string,
+): Promise<void> {
+  await page.evaluate(
+    ({ ownerNamespace, idempotencyKey, requestedAt }) => {
+      sessionStorage.setItem(
+        'amordle:ranked-practice-search-v1',
+        JSON.stringify({
+          schemaVersion: 1,
+          ownerNamespace,
+          fingerprint: 'og:2:casual:normal:1:untimed',
+          idempotencyKey,
+          mode: 'og',
+          wordLength: 2,
+          difficulty: 'casual',
+          hardMode: false,
+          puzzleCount: 5,
+          timeLimitMs: null,
+          requestedAt,
+          requestId: null,
+        }),
+      );
+    },
+    {
+      ownerNamespace: userId,
+      idempotencyKey: `${runId}:ui-ranked-${suffix}`,
+      requestedAt: new Date().toISOString(),
+    },
+  );
+}
+
+async function seedUnrankedDailyCleanupIntent(
+  page: Page,
+  userId: string,
+  runId: string,
+): Promise<void> {
+  await page.evaluate(
+    ({ ownerNamespace, creationKey, dailyDateKey, requestedAt }) => {
+      sessionStorage.setItem(
+        'amordle:unranked-daily-lobby-v2',
+        JSON.stringify({
+          schemaVersion: 2,
+          ownerNamespace,
+          creationKey,
+          mode: 'og',
+          hardMode: false,
+          dailyDateKey,
+          requestedAt,
+        }),
+      );
+    },
+    {
+      ownerNamespace: userId,
+      creationKey: `${runId}:ui-daily`,
+      dailyDateKey: new Date().toISOString().slice(0, 10),
+      requestedAt: new Date().toISOString(),
+    },
+  );
+}
+
 test.describe('protected Preview full multiplayer parity', () => {
   test.skip(!enabled, 'Requires the exact protected Preview and real-service cleanup authority.');
   test.describe.configure({ mode: 'serial', timeout: 360_000 });
@@ -162,6 +225,8 @@ test.describe('protected Preview full multiplayer parity', () => {
         await page.getByLabel('Difficulty').selectOption('casual');
         await expect(page.getByRole('button', { name: 'Find ranked opponent' })).toBeEnabled();
       }
+      await seedRankedPracticeCleanupIntent(playerOnePage, playerOne.userId, harness.runId, 'one');
+      await seedRankedPracticeCleanupIntent(playerTwoPage, playerTwo.userId, harness.runId, 'two');
       await playerOnePage.getByRole('button', { name: 'Find ranked opponent' }).click();
       await expect(
         playerOnePage.getByText(
@@ -242,15 +307,16 @@ test.describe('protected Preview full multiplayer parity', () => {
       );
       await turnPage.keyboard.type(rankedAnswer);
       await turnPage.keyboard.press('Enter');
-      await expect(turnPage.getByRole('link', { name: 'Review result' })).toBeVisible({
+      await expect(turnPage.getByRole('link', { name: 'Review trusted result' })).toBeVisible({
         timeout: 30_000,
       });
-      await turnPage.getByRole('link', { name: 'Review result' }).click();
+      await turnPage.getByRole('link', { name: 'Review trusted result' }).click();
       await expect(turnPage.getByText(/Server reconstruction settled the rating/i)).toBeVisible({
         timeout: 30_000,
       });
 
       await playerOnePage.goto('/combat/daily');
+      await seedUnrankedDailyCleanupIntent(playerOnePage, playerOne.userId, harness.runId);
       await playerOnePage.getByRole('button', { name: 'Create unranked Daily lobby' }).click();
       await expect(playerOnePage).toHaveURL(/\/combat\/match\/amordle-daily-v2-/i);
       const dailyGameId = new URL(playerOnePage.url()).pathname.split('/').at(-1)!;
@@ -278,7 +344,7 @@ test.describe('protected Preview full multiplayer parity', () => {
       );
       await dailyTurnPage.keyboard.type(dailyAnswer);
       await dailyTurnPage.keyboard.press('Enter');
-      await expect(dailyTurnPage.getByRole('link', { name: 'Review result' })).toBeVisible({
+      await expect(dailyTurnPage.getByRole('link', { name: 'Review trusted result' })).toBeVisible({
         timeout: 30_000,
       });
 
@@ -339,6 +405,29 @@ test.describe('protected Preview full multiplayer parity', () => {
       }
       await privateTurnPage.keyboard.type(privateAnswer[0]);
       await privateTurnPage.keyboard.press('Enter');
+      const conflictMessage = privateTurnPage.getByText(
+        'The match changed in another tab. Durable state was reloaded; retry your action.',
+        { exact: true },
+      );
+      await expect
+        .poll(async () => {
+          if (
+            await privateTurnPage
+              .getByRole('link', { name: 'Review result' })
+              .isVisible()
+              .catch(() => false)
+          ) {
+            return 'result';
+          }
+          return (await conflictMessage.isVisible().catch(() => false)) ? 'conflict' : 'pending';
+        })
+        .toMatch(/result|conflict/);
+      if (await conflictMessage.isVisible()) {
+        await expect(
+          privateTurnPage.getByRole('button', { name: 'Enter', exact: true }),
+        ).toBeEnabled();
+        await privateTurnPage.keyboard.press('Enter');
+      }
       await expect(privateTurnPage.getByRole('link', { name: 'Review result' })).toBeVisible({
         timeout: 30_000,
       });

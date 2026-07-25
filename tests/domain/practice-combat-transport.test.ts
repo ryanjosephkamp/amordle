@@ -221,4 +221,100 @@ describe('Practice COMBAT transport boundary', () => {
     });
     expect(insert).toHaveBeenCalledTimes(1);
   });
+
+  it('reconciles the trusted RPC timestamp for a pristine private-request game', async () => {
+    const state = createPracticeCombatPreview({
+      id: 'private-practice-1',
+      config,
+      players: [{ displayName: 'Player One' }, { displayName: 'Player Two' }],
+      answers: ['aa', 'ab', 'ac', 'ad', 'ae'],
+      now,
+    });
+    const projection = buildCooperativePracticeProjection({
+      sourceKind: 'private-request',
+      playerOneUserId: hostId,
+      playerTwoUserId: joinerId,
+      wordRevision: 'test-revision',
+      state,
+    });
+    const acceptedAt = '2026-07-23T12:00:01.000Z';
+    const row = {
+      id: projection.id,
+      scope: projection.scope,
+      mode: projection.mode,
+      daily_date_key: projection.dailyDateKey,
+      status: projection.status,
+      current_turn: projection.currentTurn,
+      word_length: projection.wordLength,
+      difficulty: projection.difficulty,
+      go_puzzle_count: projection.goPuzzleCount,
+      ranked: projection.ranked,
+      deadline_at: projection.deadlineAt,
+      ended_at: projection.endedAt,
+      winner_player_id: projection.winnerId,
+      created_at: acceptedAt,
+      updated_at: acceptedAt,
+      projection,
+    };
+    const maybeSingle = vi.fn(async () => ({ data: row, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+
+    const result = await new PracticeCombatTransportRepository({
+      from,
+    } as unknown as AmordleSupabaseClient).load(projection.id, hostId);
+
+    expect(result).toMatchObject({
+      kind: 'cooperative-participant',
+      sourceKind: 'private-request',
+      updatedAt: acceptedAt,
+      state: { updatedAt: acceptedAt, revision: 0, moves: [] },
+    });
+  });
+
+  it('does not reconcile contradictory timestamps for ordinary or mutated games', async () => {
+    const state = createPracticeCombatPreview({
+      id: 'public-practice-conflict',
+      config,
+      players: [{ displayName: 'Player One' }, { displayName: 'Player Two' }],
+      answers: ['aa', 'ab', 'ac', 'ad', 'ae'],
+      now,
+    });
+    const projection = buildCooperativePracticeProjection({
+      sourceKind: 'public-lobby',
+      playerOneUserId: hostId,
+      playerTwoUserId: joinerId,
+      wordRevision: 'test-revision',
+      state,
+    });
+    const row = {
+      id: projection.id,
+      scope: projection.scope,
+      mode: projection.mode,
+      daily_date_key: projection.dailyDateKey,
+      status: projection.status,
+      current_turn: projection.currentTurn,
+      word_length: projection.wordLength,
+      difficulty: projection.difficulty,
+      go_puzzle_count: projection.goPuzzleCount,
+      ranked: projection.ranked,
+      deadline_at: projection.deadlineAt,
+      ended_at: projection.endedAt,
+      winner_player_id: projection.winnerId,
+      created_at: now,
+      updated_at: '2026-07-23T12:00:01.000Z',
+      projection,
+    };
+    const maybeSingle = vi.fn(async () => ({ data: row, error: null }));
+    const eq = vi.fn(() => ({ maybeSingle }));
+    const select = vi.fn(() => ({ eq }));
+    const from = vi.fn(() => ({ select }));
+
+    await expect(
+      new PracticeCombatTransportRepository({
+        from,
+      } as unknown as AmordleSupabaseClient).load(projection.id, hostId),
+    ).rejects.toThrow(/metadata and projection evidence disagree/i);
+  });
 });

@@ -795,7 +795,10 @@ function chooseRematchAnswers(pool: readonly string[], count: number): string[] 
 
 function validateRow(value: unknown, viewerUserId: string): PracticeTransportProjection {
   const row = rowSchema.parse(value);
-  const projection = parsePracticeTransportProjection(row.projection, viewerUserId);
+  const projection = parsePracticeTransportProjection(
+    reconcileRpcCreatedProjectionTimestamp(row),
+    viewerUserId,
+  );
   if (
     row.id !== projection.id ||
     row.scope !== projection.scope ||
@@ -804,6 +807,77 @@ function validateRow(value: unknown, viewerUserId: string): PracticeTransportPro
     row.status !== projection.status ||
     row.current_turn !== projection.currentTurn ||
     row.word_length !== projection.wordLength ||
+    row.updated_at !== projection.updatedAt
+  ) {
+    throw new ServiceError(
+      'validation',
+      'Practice table metadata and projection evidence disagree.',
+    );
+  }
+  return projection;
+}
+
+function reconcileRpcCreatedProjectionTimestamp(
+  row: z.infer<typeof rowSchema>,
+): RawWaitingProjection | RawCancelledWaitingProjection | RawCooperativeProjection {
+  if (
+    typeof row.projection !== 'object' ||
+    row.projection === null ||
+    !('schema' in row.projection)
+  ) {
+    throw new ServiceError(
+      'validation',
+      'This legacy COMBAT record has no compatible cooperative projection.',
+    );
+  }
+  let projection: RawWaitingProjection | RawCancelledWaitingProjection | RawCooperativeProjection;
+  if (
+    row.projection.schema === 'amordle-practice-waiting-v1' ||
+    row.projection.schema === 'amordle-daily-waiting-v1'
+  ) {
+    projection = waitingProjectionSchema.parse(row.projection);
+  } else if (
+    row.projection.schema === 'amordle-practice-cancelled-v1' ||
+    row.projection.schema === 'amordle-daily-cancelled-v1'
+  ) {
+    projection = cancelledWaitingProjectionSchema.parse(row.projection);
+  } else {
+    const cooperative = cooperativeProjectionSchema.parse(row.projection);
+    const projectionTime = Date.parse(cooperative.updatedAt);
+    const rowTime = Date.parse(row.updated_at);
+    const rpcCreatedPristineGame =
+      cooperative.updatedAt !== row.updated_at &&
+      (cooperative.sourceKind === 'private-request' || cooperative.sourceKind === 'rematch') &&
+      cooperative.status === 'playing' &&
+      cooperative.state.status === 'playing' &&
+      cooperative.state.revision === 0 &&
+      cooperative.state.moves.length === 0 &&
+      cooperative.state.appliedActionIds.length === 0 &&
+      rowTime >= projectionTime &&
+      rowTime - projectionTime <= 5 * 60_000;
+    projection = rpcCreatedPristineGame
+      ? cooperativeProjectionSchema.parse({
+          ...cooperative,
+          updatedAt: row.updated_at,
+          state: {
+            ...cooperative.state,
+            updatedAt: row.updated_at,
+          },
+        })
+      : cooperative;
+  }
+
+  if (
+    row.id !== projection.id ||
+    row.scope !== projection.scope ||
+    row.daily_date_key !== projection.dailyDateKey ||
+    row.mode !== projection.mode ||
+    row.status !== projection.status ||
+    row.current_turn !== projection.currentTurn ||
+    row.word_length !== projection.wordLength ||
+    row.difficulty !== projection.difficulty ||
+    row.go_puzzle_count !== projection.goPuzzleCount ||
+    row.ranked !== projection.ranked ||
     row.updated_at !== projection.updatedAt
   ) {
     throw new ServiceError(
@@ -839,30 +913,7 @@ export class PracticeCombatTransportRepository {
       .maybeSingle();
     throwIfServiceError(error, 'Load Practice COMBAT');
     if (data === null) return null;
-    const row = rowSchema.parse(data);
-    if (
-      typeof row.projection !== 'object' ||
-      row.projection === null ||
-      !('schema' in row.projection)
-    ) {
-      throw new ServiceError(
-        'validation',
-        'This legacy COMBAT record has no compatible cooperative projection.',
-      );
-    }
-    if (
-      row.projection.schema === 'amordle-practice-waiting-v1' ||
-      row.projection.schema === 'amordle-daily-waiting-v1'
-    ) {
-      return waitingProjectionSchema.parse(row.projection);
-    }
-    if (
-      row.projection.schema === 'amordle-practice-cancelled-v1' ||
-      row.projection.schema === 'amordle-daily-cancelled-v1'
-    ) {
-      return cancelledWaitingProjectionSchema.parse(row.projection);
-    }
-    return cooperativeProjectionSchema.parse(row.projection);
+    return reconcileRpcCreatedProjectionTimestamp(rowSchema.parse(data));
   }
 
   async recoverPublicLobby(input: {
