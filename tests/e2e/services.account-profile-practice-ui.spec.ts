@@ -255,6 +255,57 @@ test.describe('protected Preview account, profile, and Practice COMBAT recovery'
       await expect(playerBPage.getByText(playerBName, { exact: false }).first()).toBeVisible();
       await attachScreenshot(testInfo, playerBPage, 'mobile-joined-practice-match.png');
 
+      await anonymousPage.goto(`/combat/live/${gameId}`);
+      await expect(anonymousPage.getByText('Live · read-only', { exact: true })).toBeVisible({
+        timeout: 15_000,
+      });
+      const spectatorSurface = anonymousPage.getByRole('region', {
+        name: 'Shared COMBAT board',
+      });
+      const spectatorViewport = spectatorSurface.getByTestId('combat-board-viewport');
+      await expect(spectatorSurface.getByRole('row')).toHaveCount(6);
+      await expect(spectatorSurface.getByRole('list', { name: 'Match participants' })).toHaveCount(
+        0,
+      );
+      await expect(anonymousPage.getByRole('group', { name: /game keyboard/i })).toHaveCount(0);
+      await expect(anonymousPage.getByText('Spectator privacy', { exact: true })).toBeVisible();
+      await expect(anonymousPage.getByText(/Scored moves only/)).toBeHidden();
+      const spectatorGeometry = await anonymousPage.evaluate(() => {
+        const board = document.querySelector<HTMLElement>('[data-testid="combat-board-viewport"]');
+        const rows = [
+          ...document.querySelectorAll<HTMLElement>(
+            '[aria-label="Shared COMBAT board"] [role="row"]',
+          ),
+        ];
+        const controls = document.querySelector<HTMLElement>('.spectator-controls');
+        const dock = document.querySelector<HTMLElement>('.mobile-dock');
+        if (!board || rows.length !== 6 || !controls || !dock) return null;
+        const boardBox = board.getBoundingClientRect();
+        const firstBox = rows[0]!.getBoundingClientRect();
+        const lastBox = rows.at(-1)!.getBoundingClientRect();
+        const controlsBox = controls.getBoundingClientRect();
+        const dockBox = dock.getBoundingClientRect();
+        return {
+          firstTop: firstBox.top,
+          lastBottom: lastBox.bottom,
+          boardTop: boardBox.top,
+          boardBottom: boardBox.bottom,
+          controlsBottom: controlsBox.bottom,
+          dockTop: dockBox.top,
+          documentOverflow:
+            document.documentElement.scrollWidth - document.documentElement.clientWidth,
+          scrollTop: document.scrollingElement?.scrollTop ?? window.scrollY,
+        };
+      });
+      expect(spectatorGeometry).not.toBeNull();
+      expect(spectatorGeometry!.firstTop).toBeGreaterThanOrEqual(spectatorGeometry!.boardTop - 1);
+      expect(spectatorGeometry!.lastBottom).toBeLessThanOrEqual(spectatorGeometry!.boardBottom + 1);
+      expect(spectatorGeometry!.controlsBottom).toBeLessThanOrEqual(spectatorGeometry!.dockTop + 1);
+      expect(spectatorGeometry!.documentOverflow).toBeLessThanOrEqual(1);
+      expect(spectatorGeometry!.scrollTop).toBe(0);
+      await expect(spectatorViewport).toHaveJSProperty('scrollTop', 0);
+      await attachScreenshot(testInfo, anonymousPage, 'mobile-board-first-spectator.png');
+
       await playerAPage.reload();
       await expect(playerAPage.getByText('Your turn', { exact: true })).toBeVisible({
         timeout: 15_000,

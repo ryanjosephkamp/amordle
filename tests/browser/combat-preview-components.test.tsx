@@ -118,6 +118,39 @@ describe('repository-agnostic COMBAT preview components', () => {
     ).toHaveTextContent('Ember Player');
   });
 
+  it('renders the read-only spectator board without duplicate mobile participant chrome', () => {
+    render(
+      <CombatSharedActorBoard
+        length={5}
+        rows={[
+          tiles('CRANE', ['absent', 'present', 'absent', 'correct', 'correct']),
+          emptyRow(5),
+          emptyRow(5),
+          emptyRow(5),
+          emptyRow(5),
+          emptyRow(5),
+        ]}
+        actorRows={[
+          { participantKey: participants[0].key, shortLabel: participants[0].shortLabel },
+          ...Array.from({ length: 5 }, () => ({
+            participantKey: null,
+            shortLabel: '',
+          })),
+        ]}
+        participants={participants}
+        contextLabel="Spectator · OG · 5 letters"
+        message="1 accepted turn"
+        readOnly
+      />,
+    );
+
+    const surface = screen.getByRole('region', { name: 'Shared COMBAT board' });
+    expect(surface).toHaveAttribute('data-read-only', 'true');
+    expect(within(surface).queryByRole('list', { name: 'Match participants' })).toBeNull();
+    expect(within(surface).getAllByRole('row')).toHaveLength(6);
+    expect(within(surface).queryByRole('group', { name: /game keyboard/i })).toBeNull();
+  });
+
   it('reuses the modular keyboard and remains bounded inside a 320px host', async () => {
     const commands: string[] = [];
     const user = userEvent.setup();

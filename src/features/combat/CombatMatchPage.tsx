@@ -4,6 +4,7 @@ import { useNavigate, useParams } from 'react-router';
 
 import { useAuth } from '../../app/auth-context';
 import { Button, ButtonLink } from '../../components/Button';
+import { Disclosure } from '../../components/Disclosure';
 import { emptyRow, type Tile } from '../../components/gameBoardData';
 import { useKeyboardInput } from '../../components/keyboard/useKeyboardInput';
 import { sharedCombatRowCapacity } from '../../domain/combat';
@@ -1202,12 +1203,19 @@ export function LiveMatchPage() {
         contextLabel={`Spectator · ${game.mode.toUpperCase()} · ${game.wordLength} letters · ${game.ranked ? 'ranked' : 'unranked'} · puzzle ${game.progress.currentPuzzleIndex + 1}${game.goPuzzleCount ? ` of ${game.goPuzzleCount}` : ''}`}
         message={`${game.progress.moveCount} accepted ${game.progress.moveCount === 1 ? 'turn' : 'turns'} · spectator projection updated ${new Date(game.updatedAt).toLocaleTimeString()}`}
         compact={game.wordLength > 10}
+        readOnly
       />
-      <p className="privacy-band" role="status">
-        Spectator · read-only · scored moves only · no keyboard, drafts, answers, raw account
-        identifiers, or mutation capabilities
-      </p>
-      <ButtonLink to="/combat/live">Back to Live</ButtonLink>
+      <div className="spectator-controls">
+        <ButtonLink tone="primary" to="/combat/live">
+          Back to Live
+        </ButtonLink>
+        <Disclosure label="Spectator privacy" meta="Read-only">
+          <p role="status">
+            Scored moves only. No keyboard, drafts, answers, raw account identifiers, or mutation
+            capabilities are exposed.
+          </p>
+        </Disclosure>
+      </div>
     </div>
   );
 }

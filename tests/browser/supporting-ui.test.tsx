@@ -6,8 +6,13 @@ import { createMemoryRouter, RouterProvider } from 'react-router';
 import type { ComponentType } from 'react';
 
 import { AuthContext, type AuthContextValue } from '../../src/app/auth-context';
-import { PlayerStateContext } from '../../src/app/player-state-context';
+import {
+  PlayerStateContext,
+  type PlayerStateContextValue,
+} from '../../src/app/player-state-context';
+import { localDateKey } from '../../src/domain/daily';
 import { createOgSession } from '../../src/domain/game';
+import type { ProgressionState } from '../../src/domain/progression';
 import { CalendarPage } from '../../src/features/calendar/CalendarPage';
 import {
   FeedbackPage,
@@ -25,7 +30,7 @@ import { wordListProvider } from '../../src/services/word-list-provider';
 import { PublicRepository } from '../../src/services/public-repository';
 import '../../src/styles/global.css';
 
-const progression = {
+const progression: ProgressionState = {
   xp: 120,
   coins: 7,
   rewardedGameIds: [],
@@ -44,7 +49,12 @@ const guestAuth: AuthContextValue = {
 function renderSupporting(
   Component: ComponentType,
   path: string,
-  options: { auth?: AuthContextValue; routePattern?: string } = {},
+  options: {
+    auth?: AuthContextValue;
+    routePattern?: string;
+    progression?: ProgressionState;
+    unlockDaily?: PlayerStateContextValue['unlockDaily'];
+  } = {},
 ) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false, gcTime: Number.POSITIVE_INFINITY } },
@@ -57,11 +67,11 @@ function renderSupporting(
       <AuthContext.Provider value={options.auth ?? guestAuth}>
         <PlayerStateContext.Provider
           value={{
-            progression,
+            progression: options.progression ?? progression,
             persistenceAvailable: true,
             economyPending: false,
             reward: async () => false,
-            unlockDaily: async () => 'invalid',
+            unlockDaily: options.unlockDaily ?? (async () => 'invalid'),
             promoteDailyUnlock: () => false,
             purchaseConsumable: async () => ({ ok: false, code: 'unavailable' }),
             consumeConsumable: async () => ({ ok: false, code: 'unavailable' }),
@@ -142,6 +152,60 @@ describe('truthful supporting surfaces', () => {
     renderSupporting(CalendarPage, '/calendar');
     expect(screen.getAllByRole('img', { name: 'Combat OG: unavailable' })[0]).toBeVisible();
     expect(screen.queryByText(/Current \d|Best \d/)).not.toBeInTheDocument();
+  });
+
+  it('lets a low-balance player select an exact past Solo lane without charging', async () => {
+    const user = userEvent.setup();
+    const unlockDaily = vi
+      .fn<PlayerStateContextValue['unlockDaily']>()
+      .mockResolvedValue('invalid');
+    const past = new Date();
+    past.setDate(past.getDate() - 1);
+    const pastDateKey = localDateKey(past);
+
+    renderSupporting(CalendarPage, '/calendar', { unlockDaily });
+
+    await user.click(
+      screen.getByRole('button', {
+        name: `Select Solo OG for ${pastDateKey}; locked`,
+      }),
+    );
+
+    expect(unlockDaily).not.toHaveBeenCalled();
+    expect(screen.getByRole('heading', { name: 'Past Solo Daily' })).toBeVisible();
+    expect(screen.getByText(`Solo OG · ${pastDateKey}`)).toBeVisible();
+    expect(screen.getByText('7 coins available')).toBeVisible();
+    expect(screen.getByText('53 coin shortfall')).toBeVisible();
+    expect(
+      screen.getByRole('button', { name: `Unlock Solo OG for ${pastDateKey}` }),
+    ).toBeDisabled();
+  });
+
+  it('charges a sufficient balance only after exact past-lane confirmation', async () => {
+    const user = userEvent.setup();
+    const unlockDaily = vi
+      .fn<PlayerStateContextValue['unlockDaily']>()
+      .mockResolvedValue('unlocked');
+    const past = new Date();
+    past.setDate(past.getDate() - 1);
+    const pastDateKey = localDateKey(past);
+
+    renderSupporting(CalendarPage, '/calendar', {
+      progression: { ...progression, coins: 100 },
+      unlockDaily,
+    });
+
+    await user.click(
+      screen.getByRole('button', {
+        name: `Select Solo GO for ${pastDateKey}; locked`,
+      }),
+    );
+    expect(unlockDaily).not.toHaveBeenCalled();
+
+    await user.click(screen.getByRole('button', { name: `Unlock Solo GO for ${pastDateKey}` }));
+    expect(unlockDaily).toHaveBeenCalledOnce();
+    expect(unlockDaily).toHaveBeenCalledWith('go', pastDateKey, localDateKey());
+    expect(screen.getByRole('status')).toHaveTextContent(`GO entitlement saved for ${pastDateKey}`);
   });
 
   it('paginates valid guesses without exposing answer-pool membership', async () => {

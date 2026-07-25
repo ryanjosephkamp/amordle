@@ -1369,7 +1369,7 @@
     color: var(--ink);
     padding: 0.5rem;
   }
-  .calendar-day:disabled {
+  .calendar-day[data-available='false'] {
     opacity: 0.35;
   }
   .calendar-day.is-today {
@@ -1399,6 +1399,22 @@
     font: 500 0.62rem/1.2 var(--display);
     letter-spacing: 0.04em;
     text-transform: uppercase;
+  }
+  .calendar-lane-button {
+    width: 100%;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+  }
+  .calendar-lane-button:focus-visible {
+    outline: 2px solid var(--ice);
+    outline-offset: 1px;
+  }
+  .calendar-lane-button[aria-pressed='true'] {
+    box-shadow: inset 0 0 0 1px currentColor;
+  }
+  .calendar-lane-button:disabled {
+    cursor: not-allowed;
   }
   .day-state__label {
     overflow: hidden;
@@ -1437,6 +1453,19 @@
   .calendar-rail > span,
   .calendar-rail p {
     color: var(--muted);
+  }
+  .calendar-rail .calendar-selection {
+    color: var(--ink);
+    font-weight: 700;
+  }
+  .spectator-controls {
+    display: grid;
+    grid-template-columns: minmax(12rem, 0.55fr) minmax(16rem, 1fr);
+    gap: 0.75rem;
+    align-items: start;
+  }
+  .spectator-controls .disclosure {
+    margin: 0;
   }
   .legend-list {
     display: grid;
@@ -2833,17 +2862,41 @@
     .app-shell--focus .game-tools {
       display: none;
     }
+    .app-shell--focus .focus-button {
+      display: none;
+    }
     .app-shell--focus .topbar {
       display: grid;
-      grid-template-columns: 1fr auto;
+      grid-template-columns: minmax(5.5rem, 1fr) minmax(0, auto) auto;
     }
     .app-shell--focus .topbar__actions {
+      display: flex;
+      padding-inline: 0.35rem 0.65rem;
+    }
+    .app-shell--focus .topbar__actions .top-action:not(.notification-button),
+    .app-shell--focus .topbar__actions .account-button {
       display: none;
     }
     .focus-exit {
       min-height: 38px;
-      margin-right: 12px;
+      max-width: 100%;
+      margin-right: 0;
       padding: 0.4rem 0.7rem;
+      white-space: nowrap;
+    }
+    .focus-exit kbd {
+      display: none;
+    }
+    .spectator-controls {
+      grid-template-columns: 1fr;
+      gap: 0.35rem;
+    }
+    .spectator-controls .button {
+      min-height: 40px;
+    }
+    .spectator-controls .disclosure summary {
+      min-height: 38px;
+      padding-block: 0.35rem;
     }
     .board-viewport {
       margin-block: 0.45rem;
@@ -3040,6 +3093,15 @@
     }
     .topbar__actions {
       padding-right: 9px;
+    }
+    .app-shell--focus .brand {
+      padding-left: 10px;
+      font-size: 1rem;
+      letter-spacing: 0.14em;
+    }
+    .app-shell--focus .focus-exit {
+      padding-inline: 0.45rem;
+      font-size: 0.72rem;
     }
     .account-button > span:nth-child(2) {
       display: none;

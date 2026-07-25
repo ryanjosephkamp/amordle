@@ -106,3 +106,52 @@ Browser review, responsive structure checks, and the real protected
 multi-account flow. Final acceptance still requires an immutable protected
 Preview built from the exact final tracked commit and the complete protected
 acceptance command.
+
+## July 25 mobile review corrections
+
+The four manual-review defects are now covered by assertion-before-capture
+checks. Hosted evidence is required before this section can be marked final.
+
+### L27–L28 — board-first mobile spectation
+
+1. **Composition:** the participant header is the single identity surface; the
+   duplicate mobile participant list is absent from read-only boards.
+2. **Capacity:** a 390×844 interactive review rendered all six base rows inside
+   the internal board viewport at document `scrollTop = 0`.
+3. **Density:** the long privacy paragraph is collapsed behind one
+   `Spectator privacy` disclosure, adjacent to the sole `Back to Live` action.
+4. **Hierarchy:** the board receives the flexible viewport row; message,
+   legend, return action, and disclosure remain compact supporting material.
+5. **Privacy:** the spectator surface still renders no keyboard, draft,
+   answer, raw identity, or mutation capability.
+6. **Responsive behavior:** the measured document overflow was zero and the
+   compact controls ended above the mobile dock.
+
+### L09–L10 — Calendar position and exact Daily selection
+
+1. **Composition:** each Solo lane is an explicit control inside its date
+   gridcell; Combat lanes remain truthful noninteractive status projections.
+2. **Initial position:** on the current month at 390 pixels, the Calendar
+   positioned itself once at `scrollLeft = 332`, placing the complete current
+   day inside the 364-pixel scrollport without moving focus.
+3. **Manual control:** returning the panel to `scrollLeft = 0` remained stable;
+   no effect fought the player’s later horizontal scroll.
+4. **Hierarchy:** selecting a past lane brings the decision rail into view and
+   identifies exact mode, date, 60-coin price, current balance, and shortfall.
+5. **Economy state:** selection is free; only the separate exact-lane
+   confirmation can invoke the existing idempotent unlock operation.
+6. **Denial state:** insufficient balance disables only confirmation. Future,
+   pre-floor, and COMBAT lanes remain unavailable.
+
+### L29–L32 — Focus Mode mobile header
+
+1. **Composition:** Focus Mode now has one shell-owned `Exit focus` control,
+   not a shell control overlaid with a second game-stage control.
+2. **Hierarchy:** the brand, Exit action, and Notifications icon occupy three
+   distinct header columns.
+3. **Interaction state:** Notifications remains keyboard/touch accessible while
+   nonessential Help, Settings, and account controls stay suppressed.
+4. **Responsive behavior:** bounding-box assertions pass with zero collision at
+   320, 360, 390, and 412 pixels; the document has no horizontal overflow.
+5. **Equivalence:** Focus Mode still uses the same route, controller, draft,
+   board, and keyboard as regular play.

@@ -105,12 +105,12 @@ test('Checkpoint 1 calendar and Word Explorer treatments remain readable and ali
     await expect(page.getByText(lane, { exact: true }).first()).toBeVisible();
   }
   await expect(
-    page.getByRole('img', { name: /Solo OG: (available|locked)/ }).first(),
+    page.getByRole('button', { name: /Select Solo OG for .*; (available|locked)/ }).first(),
   ).toBeVisible();
   await expect(page.getByRole('img', { name: 'Combat OG: unavailable' }).first()).toBeVisible();
-  await expect(
-    page.locator('button.calendar-day').filter({ hasText: 'S-OG' }).first(),
-  ).toHaveAccessibleName(/Solo OG: (available|locked|completed).*Combat OG: unavailable/);
+  await expect(page.locator('.calendar-lane-button[data-mode="og"]').first()).toHaveAccessibleName(
+    /Select Solo OG for .*; (available|locked|completed)/,
+  );
   await expect(page.getByText('—Unavailable', { exact: true })).toBeVisible();
 
   await page.goto('/word-explorer');
@@ -150,6 +150,63 @@ test('Checkpoint 1 calendar and Word Explorer treatments remain readable and ali
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
   );
   expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test('mobile Calendar initially reveals today and preserves later manual horizontal scroll', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/calendar');
+  await expect(page.locator('.calendar-day.is-today')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('.calendar-panel').evaluate((panel) => {
+        const today = panel.querySelector<HTMLElement>('.calendar-day.is-today');
+        if (!today) return false;
+        const panelBox = panel.getBoundingClientRect();
+        const todayBox = today.getBoundingClientRect();
+        return (
+          panel.scrollLeft > 0 &&
+          todayBox.left >= panelBox.left - 1 &&
+          todayBox.right <= panelBox.right + 1
+        );
+      }),
+    )
+    .toBe(true);
+
+  await page.locator('.calendar-panel').evaluate((panel) => {
+    panel.scrollLeft = 0;
+  });
+  await page.waitForTimeout(100);
+  expect(await page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft)).toBe(0);
+
+  await page.getByRole('button', { name: 'Previous month' }).click();
+  await page.getByRole('button', { name: 'Next month' }).click();
+  await expect
+    .poll(() => page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft))
+    .toBeGreaterThan(0);
+});
+
+test('a low-balance mobile player can select an exact past Daily lane before purchase', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/calendar');
+  const pastDateKey = await page.evaluate(() => {
+    const value = new Date();
+    value.setDate(value.getDate() - 1);
+    const pad = (part: number) => String(part).padStart(2, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+  });
+  const lane = page.locator(`.calendar-lane-button[data-date="${pastDateKey}"][data-mode="og"]`);
+  await expect(lane).toBeEnabled();
+  await lane.click();
+  await expect(page.getByRole('heading', { name: 'Past Solo Daily' })).toBeVisible();
+  await expect(page.getByText(`Solo OG · ${pastDateKey}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(/\d+ coin shortfall/)).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: `Unlock Solo OG for ${pastDateKey}` }),
+  ).toBeDisabled();
 });
 
 test('compatibility routes resolve to canonical destinations', async ({ page }) => {
@@ -210,6 +267,35 @@ test('Solo keyboard, rejection, durable restore, focus, and terminal recovery ar
     .click();
   await expect(page).not.toHaveURL(/focus=1/);
 });
+
+for (const width of [320, 360, 390, 412]) {
+  test(`Focus Exit and Notifications remain distinct at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/play/practice/og?focus=1');
+    const exit = page.getByRole('button', { name: /Exit focus/i });
+    const notifications = page.getByRole('button', { name: /^Notifications/ });
+    await expect(exit).toHaveCount(1);
+    await expect(exit).toBeVisible();
+    await expect(notifications).toBeVisible();
+    const [exitBox, notificationBox] = await Promise.all([
+      exit.boundingBox(),
+      notifications.boundingBox(),
+    ]);
+    expect(exitBox).not.toBeNull();
+    expect(notificationBox).not.toBeNull();
+    const overlapWidth = Math.max(
+      0,
+      Math.min(exitBox!.x + exitBox!.width, notificationBox!.x + notificationBox!.width) -
+        Math.max(exitBox!.x, notificationBox!.x),
+    );
+    const overlapHeight = Math.max(
+      0,
+      Math.min(exitBox!.y + exitBox!.height, notificationBox!.y + notificationBox!.height) -
+        Math.max(exitBox!.y, notificationBox!.y),
+    );
+    expect(overlapWidth * overlapHeight).toBe(0);
+  });
+}
 
 test('Daily GO is canonical five-letter play and Practice GO auto-advances with prior evidence', async ({
   page,

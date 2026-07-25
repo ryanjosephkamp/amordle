@@ -231,6 +231,11 @@
   overflow: hidden;
 }
 
+.boardShell[data-read-only='true'] {
+  gap: 0.45rem;
+  grid-template-rows: auto minmax(0, 1fr) auto auto;
+}
+
 .boardContext {
   margin: 0;
   color: var(--muted);
@@ -300,6 +305,16 @@
   margin: 0;
   color: var(--combat-green);
   text-align: center;
+}
+
+.boardShell[data-read-only='true'] .boardContext,
+.boardShell[data-read-only='true'] .message {
+  font-size: clamp(0.68rem, 2.8vw, 0.82rem);
+  line-height: 1.25;
+}
+
+.boardShell[data-read-only='true'] :global(.tile-legend) {
+  margin-block: 0;
 }
 
 .unavailable {

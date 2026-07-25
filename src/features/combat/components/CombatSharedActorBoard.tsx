@@ -16,6 +16,7 @@ export interface CombatSharedActorBoardProps {
   readonly participants: readonly [CombatPreviewParticipant, CombatPreviewParticipant];
   readonly contextLabel: string;
   readonly message: string;
+  readonly readOnly?: boolean;
   readonly activeRow?: number;
   readonly compact?: boolean;
   readonly keyboard?: {
@@ -33,6 +34,7 @@ export function CombatSharedActorBoard({
   participants,
   contextLabel,
   message,
+  readOnly = false,
   activeRow,
   compact = false,
   keyboard,
@@ -45,18 +47,24 @@ export function CombatSharedActorBoard({
   );
 
   return (
-    <section className={`${styles.surface} ${styles.boardShell}`} aria-label="Shared COMBAT board">
+    <section
+      className={`${styles.surface} ${styles.boardShell}`}
+      aria-label="Shared COMBAT board"
+      data-read-only={readOnly ? 'true' : 'false'}
+    >
       <p className={styles.boardContext}>{contextLabel}</p>
-      <ul className={styles.mobileActors} aria-label="Match participants">
-        {participants.map((participant) => (
-          <li key={participant.key}>
-            <span className={styles.actorToken} aria-hidden="true">
-              {participant.shortLabel}
-            </span>
-            <strong>{participant.displayName}</strong>
-          </li>
-        ))}
-      </ul>
+      {!readOnly ? (
+        <ul className={styles.mobileActors} aria-label="Match participants">
+          {participants.map((participant) => (
+            <li key={participant.key}>
+              <span className={styles.actorToken} aria-hidden="true">
+                {participant.shortLabel}
+              </span>
+              <strong>{participant.displayName}</strong>
+            </li>
+          ))}
+        </ul>
+      ) : null}
       <div className={styles.boardViewport} data-testid="combat-board-viewport">
         <GameBoard
           rows={rows.map((row) => [...row])}

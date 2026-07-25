@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
 import { Button, ButtonLink } from '../../components/Button';
@@ -25,26 +25,56 @@ function laneDescription(label: string, state: CalendarLaneState): string {
 
 function CalendarLane({
   code,
+  dateKey,
   label,
+  mode,
+  selected,
   state,
+  unavailable,
+  onSelect,
 }: {
   code: 'S-OG' | 'S-GO' | 'C-OG' | 'C-GO';
+  dateKey: string;
   label: string;
+  mode?: 'og' | 'go';
+  selected?: boolean;
   state: CalendarLaneState;
+  unavailable?: boolean;
+  onSelect?: () => void;
 }) {
-  return (
-    <span
-      className="day-state"
-      data-state={state}
-      role="img"
-      aria-label={laneDescription(label, state)}
-    >
+  const content = (
+    <>
       <span className="day-state__label" aria-hidden="true">
         {code}
       </span>
       <span className="day-state__mark" aria-hidden="true">
         {laneMarks[state]}
       </span>
+    </>
+  );
+
+  return mode && onSelect ? (
+    <button
+      type="button"
+      className="day-state calendar-lane-button"
+      data-state={state}
+      data-date={dateKey}
+      data-mode={mode}
+      disabled={unavailable}
+      aria-pressed={selected}
+      aria-label={`Select ${label} for ${dateKey}; ${state}`}
+      onClick={onSelect}
+    >
+      {content}
+    </button>
+  ) : (
+    <span
+      className="day-state"
+      data-state={state}
+      role="img"
+      aria-label={laneDescription(label, state)}
+    >
+      {content}
     </span>
   );
 }
@@ -66,7 +96,13 @@ export function CalendarPage() {
   );
   const [monthOffset, setMonthOffset] = useState(0);
   const [selectedDate, setSelectedDate] = useState(todayKey);
+  const [selectedMode, setSelectedMode] = useState<'og' | 'go'>('og');
   const [unlockMessage, setUnlockMessage] = useState('');
+  const [unlockingKey, setUnlockingKey] = useState<string | null>(null);
+  const calendarPanelRef = useRef<HTMLElement>(null);
+  const todayCellRef = useRef<HTMLDivElement>(null);
+  const calendarRailRef = useRef<HTMLElement>(null);
+  const autoPositionedMonthRef = useRef<string | null>(null);
   const shownDate = useMemo(() => {
     const now = new Date();
     return new Date(now.getFullYear(), now.getMonth() + monthOffset, 1);
@@ -81,6 +117,45 @@ export function CalendarPage() {
     return day > 0 && day <= days ? day : null;
   });
   const title = shownDate.toLocaleDateString(undefined, { month: 'long', year: 'numeric' });
+  const shownMonthKey = `${year}-${String(month + 1).padStart(2, '0')}`;
+  const todayMonthKey = todayKey.slice(0, 7);
+  const selectedAllowed = canAccessDaily({
+    mode: selectedMode,
+    dateKey: selectedDate,
+    todayKey,
+    unlocked: dailyEntitlements,
+  });
+  const selectedIsPast = selectedDate < todayKey;
+  const selectedLabel = `Solo ${selectedMode.toUpperCase()} · ${selectedDate}`;
+  const unlockShortfall = Math.max(0, 60 - progression.coins);
+
+  useLayoutEffect(() => {
+    if (shownMonthKey !== todayMonthKey) {
+      autoPositionedMonthRef.current = null;
+      return;
+    }
+    if (autoPositionedMonthRef.current === shownMonthKey || window.innerWidth > 760) {
+      return;
+    }
+    const panel = calendarPanelRef.current;
+    const todayCell = todayCellRef.current;
+    if (!panel || !todayCell) return;
+    const maximum = Math.max(0, panel.scrollWidth - panel.clientWidth);
+    const centered = todayCell.offsetLeft + todayCell.offsetWidth / 2 - panel.clientWidth / 2;
+    panel.scrollLeft = Math.min(maximum, Math.max(0, centered));
+    autoPositionedMonthRef.current = shownMonthKey;
+  }, [shownMonthKey, todayMonthKey]);
+
+  const selectSoloLane = (mode: 'og' | 'go', dateKey: string) => {
+    setSelectedMode(mode);
+    setSelectedDate(dateKey);
+    setUnlockMessage('');
+    if (window.innerWidth <= 760) {
+      window.requestAnimationFrame(() => {
+        calendarRailRef.current?.scrollIntoView({ block: 'start', inline: 'nearest' });
+      });
+    }
+  };
 
   return (
     <div className="page page--calendar">
@@ -97,7 +172,7 @@ export function CalendarPage() {
         </ButtonLink>
       </div>
       <div className="calendar-layout">
-        <section className="calendar-panel" aria-labelledby="calendar-title">
+        <section className="calendar-panel" aria-labelledby="calendar-title" ref={calendarPanelRef}>
           <header>
             <Button
               type="button"
@@ -164,84 +239,109 @@ export function CalendarPage() {
               const combatOgState: CalendarLaneState = 'unavailable';
               const combatGoState: CalendarLaneState = 'unavailable';
               return (
-                <button
-                  type="button"
+                <div
                   role="gridcell"
                   key={index}
                   className={`calendar-day ${isToday ? 'is-today' : ''}`}
-                  disabled={!inRange}
-                  onClick={() => {
-                    setSelectedDate(localDateKey(date));
-                    setUnlockMessage('');
-                  }}
-                  aria-label={`${date.toDateString()}${isToday ? ', today' : ''}. ${[
-                    laneDescription('Solo OG', soloOgState),
-                    laneDescription('Solo GO', soloGoState),
-                    laneDescription('Combat OG', combatOgState),
-                    laneDescription('Combat GO', combatGoState),
-                  ].join('; ')}`}
+                  data-available={inRange ? 'true' : 'false'}
+                  aria-label={`${date.toDateString()}${isToday ? ', today' : ''}`}
+                  ref={isToday ? todayCellRef : undefined}
                 >
                   <span>
                     {day}
                     {isToday ? <small>Today</small> : null}
                   </span>
                   <span className="day-states">
-                    <CalendarLane code="S-OG" label="Solo OG" state={soloOgState} />
-                    <CalendarLane code="S-GO" label="Solo GO" state={soloGoState} />
-                    <CalendarLane code="C-OG" label="Combat OG" state={combatOgState} />
-                    <CalendarLane code="C-GO" label="Combat GO" state={combatGoState} />
+                    <CalendarLane
+                      code="S-OG"
+                      dateKey={dateKey}
+                      label="Solo OG"
+                      mode="og"
+                      state={soloOgState}
+                      selected={selectedDate === dateKey && selectedMode === 'og'}
+                      unavailable={!inRange}
+                      onSelect={() => selectSoloLane('og', dateKey)}
+                    />
+                    <CalendarLane
+                      code="S-GO"
+                      dateKey={dateKey}
+                      label="Solo GO"
+                      mode="go"
+                      state={soloGoState}
+                      selected={selectedDate === dateKey && selectedMode === 'go'}
+                      unavailable={!inRange}
+                      onSelect={() => selectSoloLane('go', dateKey)}
+                    />
+                    <CalendarLane
+                      code="C-OG"
+                      dateKey={dateKey}
+                      label="Combat OG"
+                      state={combatOgState}
+                    />
+                    <CalendarLane
+                      code="C-GO"
+                      dateKey={dateKey}
+                      label="Combat GO"
+                      state={combatGoState}
+                    />
                   </span>
-                </button>
+                </div>
               );
             })}
           </div>
         </section>
-        <aside className="calendar-rail">
+        <aside className="calendar-rail" ref={calendarRailRef}>
           <strong>{authStatus === 'loading' ? '— coins' : `${progression.coins} coins`}</strong>
           <span>{authStatus === 'loading' ? 'Checking identity' : 'Available'}</span>
           <hr />
-          <h2>
-            {selectedDate === todayKey ? 'Today’s Solo Daily' : `Past Solo Daily · ${selectedDate}`}
-          </h2>
-          <strong>60 coins</strong>
-          <p>Unlock a past Solo puzzle once. It remains unlocked after the first guess.</p>
-          {(['og', 'go'] as const).map((mode) => {
-            const allowed = canAccessDaily({
-              mode,
-              dateKey: selectedDate,
-              todayKey,
-              unlocked: dailyEntitlements,
-            });
-            return allowed ? (
-              <ButtonLink
-                key={mode}
-                tone={mode === 'og' ? 'primary' : 'secondary'}
-                to={`/play/daily/${mode}?date=${selectedDate}`}
-              >
-                Play {mode.toUpperCase()} · {selectedDate}
-              </ButtonLink>
-            ) : (
-              <Button
-                key={mode}
-                disabled={authStatus === 'loading' || progression.coins < 60}
-                onClick={() => {
-                  void unlockDaily(mode, selectedDate, todayKey).then((result) => {
+          <h2>{selectedDate === todayKey ? 'Today’s Solo Daily' : 'Past Solo Daily'}</h2>
+          <p className="calendar-selection">{selectedLabel}</p>
+          {selectedIsPast ? (
+            <>
+              <strong>60 coins</strong>
+              <p>{progression.coins} coins available</p>
+              {selectedAllowed ? (
+                <p>This past Daily is already available in this identity namespace.</p>
+              ) : unlockShortfall > 0 ? (
+                <p>{unlockShortfall} coin shortfall</p>
+              ) : (
+                <p>Balance covers this one-time unlock.</p>
+              )}
+              <p>Selection is free. Coins are charged only after confirmation.</p>
+            </>
+          ) : (
+            <p>Today’s Daily is available without a coin unlock.</p>
+          )}
+          {selectedAllowed ? (
+            <ButtonLink tone="primary" to={`/play/daily/${selectedMode}?date=${selectedDate}`}>
+              Play {selectedMode.toUpperCase()} · {selectedDate}
+            </ButtonLink>
+          ) : (
+            <Button
+              aria-label={`Unlock Solo ${selectedMode.toUpperCase()} for ${selectedDate}`}
+              disabled={authStatus === 'loading' || progression.coins < 60 || unlockingKey !== null}
+              onClick={() => {
+                const operationKey = `${selectedMode}:${selectedDate}`;
+                if (unlockingKey !== null) return;
+                setUnlockingKey(operationKey);
+                void unlockDaily(selectedMode, selectedDate, todayKey)
+                  .then((result) => {
                     setUnlockMessage(
                       result === 'unlocked'
-                        ? `${mode.toUpperCase()} entitlement saved for ${selectedDate}. It becomes permanent after the first saved guess.`
+                        ? `${selectedMode.toUpperCase()} entitlement saved for ${selectedDate}. It becomes permanent after the first saved guess.`
                         : result === 'insufficient'
                           ? 'Not enough coins. Earn coins by completing puzzles.'
                           : result === 'already'
                             ? 'This puzzle was already unlocked.'
                             : 'That date cannot be unlocked.',
                     );
-                  });
-                }}
-              >
-                Unlock {mode.toUpperCase()} · 60 coins
-              </Button>
-            );
-          })}
+                  })
+                  .finally(() => setUnlockingKey(null));
+              }}
+            >
+              {unlockingKey ? 'Saving unlock…' : `Unlock ${selectedMode.toUpperCase()} · 60 coins`}
+            </Button>
+          )}
           {unlockMessage ? <p role="status">{unlockMessage}</p> : null}
           <SectionHeading title="Legend" />
           <ul className="legend-list">
