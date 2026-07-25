@@ -2,6 +2,12 @@ import { z } from 'zod';
 
 export type CanonicalInstant = string;
 
+function canonicalFraction(value: string): string {
+  const fraction = /^.+T\d{2}:\d{2}:\d{2}(?:\.(\d+))?(?:Z|[+-]\d{2}:\d{2})$/.exec(value)?.[1];
+  const significant = fraction?.replace(/0+$/, '') ?? '';
+  return significant.length <= 3 ? significant.padEnd(3, '0') : significant;
+}
+
 export const postgresTimestamptzSchema = z.iso
   .datetime({ offset: true })
   .transform((value, context): CanonicalInstant => {
@@ -14,7 +20,8 @@ export const postgresTimestamptzSchema = z.iso
       return z.NEVER;
     }
     try {
-      return instant.toISOString();
+      const utc = instant.toISOString();
+      return `${utc.slice(0, 19)}.${canonicalFraction(value)}Z`;
     } catch {
       context.addIssue({
         code: 'custom',

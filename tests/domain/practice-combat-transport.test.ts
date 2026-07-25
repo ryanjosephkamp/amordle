@@ -237,7 +237,8 @@ describe('Practice COMBAT transport boundary', () => {
       wordRevision: 'test-revision',
       state,
     });
-    const acceptedAt = '2026-07-23T12:00:01.000Z';
+    const acceptedAt = '2026-07-23T12:00:01.00035+00:00';
+    const canonicalAcceptedAt = '2026-07-23T12:00:01.00035Z';
     const row = {
       id: projection.id,
       scope: projection.scope,
@@ -268,8 +269,8 @@ describe('Practice COMBAT transport boundary', () => {
     expect(result).toMatchObject({
       kind: 'cooperative-participant',
       sourceKind: 'private-request',
-      updatedAt: acceptedAt,
-      state: { updatedAt: acceptedAt, revision: 0, moves: [] },
+      updatedAt: canonicalAcceptedAt,
+      state: { updatedAt: canonicalAcceptedAt, revision: 0, moves: [] },
     });
   });
 
