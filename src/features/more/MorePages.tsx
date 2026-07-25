@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useLocation, useNavigate, useParams } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { usePlayerState } from '../../app/player-state-context';
@@ -7,24 +7,159 @@ import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
 import { Icon } from '../../components/Icon';
 import { Metric, PageHeader, RuledList, SectionHeading, StatusDot } from '../../components/Surface';
-import { EconomyRepository } from '../../services/economy-repository';
 import { AccountRepository } from '../../services/account-repository';
 import { PublicRepository } from '../../services/public-repository';
+import { PrivateRequestRepository } from '../../services/private-request-repository';
 import { levelForXp } from '../../domain/progression';
+import { ownerStorageSegment, type IdentityScope } from '../../persistence/local-repository';
+import { writeSoundEnabled } from '../../services/sound-controller';
+import {
+  loadPlayerSettings,
+  mergePlayerSettings,
+  updatePlayerSettings,
+} from '../../services/settings-repository';
 import { wordListProvider } from '../../services/word-list-provider';
+import type { Json } from '../../types/database';
+import type { OwnedPublicProfileProjection } from '../../types/services';
+import {
+  readLocalSoloProjections,
+  type LocalSoloProjection,
+} from '../supporting/local-solo-projections';
 
-type HistoryRow = readonly [string, string, string, string, string];
+type HistoryProjection = {
+  readonly id: string;
+  readonly game: string;
+  readonly result: string;
+  readonly details: string;
+  readonly context: string;
+  readonly completedAt: string;
+  readonly area: string;
+  readonly source: string;
+  readonly mode: string;
+};
 
-const historyRows: readonly HistoryRow[] = [
-  ['Practice Combat · OG', 'Lost', '9 guesses · 141 pts · solved', 'Ranked · 2 players', 'Today'],
-  ['Daily Solo · OG', 'Won', '3 guesses · +50 XP · +10 coins', 'Solo', 'Today'],
-  ['Practice Solo · GO', 'Lost', '12 guesses · 3/5 puzzles', 'Solo', 'Today'],
-  ['Daily Combat · GO', 'Draw', '220 pts · 4/5 puzzles', 'UTC · unranked', 'Yesterday'],
-  ['Practice Solo · OG', 'Won', '4 guesses · +40 XP · +8 coins', 'Solo', 'Yesterday'],
-] as const;
+const profileAccents = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber'] as const;
+
+type ProfileDraft = {
+  readonly displayName: string;
+  readonly visibility: 'private' | 'public';
+  readonly accentColor: (typeof profileAccents)[number];
+  readonly avatarUrl: string;
+  readonly bio: string;
+};
+
+const emptyProfileDraft: ProfileDraft = {
+  displayName: '',
+  visibility: 'private',
+  accentColor: 'aurora',
+  avatarUrl: '',
+  bio: '',
+};
+
+function profileDraftFromProjection(profile: OwnedPublicProfileProjection): ProfileDraft {
+  return {
+    displayName: profile.displayName ?? '',
+    visibility: profile.visibility,
+    accentColor: profileAccent(profile.accentColor),
+    avatarUrl: profile.avatarUrl ?? '',
+    bio: profile.bio ?? '',
+  };
+}
+
+function profileAccent(value: unknown): (typeof profileAccents)[number] {
+  return typeof value === 'string' &&
+    profileAccents.includes(value as (typeof profileAccents)[number])
+    ? (value as (typeof profileAccents)[number])
+    : 'aurora';
+}
+
+function PublicAvatar({
+  displayName,
+  accent,
+  avatarUrl,
+  size = 'default',
+}: {
+  displayName: string;
+  accent: (typeof profileAccents)[number];
+  avatarUrl?: string | null;
+  size?: 'default' | 'xl';
+}) {
+  const initials =
+    displayName
+      .trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toUpperCase() || '—';
+  return (
+    <span
+      className={`avatar public-avatar${size === 'xl' ? ' avatar--xl' : ''}`}
+      data-accent={accent}
+      aria-hidden="true"
+    >
+      <span className="public-avatar__fallback">{initials}</span>
+      {avatarUrl ? (
+        <img
+          src={avatarUrl}
+          alt=""
+          loading="lazy"
+          referrerPolicy="no-referrer"
+          onError={(event) => event.currentTarget.remove()}
+        />
+      ) : null}
+    </span>
+  );
+}
+
+type AccountHistoryRow = Awaited<ReturnType<AccountRepository['listHistory']>>[number];
+
+function accountHistoryProjection(row: AccountHistoryRow): HistoryProjection {
+  const entry =
+    typeof row.entry === 'object' && row.entry !== null && !Array.isArray(row.entry)
+      ? (row.entry as Record<string, unknown>)
+      : {};
+  const mode = String(entry.mode ?? 'mode unavailable').toLowerCase();
+  const source = String(entry.scope ?? 'source unavailable').toLowerCase();
+  const area = String(entry.area ?? 'area unavailable').toLowerCase();
+  const result = String(entry.result ?? entry.status ?? 'Completed');
+  const details = String(entry.summary ?? 'No additional result summary was recorded.');
+  return {
+    id: row.id,
+    game: `${source} ${area} · ${mode.toUpperCase()}`,
+    result,
+    details,
+    context: String(entry.context ?? 'Account history'),
+    completedAt: Number.isNaN(Date.parse(row.completed_at))
+      ? 'Date unavailable'
+      : new Date(row.completed_at).toLocaleDateString(),
+    area,
+    source,
+    mode,
+  };
+}
+
+function localHistoryProjection(session: LocalSoloProjection): HistoryProjection {
+  return {
+    id: session.id,
+    game: session.label,
+    result: session.result ?? 'In progress',
+    details: `${session.acceptedGuesses} accepted ${session.acceptedGuesses === 1 ? 'guess' : 'guesses'}${session.mode === 'go' ? ` · ${session.completedPuzzles}/${session.puzzleCount} puzzles solved` : ''}`,
+    context: `Identity-scoped local ${session.scope}`,
+    completedAt: new Date(session.updatedAt).toLocaleDateString(),
+    area: 'solo',
+    source: session.scope,
+    mode: session.mode,
+  };
+}
+
+function resultClassName(result: string): string {
+  const normalized = result.trim().toLowerCase();
+  return ['won', 'lost', 'draw'].includes(normalized) ? `result-${normalized}` : '';
+}
 
 export function HistoryPage() {
-  const { client, user } = useAuth();
+  const { client, identity, status: authStatus, user } = useAuth();
   const repository = useMemo(() => (client ? new AccountRepository(client) : null), [client]);
   const history = useQuery({
     queryKey: ['account-history', user?.id],
@@ -36,31 +171,33 @@ export function HistoryPage() {
   const [area, setArea] = useState('all');
   const [source, setSource] = useState('all');
   const [mode, setMode] = useState('all');
-  const accountRows: HistoryRow[] = (history.data ?? []).map((row) => {
-    const entry =
-      typeof row.entry === 'object' && row.entry !== null && !Array.isArray(row.entry)
-        ? (row.entry as Record<string, unknown>)
-        : {};
-    const mode = String(entry.mode ?? 'OG').toUpperCase();
-    const scope = String(entry.scope ?? 'completed');
-    const areaName = String(entry.area ?? 'Solo');
-    const result = String(entry.result ?? entry.status ?? 'Completed');
-    const details = String(entry.summary ?? `${mode} result`);
-    return [
-      `${scope} ${areaName} · ${mode}`,
-      result,
-      details,
-      String(entry.context ?? areaName),
-      new Date(row.completed_at).toLocaleDateString(),
-    ];
-  });
-  const rows = user ? accountRows : import.meta.env.DEV ? [...historyRows] : [];
+  const localRows = useMemo(
+    () =>
+      authStatus === 'loading'
+        ? []
+        : readLocalSoloProjections(identity)
+            .filter((session) => session.status !== 'playing')
+            .map(localHistoryProjection),
+    [authStatus, identity],
+  );
+  const accountRows = (history.data ?? []).map(accountHistoryProjection);
+  const rows =
+    authStatus === 'loading'
+      ? []
+      : user
+        ? [
+            ...accountRows,
+            ...localRows.filter((local) => !accountRows.some((row) => row.id === local.id)),
+          ]
+        : localRows;
   const visible = rows.filter(
     (row) =>
-      (area === 'all' || row[0].toLowerCase().includes(area)) &&
-      (source === 'all' || row[0].toLowerCase().includes(source)) &&
-      (mode === 'all' || row[0].toLowerCase().includes(mode)),
+      (area === 'all' || row.area === area) &&
+      (source === 'all' || row.source === source) &&
+      (mode === 'all' || row.mode === mode),
   );
+  const loading = authStatus === 'loading' || Boolean(user && history.isPending);
+  const failed = Boolean(user && history.isError);
   return (
     <div className="page">
       <PageHeader
@@ -70,10 +207,10 @@ export function HistoryPage() {
       />
       <div className="summary-line">
         <strong>{visible.length} results</strong>
-        <span>{rows.filter((row) => row[0].toLowerCase().includes('solo')).length} Solo</span>
-        <span>{rows.filter((row) => row[0].toLowerCase().includes('combat')).length} Combat</span>
-        <span>{rows.filter((row) => row[1].toLowerCase() === 'won').length} won</span>
-        <span>{rows.filter((row) => row[1].toLowerCase() === 'lost').length} lost</span>
+        <span>{rows.filter((row) => row.area === 'solo').length} Solo</span>
+        <span>{rows.filter((row) => row.area === 'combat').length} Combat</span>
+        <span>{rows.filter((row) => row.result.toLowerCase() === 'won').length} won</span>
+        <span>{rows.filter((row) => row.result.toLowerCase() === 'lost').length} lost</span>
       </div>
       <div className="filter-ledger">
         <fieldset>
@@ -124,83 +261,170 @@ export function HistoryPage() {
           <span>Context</span>
           <span>Completed</span>
         </div>
-        {visible.map((row, index) => (
-          <div className="history-row" role="row" key={row[0]}>
-            <strong>{row[0]}</strong>
-            <span className={`result-${row[1].toLowerCase()}`}>{row[1]}</span>
-            <span>{row[2]}</span>
-            <span>{row[3]}</span>
-            <time>{row[4] || (index < 3 ? 'Today' : 'Yesterday')}</time>
-          </div>
-        ))}
-        {history.isPending && user ? <p role="status">Loading account-scoped history…</p> : null}
-        {!history.isPending && visible.length === 0 ? (
-          <p className="empty-state">No matching completed games.</p>
-        ) : null}
+        {!loading && !failed
+          ? visible.map((row) => (
+              <div className="history-row" role="row" key={row.id}>
+                <strong>{row.game}</strong>
+                <span className={resultClassName(row.result)}>{row.result}</span>
+                <span>{row.details}</span>
+                <span>{row.context}</span>
+                <time>{row.completedAt}</time>
+              </div>
+            ))
+          : null}
       </div>
+      {loading ? (
+        <p className="support-state" role="status">
+          Loading identity-scoped history…
+        </p>
+      ) : null}
+      {failed ? (
+        <div className="support-state" role="alert">
+          <strong>History could not be loaded.</strong>
+          <span>The current local namespace remains isolated and unchanged.</span>
+          <Button onClick={() => void history.refetch()}>Retry history</Button>
+        </div>
+      ) : null}
+      {!loading && !failed && visible.length === 0 ? (
+        <p className="empty-state">
+          {rows.length === 0
+            ? user
+              ? 'No account history records are available.'
+              : 'No completed Solo sessions exist in this local identity namespace.'
+            : 'No completed records match these filters.'}
+        </p>
+      ) : null}
     </div>
   );
 }
 
 export function StatsPage() {
+  const { client, identity, status: authStatus, user } = useAuth();
   const { progression } = usePlayerState();
+  const repository = useMemo(() => (client ? new AccountRepository(client) : null), [client]);
+  const history = useQuery({
+    queryKey: ['account-history', user?.id],
+    enabled: Boolean(repository && user),
+    queryFn: () => repository!.listHistory(user!.id),
+    staleTime: 10_000,
+    retry: 1,
+  });
+  const localRows = useMemo(
+    () =>
+      authStatus === 'loading'
+        ? []
+        : readLocalSoloProjections(identity)
+            .filter((session) => session.status !== 'playing')
+            .map(localHistoryProjection),
+    [authStatus, identity],
+  );
+  const accountRows = (history.data ?? []).map(accountHistoryProjection);
+  const rows =
+    authStatus === 'loading'
+      ? []
+      : user
+        ? [
+            ...accountRows,
+            ...localRows.filter((local) => !accountRows.some((row) => row.id === local.id)),
+          ]
+        : localRows;
+  const soloRows = rows.filter((row) => row.area === 'solo');
+  const soloWins = soloRows.filter((row) => row.result.toLowerCase() === 'won').length;
+  const soloLosses = soloRows.filter((row) => row.result.toLowerCase() === 'lost').length;
+  const winRate =
+    soloRows.length === 0 ? '—' : `${Math.round((soloWins / soloRows.length) * 100)}%`;
+  const breakdown = [
+    ['OG Daily', 'daily', 'og'],
+    ['OG Practice', 'practice', 'og'],
+    ['GO Daily', 'daily', 'go'],
+    ['GO Practice', 'practice', 'go'],
+  ] as const;
   const level = levelForXp(progression.xp);
+  const loading = authStatus === 'loading' || Boolean(user && history.isPending);
+  const failed = Boolean(user && history.isError);
   return (
     <div className="page">
       <PageHeader
         title="My Stats"
         eyebrow="Private to you"
-        description="Local guest snapshot. Sign in to hydrate an account-scoped view."
+        description={
+          user
+            ? 'Derived from the latest account history projection and account-scoped progression.'
+            : 'Derived only from completed sessions and progression in this local guest namespace.'
+        }
         actions={<ButtonLink to="/leaderboards">Public Leaderboard</ButtonLink>}
       />
       <div className="stats-grid">
         <section>
           <SectionHeading title="Solo performance" />
-          <div className="metric-row">
-            <Metric value="47" label="Games" tone="green" />
-            <Metric value="31" label="Wins" tone="green" />
-            <Metric value="66%" label="Win rate" tone="green" />
-            <Metric value="47" label="History rows" />
-          </div>
-          <RuledList>
-            {[
-              ['OG Daily', '18', '14', '78%'],
-              ['OG Practice', '14', '10', '71%'],
-              ['GO Daily', '8', '5', '63%'],
-              ['GO Practice', '7', '2', '29%'],
-            ].map((row) => (
-              <div className="stat-row" key={row[0]}>
-                <strong>{row[0]}</strong>
-                <span>{row[1]} played</span>
-                <span>{row[2]} wins</span>
-                <span>{row[3]}</span>
+          {loading ? (
+            <p className="support-state" role="status">
+              Loading private statistics…
+            </p>
+          ) : null}
+          {failed ? (
+            <div className="support-state" role="alert">
+              <strong>Statistics could not be loaded.</strong>
+              <Button onClick={() => void history.refetch()}>Retry statistics</Button>
+            </div>
+          ) : null}
+          {!loading && !failed ? (
+            <>
+              <div className="metric-row">
+                <Metric value={String(soloRows.length)} label="Recorded" tone="green" />
+                <Metric value={String(soloWins)} label="Wins" tone="green" />
+                <Metric value={String(soloLosses)} label="Losses" />
+                <Metric value={winRate} label="Win rate" />
               </div>
-            ))}
-          </RuledList>
+              {soloRows.length > 0 ? (
+                <RuledList>
+                  {breakdown.map(([label, source, mode]) => {
+                    const matching = soloRows.filter(
+                      (row) => row.source === source && row.mode === mode,
+                    );
+                    const wins = matching.filter(
+                      (row) => row.result.toLowerCase() === 'won',
+                    ).length;
+                    const losses = matching.filter(
+                      (row) => row.result.toLowerCase() === 'lost',
+                    ).length;
+                    return (
+                      <div className="stat-row" key={label}>
+                        <strong>{label}</strong>
+                        <span>{matching.length} recorded</span>
+                        <span>{wins} wins</span>
+                        <span>{losses} losses</span>
+                      </div>
+                    );
+                  })}
+                </RuledList>
+              ) : (
+                <p className="empty-state">
+                  No completed Solo records are available for statistics.
+                </p>
+              )}
+            </>
+          ) : null}
         </section>
         <section>
           <SectionHeading title="Progression" />
-          <div className="metric-row">
-            <Metric value={String(level.level)} label="Level" tone="green" />
-            <Metric value={String(progression.coins)} label="Coins" tone="green" />
-          </div>
-          <SectionHeading title="Local multiplayer ratings" />
-          <div className="rating-row">
-            <strong>
-              1535<small>Platinum</small>
-            </strong>
-            <span>24 rated</span>
-            <span>15–7–2</span>
-            <span className="result-lost">−13 last</span>
-          </div>
-          <div className="rating-row">
-            <strong>
-              1324<small>Gold</small>
-            </strong>
-            <span>12 rated</span>
-            <span>7–4–1</span>
-            <span className="result-won">+9 last</span>
-          </div>
+          {authStatus === 'loading' ? (
+            <p className="support-state" role="status">
+              Checking progression ownership…
+            </p>
+          ) : (
+            <div className="metric-row">
+              <Metric value={String(level.level)} label="Level" tone="green" />
+              <Metric value={String(progression.xp)} label="XP" tone="green" />
+              <Metric value={String(progression.coins)} label="Coins" tone="green" />
+              <Metric value={String(progression.unlockedDailies.length)} label="Daily unlocks" />
+            </div>
+          )}
+          <SectionHeading title="Multiplayer ratings" />
+          <p className="empty-state">
+            No private rating projection is available on this surface. Eligible public rows appear
+            only on Leaderboards after the ranking authority returns them.
+          </p>
         </section>
       </div>
       <div className="privacy-band">
@@ -213,13 +437,12 @@ export function StatsPage() {
 
 export function LeaderboardsPage() {
   const [bucket, setBucket] = useState('Practice OG');
-  const { client, user } = useAuth();
+  const { client, status: authStatus, user } = useAuth();
   const repository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
   const bucketKey =
     {
       'Practice OG': 'multiplayer:og',
       'Practice GO': 'multiplayer:go',
-      'Timed OG': 'multiplayer:og',
       'Daily OG': 'multiplayer:og:daily:v1',
       'Daily GO': 'multiplayer:go:daily:v1',
     }[bucket] ?? 'multiplayer:og';
@@ -239,7 +462,7 @@ export function LeaderboardsPage() {
         description="Only opted-in public profiles appear."
       />
       <div className="segmented">
-        {['Practice OG', 'Practice GO', 'Timed OG', 'Daily OG', 'Daily GO'].map((value) => (
+        {['Practice OG', 'Practice GO', 'Daily OG', 'Daily GO'].map((value) => (
           <button
             className={bucket === value ? 'is-selected' : ''}
             type="button"
@@ -254,7 +477,11 @@ export function LeaderboardsPage() {
         {rows.map((row) => (
           <div className="leader-row" key={row.public_profile_id}>
             <span>{row.rank}</span>
-            <span className="avatar">{row.display_name.slice(0, 2).toUpperCase()}</span>
+            <PublicAvatar
+              displayName={row.display_name}
+              accent={profileAccent(row.accent_color)}
+              avatarUrl={row.avatar_url}
+            />
             <div>
               <strong>{row.display_name}</strong>
               <small>{row.provisional ? 'Provisional' : 'Established'}</small>
@@ -263,18 +490,19 @@ export function LeaderboardsPage() {
             <ButtonLink to={`/players/${row.public_profile_id}`}>View</ButtonLink>
           </div>
         ))}
-        {leaderboard.isPending ? <p role="status">Loading public ranking…</p> : null}
-        {!user ? (
+        {authStatus === 'loading' ? <p role="status">Checking ranking access…</p> : null}
+        {leaderboard.isPending && user ? <p role="status">Loading public ranking…</p> : null}
+        {leaderboard.isError && user ? (
+          <div className="support-state" role="alert">
+            <strong>Public ranking could not be loaded.</strong>
+            <Button onClick={() => void leaderboard.refetch()}>Retry ranking</Button>
+          </div>
+        ) : null}
+        {!user && authStatus !== 'loading' ? (
           <p className="empty-state">Sign in to view the privacy-filtered ranked projection.</p>
         ) : null}
-        {!leaderboard.isPending && user && rows.length === 0 ? (
-          <p className="empty-state">
-            No opted-in public profiles currently qualify for this bucket
-            {bucket === 'Timed OG'
-              ? '; timed ratings remain separate from the public untimed table'
-              : ''}
-            .
-          </p>
+        {!leaderboard.isPending && !leaderboard.isError && user && rows.length === 0 ? (
+          <p className="empty-state">No opted-in public profiles qualify for this bucket.</p>
         ) : null}
       </RuledList>
     </div>
@@ -282,66 +510,66 @@ export function LeaderboardsPage() {
 }
 
 export function MarketplacePage() {
-  const { client, user } = useAuth();
-  const repository = client ? new EconomyRepository(client) : null;
-  const economy = useQuery({
-    queryKey: ['economy', user?.id],
-    enabled: Boolean(repository && user),
-    queryFn: () => repository!.get(),
-    staleTime: 5_000,
-    retry: 1,
-  });
-  const [guestCoins, setGuestCoins] = useState(import.meta.env.DEV ? 42 : 0);
-  const [guestReveal, setGuestReveal] = useState(import.meta.env.DEV ? 2 : 0);
-  const [guestRemove, setGuestRemove] = useState(import.meta.env.DEV ? 1 : 0);
-  const coins = economy.data?.coins ?? guestCoins;
-  const reveal = economy.data?.revealOneLetter ?? guestReveal;
-  const remove = economy.data?.removeIncorrectLetters ?? guestRemove;
+  const { status: authStatus, user } = useAuth();
+  const { progression, economyPending, purchaseConsumable } = usePlayerState();
+  const coins = authStatus === 'loading' ? undefined : progression.coins;
+  const reveal = progression.consumables?.revealOneLetter ?? 0;
+  const remove = progression.consumables?.removeIncorrectLetters ?? 0;
   const [message, setMessage] = useState(
     'Purchases add inventory and never activate automatically.',
   );
   const buy = async (kind: 'reveal' | 'remove') => {
-    if (!user) {
-      setMessage('Sign in before purchasing account-owned inventory.');
+    const cost = kind === 'reveal' ? 25 : 40;
+    if (economyPending || coins === undefined) {
+      setMessage('Economy authority is not ready. No purchase was attempted.');
       return;
     }
-    const cost = kind === 'reveal' ? 25 : 40;
     if (coins < cost) {
       setMessage(`${cost - coins} more coins required.`);
       return;
     }
-    if (repository && user) {
-      try {
-        await repository.purchase(
-          kind === 'reveal' ? 'revealOneLetter' : 'removeIncorrectLetters',
-          crypto.randomUUID(),
-        );
-        await economy.refetch();
-        setMessage(
-          `${kind === 'reveal' ? 'Reveal One Letter' : 'Remove Incorrect Letters'} added by server authority.`,
-        );
-      } catch (error) {
-        setMessage(
-          error instanceof Error ? error.message : 'Purchase failed without changing inventory.',
-        );
-      }
-      return;
-    }
-    setGuestCoins((v) => v - cost);
-    if (kind === 'reveal') setGuestReveal((v) => v + 1);
-    else setGuestRemove((v) => v + 1);
-    setMessage(
-      `${kind === 'reveal' ? 'Reveal One Letter' : 'Remove Incorrect Letters'} added to guest preview inventory.`,
+    const result = await purchaseConsumable(
+      kind === 'reveal' ? 'revealOneLetter' : 'removeIncorrectLetters',
+      crypto.randomUUID(),
     );
+    if (result.ok) {
+      setMessage(
+        `${kind === 'reveal' ? 'Reveal One Letter' : 'Remove Incorrect Letters'} added to ${user ? 'account' : 'local guest'} inventory.`,
+      );
+    } else {
+      setMessage(
+        result.code === 'insufficient_coins'
+          ? `${cost - coins} more coins required.`
+          : 'Purchase failed without changing inventory.',
+      );
+    }
   };
+  const economyReady = authStatus !== 'loading' && !economyPending;
   return (
     <div className="page">
       <PageHeader
         title="Marketplace"
         eyebrow="Progression"
         description="Buy to inventory · activate only in Solo Practice"
-        actions={<Metric value={coins} label="Coins" tone="amber" />}
+        actions={
+          <Metric
+            value={coins === undefined ? '—' : coins}
+            label={user ? 'Coins' : 'Local coins'}
+            tone="amber"
+          />
+        }
       />
+      {authStatus === 'loading' || economyPending ? (
+        <p className="support-state" role="status">
+          Loading private economy state…
+        </p>
+      ) : null}
+      {!user && authStatus !== 'loading' ? (
+        <p className="neutral-band">
+          Guest coins and inventory remain only in this local namespace. Sign in for private account
+          hydration; guest items never merge implicitly.
+        </p>
+      ) : null}
       <div className="market-grid">
         <section>
           <Icon name="info" />
@@ -357,7 +585,11 @@ export function MarketplacePage() {
             <i />
             <i />
           </div>
-          <Button onClick={() => void buy('reveal')} tone="primary" disabled={!user || coins < 25}>
+          <Button
+            onClick={() => void buy('reveal')}
+            tone="primary"
+            disabled={!economyReady || coins === undefined || coins < 25}
+          >
             Buy 1 · 25 coins
           </Button>
         </section>
@@ -367,7 +599,10 @@ export function MarketplacePage() {
           <StatusDot>Owned {remove}</StatusDot>
           <p>Disables up to five eligible answer-absent keyboard letters.</p>
           <div className="mini-keys">Q W E R T Y U I O P</div>
-          <Button onClick={() => void buy('remove')} disabled={!user || coins < 40}>
+          <Button
+            onClick={() => void buy('remove')}
+            disabled={!economyReady || coins === undefined || coins < 40}
+          >
             Buy 1 · 40 coins
           </Button>
         </section>
@@ -387,10 +622,16 @@ export function MarketplacePage() {
 
 export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
   const { publicProfileId } = useParams();
-  const { client, user } = useAuth();
+  const { client, status: authStatus, user } = useAuth();
+  const queryClient = useQueryClient();
   const repository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
+  const profileQueryKey = [
+    publicView ? 'public-profile' : 'my-public-profile',
+    publicProfileId,
+    user?.id,
+  ] as const;
   const profile = useQuery({
-    queryKey: [publicView ? 'public-profile' : 'my-public-profile', publicProfileId, user?.id],
+    queryKey: profileQueryKey,
     enabled: Boolean(repository && (publicView ? publicProfileId : user)),
     queryFn: () =>
       publicView ? repository!.getProfile(publicProfileId ?? '') : repository!.getMyProfile(),
@@ -402,10 +643,47 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
       ? (profile.data as Record<string, unknown>)
       : {};
   const displayName = String(
-    raw.displayName ?? raw.display_name ?? (import.meta.env.DEV ? 'Dennis Sellers' : 'Player'),
+    raw.displayName ?? raw.display_name ?? (user ? 'Profile not created' : 'Guest player'),
   );
-  const bio = String(raw.bio ?? (import.meta.env.DEV ? 'Five letters. No excuses.' : ''));
+  const bio = String(raw.bio ?? '');
+  const accent = profileAccent(raw.accentColor ?? raw.accent_color);
+  const avatarUrl =
+    typeof (raw.avatarUrl ?? raw.avatar_url) === 'string'
+      ? String(raw.avatarUrl ?? raw.avatar_url)
+      : null;
   const [saveStatus, setSaveStatus] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState<ProfileDraft>(emptyProfileDraft);
+  const [baseline, setBaseline] = useState<ProfileDraft>(emptyProfileDraft);
+
+  useEffect(() => {
+    if (publicView) return;
+    const ownerProjection = profile.data as OwnedPublicProfileProjection | null | undefined;
+    const next = ownerProjection ? profileDraftFromProjection(ownerProjection) : emptyProfileDraft;
+    setDraft(next);
+    setBaseline(next);
+  }, [profile.data, publicView, user?.id]);
+  if ((!publicView && authStatus === 'loading') || (profile.isPending && (publicView || user))) {
+    return (
+      <div className="page page--narrow">
+        <PageHeader title="Profile" eyebrow="Identity" />
+        <p className="support-state" role="status">
+          Loading approved profile fields…
+        </p>
+      </div>
+    );
+  }
+  if (profile.isError && (publicView || user)) {
+    return (
+      <div className="page page--narrow">
+        <PageHeader title="Profile unavailable" eyebrow="Identity" />
+        <div className="support-state" role="alert">
+          <strong>Approved profile fields could not be loaded.</strong>
+          <Button onClick={() => void profile.refetch()}>Retry profile</Button>
+        </div>
+      </div>
+    );
+  }
   if (publicView && !profile.isPending && !profile.data) {
     return (
       <div className="page page--narrow">
@@ -430,9 +708,9 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
         }
       />
       <section className="profile-card">
-        <span className="avatar avatar--xl">{displayName.slice(0, 2).toUpperCase()}</span>
+        <PublicAvatar displayName={displayName} accent={accent} avatarUrl={avatarUrl} size="xl" />
         <div>
-          <h2>{profile.isPending ? 'Loading approved profile…' : displayName}</h2>
+          <h2>{displayName}</h2>
           <p>{bio || 'No public bio.'}</p>
           <StatusDot>
             {publicView ? 'Public projection' : user ? 'Account-scoped editor' : 'Guest preview'}
@@ -451,33 +729,41 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
           </section>
           <section className="lane-panel">
             <h2>Eligible action</h2>
-            <ButtonLink to="/combat/practice">Request private Practice match</ButtonLink>
+            <ButtonLink
+              to={`/combat/practice?target=${encodeURIComponent(String(raw.publicProfileId ?? raw.public_profile_id ?? ''))}`}
+            >
+              Request private Practice match
+            </ButtonLink>
+            <ButtonLink
+              to={`/settings?block=${encodeURIComponent(String(raw.publicProfileId ?? raw.public_profile_id ?? ''))}#alerts`}
+            >
+              Manage private-request block
+            </ButtonLink>
           </section>
         </div>
       ) : (
         <form
           className="profile-form"
-          onSubmit={(event) => {
+          onSubmit={async (event) => {
             event.preventDefault();
             setSaveStatus('');
             if (!repository || !user) {
               setSaveStatus('Sign in before saving an account-owned public projection.');
               return;
             }
-            const form = new FormData(event.currentTarget);
-            void repository
-              .updateMyProfile({
-                displayName: String(form.get('displayName') ?? ''),
-                visibility: form.get('visibility') === 'public' ? 'public' : 'private',
-                accentColor: String(form.get('accent') ?? ''),
-                avatarUrl: String(form.get('avatarUrl') ?? ''),
-                bio: String(form.get('bio') ?? ''),
-              })
-              .then(() => profile.refetch())
-              .then(() => setSaveStatus('Player profile saved by account authority.'))
-              .catch((error: unknown) =>
-                setSaveStatus(error instanceof Error ? error.message : 'Profile save failed.'),
-              );
+            setSaving(true);
+            try {
+              const saved = await repository.updateMyProfile(draft);
+              const savedDraft = profileDraftFromProjection(saved);
+              queryClient.setQueryData(profileQueryKey, saved);
+              setDraft(savedDraft);
+              setBaseline(savedDraft);
+              setSaveStatus('Player profile saved by account authority.');
+            } catch (error: unknown) {
+              setSaveStatus(error instanceof Error ? error.message : 'Profile save failed.');
+            } finally {
+              setSaving(false);
+            }
           }}
         >
           <label>
@@ -485,13 +771,27 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
             <input
               name="displayName"
               maxLength={50}
-              defaultValue={displayName === 'Player' ? '' : displayName}
+              value={draft.displayName}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, displayName: event.target.value }))
+              }
               required
+              disabled={saving}
             />
           </label>
           <label>
             Public visibility
-            <select name="visibility" defaultValue={String(raw.visibility ?? 'private')}>
+            <select
+              name="visibility"
+              value={draft.visibility}
+              onChange={(event) =>
+                setDraft((current) => ({
+                  ...current,
+                  visibility: event.target.value === 'public' ? 'public' : 'private',
+                }))
+              }
+              disabled={saving}
+            >
               <option value="private">Private</option>
               <option value="public">Public</option>
             </select>
@@ -504,7 +804,14 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
                   type="radio"
                   name="accent"
                   value={value.toLowerCase()}
-                  defaultChecked={value === 'Aurora'}
+                  checked={value.toLowerCase() === draft.accentColor}
+                  onChange={() =>
+                    setDraft((current) => ({
+                      ...current,
+                      accentColor: profileAccent(value.toLowerCase()),
+                    }))
+                  }
+                  disabled={saving}
                 />
                 <span>{value}</span>
               </label>
@@ -517,17 +824,34 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
               type="url"
               maxLength={2048}
               placeholder="https://…"
-              defaultValue={String(raw.avatarUrl ?? raw.avatar_url ?? '')}
+              value={draft.avatarUrl}
+              onChange={(event) =>
+                setDraft((current) => ({ ...current, avatarUrl: event.target.value }))
+              }
+              disabled={saving}
             />
           </label>
           <label>
             Public bio
-            <textarea name="bio" maxLength={160} defaultValue={bio} />
+            <textarea
+              name="bio"
+              maxLength={160}
+              value={draft.bio}
+              onChange={(event) => setDraft((current) => ({ ...current, bio: event.target.value }))}
+              disabled={saving}
+            />
           </label>
-          <Button type="submit" tone="primary">
-            Save player profile
+          <Button type="submit" tone="primary" disabled={saving}>
+            {saving ? 'Saving player profile…' : 'Save player profile'}
           </Button>
-          <Button type="reset" onClick={() => setSaveStatus('')}>
+          <Button
+            type="button"
+            disabled={saving}
+            onClick={() => {
+              setDraft(baseline);
+              setSaveStatus('');
+            }}
+          >
             Discard changes
           </Button>
           {saveStatus ? <p role="status">{saveStatus}</p> : null}
@@ -548,9 +872,13 @@ const curatedDefinitions: Readonly<Record<string, string>> = {
   crate: 'A large shipping container.',
 };
 
+const WORD_EXPLORER_PAGE_SIZE = 25;
+
 export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: boolean }) {
   const [query, setQuery] = useState(definitionOnly ? 'crane' : '');
-  const [selected, setSelected] = useState('crane');
+  const [selected, setSelected] = useState(definitionOnly ? 'crane' : '');
+  const [page, setPage] = useState(1);
+  const [copyStatus, setCopyStatus] = useState('');
   const normalizedQuery = query
     .trim()
     .toLowerCase()
@@ -563,22 +891,18 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
   });
-  const filtered = (words.data?.validGuesses ?? [])
-    .filter((word) => !normalizedQuery || word.includes(normalizedQuery))
-    .slice(0, definitionOnly ? 10 : 50);
-  const selectedWord = filtered.includes(selected)
+  const filteredWords = (words.data?.validGuesses ?? []).filter(
+    (word) => !normalizedQuery || word.includes(normalizedQuery),
+  );
+  const pageSize = definitionOnly ? 10 : WORD_EXPLORER_PAGE_SIZE;
+  const pageCount = Math.max(1, Math.ceil(filteredWords.length / pageSize));
+  const visiblePage = Math.min(page, pageCount);
+  const visibleWords = filteredWords.slice((visiblePage - 1) * pageSize, visiblePage * pageSize);
+  const selectedWord = visibleWords.includes(selected)
     ? selected
-    : (filtered[0] ?? (normalizedQuery || 'crane'));
-  const answers = words.data?.answers;
-  const isAnswer = Boolean(answers?.expert.includes(selectedWord));
-  const difficulty = answers?.casual.includes(selectedWord)
-    ? 'Casual'
-    : answers?.standard.includes(selectedWord)
-      ? 'Standard'
-      : isAnswer
-        ? 'Expert'
-        : 'Valid guess only';
-  const definition = curatedDefinitions[selectedWord];
+    : (visibleWords[0] ?? normalizedQuery);
+  const isValidGuess = Boolean(selectedWord && words.data?.validGuesses.includes(selectedWord));
+  const definition = selectedWord ? curatedDefinitions[selectedWord] : undefined;
   return (
     <div className="page">
       <PageHeader
@@ -588,88 +912,185 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
       />
       <div className="explorer-layout">
         <section>
-          <label className="search-control">
-            <Icon name="search" />
-            <span className="sr-only">Search words</span>
-            <input
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Search words"
-            />
-          </label>
-          <p>
-            {words.isPending ? 'Loading' : filtered.length} visible · {length}-letter bundled data
-          </p>
+          <div className="word-search">
+            <label className="search-control">
+              <Icon name="search" />
+              <span className="sr-only">Search words</span>
+              <input
+                value={query}
+                onChange={(event) => {
+                  setQuery(event.target.value);
+                  setSelected('');
+                  setPage(1);
+                  setCopyStatus('');
+                }}
+                placeholder="Search words"
+              />
+            </label>
+            <p className="search-metadata" aria-live="polite">
+              {words.isPending
+                ? `Loading ${length}-letter word data…`
+                : words.isError
+                  ? `${length}-letter word data unavailable`
+                  : `${filteredWords.length} matching valid ${filteredWords.length === 1 ? 'word' : 'words'} · page ${visiblePage} of ${pageCount}`}
+            </p>
+          </div>
           <RuledList>
-            {filtered.map((word) => (
-              <button
-                type="button"
-                key={word}
-                className={`word-row ${selectedWord === word ? 'is-selected' : ''}`}
-                onClick={() => setSelected(word)}
-              >
-                <strong>{word.toUpperCase()}</strong>
+            {words.isPending ? (
+              <p className="support-state" role="status">
+                Loading sanctioned valid guesses…
+              </p>
+            ) : null}
+            {words.isError ? (
+              <div className="support-state" role="alert">
+                <strong>Word data could not be loaded.</strong>
                 <span>
-                  {answers?.expert.includes(word) ? 'Answer & valid guess' : 'Valid guess'}
+                  Active answers were not exposed and no fallback was presented as current data.
                 </span>
-                <small>
-                  {answers?.casual.includes(word)
-                    ? 'Casual'
-                    : answers?.standard.includes(word)
-                      ? 'Standard'
-                      : 'Expert'}
-                </small>
-              </button>
-            ))}
-            {!words.isPending && filtered.length === 0 ? (
-              <p className="empty-state">No exact-length word matched.</p>
+                <Button onClick={() => void words.refetch()}>Retry word data</Button>
+              </div>
+            ) : null}
+            {!words.isPending && !words.isError
+              ? visibleWords.map((word) => (
+                  <button
+                    type="button"
+                    key={word}
+                    className={`word-row ${selectedWord === word ? 'is-selected' : ''}`}
+                    onClick={() => {
+                      setSelected(word);
+                      setCopyStatus('');
+                    }}
+                  >
+                    <strong>{word.toUpperCase()}</strong>
+                    <span>Valid game word</span>
+                    <small>{word.length} letters</small>
+                  </button>
+                ))
+              : null}
+            {!words.isPending && !words.isError && filteredWords.length === 0 ? (
+              <p className="empty-state">No sanctioned valid guess matched this search.</p>
             ) : null}
           </RuledList>
+          {!words.isPending && !words.isError && filteredWords.length > pageSize ? (
+            <nav className="word-pagination" aria-label="Word results pages">
+              <Button
+                disabled={visiblePage === 1}
+                onClick={() => {
+                  setSelected('');
+                  setPage((current) => Math.max(1, current - 1));
+                  setCopyStatus('');
+                }}
+              >
+                Previous
+              </Button>
+              <span>
+                Page {visiblePage} of {pageCount}
+              </span>
+              <Button
+                disabled={visiblePage === pageCount}
+                onClick={() => {
+                  setSelected('');
+                  setPage((current) => Math.min(pageCount, current + 1));
+                  setCopyStatus('');
+                }}
+              >
+                Next
+              </Button>
+            </nav>
+          ) : null}
         </section>
         <section className="definition-panel">
-          <h2>{selectedWord.toUpperCase()}</h2>
-          <p>
-            {selectedWord.length} letters · {isAnswer ? 'Answer & valid guess' : 'Valid guess'} ·{' '}
-            {difficulty}
-          </p>
-          <hr />
-          <h3>Definitions</h3>
-          <StatusDot tone="ice">
-            Source: {definition ? 'bundled curated metadata' : 'fallback required'}
-          </StatusDot>
-          {definition ? (
-            <p className="definition-copy">{definition}</p>
-          ) : (
-            <p className="definition-copy">
-              No bundled definition is available. Use the explicit search fallback below.
-            </p>
-          )}
-          <Button onClick={() => void navigator.clipboard?.writeText(selectedWord)}>
-            Copy word
-          </Button>
-          <a
-            className="button button--secondary"
-            href={`https://www.google.com/search?q=define+${encodeURIComponent(selectedWord)}`}
-            target="_blank"
-            rel="noreferrer"
-          >
-            <Icon name="external" /> Search Google for “{selectedWord}”
-          </a>
+          {words.isPending ? <p className="support-state">Word details are loading.</p> : null}
+          {words.isError ? <p className="support-state">Word details are unavailable.</p> : null}
+          {!words.isPending && !words.isError && selectedWord ? (
+            <>
+              <h2>{selectedWord.toUpperCase()}</h2>
+              <p>
+                {selectedWord.length} letters ·{' '}
+                {isValidGuess ? 'Sanctioned valid guess' : 'No sanctioned valid-guess match'}
+              </p>
+              <hr />
+              <h3>Definitions</h3>
+              <StatusDot tone="ice">
+                Source: {definition ? 'bundled curated metadata' : 'fallback required'}
+              </StatusDot>
+              {definition ? (
+                <p className="definition-copy">{definition}</p>
+              ) : (
+                <p className="definition-copy">
+                  No bundled definition is available. Use the explicit search fallback below.
+                </p>
+              )}
+              <div className="word-actions">
+                <Button
+                  onClick={() => {
+                    if (!navigator.clipboard) {
+                      setCopyStatus('Clipboard access is unavailable. Select the word manually.');
+                      return;
+                    }
+                    void navigator.clipboard
+                      .writeText(selectedWord)
+                      .then(() => setCopyStatus(`${selectedWord.toUpperCase()} copied.`))
+                      .catch(() => setCopyStatus('Copy failed. Select the word manually.'));
+                  }}
+                >
+                  Copy word
+                </Button>
+                <a
+                  className="button button--secondary"
+                  href={`https://www.google.com/search?q=define+${encodeURIComponent(selectedWord)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <Icon name="external" /> Search Google{' '}
+                  <span className="word-action-query">for “{selectedWord}”</span>
+                </a>
+              </div>
+              {copyStatus ? <p role="status">{copyStatus}</p> : null}
+            </>
+          ) : null}
+          {!words.isPending && !words.isError && !selectedWord ? (
+            <p className="empty-state">Select a valid word to inspect its available definition.</p>
+          ) : null}
         </section>
       </div>
       <p className="privacy-band">
-        <Icon name="lock" /> Active answers are never exposed.
+        <Icon name="lock" /> This surface reports valid-guess membership only. Answer-pool and
+        active-answer membership are never identified.
       </p>
     </div>
   );
 }
 
 export function SettingsPage() {
-  const { client, user } = useAuth();
+  const location = useLocation();
+  const { client, identity, user } = useAuth();
+  const repository = useMemo(() => (client ? new AccountRepository(client) : null), [client]);
+  const accountSettings = useQuery({
+    queryKey: ['account-settings', user?.id],
+    enabled: Boolean(repository && user),
+    queryFn: () => repository!.loadSettings(user!.id),
+    staleTime: 10_000,
+    retry: 1,
+  });
+  if (user && accountSettings.isPending) {
+    return (
+      <div className="page page--narrow">
+        <PageHeader title="Settings" eyebrow="Player system" />
+        <p className="support-state" role="status">
+          Hydrating private account settings…
+        </p>
+      </div>
+    );
+  }
   return (
     <SettingsForm
-      key={user?.id ?? 'guest'}
+      key={`${user?.id ?? 'guest'}:${accountSettings.data ? 'cloud' : 'local'}`}
       client={client}
+      identity={identity}
+      accountSettings={accountSettings.data}
+      accountSettingsError={accountSettings.isError}
+      blockTarget={(new URLSearchParams(location.search).get('block') ?? '').toLowerCase()}
       {...(user ? { userId: user.id } : {})}
     />
   );
@@ -677,33 +1098,73 @@ export function SettingsPage() {
 
 function SettingsForm({
   client,
+  identity,
   userId,
+  accountSettings,
+  accountSettingsError,
+  blockTarget,
 }: {
   client: ReturnType<typeof useAuth>['client'];
+  identity: IdentityScope;
   userId?: string;
+  accountSettings?: Json | null | undefined;
+  accountSettingsError: boolean;
+  blockTarget: string;
 }) {
-  const storageKey = `amordle:settings:${userId ? `account:${encodeURIComponent(userId)}` : 'guest'}`;
   const initial = useMemo(() => {
-    try {
-      const parsed = JSON.parse(localStorage.getItem(storageKey) ?? '{}') as Record<
-        string,
-        unknown
-      >;
-      return parsed;
-    } catch {
-      return {};
-    }
-  }, [storageKey]);
-  const [difficulty, setDifficulty] = useState(String(initial.difficulty ?? 'Expert'));
-  const [chain, setChain] = useState(Number(initial.chain ?? 5));
-  const [hard, setHard] = useState(Boolean(initial.hard));
-  const [sound, setSound] = useState(Boolean(initial.sound));
-  const [motion, setMotion] = useState(Boolean(initial.motion));
+    const local = loadPlayerSettings(
+      identity,
+      typeof localStorage === 'undefined' ? undefined : localStorage,
+    );
+    return mergePlayerSettings(accountSettings, local.settings);
+  }, [accountSettings, identity]);
+  const [difficulty, setDifficulty] = useState(initial.difficulty);
+  const [chain, setChain] = useState(initial.chain);
+  const [hard, setHard] = useState(initial.hard);
+  const [sound, setSound] = useState(initial.sound);
+  const [motion, setMotion] = useState(initial.motion);
+  const [notifications, setNotifications] = useState(initial.notifications);
   const [saveStatus, setSaveStatus] = useState('');
+  const [resetOpen, setResetOpen] = useState(false);
+  const privateRepository = useMemo(
+    () => (client && userId ? new PrivateRequestRepository(client) : null),
+    [client, userId],
+  );
+  const privatePreference = useQuery({
+    queryKey: ['private-request-preference', userId],
+    enabled: Boolean(privateRepository),
+    queryFn: () => privateRepository!.preference(),
+    staleTime: 10_000,
+    retry: 1,
+  });
+  const blocks = useQuery({
+    queryKey: ['private-request-blocks', userId],
+    enabled: Boolean(privateRepository),
+    queryFn: () => privateRepository!.blocks(),
+    staleTime: 10_000,
+    retry: 1,
+  });
+  const publicRepository = useMemo(
+    () => (client && userId ? new PublicRepository(client) : null),
+    [client, userId],
+  );
+  const blockTargetProfile = useQuery({
+    queryKey: ['settings-block-target', blockTarget],
+    enabled: Boolean(
+      publicRepository &&
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/u.test(
+        blockTarget,
+      ),
+    ),
+    queryFn: () => publicRepository!.getProfile(blockTarget),
+    staleTime: 30_000,
+    retry: 1,
+  });
   const save = async () => {
-    const settings = { difficulty, chain, hard, sound, motion };
+    const settings = { difficulty, chain, hard, sound, motion, notifications };
     try {
-      localStorage.setItem(storageKey, JSON.stringify(settings));
+      const local = updatePlayerSettings(identity, settings, localStorage);
+      if (!local.ok) throw new Error('Versioned local settings could not be saved.');
       if (client && userId) {
         await new AccountRepository(client).saveSettings(
           userId,
@@ -727,6 +1188,12 @@ function SettingsForm({
         eyebrow="Player system"
         description="Customize your defaults, feedback, and account behavior."
       />
+      {accountSettingsError ? (
+        <p className="support-state" role="alert">
+          Account settings could not be loaded. Local settings remain visible and no cloud value was
+          overwritten.
+        </p>
+      ) : null}
       <div className="settings-layout">
         <nav className="settings-index" aria-label="Settings categories">
           <a href="#gameplay">Gameplay</a>
@@ -742,7 +1209,7 @@ function SettingsForm({
               description="Difficulty changes answer selection, never allowed guesses."
             >
               <div className="segmented">
-                {['Casual', 'Standard', 'Expert'].map((value) => (
+                {(['Casual', 'Standard', 'Expert'] as const).map((value) => (
                   <button
                     type="button"
                     className={difficulty === value ? 'is-selected' : ''}
@@ -759,7 +1226,7 @@ function SettingsForm({
               description="Number of puzzles in each new Practice chain."
             >
               <div className="segmented">
-                {[5, 7, 10].map((value) => (
+                {([5, 7, 10] as const).map((value) => (
                   <button
                     type="button"
                     className={chain === value ? 'is-selected' : ''}
@@ -788,7 +1255,10 @@ function SettingsForm({
                 <input
                   type="checkbox"
                   checked={sound}
-                  onChange={(e) => setSound(e.target.checked)}
+                  onChange={(event) => {
+                    setSound(event.target.checked);
+                    writeSoundEnabled(identity, event.target.checked, localStorage);
+                  }}
                 />
                 <span>{sound ? 'On' : 'Off'}</span>
               </label>
@@ -807,17 +1277,165 @@ function SettingsForm({
               </label>
             </SettingGroup>
           </section>
-          <Disclosure label="Alerts" meta="In-app · important sounds">
+          <section id="alerts">
+            <SectionHeading title="Alerts & private requests" />
+            <SettingGroup
+              label="In-app notifications"
+              description="Status and navigation equivalents remain available when sound is off."
+            >
+              <label className="switch">
+                <input
+                  type="checkbox"
+                  checked={notifications}
+                  onChange={(event) => setNotifications(event.target.checked)}
+                />
+                <span>{notifications ? 'On' : 'Off'}</span>
+              </label>
+            </SettingGroup>
+            {userId ? (
+              <>
+                <SettingGroup
+                  label="Private Practice requests"
+                  description="Server-owned preference; blocks always take precedence."
+                >
+                  <Button
+                    disabled={privatePreference.isPending || !privateRepository}
+                    onClick={() => {
+                      if (!privateRepository) return;
+                      const next = !(
+                        privatePreference.data?.accept_private_practice_requests ?? true
+                      );
+                      void privateRepository
+                        .updatePreference(next)
+                        .then(() => privatePreference.refetch())
+                        .then(() => setSaveStatus('Private-request preference updated.'))
+                        .catch((error: unknown) =>
+                          setSaveStatus(
+                            error instanceof Error
+                              ? error.message
+                              : 'Private-request preference failed.',
+                          ),
+                        );
+                    }}
+                  >
+                    {(privatePreference.data?.accept_private_practice_requests ?? true)
+                      ? 'Accepting requests'
+                      : 'Requests paused'}
+                  </Button>
+                </SettingGroup>
+                <div className="setting-group setting-group--stacked">
+                  <div>
+                    <h3>Blocked public players</h3>
+                    <p>Choose players from sanctioned public profile cards.</p>
+                  </div>
+                  {blockTargetProfile.isPending && blockTarget ? (
+                    <p role="status">Loading the selected public player…</p>
+                  ) : null}
+                  {blockTargetProfile.data ? (
+                    <div className="button-row">
+                      <strong>{blockTargetProfile.data.displayName ?? 'Public player'}</strong>
+                      <Button
+                        disabled={!privateRepository || blocks.isPending}
+                        onClick={() => {
+                          if (!privateRepository) return;
+                          void privateRepository
+                            .setBlock(blockTargetProfile.data!.publicProfileId, true)
+                            .then(() => blocks.refetch())
+                            .then(() =>
+                              setSaveStatus('Player added to the private-request block list.'),
+                            )
+                            .catch((error: unknown) =>
+                              setSaveStatus(
+                                error instanceof Error ? error.message : 'Block update failed.',
+                              ),
+                            );
+                        }}
+                      >
+                        Block player
+                      </Button>
+                    </div>
+                  ) : (
+                    <ButtonLink to="/leaderboards">Choose a public player</ButtonLink>
+                  )}
+                  {blocks.data?.length ? (
+                    <ul className="legend-list" aria-label="Blocked players">
+                      {blocks.data.map((block) => (
+                        <li key={block.public_profile_id}>
+                          <span>{block.display_name}</span>
+                          <Button
+                            onClick={() => {
+                              if (!privateRepository) return;
+                              void privateRepository
+                                .setBlock(block.public_profile_id, false)
+                                .then(() => blocks.refetch());
+                            }}
+                          >
+                            Unblock
+                          </Button>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <p className="empty-state">No public players are blocked.</p>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="neutral-band">
+                Sign in to manage server-owned private-request preferences and blocks.
+              </p>
+            )}
+          </section>
+          <Disclosure
+            label="Account & local data"
+            meta={userId ? 'Account-scoped' : 'Guest · local'}
+          >
             <p>
-              Notification sounds, browser permission, and private-request events remain
-              independently controlled.
+              Reset removes only this identity namespace from this browser. It never deletes the
+              account, another account’s data, or server history.
             </p>
-          </Disclosure>
-          <Disclosure label="Account" meta="Guest · local">
-            <p>
-              Sync, export, reset, and profile controls stay account-scoped and require confirmation
-              where destructive.
-            </p>
+            <Button tone="danger" onClick={() => setResetOpen(true)}>
+              Reset this browser namespace
+            </Button>
+            {resetOpen ? (
+              <div className="confirmation-bar" role="alertdialog" aria-label="Confirm local reset">
+                <p>
+                  Remove this identity’s local sessions, history, settings, progression,
+                  continuation and consumable operations, and notifications?
+                </p>
+                <Button
+                  tone="danger"
+                  onClick={() => {
+                    const suffix = `:${ownerStorageSegment(identity)}`;
+                    const prefixes = [
+                      'amordle:solo:',
+                      'amordle:solo-history:',
+                      'amordle:solo-completion:',
+                      'amordle:solo-continuation:',
+                      'amordle:solo-consumable:',
+                      'amordle:notifications:',
+                      'amordle:progression:',
+                      'amordle:practice-generation:',
+                      'amordle:settings:',
+                    ];
+                    const exactKeys = Array.from({ length: localStorage.length }, (_, index) =>
+                      localStorage.key(index),
+                    ).filter((key): key is string =>
+                      Boolean(
+                        key &&
+                        key.endsWith(suffix) &&
+                        prefixes.some((prefix) => key.startsWith(prefix)),
+                      ),
+                    );
+                    for (const key of exactKeys) localStorage.removeItem(key);
+                    window.location.assign('/');
+                  }}
+                >
+                  Confirm local reset
+                </Button>
+                <Button onClick={() => setResetOpen(false)}>Cancel</Button>
+              </div>
+            ) : null}
           </Disclosure>
           <div className="button-row">
             <Button tone="primary" onClick={() => void save()}>
@@ -851,7 +1469,7 @@ function SettingGroup({
 }
 
 export function HelpPage() {
-  const [step, setStep] = useState(2);
+  const [step, setStep] = useState(0);
   const steps = ['Welcome', 'Choose a path', 'Read the board', 'Play & score', 'Next steps'];
   return (
     <div className="page">
@@ -871,6 +1489,21 @@ export function HelpPage() {
       </ol>
       <section className="lesson">
         <h2>{steps[step]}</h2>
+        {step === 0 ? (
+          <p>
+            amordle has two word formats: OG is one puzzle and GO is a linked sequence that carries
+            prior solved-word evidence forward.
+          </p>
+        ) : null}
+        {step === 1 ? (
+          <div className="prose">
+            <p>Solo Practice is configurable and remains available to guests on this device.</p>
+            <p>
+              Solo Daily follows the local calendar day. Daily COMBAT follows UTC and requires
+              authenticated server authority.
+            </p>
+          </div>
+        ) : null}
         {step === 2 ? (
           <>
             <p>Each guess provides clues. Tile and keyboard states always include text meaning.</p>
@@ -896,17 +1529,36 @@ export function HelpPage() {
               </div>
             </div>
           </>
-        ) : (
-          <p>
-            {step === 0
-              ? 'Learn the two formats and choose a route.'
-              : step === 1
-                ? 'Play Solo locally or enter authenticated COMBAT.'
-                : step === 3
-                  ? 'Submit valid guesses, earn evidence, and read the exact result.'
-                  : 'Continue into Daily, Practice, History, and Stats.'}
-          </p>
-        )}
+        ) : null}
+        {step === 3 ? (
+          <div className="prose">
+            <p>
+              Enter submits a valid guess; Backspace or Delete removes an editable letter. Correct
+              evidence outranks present, which outranks absent.
+            </p>
+            <p>
+              In COMBAT, absent tiles score 0, present tiles 2, and correct tiles 5. Solving adds
+              100, unused attempts add 10 each, and a Hard Mode solve adds 15.
+            </p>
+            <p>
+              Elo changes only after eligible ranked server settlement. Live points, result points,
+              rating, turn, and clock are separate signals.
+            </p>
+          </div>
+        ) : null}
+        {step === 4 ? (
+          <div className="prose">
+            <p>
+              Use Daily for date-bound play, History for accepted result records, Stats for
+              available identity-scoped summaries, and Active Games to re-enter participant-owned
+              COMBAT.
+            </p>
+            <p>
+              Guest progress stays local. Public profiles are opt-in projections; answers, raw auth
+              identifiers, private matches, and account data remain protected.
+            </p>
+          </div>
+        ) : null}
       </section>
       <div className="button-row tutorial-actions">
         <Button disabled={step === 0} onClick={() => setStep((v) => Math.max(0, v - 1))}>
@@ -926,6 +1578,12 @@ export function HelpPage() {
           OG is one word. GO is a linked chain. Daily is deterministic; Practice is configurable.
         </p>
       </Disclosure>
+      <Disclosure label="Recovery & accessibility" meta="Keyboard, sound, offline">
+        <p>
+          Tile meaning never depends on color alone. Sound is optional, reduced motion is respected,
+          and saved local Solo Practice remains available when network authority is unavailable.
+        </p>
+      </Disclosure>
       <Disclosure label="More help" meta="Feedback, About">
         <div className="button-row">
           <ButtonLink to="/feedback">Feedback</ButtonLink>
@@ -936,11 +1594,25 @@ export function HelpPage() {
   );
 }
 
+function sanitizeIssueText(value: string): string {
+  return Array.from(value.replace(/\r\n?/g, '\n'))
+    .filter((character) => {
+      const codePoint = character.codePointAt(0) ?? 0;
+      return codePoint === 9 || codePoint === 10 || (codePoint >= 32 && codePoint !== 127);
+    })
+    .join('')
+    .trim()
+    .slice(0, 4_000);
+}
+
 export function FeedbackPage() {
   const [kind, setKind] = useState('Bug');
   const [message, setMessage] = useState('');
-  const [preview, setPreview] = useState(false);
-  const body = `## ${kind}\n\n${message.trim()}\n\nNo private account or game state was attached.`;
+  const [previewBody, setPreviewBody] = useState<string | null>(null);
+  const [copyStatus, setCopyStatus] = useState('');
+  const [handoffError, setHandoffError] = useState('');
+  const sanitizedMessage = sanitizeIssueText(message);
+  const body = `## ${kind}\n\n${sanitizedMessage}\n\nNo private account or game state was attached.`;
   return (
     <div className="page page--narrow">
       <PageHeader
@@ -951,13 +1623,27 @@ export function FeedbackPage() {
       <form
         onSubmit={(e) => {
           e.preventDefault();
-          setPreview(true);
+          setCopyStatus('');
+          if (sanitizedMessage.length < 10) {
+            setPreviewBody(null);
+            setHandoffError('Enter at least 10 visible characters after privacy sanitization.');
+            return;
+          }
+          setHandoffError('');
+          setPreviewBody(body);
         }}
         className="feedback-form"
       >
         <label>
           Feedback type
-          <select value={kind} onChange={(e) => setKind(e.target.value)}>
+          <select
+            value={kind}
+            onChange={(e) => {
+              setKind(e.target.value);
+              setPreviewBody(null);
+              setCopyStatus('');
+            }}
+          >
             <option>Bug</option>
             <option>Feature request</option>
             <option>Accessibility</option>
@@ -968,28 +1654,49 @@ export function FeedbackPage() {
           <textarea
             required
             minLength={10}
+            maxLength={4_000}
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={(e) => {
+              setMessage(e.target.value);
+              setPreviewBody(null);
+              setCopyStatus('');
+              setHandoffError('');
+            }}
             placeholder="Describe the issue without personal information."
           />
         </label>
         <Button tone="primary" type="submit">
           Review handoff
         </Button>
+        {handoffError ? <p role="alert">{handoffError}</p> : null}
       </form>
-      {preview ? (
+      {previewBody ? (
         <section className="issue-preview">
           <h2>Issue preview</h2>
-          <pre>{body}</pre>
-          <Button onClick={() => void navigator.clipboard?.writeText(body)}>Copy issue text</Button>
+          <pre>{previewBody}</pre>
+          <Button
+            onClick={() => {
+              if (!navigator.clipboard) {
+                setCopyStatus('Clipboard access is unavailable. Select the preview text manually.');
+                return;
+              }
+              void navigator.clipboard
+                .writeText(previewBody)
+                .then(() => setCopyStatus('Issue text copied.'))
+                .catch(() => setCopyStatus('Copy failed. Select the preview text manually.'));
+            }}
+          >
+            Copy issue text
+          </Button>
           <a
             className="button button--secondary"
             target="_blank"
             rel="noreferrer"
-            href={`https://github.com/ryanjosephkamp/amordle/issues/new?body=${encodeURIComponent(body)}`}
+            href={`https://github.com/ryanjosephkamp/amordle/issues/new?body=${encodeURIComponent(previewBody)}`}
           >
             Open GitHub issue <Icon name="external" />
           </a>
+          {copyStatus ? <p role="status">{copyStatus}</p> : null}
         </section>
       ) : null}
     </div>
@@ -1020,7 +1727,10 @@ export function AboutPage() {
           before use. The application uses self-hosted open fonts and original atmospheric artwork.
         </p>
         <h2>Release</h2>
-        <p>Greenfield private release candidate · production promotion pending separate review.</p>
+        <p>
+          Greenfield implementation in progress. This surface does not claim production promotion or
+          release-candidate acceptance.
+        </p>
       </section>
     </div>
   );
@@ -1038,6 +1748,9 @@ export function AuthPage() {
   const [status, setStatus] = useState('');
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
+  const requestedReturn = new URLSearchParams(location.search).get('returnTo');
+  const returnTo =
+    requestedReturn?.startsWith('/') && !requestedReturn.startsWith('//') ? requestedReturn : '/';
   const title = callback
     ? 'Account callback'
     : passwordUpdate
@@ -1060,7 +1773,10 @@ export function AuthPage() {
             Session verified. Account-owned data will use its isolated namespace.
           </div>
         ) : null}
-        <Button tone="primary" onClick={() => navigate(user ? '/' : '/auth', { replace: true })}>
+        <Button
+          tone="primary"
+          onClick={() => navigate(user ? returnTo : '/auth', { replace: true })}
+        >
           {user ? 'Continue to Amordle' : 'Return to sign in'}
         </Button>
       </div>
@@ -1113,7 +1829,7 @@ export function AuthPage() {
                 setStatus('Password updated. Your account session remains isolated and active.');
               })
             : mode === 'signin'
-              ? service.signIn(email, password).then(() => navigate('/', { replace: true }))
+              ? service.signIn(email, password).then(() => navigate(returnTo, { replace: true }))
               : mode === 'signup'
                 ? service.signUp(email, password).then((session) => {
                     setStatus(

@@ -4,6 +4,16 @@ export const MAX_WORD_LENGTH = 35;
 export type WordLength = number;
 export type Difficulty = 'casual' | 'standard' | 'expert';
 
+export const CASUAL_ANSWER_FRACTION = 0.35;
+export const STANDARD_ANSWER_FRACTION = 0.7;
+
+export const WORD_QUALITY_WEIGHTS = {
+  frequency: 0.45,
+  positional: 0.3,
+  vowelBalance: 0.15,
+  uniqueness: 0.1,
+} as const;
+
 export interface WordDefinition {
   readonly partOfSpeech?: string;
   readonly text: string;
@@ -54,6 +64,149 @@ export function normalizeWord(value: string): string {
 
 export function isAcceptedAlphabeticWord(value: string): boolean {
   return /^[a-z]+$/.test(value);
+}
+
+const VOWELS = new Set(['a', 'e', 'i', 'o', 'u']);
+const TARGET_VOWEL_RATIO = 0.4;
+
+interface FrequencyModel {
+  readonly overall: ReadonlyMap<string, number>;
+  readonly positional: readonly ReadonlyMap<string, number>[];
+}
+
+export interface WordQualityScore {
+  readonly word: string;
+  readonly score: number;
+}
+
+function buildFrequencyModel(words: readonly string[], wordLength: number): FrequencyModel {
+  const overallCounts = new Map<string, number>();
+  const positionalCounts: Map<string, number>[] = Array.from(
+    { length: wordLength },
+    () => new Map(),
+  );
+  let totalLetters = 0;
+  for (const word of words) {
+    for (let position = 0; position < word.length; position += 1) {
+      const letter = word[position];
+      if (letter === undefined) continue;
+      overallCounts.set(letter, (overallCounts.get(letter) ?? 0) + 1);
+      const positionMap = positionalCounts[position];
+      positionMap?.set(letter, (positionMap.get(letter) ?? 0) + 1);
+      totalLetters += 1;
+    }
+  }
+  const overall = new Map<string, number>();
+  for (const [letter, count] of overallCounts) overall.set(letter, count / totalLetters);
+  return {
+    overall,
+    positional: positionalCounts.map((counts) => {
+      const probabilities = new Map<string, number>();
+      for (const [letter, count] of counts) probabilities.set(letter, count / words.length);
+      return probabilities;
+    }),
+  };
+}
+
+function minMaxNormalize(values: readonly number[]): readonly number[] {
+  const minimum = Math.min(...values);
+  const maximum = Math.max(...values);
+  const range = maximum - minimum;
+  if (!Number.isFinite(range) || range === 0) return values.map(() => 0);
+  return values.map((value) => (value - minimum) / range);
+}
+
+/**
+ * Deterministically quality-ranks one retained answer catalog. The weighting is
+ * the source-authorized in-repository model; it never changes valid guesses or
+ * imports external frequency data.
+ */
+export function scoreWordsByQuality(
+  rawWords: readonly string[],
+  rawWordLength?: number,
+): readonly WordQualityScore[] {
+  const words = [...new Set(rawWords.map(normalizeWord))];
+  if (words.length === 0) return [];
+  const wordLength = assertWordLength(rawWordLength ?? words[0]?.length ?? 0);
+  if (words.some((word) => !isAcceptedAlphabeticWord(word) || word.length !== wordLength)) {
+    throw new WordListValidationError('Quality ranking requires one valid word length.');
+  }
+  const model = buildFrequencyModel(words, wordLength);
+  const rawFrequency = words.map(
+    (word) =>
+      [...word].reduce((sum, letter) => sum + (model.overall.get(letter) ?? 0), 0) / word.length,
+  );
+  const rawPositional = words.map(
+    (word) =>
+      [...word].reduce(
+        (sum, letter, position) => sum + (model.positional[position]?.get(letter) ?? 0),
+        0,
+      ) / word.length,
+  );
+  const frequency = minMaxNormalize(rawFrequency);
+  const positional = minMaxNormalize(rawPositional);
+  return words
+    .map((word, index) => {
+      const vowelRatio = [...word].filter((letter) => VOWELS.has(letter)).length / word.length;
+      const maxVowelDistance = Math.max(TARGET_VOWEL_RATIO, 1 - TARGET_VOWEL_RATIO);
+      const vowelBalance = 1 - Math.abs(vowelRatio - TARGET_VOWEL_RATIO) / maxVowelDistance;
+      const uniqueness = new Set(word).size / word.length;
+      return {
+        word,
+        score:
+          WORD_QUALITY_WEIGHTS.frequency * (frequency[index] ?? 0) +
+          WORD_QUALITY_WEIGHTS.positional * (positional[index] ?? 0) +
+          WORD_QUALITY_WEIGHTS.vowelBalance * vowelBalance +
+          WORD_QUALITY_WEIGHTS.uniqueness * uniqueness,
+      };
+    })
+    .sort(
+      (left, right) =>
+        right.score - left.score || (left.word < right.word ? -1 : left.word > right.word ? 1 : 0),
+    );
+}
+
+/** Select quality-ranked nested pools while preserving the retained catalog order. */
+export function partitionAnswerPools(
+  rawAnswers: readonly string[],
+): Readonly<Record<Difficulty, readonly string[]>> {
+  const answers = [...new Set(rawAnswers.map(normalizeWord))];
+  if (answers.length === 0) throw new WordListValidationError('Expert answers cannot be empty.');
+  const wordLength = assertWordLength(answers[0]?.length ?? 0);
+  const ordered = scoreWordsByQuality(answers, wordLength).map(({ word }) => word);
+  const casualCount = Math.max(1, Math.ceil(answers.length * CASUAL_ANSWER_FRACTION));
+  const standardCount = Math.max(casualCount, Math.ceil(answers.length * STANDARD_ANSWER_FRACTION));
+  const casualSet = new Set(ordered.slice(0, casualCount));
+  const standardSet = new Set(ordered.slice(0, standardCount));
+  return {
+    casual: answers.filter((word) => casualSet.has(word)),
+    standard: answers.filter((word) => standardSet.has(word)),
+    expert: answers,
+  };
+}
+
+const MILLISECONDS_PER_DAY = 86_400_000;
+
+export function dailyAnswerIndex(dateKey: string, answerCount: number): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || !Number.isInteger(answerCount) || answerCount < 1) {
+    throw new RangeError('Daily selection requires a date key and at least one answer.');
+  }
+  const day = Date.parse(`${dateKey}T00:00:00.000Z`) / MILLISECONDS_PER_DAY;
+  if (
+    !Number.isInteger(day) ||
+    new Date(day * MILLISECONDS_PER_DAY).toISOString().slice(0, 10) !== dateKey
+  ) {
+    throw new RangeError('Daily selection requires a valid date key.');
+  }
+  return ((day % answerCount) + answerCount) % answerCount;
+}
+
+/** Selects the canonical OG answer without reordering the authoritative catalog. */
+export function selectDailyOgAnswer(catalog: readonly string[], dateKey: string): string {
+  if (catalog.length === 0) throw new RangeError('Daily OG requires at least one answer.');
+  const answer = catalog[dailyAnswerIndex(dateKey, catalog.length)];
+  if (answer === undefined) throw new RangeError('Daily OG answer selection failed.');
+  return answer;
 }
 
 function normalizeWords(

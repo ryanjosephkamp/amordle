@@ -21,23 +21,50 @@ export interface CompletionReward {
   readonly coins: number;
 }
 
+function normalizedCompletion(input: CompletionRewardInput): CompletionRewardInput {
+  const gameId = input.gameId.trim();
+  if (!gameId || gameId.length > 200) throw new RangeError('A valid game id is required.');
+  if (!Number.isInteger(input.wordLength) || input.wordLength < 2 || input.wordLength > 35) {
+    throw new RangeError('Reward word length must be an integer from 2 through 35.');
+  }
+  if (!Number.isInteger(input.puzzleCount) || input.puzzleCount < 1) {
+    throw new RangeError('Reward puzzle count must be a positive integer.');
+  }
+  if (!Number.isInteger(input.unusedAttempts) || input.unusedAttempts < 0) {
+    throw new RangeError('Unused attempts must be a non-negative integer.');
+  }
+  return { ...input, gameId };
+}
+
+function completionFingerprint(input: CompletionRewardInput): string {
+  return JSON.stringify({
+    status: input.status,
+    mode: input.mode,
+    scope: input.scope,
+    wordLength: input.wordLength,
+    puzzleCount: input.puzzleCount,
+    unusedAttempts: input.unusedAttempts,
+  });
+}
+
 export function calculateCompletionReward(input: CompletionRewardInput): CompletionReward {
-  const wordLength = Math.max(2, Math.trunc(input.wordLength));
-  const puzzleCount = Math.max(1, Math.trunc(input.puzzleCount));
-  const unusedAttempts = Math.max(0, Math.trunc(input.unusedAttempts));
-  if (input.status === 'won') {
+  const normalized = normalizedCompletion(input);
+  if (normalized.status === 'won') {
     return {
-      xp: wordLength * 10 * puzzleCount + 5 * unusedAttempts + (input.mode === 'go' ? 25 : 0),
+      xp:
+        normalized.wordLength * 10 * normalized.puzzleCount +
+        5 * normalized.unusedAttempts +
+        (normalized.mode === 'go' ? 25 : 0),
       coins:
-        wordLength * puzzleCount +
-        2 * unusedAttempts +
-        (input.scope === 'daily' ? 5 : 0) +
-        (input.mode === 'go' ? 5 : 0),
+        normalized.wordLength * normalized.puzzleCount +
+        2 * normalized.unusedAttempts +
+        (normalized.scope === 'daily' ? 5 : 0) +
+        (normalized.mode === 'go' ? 5 : 0),
     };
   }
   return {
-    xp: Math.max(5, wordLength * puzzleCount),
-    coins: input.scope === 'daily' ? 2 : 1,
+    xp: Math.max(5, normalized.wordLength * normalized.puzzleCount),
+    coins: normalized.scope === 'daily' ? 2 : 1,
   };
 }
 
@@ -69,10 +96,80 @@ export interface ProgressionState {
   readonly rewardedGameIds: readonly string[];
   readonly unlockedDailies: readonly string[];
   readonly appliedUnlockIds: readonly string[];
+  /** Fingerprints make a reused operation id fail closed instead of masquerading as a retry. */
+  readonly rewardOperations?: Readonly<Record<string, string>> | undefined;
+  readonly unlockOperations?: Readonly<Record<string, string>> | undefined;
+  readonly consumables?:
+    Readonly<{ revealOneLetter: number; removeIncorrectLetters: number }> | undefined;
+  readonly economyRevision?: number | undefined;
+  readonly economyOperations?: Readonly<Record<string, string>> | undefined;
+  readonly pendingDailyUnlocks?: Readonly<Record<string, string>> | undefined;
 }
 
 export function initialProgressionState(): ProgressionState {
-  return { xp: 0, coins: 0, rewardedGameIds: [], unlockedDailies: [], appliedUnlockIds: [] };
+  return {
+    xp: 0,
+    coins: 0,
+    rewardedGameIds: [],
+    unlockedDailies: [],
+    appliedUnlockIds: [],
+    rewardOperations: {},
+    unlockOperations: {},
+    consumables: { revealOneLetter: 0, removeIncorrectLetters: 0 },
+    economyRevision: 0,
+    economyOperations: {},
+    pendingDailyUnlocks: {},
+  };
+}
+
+export function purchasePastDailyEntitlement(input: {
+  readonly state: ProgressionState;
+  readonly operationId: string;
+  readonly mode: DailyMode;
+  readonly dateKey: string;
+  readonly todayKey: string;
+}): ReturnType<typeof unlockPastDaily> {
+  if (!isDateKey(input.dateKey)) {
+    return { ok: false, code: 'invalid_date', state: input.state };
+  }
+  const key = pastDailyUnlockKey(input.mode, input.dateKey);
+  if (input.state.pendingDailyUnlocks?.[key]) {
+    return { ok: true, applied: false, state: input.state };
+  }
+  const purchased = unlockPastDaily(input);
+  if (!purchased.ok || !purchased.applied) return purchased;
+  return {
+    ...purchased,
+    state: {
+      ...purchased.state,
+      unlockedDailies: purchased.state.unlockedDailies.filter((item) => item !== key),
+      pendingDailyUnlocks: {
+        ...purchased.state.pendingDailyUnlocks,
+        [key]: input.operationId.trim(),
+      },
+    },
+  };
+}
+
+export function promotePastDailyEntitlement(
+  state: ProgressionState,
+  mode: DailyMode,
+  dateKey: string,
+): { readonly applied: boolean; readonly state: ProgressionState } {
+  const key = pastDailyUnlockKey(mode, dateKey);
+  if (!state.pendingDailyUnlocks?.[key]) return { applied: false, state };
+  const pendingDailyUnlocks = { ...state.pendingDailyUnlocks };
+  delete pendingDailyUnlocks[key];
+  return {
+    applied: true,
+    state: {
+      ...state,
+      pendingDailyUnlocks,
+      unlockedDailies: state.unlockedDailies.includes(key)
+        ? state.unlockedDailies
+        : [...state.unlockedDailies, key],
+    },
+  };
 }
 
 export function applyCompletionReward(
@@ -80,19 +177,31 @@ export function applyCompletionReward(
   completion: CompletionRewardInput,
 ): {
   readonly applied: boolean;
+  readonly conflict: boolean;
   readonly state: ProgressionState;
   readonly reward: CompletionReward;
 } {
-  const reward = calculateCompletionReward(completion);
-  if (state.rewardedGameIds.includes(completion.gameId)) return { applied: false, state, reward };
+  const normalized = normalizedCompletion(completion);
+  const reward = calculateCompletionReward(normalized);
+  const fingerprint = completionFingerprint(normalized);
+  const existing = state.rewardOperations?.[normalized.gameId];
+  if (existing !== undefined) {
+    return { applied: false, conflict: existing !== fingerprint, state, reward };
+  }
+  if (state.rewardedGameIds.includes(normalized.gameId)) {
+    // Legacy state has no fingerprint; preserve the original once-only decision.
+    return { applied: false, conflict: false, state, reward };
+  }
   return {
     applied: true,
+    conflict: false,
     reward,
     state: {
       ...state,
       xp: state.xp + reward.xp,
       coins: state.coins + reward.coins,
-      rewardedGameIds: [...state.rewardedGameIds, completion.gameId],
+      rewardedGameIds: [...state.rewardedGameIds, normalized.gameId],
+      rewardOperations: { ...state.rewardOperations, [normalized.gameId]: fingerprint },
     },
   };
 }
@@ -107,9 +216,18 @@ export function unlockPastDaily(input: {
   | { readonly ok: true; readonly applied: boolean; readonly state: ProgressionState }
   | {
       readonly ok: false;
-      readonly code: 'invalid_date' | 'not_past' | 'insufficient_coins';
+      readonly code:
+        | 'invalid_operation'
+        | 'idempotency_conflict'
+        | 'invalid_date'
+        | 'not_past'
+        | 'insufficient_coins';
       readonly state: ProgressionState;
     } {
+  const operationId = input.operationId.trim();
+  if (!operationId || operationId.length > 200) {
+    return { ok: false, code: 'invalid_operation', state: input.state };
+  }
   if (!isDateKey(input.dateKey) || !isDateKey(input.todayKey)) {
     return { ok: false, code: 'invalid_date', state: input.state };
   }
@@ -117,8 +235,14 @@ export function unlockPastDaily(input: {
     return { ok: false, code: 'not_past', state: input.state };
   }
   const key = pastDailyUnlockKey(input.mode, input.dateKey);
+  const fingerprint = JSON.stringify({ mode: input.mode, dateKey: input.dateKey });
+  const existing = input.state.unlockOperations?.[operationId];
+  if (existing !== undefined && existing !== fingerprint) {
+    return { ok: false, code: 'idempotency_conflict', state: input.state };
+  }
   if (
-    input.state.appliedUnlockIds.includes(input.operationId) ||
+    existing === fingerprint ||
+    input.state.appliedUnlockIds.includes(operationId) ||
     input.state.unlockedDailies.includes(key)
   ) {
     return { ok: true, applied: false, state: input.state };
@@ -133,7 +257,8 @@ export function unlockPastDaily(input: {
       ...input.state,
       coins: input.state.coins - PAST_DAILY_UNLOCK_COST,
       unlockedDailies: [...input.state.unlockedDailies, key],
-      appliedUnlockIds: [...input.state.appliedUnlockIds, input.operationId],
+      appliedUnlockIds: [...input.state.appliedUnlockIds, operationId],
+      unlockOperations: { ...input.state.unlockOperations, [operationId]: fingerprint },
     },
   };
 }

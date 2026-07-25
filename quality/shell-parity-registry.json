@@ -1,0 +1,1902 @@
+{
+  "schemaVersion": 1,
+  "authority": {
+    "shellCheckpoint": "062624b2",
+    "amordleStart": "d92bfc710d693fbb1740ef65a350f589591a2fbe",
+    "productionReleaseIncluded": false
+  },
+  "previewContract": {
+    "mode": "protected-release-candidate-preview",
+    "productionReady": false,
+    "requiredLimits": [
+      "Unranked Practice preserves the accepted shell authority class: durable participant-authored turns with no rating mutation; it is not represented as cheat-resistant.",
+      "Production promotion, merge, public release, and default-branch changes remain outside this candidate.",
+      "The candidate must remain protected until a separate production authorization."
+    ]
+  },
+  "evidenceProfiles": {
+    "domain-ui": ["automated", "manual"],
+    "ui": ["automated", "visual", "manual"],
+    "service": ["automated", "service", "cleanup", "manual"],
+    "privacy": ["automated", "service", "cleanup"],
+    "cleanup": ["automated", "service", "cleanup"],
+    "operations": ["automated", "hosted", "cleanup", "manual"],
+    "visual": ["automated", "visual", "manual"]
+  },
+  "items": [
+    {
+      "id": "APP-01",
+      "capability": "All product routes and protected Admin remain reachable.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-02",
+      "capability": "Refresh preserves persisted game state for explicit re-entry.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-03",
+      "capability": "Back, Forward, and in-app navigation do not corrupt route or game state.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-04",
+      "capability": "Supported desktop and mobile layouts avoid overflow, clipping, and blocked controls.",
+      "checkpoint": 1,
+      "evidenceProfile": "visual",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts required-width overflow matrix",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.shell-parity.spec.ts desktop and mobile captures",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-05",
+      "capability": "Manual scrolling remains responsive and auto-scroll stays narrowly scoped.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-06",
+      "capability": "Keyboard navigation, focus, dialogs, status, and controls remain accessible.",
+      "checkpoint": 5,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts", "tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-07",
+      "capability": "Focus Mode reduces chrome without hiding required gameplay state or controls.",
+      "checkpoint": 1,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/fixture.navigation.spec.ts Solo focus recovery",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.gallery.spec.ts solo-focus",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-08",
+      "capability": "Progression HUD and Marketplace share authoritative coin and progression state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "APP-09",
+      "capability": "Notifications, account menus, dialogs, and private-request actions dismiss and route predictably.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/notifications.test.ts",
+          "tests/browser/notification-center.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-10",
+      "capability": "PWA registration and prompted updates remain non-blocking.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/runtime-status.test.tsx",
+          "scripts/check-build.mjs",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "hosted": [
+          "scripts/require-preview-environment.mjs",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts protected Preview flow",
+          "scripts/require-rc-environment.mjs"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-11",
+      "capability": "The redesign may replace decoration while preserving state and accessibility meaning.",
+      "checkpoint": 5,
+      "evidenceProfile": "visual",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts", "tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "APP-12",
+      "capability": "Selected subtab numeric and Ready badges remain readable and accessible.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-01",
+      "capability": "OG validation, duplicate scoring, keyboard precedence, attempts, outcomes, and Hard Mode are exact.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/game.test.ts",
+          "tests/browser/game-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md keyboard evidence and sound",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-02",
+      "capability": "GO chain count, automatic advancement, prior evidence, terminal completion, and Hard Mode are exact.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/go-daily.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts GO auto-advance",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md GO solved hold and prior evidence",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-03",
+      "capability": "Practice configuration supports lengths 2-35, difficulty, Hard Mode, and GO counts without changing Daily.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-launch.test.ts",
+          "tests/domain/words.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md Daily GO fixed-five launch",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-04",
+      "capability": "Solo Daily is deterministic for the local date and preserves current and past access rules.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "GAME-05",
+      "capability": "Guest Solo remains local and separate from signed-in cloud history.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "GAME-06",
+      "capability": "Signed-in Solo guesses, completion, continuation, inventory, and consumables persist and resume.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "GAME-07",
+      "capability": "New Practice games supersede resume lanes without resurrecting completed sessions.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-08",
+      "capability": "Completion, final green rows, definitions, and GO transition evidence survive re-entry.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-09",
+      "capability": "Draft, invalid, submitted, consumable, solved, transition, and completion feedback is perceivable.",
+      "checkpoint": 1,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/game-ui.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.shell-parity.spec.ts", "tests/e2e/visual.gallery.spec.ts"],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-10",
+      "capability": "Sound preferences and gameplay or notification cues are user-controlled and correctly triggered.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/sound.test.ts",
+          "tests/browser/game-ui.test.tsx sound cue dispatch",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md keyboard evidence and sound",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-11",
+      "capability": "Word lists validate, cache, refresh, cover every length, and do not expose answers.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/words.test.ts",
+          "tests/server/word-list-atomicity.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "GAME-12",
+      "capability": "Definitions use curated metadata or explicit fallback without duplicate final GO definitions.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-13",
+      "capability": "Sharing is accurate and privacy-safe without premature answer disclosure.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-results.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "GAME-14",
+      "capability": "GO selection is versioned, deterministic, no-replacement, cutoff-aware, and preserves stored chains.",
+      "checkpoint": 1,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/go-daily.test.ts cutoff and stored-answer vectors",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-1-visual-comparison.md Daily GO fixed-five launch",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "ACC-01",
+      "capability": "Create account, sign in, sign out, restore, recover, and auth errors are functional.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/auth-service.test.ts",
+          "tests/domain/identity-transition-machine.test.ts",
+          "tests/domain/account-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-02",
+      "capability": "One validated public player name is used consistently.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-03",
+      "capability": "Avatar, accent, and account badge remain responsive and privacy-safe.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "ACC-04",
+      "capability": "Public profiles expose only sanctioned metadata and preserve return and private-match actions.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-05",
+      "capability": "Settings preserve notification, private-request, block, sound, account, and reset boundaries.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/account-repository.test.ts",
+          "tests/domain/sound.test.ts",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-06",
+      "capability": "Local state is account-scoped, versioned, migration-safe, and isolated on account switch.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/auth-service.test.ts",
+          "tests/domain/identity-transition-machine.test.ts",
+          "tests/domain/account-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-07",
+      "capability": "Automatic sync, explicit status, retry, and authoritative economy recovery coexist.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/solo-session-persistence.test.ts",
+          "tests/domain/solo-cloud-reconciliation.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-08",
+      "capability": "Coins, XP, level, continuation, past Daily, purchases, and consumables are deterministic and idempotent.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-09",
+      "capability": "History displays accurate retained Solo and COMBAT records within privacy boundaries.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-10",
+      "capability": "Calendar exposes current and eligible past Dailies with payment and routing state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-11",
+      "capability": "Private Stats preserve provenance, Solo, COMBAT, progression, and aggregates.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-12",
+      "capability": "Public site stats and leaderboard metadata are sanitized, labeled, and fresh.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/public-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "ACC-13",
+      "capability": "Marketplace sells only 25-coin Reveal and 40-coin Remove with authoritative state.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/economy-progression.test.ts",
+          "tests/domain/solo-continuation-intent.test.ts",
+          "tests/domain/solo-consumable-intent.test.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "MP-01",
+      "capability": "Practice COMBAT OG and GO create, join, alternate, persist, resume, complete, and clean up.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/browser/combat-preview-components.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      },
+      "authorityClass": "Unranked Practice is shell-grade participant-authored durable play; Ranked Practice is server-authoritative v2."
+    },
+    {
+      "id": "MP-02",
+      "capability": "Unranked and ranked Daily COMBAT use distinct fixed-five UTC, claim-safe, no-clock lanes.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-03",
+      "capability": "Player-owned canonical sessions remain authoritative over rival display projections.",
+      "checkpoint": 3,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-projections.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      },
+      "authorityClass": "Ranked and Daily participant projections are answerless and server-owned; unranked shell-compatible sessions remain participant-authored."
+    },
+    {
+      "id": "MP-04",
+      "capability": "Shared rows and keyboard evidence converge for both participants without replay.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/browser/combat-preview-components.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-05",
+      "capability": "COMBAT GO holds, transitions, prior answers, definitions, and turn ownership synchronize.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/go-daily.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-06",
+      "capability": "Practice settings and clocks and ranked Daily restrictions are server-enforced.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/combat-preview-projections.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      },
+      "authorityClass": "Ranked Practice and Daily restrictions are server-enforced; unranked Practice preserves the disclosed shell authority class."
+    },
+    {
+      "id": "MP-07",
+      "capability": "Cancel, forfeit, timeout, completion, winner precedence, and conflicts are durable and idempotent.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-preview.test.ts",
+          "tests/domain/practice-combat-transport.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      },
+      "authorityClass": "Ranked terminal precedence is reconstructed server-side; unranked compare-and-swap behavior matches the accepted shell."
+    },
+    {
+      "id": "MP-08",
+      "capability": "Ranked Practice FIFO supports compatible repeat opponents and finalizes once.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts Ranked FIFO UI flow",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": ["quality/full-shell-multiplayer-parity-visual-comparison.md"]
+      }
+    },
+    {
+      "id": "MP-09",
+      "capability": "Ratings, bands, points, and trusted settlement are deterministic by bucket.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts server-reconstructed settlement",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts idempotent Elo settlement"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": ["quality/full-shell-multiplayer-parity-visual-comparison.md"]
+      }
+    },
+    {
+      "id": "MP-10",
+      "capability": "Private Practice requests implement eligible settings and their full durable lifecycle.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": ["tests/e2e/services.multiplayer-parity-ui.spec.ts private request lifecycle"],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-11",
+      "capability": "Active Games lists participant-owned games, turn cues, resume, and sanctioned profile links.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-repository.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-12",
+      "capability": "Lobby lists joinable public games and enforces join and cancel without identity expansion.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/browser/combat-preview-components.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-13",
+      "capability": "Live lists sanctioned games and participant-only identity links.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts anonymous Live list and exact route",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      }
+    },
+    {
+      "id": "MP-14",
+      "capability": "Spectators are read-only and receive sanitized answerless projections.",
+      "checkpoint": 3,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts read-only spectator UI",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts answerless projection"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      }
+    },
+    {
+      "id": "MP-15",
+      "capability": "Realtime refocus and polling converge without stale flashes, resets, or auth noise.",
+      "checkpoint": 3,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "tests/browser/combat-preview-components.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-16",
+      "capability": "Private-request notifications deduplicate, honor preferences, and route to exact state.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/notifications.test.ts",
+          "tests/browser/notification-center.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-17",
+      "capability": "Postgame rematches and actions preserve eligibility, result state, and privacy.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts rematch request and acceptance"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-18",
+      "capability": "Ranked Daily has four independent FIFO lanes with distinct answer and rating namespaces.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      }
+    },
+    {
+      "id": "MP-19",
+      "capability": "Private opt-out, blocking, uniqueness, locks, anti-spam, visibility, and mutations are server-enforced.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/combat-preview-projections.test.ts",
+          "tests/browser/supporting-ui.test.tsx",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      }
+    },
+    {
+      "id": "MP-20",
+      "capability": "Same-tab provisional COMBAT projection is same-account only and yields to repository authority within five seconds.",
+      "checkpoint": 4,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-repository.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "MP-21",
+      "capability": "Participant startup reads coalesce, reject stale generations, and load only required word banks.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/domain/authoritative-combat-repository.test.ts",
+          "tests/domain/combat-live-repository.test.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts zero-residue teardown"
+        ]
+      }
+    },
+    {
+      "id": "SUP-01",
+      "capability": "Home summarizes real actionable state and routes to core areas.",
+      "checkpoint": 2,
+      "evidenceProfile": "service",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "SUP-02",
+      "capability": "Word Explorer loads, filters, paginates, copies, and defines sanctioned answer-safe data.",
+      "checkpoint": 2,
+      "evidenceProfile": "domain-ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "SUP-03",
+      "capability": "Help and About are reachable and accurately separate instructions and rating explanation.",
+      "checkpoint": 2,
+      "evidenceProfile": "ui",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": [
+          "tests/e2e/visual.checkpoint-2.spec.ts",
+          "tests/e2e/visual.gallery.spec.ts",
+          "tests/e2e/visual.shell-parity.spec.ts"
+        ],
+        "manual": [
+          "quality/checkpoint-2-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "SUP-04",
+      "capability": "Feedback produces a previewable sanitized GitHub issue handoff without silent submission.",
+      "checkpoint": 2,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/supporting-ui.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/e2e/fixture.product-state.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "SUP-05",
+      "capability": "Admin diagnostics and refresh are role-first, protected, and non-public.",
+      "checkpoint": 4,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/e2e/fixture.checkpoint-2-support.spec.ts",
+          "tests/server/api-contract.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.hosted.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "SUP-06",
+      "capability": "Refresh and update failures remain visible without blocking gameplay.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/runtime-status.test.tsx",
+          "tests/browser/admin-preview-states.test.tsx",
+          "tests/server/word-list-atomicity.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "hosted": [
+          "tests/e2e/services.hosted.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts protected Preview flow",
+          "scripts/require-rc-environment.mjs"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "AM-PRIVACY-01",
+      "capability": "No answer, email, raw auth identifier, seed, private schema field, or secret crosses an unapproved boundary.",
+      "checkpoint": 5,
+      "evidenceProfile": "privacy",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/domain/practice-combat-transport.test.ts",
+          "tests/domain/combat-preview-projections.test.ts",
+          "scripts/scan-boundaries.mjs",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "AM-BACKEND-01",
+      "capability": "Exactly 42 immutable migrations and exactly three HTTP APIs remain in the release candidate.",
+      "checkpoint": 5,
+      "evidenceProfile": "operations",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "scripts/verify-migrations.mjs",
+          "scripts/scan-boundaries.mjs",
+          "tests/server/api-contract.test.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "hosted": [
+          "scripts/require-preview-environment.mjs",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts protected Preview flow",
+          "scripts/require-rc-environment.mjs"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "AM-BLOB-01",
+      "capability": "Word refresh uses lease and conditional promotion; failure preserves the prior manifest.",
+      "checkpoint": 4,
+      "evidenceProfile": "operations",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/server/word-list-atomicity.test.ts concurrency and precondition matrix",
+          "tests/server/word-list-publication-store.test.ts strongly consistent public snapshot retry",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "hosted": [
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts protected Preview flow",
+          "scripts/require-rc-environment.mjs"
+        ],
+        "cleanup": [
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": ["quality/full-shell-multiplayer-parity-visual-comparison.md"]
+      }
+    },
+    {
+      "id": "AM-CLEANUP-01",
+      "capability": "Every hosted run records exact resources and proves zero residue with fail-closed cleanup.",
+      "checkpoint": 5,
+      "evidenceProfile": "cleanup",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "service": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+          "tests/e2e/services.authoritative-combat-v2.spec.ts"
+        ],
+        "cleanup": [
+          "tests/e2e/services.amordle.spec.ts",
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ]
+      }
+    },
+    {
+      "id": "AM-VISUAL-01",
+      "capability": "All L01-L64 concepts retain composition, density, hierarchy, responsive behavior, and fire or ice identity.",
+      "checkpoint": 5,
+      "evidenceProfile": "visual",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "tests/browser/combat-preview-components.test.tsx",
+          "tests/e2e/fixture.navigation.spec.ts",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "visual": ["tests/e2e/visual.gallery.spec.ts", "tests/e2e/visual.shell-parity.spec.ts"],
+        "manual": [
+          "quality/existing-backend-preview-visual-comparison.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    },
+    {
+      "id": "AM-RELEASE-01",
+      "capability": "The candidate is protected, non-production, immutable, rollback-ready, and not merged.",
+      "checkpoint": 5,
+      "evidenceProfile": "operations",
+      "status": "accepted",
+      "evidence": {
+        "automated": [
+          "scripts/require-preview-environment.mjs",
+          "scripts/verify-preview-parity.mjs",
+          "pnpm test:acceptance:local",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "hosted": [
+          "protected preview identity recorded in ignored completion evidence",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts protected Preview flow",
+          "scripts/require-rc-environment.mjs"
+        ],
+        "cleanup": [
+          "tests/e2e/services.practice-combat.spec.ts",
+          "tests/server/real-service-harness.ts exact-ID teardown and residue probes",
+          "tests/e2e/services.multiplayer-parity-ui.spec.ts"
+        ],
+        "manual": [
+          "AMORDLE-EXISTING-BACKEND-PREVIEW-MANUAL-CHECKLIST.md",
+          "quality/full-shell-multiplayer-parity-visual-comparison.md"
+        ]
+      }
+    }
+  ],
+  "releaseCandidate": {
+    "migrationCount": 45,
+    "requiredHostedSuites": [
+      "tests/e2e/services.multiplayer-parity-ui.spec.ts",
+      "tests/e2e/services.authoritative-combat-v2.spec.ts"
+    ],
+    "manualLedger": "quality/full-shell-multiplayer-parity-visual-comparison.md",
+    "productionUnchanged": true,
+    "mergeAuthorized": false
+  }
+}

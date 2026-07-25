@@ -1,47 +1,185 @@
 import type { User } from '@supabase/supabase-js';
-import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { Button } from '../components/Button';
 import { getBrowserSupabaseClient } from '../lib/supabase-browser';
+import { AccountRepository } from '../services/account-repository';
+import {
+  AccountHydrationError,
+  hydrateAccountScope,
+  type AccountHydrationStage,
+} from '../services/account-hydration';
 import { AuthService } from '../services/auth-service';
+import {
+  IdentityTransitionMachine,
+  settledIdentity,
+  type IdentityTransitionEffect,
+  type IdentityTransitionResult,
+  type IdentityTransitionState,
+} from '../services/identity-transition-machine';
 import { AuthContext, type AuthContextValue, type AuthStatus } from './auth-context';
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const client = useMemo(() => getBrowserSupabaseClient(), []);
   const service = useMemo(() => (client ? new AuthService(client) : null), [client]);
+  const accountRepository = useMemo(
+    () => (client ? new AccountRepository(client) : null),
+    [client],
+  );
+  const machine = useRef(new IdentityTransitionMachine());
+  const [transition, setTransition] = useState<IdentityTransitionState>({
+    status: 'unconfigured',
+    epoch: 0,
+  });
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(Boolean(service));
+  const [hydrationFailureStage, setHydrationFailureStage] = useState<AccountHydrationStage | null>(
+    null,
+  );
 
   useEffect(() => {
-    if (!service) return;
+    if (!service || !accountRepository) {
+      const result = machine.current.dispatch({ type: 'unconfigure' });
+      if (result.accepted) setTransition(result.state);
+      setUser(null);
+      return;
+    }
     let active = true;
+
+    const runEffects = (effects: readonly IdentityTransitionEffect[]) => {
+      for (const effect of effects) {
+        if (effect.type !== 'hydrate-account') continue;
+        setHydrationFailureStage(null);
+        void hydrateAccountScope(accountRepository, effect.identity.userId)
+          .then(() => {
+            if (!active) return;
+            setHydrationFailureStage(null);
+            apply(
+              machine.current.dispatch({
+                type: 'account-hydrated',
+                userId: effect.identity.userId,
+                epoch: effect.epoch,
+              }),
+            );
+          })
+          .catch((error: unknown) => {
+            if (!active) return;
+            setHydrationFailureStage(
+              error instanceof AccountHydrationError ? error.stage : 'progress',
+            );
+            apply(
+              machine.current.dispatch({
+                type: 'account-hydration-failed',
+                userId: effect.identity.userId,
+                epoch: effect.epoch,
+              }),
+            );
+          });
+      }
+    };
+    const apply = (result: IdentityTransitionResult) => {
+      if (!result.accepted || !active) return;
+      setTransition(result.state);
+      runEffects(result.effects);
+    };
+
+    apply(machine.current.dispatch({ type: 'configure' }));
     void service
       .session()
       .then((session) => {
-        if (active) setUser(session?.user ?? null);
+        if (!active) return;
+        setUser(session?.user ?? null);
+        apply(
+          machine.current.dispatch({
+            type: 'session-resolved',
+            userId: session?.user.id ?? null,
+          }),
+        );
       })
       .catch(() => {
-        if (active) setUser(null);
-      })
-      .finally(() => {
-        if (active) setLoading(false);
+        if (!active) return;
+        setUser(null);
+        apply(machine.current.dispatch({ type: 'restore-failed' }));
       });
     const subscription = service.onChange((_event, session) => {
-      if (active) {
-        setUser(session?.user ?? null);
-        setLoading(false);
-      }
+      if (!active) return;
+      setUser(session?.user ?? null);
+      apply(
+        machine.current.dispatch({
+          type: 'session-changed',
+          userId: session?.user.id ?? null,
+        }),
+      );
     });
     return () => {
       active = false;
       subscription.unsubscribe();
     };
-  }, [service]);
+  }, [accountRepository, service]);
+
+  const hydrateForRetry = (
+    effect: Extract<IdentityTransitionEffect, { type: 'hydrate-account' }>,
+  ) => {
+    if (!accountRepository) return;
+    setHydrationFailureStage(null);
+    void hydrateAccountScope(accountRepository, effect.identity.userId).then(
+      () => {
+        setHydrationFailureStage(null);
+        const completed = machine.current.dispatch({
+          type: 'account-hydrated',
+          userId: effect.identity.userId,
+          epoch: effect.epoch,
+        });
+        if (completed.accepted) setTransition(completed.state);
+      },
+      (error: unknown) => {
+        setHydrationFailureStage(error instanceof AccountHydrationError ? error.stage : 'progress');
+        const failed = machine.current.dispatch({
+          type: 'account-hydration-failed',
+          userId: effect.identity.userId,
+          epoch: effect.epoch,
+        });
+        if (failed.accepted) setTransition(failed.state);
+      },
+    );
+  };
+
+  const retry = () => {
+    const retryingRestore = transition.status === 'restore-error';
+    const result = machine.current.dispatch({ type: 'retry' });
+    if (!result.accepted) return;
+    setTransition(result.state);
+    const effect = result.effects.find((item) => item.type === 'hydrate-account');
+    if (retryingRestore && service) {
+      void service.session().then(
+        (session) => {
+          setUser(session?.user ?? null);
+          const restored = machine.current.dispatch({
+            type: 'session-resolved',
+            userId: session?.user.id ?? null,
+          });
+          if (restored.accepted) {
+            setTransition(restored.state);
+            const hydration = restored.effects.find((item) => item.type === 'hydrate-account');
+            if (hydration) hydrateForRetry(hydration);
+          }
+        },
+        () => {
+          const failed = machine.current.dispatch({ type: 'restore-failed' });
+          if (failed.accepted) setTransition(failed.state);
+        },
+      );
+      return;
+    }
+    if (!effect || !accountRepository) return;
+    hydrateForRetry(effect);
+  };
 
   const value = useMemo<AuthContextValue>(() => {
+    const identity = settledIdentity(transition);
     const status: AuthStatus = !service
       ? 'unconfigured'
-      : loading
+      : !identity
         ? 'loading'
-        : user
+        : identity.kind === 'authenticated'
           ? 'authenticated'
           : 'guest';
     return {
@@ -49,9 +187,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       service,
       user,
       status,
-      identity: user ? { kind: 'authenticated', userId: user.id } : { kind: 'guest' },
+      identity: identity ?? { kind: 'guest' },
     };
-  }, [client, loading, service, user]);
+  }, [client, service, transition, user]);
+
+  if (service && !settledIdentity(transition)) {
+    const failed = transition.status === 'account-error' || transition.status === 'restore-error';
+    return (
+      <main className="route-loading" aria-live="polite" aria-busy={!failed}>
+        <span aria-hidden="true" />
+        <p>
+          {failed
+            ? hydrationFailureStage === 'settings'
+              ? 'Account settings could not be restored.'
+              : hydrationFailureStage === 'progress'
+                ? 'Account progress could not be restored.'
+                : 'Account hydration could not be verified.'
+            : 'Restoring account scope…'}
+        </p>
+        <small>
+          {failed
+            ? 'No guest or previous-account data has been substituted.'
+            : 'Saved account data is validated before the application becomes interactive.'}
+        </small>
+        {failed ? <Button onClick={retry}>Retry account restore</Button> : null}
+      </main>
+    );
+  }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

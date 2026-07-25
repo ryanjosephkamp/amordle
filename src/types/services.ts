@@ -30,12 +30,70 @@ export type EconomyMutation = EconomySnapshot & {
 
 export type PublicProfileProjection = {
   publicProfileId: string;
-  displayName: string;
-  accentColor: string | null;
-  flairKey: string | null;
+  displayName: string | null;
+  accentColor: 'ice' | 'aurora' | 'cyan' | 'violet' | 'rose' | 'amber';
+  flairKey: 'none';
   avatarUrl: string | null;
   bio: string | null;
+  createdAt: string;
   updatedAt: string;
+};
+
+export type OwnedPublicProfileProjection = {
+  publicProfileId: string;
+  visibility: 'private' | 'public';
+  displayName: string | null;
+  accentColor: PublicProfileProjection['accentColor'];
+  flairKey: PublicProfileProjection['flairKey'];
+  avatarUrl: string | null;
+  bio: string | null;
+  moderationStatus: 'active' | 'hidden' | 'suspended';
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PublicLeaderboardBucket =
+  'multiplayer:og' | 'multiplayer:go' | 'multiplayer:og:daily:v1' | 'multiplayer:go:daily:v1';
+
+export type PublicLeaderboardKey = 'ranked-practice-v1' | 'ranked-daily-v1';
+
+/**
+ * The snake-case names intentionally mirror the sanctioned RPC projection.
+ * Keeping the wire shape explicit prevents callers from receiving a broad
+ * database row with account-owned fields attached.
+ */
+export type PublicLeaderboardProjection = {
+  leaderboard_key: PublicLeaderboardKey;
+  rank: number;
+  bucket: PublicLeaderboardBucket;
+  public_profile_id: string;
+  display_name: string;
+  accent_color: PublicProfileProjection['accentColor'];
+  flair_key: PublicProfileProjection['flairKey'];
+  avatar_url: string | null;
+  rating: number;
+  games_played: number;
+  wins: number;
+  losses: number;
+  draws: number;
+  provisional: boolean;
+  latest_rating_delta: number;
+  latest_rating_movement_at: string | null;
+  peak_rating: number;
+  profile_updated_at: string;
+  leaderboard_updated_at: string;
+};
+
+export type PublicSiteStatsProjection = {
+  stats_key: 'site-stats-v1';
+  generated_at: string;
+  public_profiles_active: number;
+  ranked_practice_public_players: number;
+  ranked_practice_public_player_results: number;
+  ranked_practice_public_og_players: number;
+  ranked_practice_public_go_players: number;
+  leaderboard_updated_at: string | null;
+  public_profiles_updated_at: string | null;
 };
 
 export type WordAnswerRecord = {

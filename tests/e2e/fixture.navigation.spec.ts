@@ -1,5 +1,26 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 import AxeBuilder from '@axe-core/playwright';
+
+async function expectMobileGameplayAboveDock(page: Page) {
+  const keyboard = page.getByRole('group', { name: /game keyboard/i });
+  const stage = page.locator('.game-stage--active');
+  const dock = page.locator('.mobile-dock');
+  await expect(keyboard).toBeVisible();
+  await expect(stage).toBeVisible();
+  await expect(dock).toBeVisible();
+  const [keyboardBox, stageBox, dockBox, scrollTop] = await Promise.all([
+    keyboard.boundingBox(),
+    stage.boundingBox(),
+    dock.boundingBox(),
+    page.evaluate(() => document.scrollingElement?.scrollTop ?? window.scrollY),
+  ]);
+  expect(keyboardBox).not.toBeNull();
+  expect(stageBox).not.toBeNull();
+  expect(dockBox).not.toBeNull();
+  expect(scrollTop).toBe(0);
+  expect(keyboardBox!.y + keyboardBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+  expect(stageBox!.y + stageBox!.height).toBeLessThanOrEqual(dockBox!.y + 1);
+}
 
 const canonicalRoutes = [
   '/',
@@ -63,6 +84,131 @@ test('Home does not request answer banks', async ({ page }) => {
   expect(requestedWordBanks).toEqual([]);
 });
 
+test('invalid Solo route segments fail before requesting a word bank', async ({ page }) => {
+  const requestedWordBanks: string[] = [];
+  page.on('request', (request) => {
+    if (/words_length_\d+\.json/.test(request.url())) requestedWordBanks.push(request.url());
+  });
+  await page.goto('/play/not-a-mode/not-a-scope');
+  await expect(page.getByRole('heading', { name: 'Invalid game configuration' })).toBeVisible();
+  await expect(page.getByText(/No word list was requested/)).toBeVisible();
+  await page.waitForTimeout(250);
+  expect(requestedWordBanks).toEqual([]);
+});
+
+test('Checkpoint 1 calendar and Word Explorer treatments remain readable and aligned', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 1440, height: 1024 });
+  await page.goto('/calendar');
+  for (const lane of ['S-OG', 'S-GO', 'C-OG', 'C-GO']) {
+    await expect(page.getByText(lane, { exact: true }).first()).toBeVisible();
+  }
+  await expect(
+    page.getByRole('button', { name: /Select Solo OG for .*; (available|locked)/ }).first(),
+  ).toBeVisible();
+  await expect(page.getByRole('img', { name: 'Combat OG: unavailable' }).first()).toBeVisible();
+  await expect(page.locator('.calendar-lane-button[data-mode="og"]').first()).toHaveAccessibleName(
+    /Select Solo OG for .*; (available|locked|completed)/,
+  );
+  await expect(page.getByText('—Unavailable', { exact: true })).toBeVisible();
+
+  await page.goto('/word-explorer');
+  await expect(page.locator('.search-metadata')).toContainText(
+    /^\d+ matching valid words .* page 1 of \d+/,
+  );
+  await expect(page.locator('.ruled-list .word-row').first()).toBeVisible();
+  await expect(page.getByText('Answer & valid guess')).toHaveCount(0);
+  await expect(page.getByText('Casual', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Standard', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Expert', { exact: true })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Next' })).toBeVisible();
+  const searchGap = await page.evaluate(() => {
+    const input = document.querySelector('.search-control input')?.getBoundingClientRect();
+    const metadata = document.querySelector('.search-metadata')?.getBoundingClientRect();
+    return input && metadata ? metadata.top - input.bottom : -1;
+  });
+  expect(searchGap).toBeGreaterThanOrEqual(10);
+  const actionAlignment = await page.locator('.word-actions').evaluate((actions) => {
+    const boxes = [...actions.querySelectorAll<HTMLElement>('.button')].map((item) =>
+      item.getBoundingClientRect(),
+    );
+    return {
+      bottomDelta: Math.abs((boxes[0]?.bottom ?? 0) - (boxes[1]?.bottom ?? 0)),
+      topDelta: Math.abs((boxes[0]?.top ?? 0) - (boxes[1]?.top ?? 0)),
+    };
+  });
+  expect(actionAlignment.topDelta).toBeLessThanOrEqual(1);
+  expect(actionAlignment.bottomDelta).toBeLessThanOrEqual(1);
+
+  await page.setViewportSize({ width: 320, height: 844 });
+  await page.goto('/word-explorer');
+  await expect(page.locator('.word-actions .button')).toHaveCount(2);
+  await page.locator('.word-actions .button').nth(1).scrollIntoViewIfNeeded();
+  await expect(page.locator('.word-actions .button').nth(1)).toBeVisible();
+  const overflow = await page.evaluate(
+    () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+  );
+  expect(overflow).toBeLessThanOrEqual(1);
+});
+
+test('mobile Calendar initially reveals today and preserves later manual horizontal scroll', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/calendar');
+  await expect(page.locator('.calendar-day.is-today')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('.calendar-panel').evaluate((panel) => {
+        const today = panel.querySelector<HTMLElement>('.calendar-day.is-today');
+        if (!today) return false;
+        const panelBox = panel.getBoundingClientRect();
+        const todayBox = today.getBoundingClientRect();
+        return (
+          panel.scrollLeft > 0 &&
+          todayBox.left >= panelBox.left - 1 &&
+          todayBox.right <= panelBox.right + 1
+        );
+      }),
+    )
+    .toBe(true);
+
+  await page.locator('.calendar-panel').evaluate((panel) => {
+    panel.scrollLeft = 0;
+  });
+  await page.waitForTimeout(100);
+  expect(await page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft)).toBe(0);
+
+  await page.getByRole('button', { name: 'Previous month' }).click();
+  await page.getByRole('button', { name: 'Next month' }).click();
+  await expect
+    .poll(() => page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft))
+    .toBeGreaterThan(0);
+});
+
+test('a low-balance mobile player can select an exact past Daily lane before purchase', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.goto('/calendar');
+  const pastDateKey = await page.evaluate(() => {
+    const value = new Date();
+    value.setDate(value.getDate() - 1);
+    const pad = (part: number) => String(part).padStart(2, '0');
+    return `${value.getFullYear()}-${pad(value.getMonth() + 1)}-${pad(value.getDate())}`;
+  });
+  const lane = page.locator(`.calendar-lane-button[data-date="${pastDateKey}"][data-mode="og"]`);
+  await expect(lane).toBeEnabled();
+  await lane.click();
+  await expect(page.getByRole('heading', { name: 'Past Solo Daily' })).toBeVisible();
+  await expect(page.getByText(`Solo OG · ${pastDateKey}`, { exact: true })).toBeVisible();
+  await expect(page.getByText(/\d+ coin shortfall/)).toBeVisible();
+  await expect(
+    page.getByRole('button', { name: `Unlock Solo OG for ${pastDateKey}` }),
+  ).toBeDisabled();
+});
+
 test('compatibility routes resolve to canonical destinations', async ({ page }) => {
   const redirects = new Map([
     ['/home', '/'],
@@ -122,6 +268,68 @@ test('Solo keyboard, rejection, durable restore, focus, and terminal recovery ar
   await expect(page).not.toHaveURL(/focus=1/);
 });
 
+for (const width of [320, 360, 390, 412]) {
+  test(`Focus Exit and Notifications remain distinct at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/play/practice/og?focus=1');
+    const exit = page.getByRole('button', { name: /Exit focus/i });
+    const notifications = page.getByRole('button', { name: /^Notifications/ });
+    await expect(exit).toHaveCount(1);
+    await expect(exit).toBeVisible();
+    await expect(notifications).toBeVisible();
+    const [exitBox, notificationBox] = await Promise.all([
+      exit.boundingBox(),
+      notifications.boundingBox(),
+    ]);
+    expect(exitBox).not.toBeNull();
+    expect(notificationBox).not.toBeNull();
+    const overlapWidth = Math.max(
+      0,
+      Math.min(exitBox!.x + exitBox!.width, notificationBox!.x + notificationBox!.width) -
+        Math.max(exitBox!.x, notificationBox!.x),
+    );
+    const overlapHeight = Math.max(
+      0,
+      Math.min(exitBox!.y + exitBox!.height, notificationBox!.y + notificationBox!.height) -
+        Math.max(exitBox!.y, notificationBox!.y),
+    );
+    expect(overlapWidth * overlapHeight).toBe(0);
+  });
+}
+
+test('Daily GO is canonical five-letter play and Practice GO auto-advances with prior evidence', async ({
+  page,
+}) => {
+  await page.goto('/play/daily/go?length=7&count=10');
+  await expect(page).toHaveURL(/\/play\/daily\/go$/);
+  await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
+    timeout: 15_000,
+  });
+  await expect(page.getByText(/daily go · 5 letters/i)).toBeVisible();
+
+  await page.goto('/play/practice/go?length=5&count=5');
+  await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
+    timeout: 15_000,
+  });
+  const firstAnswer = await page.evaluate(() => {
+    const key = Object.keys(localStorage).find((candidate) =>
+      candidate.startsWith('amordle:solo:practice:go:'),
+    );
+    if (!key) return '';
+    const stored = JSON.parse(localStorage.getItem(key) ?? '{}') as {
+      payload?: { answers?: string[] };
+    };
+    return stored.payload?.answers?.[0] ?? '';
+  });
+  expect(firstAnswer).toMatch(/^[a-z]{5}$/);
+  await page.keyboard.type(firstAnswer);
+  await page.keyboard.press('Enter');
+  await expect(page.getByText(/holding solved evidence/i)).toBeVisible();
+  await expect(page.getByText(/puzzle 2 \/ 5/i)).toBeVisible({ timeout: 3_500 });
+  await expect(page.getByRole('row', { name: /P1 seeded evidence row/ })).toBeVisible();
+  await expect(page.getByText('P1', { exact: true })).toBeVisible();
+});
+
 test('physical-key input reaches a tile below the 100ms p95 budget', async ({ page }, testInfo) => {
   await page.goto('/play/practice/og');
   await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
@@ -130,10 +338,29 @@ test('physical-key input reaches a tile below the 100ms p95 budget', async ({ pa
   const firstTile = page.getByRole('gridcell').first();
   const samples: number[] = [];
   for (let index = 0; index < 20; index += 1) {
-    const started = performance.now();
+    await page.evaluate(() => {
+      const runtime = window as unknown as Window & {
+        __amordleKeyStarted: number | undefined;
+        __amordleKeyLatency: number | undefined;
+      };
+      runtime.__amordleKeyLatency = undefined;
+      runtime.__amordleKeyStarted = performance.now();
+      const board = document.querySelector('[role="grid"]');
+      const observer = new MutationObserver(() => {
+        const tile = document.querySelector('[role="gridcell"]');
+        if (tile?.getAttribute('aria-label') === 'A, draft') {
+          runtime.__amordleKeyLatency = performance.now() - (runtime.__amordleKeyStarted ?? 0);
+          observer.disconnect();
+        }
+      });
+      if (board) observer.observe(board, { childList: true, subtree: true, attributes: true });
+    });
     await page.keyboard.press('a');
     await expect(firstTile).toHaveAttribute('aria-label', 'A, draft');
-    samples.push(performance.now() - started);
+    const elapsed = await page.waitForFunction(
+      () => (window as unknown as Window & { __amordleKeyLatency?: number }).__amordleKeyLatency,
+    );
+    samples.push(Number(await elapsed.jsonValue()));
     await page.keyboard.press('Backspace');
     await expect(firstTile).toHaveAttribute('aria-label', 'empty position 1');
   }
@@ -146,6 +373,32 @@ test('physical-key input reaches a tile below the 100ms p95 budget', async ({ pa
   });
   console.info(JSON.stringify({ keyToTileP95Ms: p95 }));
 });
+
+for (const width of [320, 360, 390, 412]) {
+  test(`active Solo keeps its complete keyboard above the mobile dock at ${width}px`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width, height: 844 });
+    await page.goto('/play/practice/og?length=5');
+    await expect(page.getByRole('grid', { name: '5-letter word board' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectMobileGameplayAboveDock(page);
+  });
+}
+
+for (const length of [2, 7, 35]) {
+  test(`active Solo length ${length} keeps its complete keyboard above the mobile dock`, async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto(`/play/practice/og?length=${length}`);
+    await expect(page.getByRole('grid', { name: `${length}-letter word board` })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expectMobileGameplayAboveDock(page);
+  });
+}
 
 for (const width of [320, 360, 390, 412, 768, 960, 1440, 1920]) {
   test(`has no page overflow at ${width}px`, async ({ page }) => {

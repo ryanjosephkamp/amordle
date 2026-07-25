@@ -3,6 +3,7 @@ import { useEffect, useState, type ReactNode } from 'react';
 import { useRegisterSW } from 'virtual:pwa-register/react';
 import { AuthProvider } from './AuthContext';
 import { PlayerStateProvider } from './PlayerStateProvider';
+import { RuntimeStatusPanel } from './RuntimeStatusPanel';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -43,31 +44,15 @@ function ConnectivityAndUpdateStatus() {
     };
   }, []);
 
-  if (online && !needRefresh && !offlineReady) return null;
-
   return (
-    <aside className="runtime-status" aria-live="polite" aria-label="Application status">
-      {!online ? <p>Offline · saved Solo Practice remains available on this device.</p> : null}
-      {offlineReady ? (
-        <p>
-          Offline shell ready.
-          <button type="button" onClick={() => setOfflineReady(false)}>
-            Dismiss
-          </button>
-        </p>
-      ) : null}
-      {needRefresh ? (
-        <p>
-          An Amordle update is ready.
-          <button type="button" onClick={() => void updateServiceWorker(true)}>
-            Update now
-          </button>
-          <button type="button" onClick={() => setNeedRefresh(false)}>
-            Later
-          </button>
-        </p>
-      ) : null}
-    </aside>
+    <RuntimeStatusPanel
+      online={online}
+      offlineReady={offlineReady}
+      needRefresh={needRefresh}
+      onDismissOffline={() => setOfflineReady(false)}
+      onUpdate={() => void updateServiceWorker(true)}
+      onLater={() => setNeedRefresh(false)}
+    />
   );
 }
 

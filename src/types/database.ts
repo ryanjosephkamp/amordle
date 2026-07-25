@@ -35,6 +35,7 @@ export type Database = {
     Tables: {
       async_multiplayer_games: {
         Row: {
+          authority_version: number;
           created_at: string;
           current_turn: string;
           custom_game_code: string | null;
@@ -47,18 +48,23 @@ export type Database = {
           id: string;
           matchmaking_request_id: string | null;
           mode: string;
+          move_count: number;
           player_one_user_id: string | null;
           player_two_user_id: string | null;
           projection: Json;
           ranked: boolean;
           rating_bucket: string | null;
           scope: string;
+          source_kind: string;
+          state_version: number;
           status: string;
           updated_at: string;
+          visibility_kind: string;
           winner_player_id: string | null;
           word_length: number;
         };
         Insert: {
+          authority_version?: number;
           created_at?: string;
           current_turn?: string;
           custom_game_code?: string | null;
@@ -71,18 +77,23 @@ export type Database = {
           id?: string;
           matchmaking_request_id?: string | null;
           mode: string;
+          move_count?: number;
           player_one_user_id?: string | null;
           player_two_user_id?: string | null;
           projection?: Json;
           ranked?: boolean;
           rating_bucket?: string | null;
           scope: string;
+          source_kind?: string;
+          state_version?: number;
           status?: string;
           updated_at?: string;
+          visibility_kind?: string;
           winner_player_id?: string | null;
           word_length?: number;
         };
         Update: {
+          authority_version?: number;
           created_at?: string;
           current_turn?: string;
           custom_game_code?: string | null;
@@ -95,14 +106,18 @@ export type Database = {
           id?: string;
           matchmaking_request_id?: string | null;
           mode?: string;
+          move_count?: number;
           player_one_user_id?: string | null;
           player_two_user_id?: string | null;
           projection?: Json;
           ranked?: boolean;
           rating_bucket?: string | null;
           scope?: string;
+          source_kind?: string;
+          state_version?: number;
           status?: string;
           updated_at?: string;
+          visibility_kind?: string;
           winner_player_id?: string | null;
           word_length?: number;
         };
@@ -514,8 +529,11 @@ export type Database = {
       };
       multiplayer_matchmaking_queue: {
         Row: {
+          authority_version: number;
           daily_date_key: string | null;
+          difficulty: string | null;
           expires_at: string | null;
+          go_puzzle_count: number | null;
           hard_mode: boolean;
           id: string;
           idempotency_key: string;
@@ -536,8 +554,11 @@ export type Database = {
           word_length: number | null;
         };
         Insert: {
+          authority_version?: number;
           daily_date_key?: string | null;
+          difficulty?: string | null;
           expires_at?: string | null;
+          go_puzzle_count?: number | null;
           hard_mode?: boolean;
           id?: string;
           idempotency_key: string;
@@ -558,8 +579,11 @@ export type Database = {
           word_length?: number | null;
         };
         Update: {
+          authority_version?: number;
           daily_date_key?: string | null;
+          difficulty?: string | null;
           expires_at?: string | null;
+          go_puzzle_count?: number | null;
           hard_mode?: boolean;
           id?: string;
           idempotency_key?: string;
@@ -1233,6 +1257,98 @@ export type Database = {
           word_length: number;
         }[];
       };
+      amordle_legacy_authenticated_live_v1_spectator_games: {
+        Args: { p_limit?: number };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          daily_date_key: string;
+          deadline_at: string;
+          difficulty: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          rating_bucket: string;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          time_limit_ms: number;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      amordle_legacy_authenticated_live_v1_spectator_games_v2: {
+        Args: { p_limit?: number; p_terminal_window_seconds?: number };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          daily_date_key: string;
+          deadline_at: string;
+          difficulty: string;
+          ended_at: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          rating_bucket: string;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          terminal_hold_until: string;
+          time_limit_ms: number;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      amordle_legacy_public_live_v1_spectator_games_v1: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      cancel_amordle_ranked_practice_v2: {
+        Args: { p_action_id: string; p_request_id: string };
+        Returns: Json;
+      };
+      cancel_amordle_unranked_daily_lobby_v2: {
+        Args: {
+          p_action_id: string;
+          p_expected_version: number;
+          p_game_id: string;
+        };
+        Returns: Json;
+      };
       cancel_practice_multiplayer_rematch: {
         Args: { p_request_id: string };
         Returns: {
@@ -1302,6 +1418,10 @@ export type Database = {
           request_status: string;
         }[];
       };
+      claim_amordle_ranked_practice_v2: {
+        Args: { p_action_id: string; p_request_id: string };
+        Returns: Json;
+      };
       claim_daily_multiplayer_participation:
         | {
             Args: {
@@ -1335,6 +1455,15 @@ export type Database = {
           request_status: string;
         }[];
       };
+      cleanup_amordle_combat_e2e_v2: {
+        Args: {
+          p_game_ids: string[];
+          p_request_ids: string[];
+          p_run_id: string;
+          p_user_ids: string[];
+        };
+        Returns: Json;
+      };
       cleanup_ranked_daily_multiplayer_for_users: {
         Args: { p_user_ids: string[] };
         Returns: {
@@ -1357,6 +1486,23 @@ export type Database = {
           reveal_one_letter: number;
           revision: number;
         }[];
+      };
+      create_amordle_ranked_practice_request_v2: {
+        Args: {
+          p_creation_key: string;
+          p_difficulty: string;
+          p_expires_at?: string;
+          p_go_puzzle_count: number;
+          p_hard_mode: boolean;
+          p_mode: string;
+          p_time_limit_ms: number;
+          p_word_length: number;
+        };
+        Returns: Json;
+      };
+      create_amordle_unranked_daily_lobby_v2: {
+        Args: { p_creation_key: string; p_hard_mode: boolean; p_mode: string };
+        Returns: Json;
       };
       create_private_multiplayer_match_request: {
         Args: {
@@ -1569,6 +1715,10 @@ export type Database = {
           word_length: number;
         }[];
       };
+      finalize_amordle_ranked_practice_v2: {
+        Args: { p_action_id: string; p_game_id: string; p_request_id: string };
+        Returns: Json;
+      };
       finalize_ranked_async_matchmaking_game: {
         Args: {
           p_game_projection: Json;
@@ -1625,6 +1775,15 @@ export type Database = {
           ranked_queue_stale_candidates: number;
         }[];
       };
+      get_amordle_combat_game_v2: { Args: { p_game_id: string }; Returns: Json };
+      get_amordle_practice_leaderboard_v2: {
+        Args: { p_app_bucket: string; p_limit?: number; p_offset?: number };
+        Returns: Json[];
+      };
+      get_amordle_ranked_practice_status_v2: {
+        Args: { p_request_id: string };
+        Returns: Json;
+      };
       get_authenticated_live_v1_spectator_games: {
         Args: { p_limit?: number };
         Returns: {
@@ -1675,6 +1834,32 @@ export type Database = {
           terminal_at: string;
           terminal_hold_until: string;
           time_limit_ms: number;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      get_authenticated_live_v1_spectator_games_v3: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
           updated_at: string;
           word_length: number;
         }[];
@@ -1826,6 +2011,32 @@ export type Database = {
           word_length: number;
         }[];
       };
+      get_public_live_v1_spectator_games_v2: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
       get_public_player_profile: {
         Args: { p_public_profile_id: string };
         Returns: {
@@ -1930,6 +2141,26 @@ export type Database = {
           viewer_seat: string;
           word_length: number;
         }[];
+      };
+      inspect_amordle_combat_e2e_v2: {
+        Args: { p_game_id: string; p_run_id: string; p_user_ids: string[] };
+        Returns: Json;
+      };
+      join_amordle_unranked_daily_lobby_v2: {
+        Args: {
+          p_action_id: string;
+          p_expected_version: number;
+          p_game_id: string;
+        };
+        Returns: Json;
+      };
+      list_amordle_combat_active_v2: {
+        Args: { p_limit?: number };
+        Returns: Json[];
+      };
+      list_amordle_unranked_daily_lobbies_v2: {
+        Args: { p_limit?: number; p_mode?: string };
+        Returns: Json[];
       };
       phase27_expected_score: {
         Args: { p_opponent_rating: number; p_rating: number };
@@ -2156,6 +2387,15 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      probe_amordle_combat_e2e_residue_v2: {
+        Args: {
+          p_game_ids: string[];
+          p_request_ids: string[];
+          p_run_id: string;
+          p_user_ids: string[];
+        };
+        Returns: Json;
+      };
       purchase_solo_practice_consumable: {
         Args: { p_consumable_type: string; p_operation_id: string };
         Returns: {
@@ -2220,6 +2460,17 @@ export type Database = {
           word_length: number;
         }[];
       };
+      save_amordle_combat_command_v2: {
+        Args: {
+          p_action_id: string;
+          p_command: string;
+          p_expected_move_count: number;
+          p_expected_version: number;
+          p_game_id: string;
+          p_guess?: string;
+        };
+        Returns: Json;
+      };
       save_ranked_daily_async_multiplayer_action: {
         Args: {
           p_action_id: string;
@@ -2240,6 +2491,10 @@ export type Database = {
           public_profile_id: string;
           updated_at: string;
         }[];
+      };
+      settle_amordle_ranked_practice_v2: {
+        Args: { p_action_id: string; p_game_id: string };
+        Returns: Json;
       };
       settle_ranked_async_multiplayer_match: {
         Args: { p_game_id: string; p_idempotency_key?: string };

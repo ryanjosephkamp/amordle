@@ -1,16 +1,30 @@
 import { defineConfig, devices } from '@playwright/test';
+import path from 'node:path';
 
 const baseURL = process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173';
 const protectionBypass = process.env.VERCEL_AUTOMATION_BYPASS_SECRET;
+const protectionShare = process.env.VERCEL_PREVIEW_SHARE_URL;
+const protectedPreviewStorageState = path.join(
+  process.cwd(),
+  '.codex-internal',
+  'evidence',
+  'protected-preview-storage-state.json',
+);
 
 export default defineConfig({
   testDir: './tests/e2e',
+  ...(protectionShare
+    ? {
+        globalSetup: './tests/e2e/protected-preview-global-setup.ts',
+      }
+    : {}),
   fullyParallel: true,
   forbidOnly: Boolean(process.env.CI),
   retries: process.env.CI ? 2 : 0,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
+    ...(protectionShare ? { storageState: protectedPreviewStorageState } : {}),
     ...(protectionBypass
       ? { extraHTTPHeaders: { 'x-vercel-protection-bypass': protectionBypass } }
       : {}),

@@ -7,20 +7,32 @@ import type {
   WordListManifest,
   WordListManifestLength,
 } from '../../src/types/services.js';
+import { wordListManifestSchema } from '../../src/services/manifest-service.js';
 import type { WordListStore } from './blob-store.js';
 import { RefreshError } from './safe-error.js';
+import {
+  createVercelWordListPublicationStore,
+  PublicationPreconditionError,
+  type PublicationRecord,
+  type WordListPublicationStore,
+} from './word-list-publication-store.js';
 
 const DATASET = 'ryanjosephkamp/english-openlist' as const;
 const PATH_PREFIX = 'latest/brrrdle' as const;
 const SUPPORTED_LENGTHS = Array.from({ length: 34 }, (_, index) => index + 2);
+const MANIFEST_PATH = 'word-lists/manifest.json' as const;
+const REFRESH_LEASE_PATH = 'word-lists/.refresh-lease.json' as const;
+const REFRESH_LEASE_DURATION_MS = 5 * 60_000;
 const metadataSchema = z.object({
   sha: z.string().min(7).max(128),
   lastModified: z.string().datetime().optional(),
 });
-const currentManifestSchema = z.object({
-  revision: z.string(),
-  generatedAt: z.string().datetime(),
-  entries: z.array(z.object({ length: z.number().int().min(2).max(35) })).length(34),
+const refreshLeaseSchema = z.object({
+  version: z.literal(1),
+  leaseId: z.string().min(1).max(200),
+  revision: z.string().regex(/^[a-zA-Z0-9._-]{7,128}$/),
+  acquiredAt: z.string().datetime(),
+  expiresAt: z.string().datetime(),
 });
 
 type UpstreamPayload = Record<string, unknown> | string[];
@@ -30,14 +42,25 @@ export type RefreshSummary = {
   generatedAt: string;
   fetchedAt: string;
   counts: Array<{ length: number; answers: number; validGuesses: number }>;
-  persistence: 'manifest-published' | 'manifest-already-current' | 'manifest-preserved-newer';
+  persistence:
+    | 'manifest-published'
+    | 'manifest-already-current'
+    | 'manifest-preserved-newer'
+    | 'refresh-in-progress';
+  activeRevision?: string;
 };
 
 export type RefreshDependencies = {
   store: WordListStore;
   fetcher?: typeof fetch;
   now?: () => Date;
+  publication?: WordListPublicationStore;
+  leaseId?: () => string;
 };
+
+type RefreshLease = z.infer<typeof refreshLeaseSchema>;
+type AcquiredLease = { acquired: true; lease: RefreshLease; etag: string };
+type BusyLease = { acquired: false; activeRevision?: string };
 
 function stringArray(source: Record<string, unknown>, names: string[]): string[] | null {
   for (const name of names) {
@@ -201,6 +224,176 @@ function summary(
   };
 }
 
+function countsFromDocuments(documents: readonly WordListDocument[]) {
+  return documents
+    .map((document) => ({
+      length: document.metadata.length,
+      answers: document.answers.length,
+      validGuesses: document.validGuesses.length,
+    }))
+    .sort((left, right) => left.length - right.length);
+}
+
+function inProgressSummary(
+  revision: string,
+  generatedAt: string,
+  fetchedAt: string,
+  documents: readonly WordListDocument[],
+  activeRevision?: string,
+): RefreshSummary {
+  return {
+    revision,
+    generatedAt,
+    fetchedAt,
+    counts: countsFromDocuments(documents),
+    persistence: 'refresh-in-progress',
+    ...(activeRevision ? { activeRevision } : {}),
+  };
+}
+
+function parseManifest(
+  record: PublicationRecord | null,
+): { record: PublicationRecord; manifest: WordListManifest } | null {
+  if (!record) return null;
+  const parsed = wordListManifestSchema.safeParse(record.value);
+  if (!parsed.success) {
+    throw new RefreshError('persistence', 'Stored word-list metadata was invalid.');
+  }
+  return { record, manifest: parsed.data as WordListManifest };
+}
+
+function existingManifestResult(
+  current: ReturnType<typeof parseManifest>,
+  revision: string,
+  generatedAt: string,
+): RefreshSummary | null {
+  if (!current) return null;
+  if (current.manifest.revision === revision) {
+    return summary(current.manifest, 'manifest-already-current');
+  }
+  if (Date.parse(current.manifest.generatedAt) > Date.parse(generatedAt)) {
+    return summary(current.manifest, 'manifest-preserved-newer');
+  }
+  return null;
+}
+
+async function readPublicationRecord(
+  publication: WordListPublicationStore,
+  path: string,
+): Promise<PublicationRecord | null> {
+  try {
+    return await publication.readJson(path);
+  } catch (error) {
+    throw new RefreshError('persistence', 'Stored word-list metadata could not be read.', {
+      cause: error,
+    });
+  }
+}
+
+async function acquireRefreshLease(
+  publication: WordListPublicationStore,
+  lease: RefreshLease,
+  nowMs: number,
+): Promise<AcquiredLease | BusyLease> {
+  let current = await readPublicationRecord(publication, REFRESH_LEASE_PATH);
+  if (!current) {
+    try {
+      const created = await publication.createJson(REFRESH_LEASE_PATH, lease);
+      return { acquired: true, lease, etag: created.etag };
+    } catch (error) {
+      if (!(error instanceof PublicationPreconditionError)) {
+        throw new RefreshError(
+          'persistence',
+          'The refresh publication lease could not be acquired.',
+          {
+            cause: error,
+          },
+        );
+      }
+      current = await readPublicationRecord(publication, REFRESH_LEASE_PATH);
+      if (!current) return { acquired: false };
+    }
+  }
+
+  const parsed = refreshLeaseSchema.safeParse(current.value);
+  const boundedExpiryMs = Math.min(
+    parsed.success ? Date.parse(parsed.data.expiresAt) : Number.POSITIVE_INFINITY,
+    current.uploadedAt.getTime() + REFRESH_LEASE_DURATION_MS,
+  );
+  if (boundedExpiryMs > nowMs) {
+    return {
+      acquired: false,
+      ...(parsed.success ? { activeRevision: parsed.data.revision } : {}),
+    };
+  }
+
+  try {
+    const replaced = await publication.replaceJson(REFRESH_LEASE_PATH, lease, current.etag);
+    return { acquired: true, lease, etag: replaced.etag };
+  } catch (error) {
+    if (error instanceof PublicationPreconditionError) {
+      const active = await readPublicationRecord(publication, REFRESH_LEASE_PATH);
+      const activeLease = refreshLeaseSchema.safeParse(active?.value);
+      return {
+        acquired: false,
+        ...(activeLease.success ? { activeRevision: activeLease.data.revision } : {}),
+      };
+    }
+    throw new RefreshError('persistence', 'The stale refresh publication lease was not replaced.', {
+      cause: error,
+    });
+  }
+}
+
+async function assertLeaseOwnership(
+  publication: WordListPublicationStore,
+  acquired: AcquiredLease,
+): Promise<void> {
+  const current = await readPublicationRecord(publication, REFRESH_LEASE_PATH);
+  const parsed = refreshLeaseSchema.safeParse(current?.value);
+  if (
+    !current ||
+    current.etag !== acquired.etag ||
+    !parsed.success ||
+    parsed.data.leaseId !== acquired.lease.leaseId
+  ) {
+    throw new RefreshError(
+      'persistence',
+      'The refresh publication lease changed before manifest promotion.',
+    );
+  }
+}
+
+async function safelyReleaseLease(
+  publication: WordListPublicationStore,
+  acquired: AcquiredLease,
+): Promise<void> {
+  try {
+    await publication.deleteIfMatch(REFRESH_LEASE_PATH, acquired.etag);
+  } catch (error) {
+    // A failed precondition proves another caller already replaced this lease.
+    // Other release failures are bounded by stale-lease takeover and must not
+    // turn an already-published manifest into a reported failure.
+    if (!(error instanceof PublicationPreconditionError)) {
+      console.warn('word-list-refresh: lease release deferred to stale takeover');
+    }
+  }
+}
+
+async function resultAfterPromotionRace(
+  publication: WordListPublicationStore,
+  revision: string,
+  generatedAt: string,
+): Promise<RefreshSummary> {
+  const latest = parseManifest(await readPublicationRecord(publication, MANIFEST_PATH));
+  const accepted = existingManifestResult(latest, revision, generatedAt);
+  if (accepted) return accepted;
+  throw new RefreshError(
+    'persistence',
+    'The word-list manifest changed during conditional promotion.',
+  );
+}
+
 export async function refreshAllWordLists(
   dependencies: RefreshDependencies,
 ): Promise<RefreshSummary> {
@@ -252,52 +445,85 @@ export async function refreshAllWordLists(
     }),
   );
 
-  const entries: WordListManifestLength[] = [];
-  await Promise.all(
-    documents.map(async (document) => {
-      const body = JSON.stringify(document);
-      const path = `word-lists/${revision}/words_length_${document.metadata.length}.json`;
-      const stored = await dependencies.store.put(path, body, 'application/json; charset=utf-8');
-      entries.push({
-        length: document.metadata.length,
-        url: stored.url,
-        answers: document.answers.length,
-        validGuesses: document.validGuesses.length,
-        status: 'served',
-      });
-    }),
-  );
-  entries.sort((left, right) => left.length - right.length);
-  if (entries.length !== SUPPORTED_LENGTHS.length) {
-    throw new RefreshError('persistence', 'The served word list was not changed.');
-  }
+  const publication = dependencies.publication ?? createVercelWordListPublicationStore();
+  const beforeLease = parseManifest(await readPublicationRecord(publication, MANIFEST_PATH));
+  const beforeLeaseResult = existingManifestResult(beforeLease, revision, generatedAt);
+  if (beforeLeaseResult) return beforeLeaseResult;
 
-  const manifest: WordListManifest = {
+  const acquiredAt = now();
+  const lease: RefreshLease = {
+    version: 1,
+    leaseId: (dependencies.leaseId ?? randomUUID)(),
     revision,
-    generatedAt,
-    fetchedAt,
-    source: { datasetId: DATASET, pathPrefix: PATH_PREFIX },
-    entries,
+    acquiredAt: acquiredAt.toISOString(),
+    expiresAt: new Date(acquiredAt.getTime() + REFRESH_LEASE_DURATION_MS).toISOString(),
   };
+  const acquired = await acquireRefreshLease(publication, lease, acquiredAt.getTime());
+  if (acquired.acquired === false) {
+    const current = parseManifest(await readPublicationRecord(publication, MANIFEST_PATH));
+    const currentResult = existingManifestResult(current, revision, generatedAt);
+    return (
+      currentResult ??
+      inProgressSummary(revision, generatedAt, fetchedAt, documents, acquired.activeRevision)
+    );
+  }
 
-  const currentRaw = await dependencies.store.readJson('word-lists/manifest.json');
-  const current = currentManifestSchema.safeParse(currentRaw);
-  if (current.success && current.data.revision === revision) {
-    return summary(manifest, 'manifest-already-current');
-  }
-  if (current.success && Date.parse(current.data.generatedAt) > Date.parse(generatedAt)) {
-    return {
-      ...summary(manifest, 'manifest-preserved-newer'),
-      revision: current.data.revision,
-      generatedAt: current.data.generatedAt,
+  try {
+    const entries: WordListManifestLength[] = [];
+    await Promise.all(
+      documents.map(async (document) => {
+        const body = JSON.stringify(document);
+        const path = `word-lists/${revision}/words_length_${document.metadata.length}.json`;
+        const stored = await publication.putImmutable(
+          path,
+          body,
+          'application/json; charset=utf-8',
+        );
+        entries.push({
+          length: document.metadata.length,
+          url: stored.url,
+          answers: document.answers.length,
+          validGuesses: document.validGuesses.length,
+          status: 'served',
+        });
+      }),
+    );
+    entries.sort((left, right) => left.length - right.length);
+    if (entries.length !== SUPPORTED_LENGTHS.length) {
+      throw new RefreshError('persistence', 'The served word list was not changed.');
+    }
+
+    const manifest: WordListManifest = {
+      revision,
+      generatedAt,
+      fetchedAt,
+      source: { datasetId: DATASET, pathPrefix: PATH_PREFIX },
+      entries,
     };
+
+    await assertLeaseOwnership(publication, acquired);
+    const current = parseManifest(await readPublicationRecord(publication, MANIFEST_PATH));
+    const currentResult = existingManifestResult(current, revision, generatedAt);
+    if (currentResult) return currentResult;
+
+    try {
+      if (current) {
+        await publication.replaceJson(MANIFEST_PATH, manifest, current.record.etag);
+      } else {
+        await publication.createJson(MANIFEST_PATH, manifest);
+      }
+    } catch (error) {
+      if (error instanceof PublicationPreconditionError) {
+        return resultAfterPromotionRace(publication, revision, generatedAt);
+      }
+      throw new RefreshError('persistence', 'The word-list manifest was not promoted.', {
+        cause: error,
+      });
+    }
+    return summary(manifest, 'manifest-published');
+  } finally {
+    await safelyReleaseLease(publication, acquired);
   }
-  await dependencies.store.put(
-    'word-lists/manifest.json',
-    JSON.stringify(manifest),
-    'application/json; charset=utf-8',
-  );
-  return summary(manifest, 'manifest-published');
 }
 
 export function refreshRequestId(): string {

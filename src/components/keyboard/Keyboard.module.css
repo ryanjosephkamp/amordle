@@ -1,0 +1,399 @@
+.keyboard {
+  --keyboard-key-size: 56px;
+  --keyboard-key-gap: clamp(5px, 0.55vw, 8px);
+  --keyboard-motion-duration: 100ms;
+  width: min(100%, 650px);
+  margin-inline: auto;
+  display: grid;
+  gap: 8px;
+  padding: 3px 2px 8px;
+  isolation: isolate;
+}
+
+.thermalDeck {
+  --key-face-top: #2b4350;
+  --key-face: #1a2b35;
+  --key-face-bottom: #101b22;
+  --key-edge: #050a0e;
+  --key-edge-highlight: #263a43;
+  --key-border: #507486;
+  --key-specular: rgba(165, 225, 249, 0.28);
+  --key-glow: rgba(73, 185, 229, 0.14);
+  --key-ink: #edf5f6;
+}
+
+.row {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  gap: var(--keyboard-key-gap);
+  min-width: 0;
+  padding-inline: calc(var(--row-offset, 0) * var(--keyboard-key-size));
+}
+
+.keycap {
+  position: relative;
+  isolation: isolate;
+  flex: var(--key-width, 1) 1 0;
+  min-width: 0;
+  max-width: calc(var(--keyboard-key-size) * var(--key-width, 1));
+  height: 56px;
+  margin: 0 0 2px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+  color: var(--key-ink);
+  font: 500 clamp(0.74rem, 1.25vw, 1rem) var(--display);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  touch-action: manipulation;
+  user-select: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.underbody,
+.face,
+.effectSurface {
+  position: absolute;
+  pointer-events: none;
+  clip-path: polygon(
+    6px 0,
+    calc(100% - 6px) 0,
+    100% 6px,
+    100% calc(100% - 4px),
+    calc(100% - 4px) 100%,
+    4px 100%,
+    0 calc(100% - 4px),
+    0 6px
+  );
+  transition:
+    transform var(--keyboard-motion-duration) cubic-bezier(0.2, 0.8, 0.2, 1),
+    filter var(--keyboard-motion-duration) ease,
+    opacity var(--keyboard-motion-duration) ease;
+}
+
+.underbody {
+  z-index: 0;
+  inset: 2px 0 -2px;
+  transform: translateY(2px);
+  background:
+    linear-gradient(90deg, transparent 4%, var(--key-edge-highlight) 5% 95%, transparent 96%) top /
+      100% 1px no-repeat,
+    linear-gradient(180deg, #10181d 0%, var(--key-edge) 58%, #020506 100%);
+  box-shadow:
+    0 3px 0 #020405,
+    0 6px 9px rgba(0, 0, 0, 0.42),
+    0 0 13px var(--key-glow);
+}
+
+.face {
+  z-index: 1;
+  inset: 0 0 2px;
+  background:
+    linear-gradient(135deg, var(--key-specular) 0 1px, transparent 1px 16%),
+    linear-gradient(
+      180deg,
+      var(--key-face-top) 0%,
+      var(--key-face) 52%,
+      var(--key-face-bottom) 100%
+    );
+  box-shadow:
+    inset 0 1px 0 var(--key-specular),
+    inset 1px 0 0 rgba(154, 213, 237, 0.1),
+    inset -1px 0 0 rgba(0, 0, 0, 0.4),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.65),
+    0 0 0 1px var(--key-border);
+}
+
+.legend {
+  position: relative;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 100%;
+  height: calc(100% - 2px);
+  pointer-events: none;
+  text-shadow:
+    0 1px 0 #000,
+    0 0 8px var(--key-glow);
+  transition:
+    transform var(--keyboard-motion-duration) cubic-bezier(0.2, 0.8, 0.2, 1),
+    opacity var(--keyboard-motion-duration) ease;
+}
+
+.legend svg {
+  width: 21px;
+  margin: auto;
+}
+
+.tactileMarker {
+  position: absolute;
+  width: 0.48rem;
+  height: 1px;
+  bottom: 0.36rem;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 1px 0 rgba(0, 0, 0, 0.7);
+  opacity: 0.52;
+}
+
+.effectSurface {
+  z-index: 4;
+  inset: 0 0 2px;
+  overflow: hidden;
+  opacity: 0;
+  background: linear-gradient(
+    105deg,
+    transparent 28%,
+    rgba(181, 234, 255, 0.08) 43%,
+    rgba(181, 234, 255, 0.62) 50%,
+    rgba(181, 234, 255, 0.08) 57%,
+    transparent 72%
+  );
+  transform: translateX(-135%);
+}
+
+.keycap[data-key-kind='enter'],
+.keycap[data-key-kind='backspace'] {
+  --key-face-top: #263944;
+  --key-face: #172730;
+  --key-face-bottom: #0d171d;
+  --key-border: #415f6c;
+  letter-spacing: 0.09em;
+}
+
+.keycap[data-state='correct'] {
+  --key-face-top: #237a43;
+  --key-face: #176435;
+  --key-face-bottom: #0d4826;
+  --key-edge: #061d10;
+  --key-edge-highlight: #1b6337;
+  --key-border: #2a9851;
+  --key-specular: rgba(156, 240, 184, 0.3);
+  --key-glow: rgba(41, 204, 103, 0.18);
+}
+
+.keycap[data-state='present'] {
+  --key-face-top: #96650d;
+  --key-face: #7b5209;
+  --key-face-bottom: #513504;
+  --key-edge: #231703;
+  --key-edge-highlight: #81560a;
+  --key-border: #c98710;
+  --key-specular: rgba(255, 222, 139, 0.3);
+  --key-glow: rgba(237, 161, 19, 0.16);
+}
+
+.keycap[data-state='absent'] {
+  --key-face-top: #2b3235;
+  --key-face: #202527;
+  --key-face-bottom: #15191a;
+  --key-edge: #080b0c;
+  --key-edge-highlight: #333b3e;
+  --key-border: #424a4d;
+  --key-specular: rgba(255, 255, 255, 0.13);
+  --key-glow: transparent;
+  --key-ink: #999;
+}
+
+.keycap[data-state='removed'] {
+  --key-face-top: #191f22;
+  --key-face: #121719;
+  --key-face-bottom: #0a0e10;
+  --key-border: #353c3f;
+  --key-glow: transparent;
+  color: #7d8588;
+}
+
+.keycap[data-state='removed'] .face::after {
+  content: '';
+  position: absolute;
+  z-index: 2;
+  width: 145%;
+  height: 1px;
+  left: -22%;
+  top: 50%;
+  background: currentColor;
+  transform: rotate(-42deg);
+  opacity: 0.75;
+}
+
+.keycap[data-state='removed'] .legend {
+  opacity: 0.32;
+}
+
+.keycap:focus-visible {
+  z-index: 5;
+  outline: 2px solid var(--ice);
+  outline-offset: 3px;
+}
+
+.keycap[data-hovered]:not([data-disabled]) .face,
+.keycap[data-hovered]:not([data-disabled]) .legend,
+.keycap[data-hovered]:not([data-disabled]) .effectSurface {
+  transform: translateY(-1px);
+  filter: brightness(1.08);
+}
+
+.keycap[data-hovered]:not([data-disabled]) .underbody {
+  transform: translateY(1px);
+  filter: brightness(1.08);
+}
+
+.keycap[data-pressed]:not([data-disabled]) .face,
+.keycap[data-physical-pressed='true']:not([data-disabled]) .face,
+.keycap[data-pressed]:not([data-disabled]) .legend,
+.keycap[data-physical-pressed='true']:not([data-disabled]) .legend,
+.keycap[data-pressed]:not([data-disabled]) .effectSurface,
+.keycap[data-physical-pressed='true']:not([data-disabled]) .effectSurface {
+  transform: translateY(2px);
+  filter: brightness(1.11);
+}
+
+.keycap[data-pressed]:not([data-disabled]) .underbody,
+.keycap[data-physical-pressed='true']:not([data-disabled]) .underbody {
+  transform: translateY(0);
+  opacity: 0.7;
+}
+
+.keycap[data-pressed]:not([data-disabled]) .effectSurface,
+.keycap[data-physical-pressed='true']:not([data-disabled]) .effectSurface,
+.keycap[data-effect='press-glint'] .effectSurface {
+  animation: key-glint var(--keyboard-motion-duration) ease-out both;
+}
+
+.keycap[data-disabled] {
+  cursor: not-allowed;
+}
+
+.keycap[data-disabled]:not([data-state='removed']) {
+  opacity: 0.5;
+}
+
+@keyframes key-glint {
+  0% {
+    opacity: 0;
+    transform: translateX(-135%);
+  }
+  35% {
+    opacity: 0.75;
+  }
+  100% {
+    opacity: 0;
+    transform: translateX(135%);
+  }
+}
+
+@media (hover: none), (pointer: coarse) {
+  .keycap[data-hovered]:not([data-disabled]) .face,
+  .keycap[data-hovered]:not([data-disabled]) .legend,
+  .keycap[data-hovered]:not([data-disabled]) .effectSurface {
+    transform: none;
+    filter: none;
+  }
+
+  .keycap[data-hovered]:not([data-disabled]) .underbody {
+    transform: translateY(2px);
+    filter: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .keyboard {
+    --keyboard-key-size: 44px;
+    --keyboard-key-gap: 3px;
+    gap: 6px;
+    padding: 2px 0 7px;
+    scroll-margin-bottom: calc(var(--mobile-dock) + env(safe-area-inset-bottom) + 12px);
+  }
+
+  .keycap {
+    height: 44px;
+    min-height: 44px;
+    margin-bottom: 2px;
+    font-size: clamp(0.64rem, 3vw, 0.78rem);
+    scroll-margin-bottom: calc(var(--mobile-dock) + env(safe-area-inset-bottom) + 12px);
+  }
+
+  .underbody {
+    bottom: -1px;
+    transform: translateY(1px);
+    box-shadow:
+      0 2px 0 #020405,
+      0 4px 6px rgba(0, 0, 0, 0.38),
+      0 0 9px var(--key-glow);
+  }
+
+  .face,
+  .effectSurface {
+    bottom: 1px;
+  }
+
+  .tactileMarker {
+    bottom: 0.25rem;
+    width: 0.38rem;
+  }
+
+  .keycap[data-hovered]:not([data-disabled]) .underbody {
+    transform: translateY(1px);
+  }
+}
+
+@media (max-width: 340px) {
+  .keyboard {
+    --keyboard-key-gap: 2px;
+  }
+
+  .keycap {
+    font-size: 0.61rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .underbody,
+  .face,
+  .legend,
+  .effectSurface {
+    transition: none;
+    animation: none !important;
+  }
+
+  .keycap[data-hovered]:not([data-disabled]) .face,
+  .keycap[data-hovered]:not([data-disabled]) .legend,
+  .keycap[data-hovered]:not([data-disabled]) .effectSurface,
+  .keycap[data-pressed]:not([data-disabled]) .face,
+  .keycap[data-physical-pressed='true']:not([data-disabled]) .face,
+  .keycap[data-pressed]:not([data-disabled]) .legend,
+  .keycap[data-physical-pressed='true']:not([data-disabled]) .legend,
+  .keycap[data-pressed]:not([data-disabled]) .effectSurface,
+  .keycap[data-physical-pressed='true']:not([data-disabled]) .effectSurface {
+    transform: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .keycap,
+  .underbody,
+  .face,
+  .legend,
+  .effectSurface {
+    forced-color-adjust: auto;
+  }
+
+  .keycap {
+    border: 1px solid ButtonText;
+  }
+
+  .face,
+  .underbody {
+    background: ButtonFace;
+    box-shadow: none;
+  }
+
+  .keycap[data-state='removed'] .face::after {
+    background: GrayText;
+  }
+}

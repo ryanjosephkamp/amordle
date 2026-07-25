@@ -39,7 +39,13 @@ type MatchValue = string | number | boolean | null;
 type RowResource = { kind: 'row'; table: PublicTable; match: Record<string, MatchValue> };
 type StorageResource = { kind: 'storage'; bucket: string; path: string };
 type UserResource = { kind: 'auth-user'; userId: string };
-type Resource = RowResource | StorageResource | UserResource;
+type AuthoritativeCombatResource = {
+  kind: 'authoritative-combat';
+  gameIds: string[];
+  requestIds: string[];
+  userIds: string[];
+};
+type Resource = RowResource | StorageResource | UserResource | AuthoritativeCombatResource;
 
 const CLEANUP_ORDER: PublicTable[] = [
   'live_match_events',
@@ -189,6 +195,57 @@ export class RealServiceHarness {
     await this.register({ kind: 'storage', bucket, path: objectPath });
   }
 
+  async registerAuthoritativeCombat(input: {
+    gameIds?: string[];
+    requestIds?: string[];
+    userIds?: string[];
+  }): Promise<void> {
+    const resource: AuthoritativeCombatResource = {
+      kind: 'authoritative-combat',
+      gameIds: [...new Set(input.gameIds ?? [])],
+      requestIds: [...new Set(input.requestIds ?? [])],
+      userIds: [...new Set(input.userIds ?? [])],
+    };
+    if (
+      resource.gameIds.length === 0 &&
+      resource.requestIds.length === 0 &&
+      resource.userIds.length === 0
+    ) {
+      throw new Error('Authoritative COMBAT cleanup registration must identify a resource.');
+    }
+    await this.register(resource);
+  }
+
+  async discoverAndRegisterAuthoritativeCombatForUsers(userIds: string[]): Promise<void> {
+    const exactUserIds = [...new Set(userIds)];
+    if (exactUserIds.length === 0) {
+      throw new Error('Authoritative COMBAT discovery requires exact disposable user IDs.');
+    }
+    const [requests, games] = await Promise.all([
+      this.admin
+        .from('multiplayer_matchmaking_queue')
+        .select('id')
+        .eq('authority_version', 2)
+        .in('user_id', exactUserIds)
+        .like('idempotency_key', `${this.runId}:%`),
+      this.admin
+        .from('async_multiplayer_games')
+        .select('id')
+        .eq('authority_version', 2)
+        .or(
+          `host_user_id.in.(${exactUserIds.join(',')}),player_one_user_id.in.(${exactUserIds.join(',')}),player_two_user_id.in.(${exactUserIds.join(',')})`,
+        ),
+    ]);
+    if (requests.error || games.error) {
+      throw requests.error ?? games.error ?? new Error('Authoritative COMBAT discovery failed.');
+    }
+    await this.registerAuthoritativeCombat({
+      requestIds: (requests.data ?? []).map(({ id }) => id),
+      gameIds: (games.data ?? []).map(({ id }) => id),
+      userIds: exactUserIds,
+    });
+  }
+
   async cleanup(): Promise<void> {
     const failures: string[] = [];
     const users = this.resources.filter(
@@ -202,6 +259,52 @@ export class RealServiceHarness {
         if (error) throw error;
       } catch {
         failures.push('ranked Daily private cleanup failed');
+      }
+      try {
+        await this.discoverAndRegisterAuthoritativeCombatForUsers(
+          users.map(({ userId }) => userId),
+        );
+      } catch {
+        failures.push('authoritative COMBAT resource discovery failed');
+      }
+    }
+
+    const authoritative = this.resources.filter(
+      (resource): resource is AuthoritativeCombatResource =>
+        resource.kind === 'authoritative-combat',
+    );
+    if (authoritative.length > 0) {
+      const gameIds = [...new Set(authoritative.flatMap((resource) => resource.gameIds))];
+      const requestIds = [...new Set(authoritative.flatMap((resource) => resource.requestIds))];
+      const userIds = [
+        ...new Set([
+          ...users.map(({ userId }) => userId),
+          ...authoritative.flatMap((resource) => resource.userIds),
+        ]),
+      ];
+      try {
+        await retry(async () => {
+          const cleanup = await this.admin.rpc('cleanup_amordle_combat_e2e_v2', {
+            p_run_id: this.runId,
+            p_game_ids: gameIds,
+            p_request_ids: requestIds,
+            p_user_ids: userIds,
+          });
+          if (cleanup.error) throw cleanup.error;
+          const probe = await this.admin.rpc('probe_amordle_combat_e2e_residue_v2', {
+            p_run_id: this.runId,
+            p_game_ids: gameIds,
+            p_request_ids: requestIds,
+            p_user_ids: userIds,
+          });
+          if (probe.error) throw probe.error;
+          const residue = Object.values((probe.data ?? {}) as Record<string, unknown>).some(
+            (value) => typeof value !== 'number' || value !== 0,
+          );
+          if (residue) throw new Error('authoritative COMBAT residue');
+        });
+      } catch {
+        failures.push('authoritative COMBAT cleanup or zero-residue probe failed');
       }
     }
 

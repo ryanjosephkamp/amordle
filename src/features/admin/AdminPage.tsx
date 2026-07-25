@@ -1,12 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
-import { useLocation } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { Button } from '../../components/Button';
 import { Icon } from '../../components/Icon';
 import { Metric, PageHeader, RuledList, StatusDot } from '../../components/Surface';
 
-type AdminState =
+export type AdminState =
   | 'unconfigured'
   | 'anonymous'
   | 'denied'
@@ -16,22 +15,7 @@ type AdminState =
   | 'success'
   | 'failure';
 
-const metrics = [
-  ['Accounts', '20'],
-  ['Public profiles', '12'],
-  ['Active public profiles', '8'],
-  ['Suspended profiles', '1'],
-  ['Ranked profiles', '10'],
-  ['Established ratings', '7'],
-  ['Pending ranked queue', '3'],
-  ['Stale queue candidates', '1'],
-  ['Active async games', '5'],
-  ['Terminal async games', '101'],
-  ['Pending private requests', '2'],
-  ['Daily claims today', '9'],
-] as const;
-
-function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied' }) {
+export function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied' }) {
   const title = 'Developer operations locked';
   const message =
     state === 'unconfigured'
@@ -54,15 +38,13 @@ function LockedAdmin({ state }: { state: 'unconfigured' | 'anonymous' | 'denied'
 }
 
 export function AdminPage() {
-  const location = useLocation();
-  const visual = new URLSearchParams(location.search).get('visual') as AdminState | null;
   const { client, service, status: authStatus, user } = useAuth();
   const [state, setState] = useState<AdminState>('ready');
   const [receipt, setReceipt] = useState<Record<string, unknown> | null>(null);
   const isAdmin = user?.app_metadata.role === 'admin';
   const dashboard = useQuery({
     queryKey: ['admin-operational-dashboard'],
-    enabled: Boolean(client && isAdmin && !(import.meta.env.DEV && visual)),
+    enabled: Boolean(client && isAdmin),
     queryFn: async () => {
       if (!client) throw new Error('Admin client is unavailable.');
       const { data, error } = await client.rpc('get_admin_operational_dashboard_v1');
@@ -73,13 +55,6 @@ export function AdminPage() {
     retry: false,
   });
 
-  if (import.meta.env.DEV && visual) {
-    if (visual === 'unconfigured' || visual === 'anonymous' || visual === 'denied') {
-      return <LockedAdmin state={visual} />;
-    }
-    if (visual === 'ready') return <Dashboard onConfirm={() => setState('confirm')} />;
-    return <RefreshOperation state={visual} onState={setState} receipt={receipt} />;
-  }
   if (authStatus === 'unconfigured') return <LockedAdmin state="unconfigured" />;
   if (authStatus === 'loading') return <p role="status">Verifying developer authorization…</p>;
   if (!user) return <LockedAdmin state="anonymous" />;
@@ -96,7 +71,7 @@ export function AdminPage() {
   }
   if (state === 'ready') {
     return (
-      <Dashboard
+      <AdminDashboard
         onConfirm={() => setState('confirm')}
         onReload={() => void dashboard.refetch()}
         {...(dashboard.data ? { data: dashboard.data as Record<string, unknown> } : {})}
@@ -128,7 +103,7 @@ export function AdminPage() {
     }
   };
   return (
-    <RefreshOperation
+    <AdminRefreshOperation
       state={state as Exclude<AdminState, 'unconfigured' | 'anonymous' | 'denied' | 'ready'>}
       onState={setState}
       onExecute={execute}
@@ -137,7 +112,7 @@ export function AdminPage() {
   );
 }
 
-function Dashboard({
+export function AdminDashboard({
   onConfirm,
   onReload,
   data,
@@ -146,7 +121,6 @@ function Dashboard({
   onReload?: () => void;
   data?: Record<string, unknown>;
 }) {
-  const [stamp, setStamp] = useState('Snapshot ready');
   const rows = data
     ? [
         ['Accounts', data.accounts_total],
@@ -162,7 +136,12 @@ function Dashboard({
         ['Pending private requests', data.private_match_requests_pending],
         ['Daily claims today', data.daily_claims_today],
       ].map(([label, value]) => [String(label), String(value ?? 0)] as const)
-    : metrics;
+    : [];
+  const generatedAt = data?.generated_at;
+  const generatedLabel =
+    typeof generatedAt === 'string' && !Number.isNaN(Date.parse(generatedAt))
+      ? new Date(generatedAt).toLocaleString()
+      : null;
   return (
     <div className="page page--admin">
       <PageHeader
@@ -172,37 +151,38 @@ function Dashboard({
       />
       <div className="dashboard-title">
         <h2>Operational dashboard</h2>
-        <Button
-          onClick={() => {
-            onReload?.();
-            setStamp(`Reloaded ${new Date().toLocaleTimeString()}`);
-          }}
-        >
-          <Icon name="refresh" /> Refresh
-        </Button>
-        <span>{stamp}</span>
+        {onReload ? (
+          <Button onClick={onReload}>
+            <Icon name="refresh" /> Refresh
+          </Button>
+        ) : null}
+        <span>{generatedLabel ? `Generated ${generatedLabel}` : 'No authorized snapshot'}</span>
       </div>
-      <div className="operations-matrix" role="list" aria-label="Approved aggregate metrics">
-        {rows.map(([label, value]) => (
-          <div role="listitem" key={label}>
-            <Metric
-              value={value}
-              label={label}
-              tone={['1', '3', '5', '2'].includes(value) ? 'amber' : 'green'}
-            />
-            {['1', '3', '5', '2'].includes(value) ? <small>Attention</small> : null}
+      {data ? (
+        <>
+          <div className="operations-matrix" role="list" aria-label="Approved aggregate metrics">
+            {rows.map(([label, value]) => (
+              <div role="listitem" key={label}>
+                <Metric value={value} label={label} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <RuledList label="Activity timestamps">
-        {['Generated', 'Ranked queue', 'Private requests', 'Async games'].map((label) => (
-          <div className="activity-row" role="listitem" key={label}>
-            <Icon name="clock" />
-            <span>{label}</span>
-            <time>Jul 21, 2026 · 2:22 PM</time>
-          </div>
-        ))}
-      </RuledList>
+          {generatedLabel ? (
+            <RuledList label="Activity timestamps">
+              <div className="activity-row" role="listitem">
+                <Icon name="clock" />
+                <span>Snapshot generated</span>
+                <time dateTime={String(generatedAt)}>{generatedLabel}</time>
+              </div>
+            </RuledList>
+          ) : null}
+        </>
+      ) : (
+        <p className="support-state" role="status">
+          No authorized aggregate snapshot is attached to this local visual state. Operational
+          counts and timestamps are intentionally omitted.
+        </p>
+      )}
       <Button tone="primary" onClick={onConfirm}>
         Manual word-list refresh
       </Button>
@@ -210,7 +190,7 @@ function Dashboard({
   );
 }
 
-function RefreshOperation({
+export function AdminRefreshOperation({
   state,
   onState,
   onExecute,
@@ -222,9 +202,15 @@ function RefreshOperation({
   receipt?: Record<string, unknown> | null;
 }) {
   const inFlight = state === 'inflight';
+  const liveOperation = Boolean(onExecute);
+  const hasReceipt = Boolean(receipt);
   return (
     <div className="page page--admin">
-      <StatusDot>Admin access verified · signed in</StatusDot>
+      <StatusDot tone={liveOperation ? 'green' : 'ice'}>
+        {liveOperation
+          ? 'Admin access verified · signed in'
+          : 'Local visual state · no authorization claim'}
+      </StatusDot>
       <PageHeader
         title="Manual word-list refresh"
         eyebrow="Developer Operations"
@@ -232,7 +218,9 @@ function RefreshOperation({
           state === 'confirm'
             ? 'Review the full operation before execution.'
             : state === 'inflight'
-              ? 'The protected request is active. The server remains the authority.'
+              ? liveOperation
+                ? 'The protected request is active. The server remains the authority.'
+                : 'This local visual state does not send a protected request.'
               : 'The protected request returned the status below.'
         }
       />
@@ -269,13 +257,17 @@ function RefreshOperation({
         <div className="operation-status" role="status">
           <Icon name="clock" />
           <div>
-            <h2>Refreshing word lists…</h2>
-            <p>No percentage, stage, ETA, or partial outcome is available.</p>
+            <h2>{liveOperation ? 'Refreshing word lists…' : 'Visual in-flight layout'}</h2>
+            <p>
+              {liveOperation
+                ? 'No percentage, stage, ETA, or partial outcome is available.'
+                : 'No request was sent and no operational result is implied.'}
+            </p>
           </div>
-          <Button disabled>Refreshing…</Button>
+          <Button disabled>{liveOperation ? 'Refreshing…' : 'No request'}</Button>
         </div>
       ) : null}
-      {state === 'success' ? (
+      {state === 'success' && hasReceipt ? (
         <div className="operation-status operation-status--success" role="status">
           <Icon name="check" />
           <div>
@@ -283,30 +275,39 @@ function RefreshOperation({
             <dl className="receipt">
               <div>
                 <dt>Revision</dt>
-                <dd>{String(receipt?.revision ?? 'validated revision')}</dd>
+                <dd>{String(receipt?.revision ?? 'Not returned')}</dd>
               </div>
               <div>
                 <dt>Generated at</dt>
-                <dd>{String(receipt?.generatedAt ?? receipt?.generated_at ?? 'validated')}</dd>
+                <dd>{String(receipt?.generatedAt ?? receipt?.generated_at ?? 'Not returned')}</dd>
               </div>
               <div>
                 <dt>Fetched at</dt>
-                <dd>{String(receipt?.fetchedAt ?? receipt?.fetched_at ?? 'validated')}</dd>
+                <dd>{String(receipt?.fetchedAt ?? receipt?.fetched_at ?? 'Not returned')}</dd>
               </div>
               <div>
                 <dt>Lengths refreshed</dt>
-                <dd>{String(receipt?.lengthsRefreshed ?? receipt?.lengths_refreshed ?? 34)}</dd>
+                <dd>
+                  {String(
+                    receipt?.lengthsRefreshed ?? receipt?.lengths_refreshed ?? 'Not returned',
+                  )}
+                </dd>
               </div>
               <div>
                 <dt>Persistence</dt>
-                <dd>Swapped</dd>
+                <dd>{String(receipt?.persistence ?? 'Not returned')}</dd>
               </div>
             </dl>
           </div>
           <Button onClick={() => onState('ready')}>Reset status</Button>
         </div>
       ) : null}
-      {state === 'failure' ? (
+      {state === 'success' && !hasReceipt ? (
+        <div className="support-state" role="status">
+          No service receipt is attached to this local visual state. Success is not claimed.
+        </div>
+      ) : null}
+      {state === 'failure' && hasReceipt ? (
         <div className="operation-status operation-status--failure" role="alert">
           <Icon name="info" />
           <div>
@@ -324,10 +325,10 @@ function RefreshOperation({
           </div>
         </div>
       ) : null}
-      {import.meta.env.DEV && inFlight ? (
-        <div className="visual-state-controls" aria-label="Local visual-state controls">
-          <Button onClick={() => onState('success')}>Show success</Button>
-          <Button onClick={() => onState('failure')}>Show failure</Button>
+      {state === 'failure' && !hasReceipt ? (
+        <div className="support-state" role="status">
+          No service failure receipt is attached to this local visual state. A server error is not
+          claimed.
         </div>
       ) : null}
     </div>

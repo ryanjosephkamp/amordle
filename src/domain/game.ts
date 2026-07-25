@@ -54,8 +54,8 @@ export type GuessValidationCode =
   | 'unsupported_length'
   | 'not_in_word_list'
   | 'hard_mode_correct_position'
-  | 'hard_mode_present_position'
   | 'hard_mode_missing_letter'
+  | 'hard_mode_absent_letter'
   | 'revealed_position_mismatch'
   | 'terminal';
 
@@ -143,6 +143,20 @@ function requiredHardModeCounts(
   return required;
 }
 
+function forbiddenHardModeLetters(
+  guesses: readonly Pick<ScoredGuess, 'tiles'>[],
+): ReadonlySet<string> {
+  const knownPositive = new Set<string>();
+  const knownAbsent = new Set<string>();
+  for (const guess of guesses) {
+    for (const tile of guess.tiles) {
+      if (tile.state === 'absent') knownAbsent.add(tile.letter);
+      else knownPositive.add(tile.letter);
+    }
+  }
+  return new Set([...knownAbsent].filter((letter) => !knownPositive.has(letter)));
+}
+
 export function validateHardMode(
   guess: string,
   evidence: readonly Pick<ScoredGuess, 'tiles'>[],
@@ -160,19 +174,6 @@ export function validateHardMode(
     }
   }
 
-  for (const prior of evidence) {
-    for (const tile of prior.tiles) {
-      if (tile.state === 'present' && guess[tile.position] === tile.letter) {
-        return {
-          code: 'hard_mode_present_position',
-          message: `${tile.letter.toLocaleUpperCase('en-US')} cannot remain in position ${tile.position + 1}.`,
-          letter: tile.letter,
-          position: tile.position,
-        };
-      }
-    }
-  }
-
   const counts = new Map<string, number>();
   for (const letter of guess) counts.set(letter, (counts.get(letter) ?? 0) + 1);
   for (const [letter, minimum] of requiredHardModeCounts(evidence)) {
@@ -180,6 +181,15 @@ export function validateHardMode(
       return {
         code: 'hard_mode_missing_letter',
         message: `Guess must include ${minimum} ${letter.toLocaleUpperCase('en-US')}${minimum === 1 ? '' : 's'}.`,
+        letter,
+      };
+    }
+  }
+  for (const letter of forbiddenHardModeLetters(evidence)) {
+    if (guess.includes(letter)) {
+      return {
+        code: 'hard_mode_absent_letter',
+        message: `Gray letter ${letter.toLocaleUpperCase('en-US')} cannot be reused.`,
         letter,
       };
     }
@@ -382,11 +392,12 @@ export function continueOgSession(
   operationId: string,
   now?: string,
 ): OgSession {
-  if (session.appliedContinuationIds.includes(operationId)) return session;
+  const id = operationId.trim();
+  if (!id || id.length > 200)
+    throw new RangeError('A valid continuation operation id is required.');
+  if (session.appliedContinuationIds.includes(id)) return session;
   if (session.scope !== 'practice' || session.status !== 'lost' || session.revealedAnswer)
     return session;
-  const id = operationId.trim();
-  if (!id) throw new RangeError('Continuation operation id is required.');
   return {
     ...session,
     maxAttempts: session.maxAttempts + 1,
