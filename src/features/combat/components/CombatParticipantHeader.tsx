@@ -37,11 +37,15 @@ export function CombatParticipantHeader({
             key={participant.key}
           >
             <span className={styles.participantMark} aria-hidden="true">
-              {participant.shortLabel}
+              {participant.avatarUrl ? (
+                <img alt="" src={participant.avatarUrl} />
+              ) : (
+                participant.shortLabel
+              )}
             </span>
             <span className={styles.participantCopy}>
               <strong>{participant.displayName}</strong>
-              <span>{activeSeat === side ? 'Active participant' : 'Waiting participant'}</span>
+              <span>{activeSeat === side ? 'Current turn' : 'Ready'}</span>
             </span>
           </div>
         );

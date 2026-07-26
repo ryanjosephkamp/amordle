@@ -362,9 +362,9 @@ function SoloRuntime({
   const legacyRestartInFlight = useRef(false);
   const [message, setMessage] = useState(
     initial.legacyRestartNeeded
-      ? 'GO attempt rules were updated. This active chain will restart after durable actions recover.'
+      ? 'GO attempt rules were updated. This active chain will restart after pending purchases finish.'
       : initial.restored
-        ? 'Saved session restored from this account namespace.'
+        ? 'Your saved session was restored.'
         : 'Enter a valid word. Attempts are not consumed by rejected guesses.',
   );
   const [confirmReveal, setConfirmReveal] = useState(false);
@@ -409,7 +409,7 @@ function SoloRuntime({
         setMessage(
           result.reason === 'conflict'
             ? 'A newer saved session exists. Reload before continuing.'
-            : 'Local persistence is unavailable. The durable action was not confirmed.',
+            : 'This move could not be saved on this device. Try again.',
         );
         return false;
       }
@@ -575,7 +575,7 @@ function SoloRuntime({
 
   const submit = useCallback(() => {
     if (soloActionsBlocked) {
-      setMessage('Finish the pending durable economy recovery before submitting another guess.');
+      setMessage('Finish the pending purchase recovery before submitting another guess.');
       return;
     }
     const current = activePuzzle(session);
@@ -923,7 +923,7 @@ function SoloRuntime({
         new Date().toISOString(),
       );
       if (!marked.ok || marked.value === 'missing' || marked.value === 'idempotency_conflict') {
-        setMessage('The inventory operation is idempotent, but its durable intent needs recovery.');
+        setMessage('This item use needs to be recovered before you can continue.');
         return false;
       }
 
@@ -1411,7 +1411,11 @@ function SoloRuntime({
                   >
                     Copy result
                   </Button>
-                  <ButtonLink to="/definitions">Definitions</ButtonLink>
+                  <ButtonLink
+                    to={`/word-explorer?word=${encodeURIComponent(puzzle.answer.toLocaleLowerCase('en-US'))}`}
+                  >
+                    Definition
+                  </ButtonLink>
                   <ButtonLink to="/history">History</ButtonLink>
                 </>
               ) : null}
@@ -1566,8 +1570,7 @@ function SoloWordListLoader({ config }: { config: SoloConfig }) {
         <p className="eyebrow">Local continuity</p>
         <h1>Saved Solo state requires recovery</h1>
         <p>
-          The active identity namespace was not replaced. Resolve or reset its saved state before
-          playing this lane.
+          This player’s saved game was not replaced. Resolve or reset it before playing this lane.
         </p>
         <ButtonLink to="/settings">Open recovery settings</ButtonLink>
         <ButtonLink to="/play">Back to Play</ButtonLink>

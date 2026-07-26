@@ -85,7 +85,9 @@ export class CombatPreviewRepository {
       .order('updated_at', { ascending: false })
       .limit(safeLimit);
     throwIfServiceError(error, 'Load participant COMBAT summaries');
-    return (data ?? []).map(parseLegacyCombatSummary);
+    return (data ?? [])
+      .map(parseLegacyCombatSummary)
+      .filter((summary) => summary.status === 'waiting' || summary.status === 'playing');
   }
 
   async loadProjection(gameId: string, viewerUserId: string): Promise<CombatProjection | null> {

@@ -11,6 +11,7 @@ import {
   CombatUnavailablePanel,
   type CombatPreviewParticipant,
 } from '../../src/features/combat/components';
+import { useRankedSearchController } from '../../src/features/combat/ranked-search-controller';
 import '../../src/styles/global.css';
 
 const participants: readonly [CombatPreviewParticipant, CombatPreviewParticipant] = [
@@ -34,6 +35,43 @@ afterEach(() => {
 });
 
 describe('repository-agnostic COMBAT preview components', () => {
+  it('keeps restored ranked-search UI stable while status is loading and reconciling', () => {
+    const claim = vi.fn(() => new Promise<{ status: 'queued' }>(() => undefined));
+    const finalize = vi.fn(async () => undefined);
+    const onQueueUpdate = vi.fn();
+    const onTerminal = vi.fn();
+    const onTransientError = vi.fn();
+    function SearchHarness({
+      queue,
+      updatedAt,
+    }: {
+      queue: { status: 'queued' } | undefined;
+      updatedAt: number;
+    }) {
+      const search = useRankedSearchController({
+        enabled: true,
+        requestId: 'queue-one',
+        queue,
+        queueUpdatedAt: updatedAt,
+        claim,
+        finalize,
+        onQueueUpdate,
+        onTerminal,
+        onTransientError,
+      });
+      return (
+        <p role="status">{search.phase === 'queued' ? 'Searching for a rival' : search.phase}</p>
+      );
+    }
+
+    const { rerender } = render(<SearchHarness queue={undefined} updatedAt={0} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Searching for a rival');
+
+    rerender(<SearchHarness queue={{ status: 'queued' }} updatedAt={1} />);
+    expect(screen.getByRole('status')).toHaveTextContent('Searching for a rival');
+    expect(claim).toHaveBeenCalledOnce();
+  });
+
   it('renders an accessible participant status header and server-derived clock label', () => {
     render(
       <CombatParticipantHeader
@@ -190,6 +228,37 @@ describe('repository-agnostic COMBAT preview components', () => {
     );
     await user.click(screen.getByRole('button', { name: 'Enter' }));
     expect(commands).toEqual(['ENTER']);
+  });
+
+  it('fits six shared rows and the keyboard inside a mobile gameplay stage', () => {
+    render(
+      <div
+        data-testid="mobile-match-stage"
+        style={{ width: 390, height: 720, display: 'grid', overflow: 'hidden' }}
+      >
+        <CombatSharedActorBoard
+          length={5}
+          rows={Array.from({ length: 6 }, () => emptyRow(5))}
+          actorRows={Array.from({ length: 6 }, () => ({
+            participantKey: null,
+            shortLabel: '',
+          }))}
+          participants={participants}
+          contextLabel="Unranked Public Practice OG · 5 letters"
+          message="Your turn."
+          activeRow={0}
+          keyboard={{ onCommand: () => true }}
+        />
+      </div>,
+    );
+
+    const host = screen.getByTestId('mobile-match-stage');
+    const keyboard = screen.getByRole('group', { name: /game keyboard/i });
+    expect(screen.getAllByRole('row')).toHaveLength(6);
+    expect(host.scrollWidth).toBeLessThanOrEqual(host.clientWidth + 1);
+    expect(keyboard.getBoundingClientRect().bottom).toBeLessThanOrEqual(
+      host.getBoundingClientRect().bottom + 1,
+    );
   });
 
   it('renders unavailable and terminal states from sanitized props only', async () => {

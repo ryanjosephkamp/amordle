@@ -8,7 +8,7 @@ export interface CombatUnavailablePanelProps {
   readonly description: string;
   readonly statusLabel: string;
   readonly statusTone?: CombatPreviewTone;
-  readonly privacyNote: string;
+  readonly privacyNote?: string;
   readonly actions?: readonly CombatPreviewAction[];
 }
 
@@ -32,7 +32,7 @@ export function CombatUnavailablePanel({
       </span>
       <h2 id={titleId}>{title}</h2>
       <p>{description}</p>
-      <p className={styles.privacyNote}>{privacyNote}</p>
+      {privacyNote ? <p className={styles.privacyNote}>{privacyNote}</p> : null}
       {actions.length > 0 ? (
         <div className={styles.actions}>
           {actions.map((action) => (

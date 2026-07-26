@@ -1,4 +1,4 @@
-import type { CSSProperties } from 'react';
+import { useEffect, useRef, type CSSProperties } from 'react';
 
 import { GameBoard, TileLegend, type Tile, type TileState } from '../../../components/GameBoard';
 import { Keyboard, type KeyboardProps } from '../../../components/keyboard/Keyboard';
@@ -41,12 +41,25 @@ export function CombatSharedActorBoard({
   compact = false,
   keyboard,
 }: CombatSharedActorBoardProps) {
+  const viewportRef = useRef<HTMLDivElement>(null);
+  const priorRowCount = useRef(rows.length);
   const actorLabels = rows.map((_, index) =>
     actorRows[index]?.kind === 'evidence' ? '' : (actorRows[index]?.shortLabel ?? ''),
   );
   const evidenceLabels = rows.map((_, index) =>
     actorRows[index]?.kind === 'evidence' ? actorRows[index]?.shortLabel : undefined,
   );
+
+  useEffect(() => {
+    if (rows.length > priorRowCount.current) {
+      const viewport = viewportRef.current;
+      viewport?.scrollTo({
+        top: viewport.scrollHeight,
+        behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth',
+      });
+    }
+    priorRowCount.current = rows.length;
+  }, [rows.length]);
 
   return (
     <section
@@ -68,6 +81,7 @@ export function CombatSharedActorBoard({
         </ul>
       ) : null}
       <div
+        ref={viewportRef}
         className={styles.boardViewport}
         data-testid="combat-board-viewport"
         style={{ '--combat-word-length': length } as CSSProperties}

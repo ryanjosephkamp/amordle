@@ -5,10 +5,8 @@ import { useAuth } from '../../app/auth-context';
 import type { TileState } from '../../components/gameBoardData';
 import type { KeyboardCommand } from '../../components/keyboard/keyboard-model';
 import { CombatParticipantIdentityRepository } from '../../services/combat-participant-identity';
-import {
-  CombatPreviewRepository,
-  type CombatPreviewConflictError,
-} from '../../services/combat-preview-repository';
+import { CombatPreviewRepository } from '../../services/combat-preview-repository';
+import { combatCommandFailure } from '../../services/combat-command-failure';
 import { RealtimeReconciler } from '../../services/realtime-reconciler';
 import { readSoundEnabled, soundEngine } from '../../services/sound-controller';
 import { wordListProvider } from '../../services/word-list-provider';
@@ -30,7 +28,7 @@ export function useRankedDailyCombatMatch(gameId: string) {
     enabled: Boolean(repository && user),
     queryFn: async () => {
       const loaded = await repository!.loadProjection(gameId, user!.id);
-      if (loaded?.kind !== 'ranked-daily') throw new Error('Ranked Daily projection unavailable.');
+      if (loaded?.kind !== 'ranked-daily') throw new Error('Ranked Daily game unavailable.');
       return loaded;
     },
     refetchInterval: 5_000,
@@ -51,7 +49,7 @@ export function useRankedDailyCombatMatch(gameId: string) {
   });
   const storageKey = `amordle:ranked-daily-draft:${identity.kind === 'authenticated' ? identity.userId : 'guest'}:${gameId}`;
   const [draft, setDraft] = useState(() => sessionStorage.getItem(storageKey) ?? '');
-  const [message, setMessage] = useState('Loading private Ranked Daily authority…');
+  const [message, setMessage] = useState('Loading Ranked Daily…');
   const [saving, setSaving] = useState(false);
   const [settlement, setSettlement] = useState<Awaited<
     ReturnType<CombatPreviewRepository['settleRankedDaily']>
@@ -71,7 +69,7 @@ export function useRankedDailyCombatMatch(gameId: string) {
       reconcile: async () => {
         await queryClient.invalidateQueries({ queryKey });
       },
-      onError: () => setMessage('Connection changed. Durable polling remains active.'),
+      onError: () => setMessage('Connection changed. Reconnecting…'),
     });
     reconciler.start();
     return () => reconciler.stop();
@@ -96,23 +94,25 @@ export function useRankedDailyCombatMatch(gameId: string) {
           ...(forfeit ? { forfeit: true } : { guess: draft.toLocaleLowerCase('en-US') }),
         });
         queryClient.setQueryData(queryKey, accepted);
+        if (['won', 'lost', 'expired', 'cancelled'].includes(accepted.status)) {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['combat', 'active'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'hub'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'lobbies'] }),
+          ]);
+        }
         sessionStorage.removeItem(storageKey);
         setDraft('');
         setMessage(
           ['won', 'lost', 'expired', 'cancelled'].includes(accepted.status)
-            ? 'Server-authoritative terminal state saved.'
-            : 'Server-authoritative move saved. Waiting for the other participant.',
+            ? 'Game complete. Results are ready.'
+            : 'Move accepted. Waiting for the other player.',
         );
         return true;
       } catch (error) {
-        await projection.refetch();
-        setMessage(
-          (error as CombatPreviewConflictError)?.failure?.code === 'conflict'
-            ? 'Ranked Daily changed before this action. Durable state was reloaded.'
-            : error instanceof Error
-              ? error.message
-              : 'Ranked Daily action failed.',
-        );
+        const failure = combatCommandFailure(error);
+        if (failure.reread) await projection.refetch();
+        setMessage(failure.message);
         return false;
       } finally {
         setSaving(false);
@@ -134,7 +134,7 @@ export function useRankedDailyCombatMatch(gameId: string) {
       .settleRankedDaily({ gameId, viewerUserId: user.id })
       .then(setSettlement)
       .catch((error: unknown) =>
-        setMessage(error instanceof Error ? error.message : 'Trusted settlement failed.'),
+        setMessage(error instanceof Error ? error.message : 'Rating update is still pending.'),
       );
   }, [current, gameId, repository, settlement, user]);
 

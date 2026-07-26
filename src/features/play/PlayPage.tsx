@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { useNavigate } from 'react-router';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router';
 import { useAuth } from '../../app/auth-context';
 import { Button, ButtonLink } from '../../components/Button';
 import { Disclosure } from '../../components/Disclosure';
@@ -8,6 +8,8 @@ import { readLocalSoloProjections } from '../supporting/local-solo-projections';
 
 export function PlayPage() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const activeHeadingRef = useRef<HTMLHeadingElement>(null);
   const { identity, status: authStatus } = useAuth();
   const [mode, setMode] = useState<'og' | 'go'>('og');
   const [length, setLength] = useState(5);
@@ -21,6 +23,12 @@ export function PlayPage() {
         : readLocalSoloProjections(identity).filter((session) => session.status === 'playing'),
     [authStatus, identity],
   );
+  const requestedView = new URLSearchParams(location.search).get('view');
+  useEffect(() => {
+    if (requestedView !== 'active') return;
+    activeHeadingRef.current?.focus({ preventScroll: true });
+    activeHeadingRef.current?.scrollIntoView({ block: 'start' });
+  }, [requestedView]);
   return (
     <div className="page page--play-overview">
       <PageHeader
@@ -32,16 +40,16 @@ export function PlayPage() {
         }
       />
       <nav className="subnav" aria-label="Solo">
-        <a aria-current="page" href="#formats">
+        <Link aria-current={requestedView === 'active' ? undefined : 'page'} to="/play">
           Overview
-        </a>
+        </Link>
         <ButtonLink to="/play/daily/og" tone="quiet">
           Daily
         </ButtonLink>
         <ButtonLink to="/play/practice/og" tone="quiet">
           Practice
         </ButtonLink>
-        <a href="#active">
+        <Link aria-current={requestedView === 'active' ? 'page' : undefined} to="/play?view=active">
           Active
           <span
             className="subnav-badge"
@@ -49,7 +57,7 @@ export function PlayPage() {
           >
             {activeSolo.length}
           </span>
-        </a>
+        </Link>
       </nav>
       <SectionHeading title="Choose a format" />
       <div className="format-grid" id="formats">
@@ -134,12 +142,16 @@ export function PlayPage() {
           Start configured Practice
         </Button>
       </form>
-      <SectionHeading title="Active Solo" />
+      <div className="section-heading">
+        <h2 id="active-heading" ref={activeHeadingRef} tabIndex={-1}>
+          Active Solo
+        </h2>
+      </div>
       <div id="active">
         <RuledList>
           {authStatus === 'loading' ? (
             <p className="support-state" role="status">
-              Checking the identity namespace before reading active sessions…
+              Checking for saved Solo games…
             </p>
           ) : null}
           {authStatus !== 'loading'
@@ -157,10 +169,7 @@ export function PlayPage() {
               ))
             : null}
           {authStatus !== 'loading' && activeSolo.length === 0 ? (
-            <p className="empty-state">
-              No resumable Solo sessions exist in this identity namespace. Start a Daily or Practice
-              game above.
-            </p>
+            <p className="empty-state">No saved games to resume.</p>
           ) : null}
         </RuledList>
       </div>

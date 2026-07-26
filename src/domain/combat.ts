@@ -27,7 +27,6 @@ export function sharedCombatRowCapacity(input: {
   return Math.max(
     SHARED_COMBAT_BASE_ROWS,
     input.seededRows + input.acceptedMoves + (input.hasActiveDraft ? 1 : 0),
-    input.seededRows + input.attemptBudget,
   );
 }
 

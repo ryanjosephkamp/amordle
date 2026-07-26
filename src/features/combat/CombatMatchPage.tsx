@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
-import { useMemo, useState } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router';
 
 import { useAuth } from '../../app/auth-context';
@@ -17,6 +17,10 @@ import {
   AuthoritativeCombatRepository,
   authoritativeGuessMoves,
 } from '../../services/authoritative-combat-repository';
+import { AccountRepository } from '../../services/account-repository';
+import { createCombatHistoryRow } from '../../services/combat-history';
+import { wordListProvider } from '../../services/word-list-provider';
+import { combatLaneLabel, projectedCombatPoints } from '../../domain/combat-presentation';
 import {
   CombatParticipantHeader,
   CombatSharedActorBoard,
@@ -38,22 +42,51 @@ function shortLabel(displayName: string): string {
   ).toLocaleUpperCase('en-US');
 }
 
+function normalizedDifficulty(
+  value: 'casual' | 'standard' | 'expert' | 'easy' | 'medium' | 'hard',
+): 'casual' | 'standard' | 'expert' {
+  if (value === 'easy') return 'casual';
+  if (value === 'medium') return 'standard';
+  if (value === 'hard') return 'expert';
+  return value;
+}
+
 function participantPair(
   identities:
     | readonly {
         seat: 'player-one' | 'player-two';
         displayName: string;
+        publicProfileId?: string | null | undefined;
+        avatarUrl?: string | null | undefined;
+        accentColor?: string | null | undefined;
       }[]
     | undefined,
 ): readonly [CombatPreviewParticipant, CombatPreviewParticipant] {
+  const identityFor = (seat: 'player-one' | 'player-two') =>
+    identities?.find((identity) => identity.seat === seat);
   const nameFor = (seat: 'player-one' | 'player-two') =>
-    identities?.find((identity) => identity.seat === seat)?.displayName ??
-    (seat === 'player-one' ? 'Player One' : 'Player Two');
+    identityFor(seat)?.displayName ?? (seat === 'player-one' ? 'Player One' : 'Player Two');
   const leftName = nameFor('player-one');
   const rightName = nameFor('player-two');
   return [
-    { key: 'player-one', displayName: leftName, shortLabel: shortLabel(leftName), tone: 'ember' },
-    { key: 'player-two', displayName: rightName, shortLabel: shortLabel(rightName), tone: 'ice' },
+    {
+      key: 'player-one',
+      displayName: leftName,
+      shortLabel: shortLabel(leftName),
+      tone: 'ember',
+      publicProfileId: identityFor('player-one')?.publicProfileId ?? null,
+      avatarUrl: identityFor('player-one')?.avatarUrl ?? null,
+      accentColor: identityFor('player-one')?.accentColor ?? null,
+    },
+    {
+      key: 'player-two',
+      displayName: rightName,
+      shortLabel: shortLabel(rightName),
+      tone: 'ice',
+      publicProfileId: identityFor('player-two')?.publicProfileId ?? null,
+      avatarUrl: identityFor('player-two')?.avatarUrl ?? null,
+      accentColor: identityFor('player-two')?.accentColor ?? null,
+    },
   ];
 }
 
@@ -70,6 +103,55 @@ function formatClock(deadlineAt: string | null): string | undefined {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
+function ResultDefinitions({ answers }: { answers: readonly string[] }) {
+  const normalized = answers
+    .map((answer) => answer.trim().toLocaleLowerCase('en-US'))
+    .filter((answer) => /^[a-z]{2,35}$/u.test(answer));
+  const wordLength = normalized[0]?.length;
+  const words = useQuery({
+    queryKey: ['result-definitions', wordLength],
+    enabled: wordLength !== undefined,
+    queryFn: ({ signal }) => wordListProvider.load(wordLength!, signal),
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: 1,
+  });
+  if (normalized.length === 0) return null;
+  return (
+    <section className="result-definitions" aria-labelledby="result-definitions-title">
+      <h2 id="result-definitions-title">Definitions</h2>
+      {normalized.map((word) => {
+        const entries = words.data?.definitions?.[word] ?? [];
+        return (
+          <article key={word}>
+            <h3>{word.toLocaleUpperCase('en-US')}</h3>
+            {entries.length > 0 ? (
+              <ul>
+                {entries.map((entry, index) => (
+                  <li key={`${word}:${index}`}>
+                    {entry.partOfSpeech ? <em>{entry.partOfSpeech}: </em> : null}
+                    {entry.text}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p>
+                No definition is available.{' '}
+                <a
+                  href={`https://www.google.com/search?q=define+${encodeURIComponent(word)}`}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  Search Google for this word.
+                </a>
+              </p>
+            )}
+          </article>
+        );
+      })}
+    </section>
+  );
+}
+
 function MatchGate({ title, description }: { title: string; description: string }) {
   const navigate = useNavigate();
   return (
@@ -79,7 +161,6 @@ function MatchGate({ title, description }: { title: string; description: string 
         statusLabel="Unavailable"
         statusTone="muted"
         description={description}
-        privacyNote="No fictional projection, raw JSON, or answer material is substituted."
         actions={[{ label: 'Back to COMBAT', onPress: () => navigate('/combat'), tone: 'primary' }]}
       />
     </div>
@@ -112,7 +193,7 @@ export function CombatMatchPage() {
     return (
       <MatchGate
         title="Sign in to open this participant match"
-        description="COMBAT match projections are participant-only."
+        description="Only players in this match can open it."
       />
     );
   }
@@ -120,7 +201,7 @@ export function CombatMatchPage() {
     return (
       <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
-        <p>Resolving the safe match lane…</p>
+        <p>Opening match…</p>
       </div>
     );
   }
@@ -143,8 +224,8 @@ export function CombatMatchPage() {
   if (summary.data.scope === 'practice' && summary.data.ranked) {
     return (
       <MatchGate
-        title="Legacy Ranked Practice is read-only"
-        description="This pre-authority shell record is preserved as recovery material, but Amordle will not accept participant-authored ranked moves or settlement. Start a new Ranked Practice search for server-owned play."
+        title="This older Ranked Practice game is read-only"
+        description="Start a new Ranked Practice search to play from Amordle."
       />
     );
   }
@@ -219,7 +300,7 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
     return (
       <MatchGate
         title="Sign in to open this participant match"
-        description="Authoritative COMBAT projections are participant-only."
+        description="Only players in this match can open it."
       />
     );
   }
@@ -227,18 +308,18 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
     return (
       <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
-        <p>Loading server-authoritative COMBAT state…</p>
+        <p>Loading match…</p>
       </div>
     );
   }
   if (!current || match.projection.isError) {
     return (
       <MatchGate
-        title="Authoritative match unavailable"
+        title="Match unavailable"
         description={
           match.projection.error instanceof Error
             ? match.projection.error.message
-            : 'No participant projection was returned.'
+            : 'The match could not be loaded.'
         }
       />
     );
@@ -249,8 +330,7 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
         <CombatUnavailablePanel
           title="Waiting for a second participant"
           statusLabel="Lobby open"
-          description="The private answer authority is prepared, but gameplay cannot begin until a distinct signed-in participant joins."
-          privacyNote="The waiting projection contains no answer, seed, email, or raw Auth identifier."
+          description="Gameplay begins when another signed-in player joins."
           actions={[
             {
               label: current.scope === 'daily' ? 'Open Daily' : 'Open Practice',
@@ -284,7 +364,7 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
           current.status === 'holding'
             ? 'Evidence hold'
             : terminal
-              ? 'Server terminal'
+              ? 'Game complete'
               : match.canEdit
                 ? 'Your turn'
                 : 'Other participant’s turn'
@@ -316,14 +396,10 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
           onCommand: match.onCommand,
         }}
       />
-      <p className="privacy-band">
-        Server-owned answers, validation, turns, GO evidence, clocks, outcomes
-        {current.ranked ? ', and Elo settlement' : ''} · participant projection excludes active
-        answer authority
-      </p>
+      <p className="privacy-band">Moves save automatically. Only the two players can play.</p>
       {terminal ? (
         <ButtonLink tone="primary" to={`/combat/match/${matchId}/result`}>
-          Review trusted result
+          View results
         </ButtonLink>
       ) : (
         <>
@@ -335,7 +411,7 @@ function AuthoritativeCombatMatchView({ matchId }: { matchId: string }) {
               <p>
                 {terminalAction === 'cancel'
                   ? 'No accepted moves exist. Cancellation creates no winner or rating result.'
-                  : 'Play has started. Forfeit gives the other participant the authoritative win.'}
+                  : 'Play has started. Forfeit gives the other player the win.'}
               </p>
               <Button
                 tone="danger"
@@ -426,8 +502,7 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
         <CombatUnavailablePanel
           title="Sign in to open this participant match"
           statusLabel="Participant-only"
-          description="COMBAT drafts and answer-bearing participant state are never exposed to guests."
-          privacyNote="Use Auth, then return to the exact match link."
+          description="Sign in with a player account, then return to this match."
           actions={[
             {
               label: 'Open Auth',
@@ -444,7 +519,7 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
     return (
       <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
-        <p>Loading durable COMBAT state…</p>
+        <p>Loading match…</p>
       </div>
     );
   }
@@ -459,9 +534,8 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
           description={
             match.projection.error instanceof Error
               ? match.projection.error.message
-              : 'The record is missing or is a legacy shell game without a compatible participant projection.'
+              : 'The game is missing or cannot be opened by this version of Amordle.'
           }
-          privacyNote="Amordle does not guess at legacy state, expose raw projection JSON, or mutate an incompatible match."
           actions={[
             { label: 'Back to COMBAT', onPress: () => navigate('/combat'), tone: 'primary' },
           ]}
@@ -476,8 +550,7 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
         <CombatUnavailablePanel
           title="Waiting for a second participant"
           statusLabel="Lobby open"
-          description="The answerless lobby is durable. Gameplay begins only after another signed-in account joins."
-          privacyNote="No answer or player-two session exists yet."
+          description="Gameplay begins when another signed-in player joins."
           actions={[
             {
               label: projection.scope === 'daily' ? 'Open Daily' : 'Open Lobby',
@@ -499,7 +572,6 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
           statusLabel="No result"
           statusTone="muted"
           description="This lobby ended before a second participant joined."
-          privacyNote="No answer was selected and no rating, history result, or reward was created."
           actions={[
             { label: 'Back to COMBAT', onPress: () => navigate('/combat'), tone: 'primary' },
           ]}
@@ -558,14 +630,14 @@ function PracticeCombatMatchView({ matchId }: { matchId: string }) {
       />
       <p className="privacy-band">
         {projection.scope === 'daily'
-          ? `Unranked Daily · ${projection.dailyDateKey} UTC · participant-authored turns · no rating mutation · never public Live`
+          ? `Unranked Daily · ${projection.dailyDateKey} UTC · ratings unchanged`
           : projection.ranked
-            ? 'Ranked shell parity · FIFO matched · durable compare-and-swap turns · trusted terminal settlement'
-            : 'Unranked Practice · durable compare-and-swap recovery · no rating mutation'}
+            ? 'Ranked Practice · rating updates after the game'
+            : 'Unranked Practice · ratings unchanged'}
       </p>
       {terminal ? (
         <ButtonLink tone="primary" to={`/combat/match/${matchId}/result`}>
-          Review result
+          View results
         </ButtonLink>
       ) : null}
       {!terminal && viewerActor ? (
@@ -620,18 +692,18 @@ function RankedDailyMatchView({ matchId }: { matchId: string }) {
   if (match.projection.isPending) {
     return (
       <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
-        <p>Loading server-authoritative Ranked Daily…</p>
+        <p>Loading Ranked Daily…</p>
       </div>
     );
   }
   if (!current || match.projection.isError) {
     return (
       <MatchGate
-        title="Ranked Daily projection unavailable"
+        title="Ranked Daily unavailable"
         description={
           match.projection.error instanceof Error
             ? match.projection.error.message
-            : 'No participant projection was returned.'
+            : 'The match could not be loaded.'
         }
       />
     );
@@ -680,7 +752,7 @@ function RankedDailyMatchView({ matchId }: { matchId: string }) {
         participants={participants}
         activeSeat={terminal ? null : activeSeat}
         statusLabel={
-          terminal ? 'Server terminal' : match.canEdit ? 'Your turn' : 'Other participant’s turn'
+          terminal ? 'Complete' : match.canEdit ? 'Your turn' : 'Other participant’s turn'
         }
         statusTone={match.canEdit ? 'green' : terminal ? 'muted' : 'ice'}
       />
@@ -699,13 +771,10 @@ function RankedDailyMatchView({ matchId }: { matchId: string }) {
           onCommand: match.onCommand,
         }}
       />
-      <p className="privacy-band">
-        Server-authoritative answers, validation, turns, outcome, and trusted settlement · never
-        public Live
-      </p>
+      <p className="privacy-band">Ranked Daily · rating updates after the game.</p>
       {terminal ? (
         <ButtonLink tone="primary" to={`/combat/match/${matchId}/result`}>
-          Review trusted result
+          View results
         </ButtonLink>
       ) : (
         <>
@@ -721,7 +790,7 @@ function RankedDailyMatchView({ matchId }: { matchId: string }) {
               <p>
                 {current.moves.length === 0
                   ? 'Cancelling before the first move creates no result.'
-                  : 'Forfeit overrides tile points and is settled from private authority.'}
+                  : 'Forfeit gives the other player the win.'}
               </p>
               <Button
                 tone="danger"
@@ -775,7 +844,7 @@ export function CombatResultPage() {
   if (authoritative.isPending && summary.isPending) {
     return (
       <div className="route-loading" role="status" aria-live="polite">
-        <p>Loading participant result…</p>
+        <p>Loading results…</p>
       </div>
     );
   }
@@ -790,13 +859,78 @@ export function CombatResultPage() {
 
 function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { client, user } = useAuth();
+  const accountRepository = useMemo(
+    () => (client ? new AccountRepository(client) : null),
+    [client],
+  );
   const match = useAuthoritativeCombatMatch(matchId);
   const current = match.current;
   const participants = participantPair(current?.players);
+  const historyInFlight = useRef(false);
+  const [historyStatus, setHistoryStatus] = useState<'idle' | 'saved' | 'pending'>('idle');
+
+  useEffect(() => {
+    if (
+      !accountRepository ||
+      !user ||
+      !current ||
+      current.status !== 'completed' ||
+      current.outcome.reason === undefined ||
+      current.outcome.reason === 'cancelled' ||
+      !current.endedAt ||
+      historyInFlight.current ||
+      historyStatus !== 'idle'
+    ) {
+      return;
+    }
+    const viewerSeat = current.viewerSeat;
+    const opponentSeat = viewerSeat === 'player-one' ? 'player-two' : 'player-one';
+    const opponent = current.players.find((player) => player.seat === opponentSeat);
+    const winner = current.outcome.winnerSeat;
+    const result = winner === undefined ? 'Draw' : winner === viewerSeat ? 'Won' : 'Lost';
+    historyInFlight.current = true;
+    void accountRepository
+      .saveHistory(
+        createCombatHistoryRow({
+          gameId: current.id,
+          userId: user.id,
+          scope: current.scope,
+          mode: current.mode,
+          ranked: current.ranked,
+          sourceKind: current.sourceKind,
+          result,
+          terminalReason: current.outcome.reason,
+          wordLength: current.wordLength,
+          difficulty: normalizedDifficulty(current.difficulty),
+          hardMode: current.hardMode,
+          puzzleCount: current.mode === 'go' ? (current.goPuzzleCount ?? 5) : 1,
+          playerPoints: current.playerState[viewerSeat].points,
+          opponentPoints: current.playerState[opponentSeat].points,
+          completedAt: current.endedAt,
+          opponent: {
+            publicProfileId: opponent?.publicProfileId ?? null,
+            displayName: opponent?.displayName ?? 'Private player',
+          },
+        }),
+      )
+      .then(async () => {
+        setHistoryStatus('saved');
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['account-history', user.id] }),
+          queryClient.invalidateQueries({ queryKey: ['account-stats', user.id] }),
+        ]);
+      })
+      .catch(() => setHistoryStatus('pending'))
+      .finally(() => {
+        historyInFlight.current = false;
+      });
+  }, [accountRepository, current, historyStatus, queryClient, user]);
   if (match.projection.isPending) {
     return (
       <div className="route-loading" role="status" aria-live="polite">
-        <p>Loading server-authoritative result…</p>
+        <p>Loading results…</p>
       </div>
     );
   }
@@ -807,8 +941,8 @@ function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
   ) {
     return (
       <MatchGate
-        title="Trusted result unavailable"
-        description="The server-owned authority has not returned a participant terminal projection."
+        title="Results unavailable"
+        description="This game does not have a completed result yet."
       />
     );
   }
@@ -831,18 +965,24 @@ function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
             : current.outcome.reason === 'draw'
               ? 'Draw'
               : 'Cancellation';
+  const lane = combatLaneLabel({
+    scope: current.scope,
+    mode: current.mode,
+    ranked: current.ranked,
+    sourceKind: current.sourceKind,
+  });
   return (
     <div className="page page--combat-result">
       <CombatTerminalResultPanel
-        title={cancelled ? 'Match cancelled' : winner ? `${winner} won` : 'Match drawn'}
+        title={cancelled ? `${lane} cancelled` : winner ? `${winner} won` : `${lane} drawn`}
         summary={
           cancelled
-            ? 'The match ended before an eligible result. No answer or rating result was created.'
+            ? 'The game ended before play began. No result or rating change was recorded.'
             : current.ranked && match.settlement
-              ? `Server reconstruction settled the rating: ${match.settlement.oldRating} → ${match.settlement.newRating}.`
+              ? `${lane} complete. Rating ${match.settlement.oldRating} → ${match.settlement.newRating}.`
               : current.ranked
-                ? `${reason} is durable. Server-owned Elo settlement is reconciling.`
-                : `${reason} determined this unranked Daily result without a rating mutation.`
+                ? `${lane} complete by ${reason.toLocaleLowerCase('en-US')}. Rating update pending.`
+                : `${lane} complete by ${reason.toLocaleLowerCase('en-US')}.`
         }
         statusLabel={cancelled ? 'No result' : reason}
         statusTone={cancelled ? 'muted' : 'green'}
@@ -850,6 +990,13 @@ function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
           {
             ...participants[0],
             score: current.playerState['player-one'].points,
+            outcome: cancelled
+              ? 'neutral'
+              : current.outcome.winnerSeat === undefined
+                ? 'draw'
+                : current.outcome.winnerSeat === 'player-one'
+                  ? 'winner'
+                  : 'loser',
             ...(current.viewerSeat === 'player-one' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -859,6 +1006,13 @@ function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
           {
             ...participants[1],
             score: current.playerState['player-two'].points,
+            outcome: cancelled
+              ? 'neutral'
+              : current.outcome.winnerSeat === undefined
+                ? 'draw'
+                : current.outcome.winnerSeat === 'player-two'
+                  ? 'winner'
+                  : 'loser',
             ...(current.viewerSeat === 'player-two' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -879,21 +1033,114 @@ function AuthoritativeCombatResultView({ matchId }: { matchId: string }) {
               navigate(current.scope === 'daily' ? '/combat/daily' : '/combat/practice'),
             tone: 'primary',
           },
+          { label: 'View History', onPress: () => navigate('/history') },
           { label: 'Active games', onPress: () => navigate('/combat/active') },
         ]}
       />
+      {!cancelled ? <ResultDefinitions answers={current.revealedAnswers ?? []} /> : null}
+      {historyStatus === 'pending' ? (
+        <p className="game-message" role="status">
+          Result saved. History sync is pending and will retry when this page is reopened.
+        </p>
+      ) : null}
     </div>
   );
 }
 
 function PracticeCombatResultView({ matchId }: { matchId: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
   const { client, user } = useAuth();
   const repository = useMemo(() => (client ? new CombatPreviewRepository(client) : null), [client]);
+  const accountRepository = useMemo(
+    () => (client ? new AccountRepository(client) : null),
+    [client],
+  );
   const [rematchMessage, setRematchMessage] = useState('');
+  const historyInFlight = useRef(false);
+  const [historyStatus, setHistoryStatus] = useState<'idle' | 'saved' | 'pending'>('idle');
   const match = usePracticeCombatMatch(matchId);
   const state = match.state;
   const participants = participantPair(match.participantIdentities.data);
+
+  useEffect(() => {
+    const projection = match.projection.data;
+    if (
+      !accountRepository ||
+      !user ||
+      !state ||
+      !projection ||
+      state.status !== 'terminal' ||
+      !state.outcome ||
+      state.outcome.kind === 'cancelled' ||
+      !projection.endedAt ||
+      historyInFlight.current ||
+      historyStatus !== 'idle'
+    ) {
+      return;
+    }
+    const viewerActor = projection.viewerSeat === 'player-two' ? 'right' : 'left';
+    const opponentIndex = viewerActor === 'left' ? 1 : 0;
+    const result =
+      state.outcome.kind === 'draw'
+        ? 'Draw'
+        : state.outcome.winnerId === viewerActor
+          ? 'Won'
+          : 'Lost';
+    const terminalReason =
+      state.outcome.kind === 'draw'
+        ? 'draw'
+        : state.outcome.reason === 'og_solve'
+          ? 'solve'
+          : state.outcome.reason;
+    historyInFlight.current = true;
+    void accountRepository
+      .saveHistory(
+        createCombatHistoryRow({
+          gameId: state.id,
+          userId: user.id,
+          scope: projection.scope,
+          mode: state.config.mode,
+          ranked: projection.ranked,
+          sourceKind: projection.sourceKind,
+          result,
+          terminalReason,
+          wordLength: state.config.wordLength,
+          difficulty: state.config.difficulty,
+          hardMode: state.config.hardMode,
+          puzzleCount: state.config.puzzleCount,
+          playerPoints: practiceCombatPlayerPoints(state, viewerActor),
+          opponentPoints: practiceCombatPlayerPoints(
+            state,
+            viewerActor === 'left' ? 'right' : 'left',
+          ),
+          completedAt: projection.endedAt,
+          opponent: {
+            publicProfileId: participants[opponentIndex].publicProfileId ?? null,
+            displayName: participants[opponentIndex].displayName,
+          },
+        }),
+      )
+      .then(async () => {
+        setHistoryStatus('saved');
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['account-history', user.id] }),
+          queryClient.invalidateQueries({ queryKey: ['account-stats', user.id] }),
+        ]);
+      })
+      .catch(() => setHistoryStatus('pending'))
+      .finally(() => {
+        historyInFlight.current = false;
+      });
+  }, [
+    accountRepository,
+    historyStatus,
+    match.projection.data,
+    participants,
+    queryClient,
+    state,
+    user,
+  ]);
 
   if (match.projection.isPending) {
     return (
@@ -906,10 +1153,9 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
     return (
       <div className="page page--combat-result">
         <CombatUnavailablePanel
-          title="Terminal result unavailable"
+          title="Results unavailable"
           statusLabel="Not complete"
-          description="This route only renders a durable participant terminal state."
-          privacyNote="No fictional score, answer, or settlement is substituted."
+          description="This game does not have a completed result yet."
           actions={[
             {
               label: 'Return to match',
@@ -953,10 +1199,10 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
           cancelled
             ? 'The game ended before the first accepted move. No winner, answer reveal, or rating result was created.'
             : match.projection.data?.scope === 'daily'
-              ? `${reason} determined this unranked Daily result. The UTC lane is durable and does not mutate ratings.`
+              ? `${reason} decided this Unranked Daily game. Ratings were unchanged.`
               : match.projection.data?.ranked
-                ? `${reason} determined this Ranked Practice result. Trusted shell settlement ${match.settlement ? 'is complete' : 'is reconciling'}.`
-                : `${reason} determined this unranked Practice result. The result is durable and does not mutate ratings.`
+                ? `${reason} decided this Ranked Practice game. The rating update ${match.settlement ? 'is complete' : 'is pending'}.`
+                : `${reason} decided this Unranked Practice game. Ratings were unchanged.`
         }
         statusLabel={cancelled ? 'No result' : reason}
         statusTone={cancelled ? 'muted' : 'green'}
@@ -964,6 +1210,13 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
           {
             ...participants[0],
             score: leftPoints,
+            outcome: cancelled
+              ? 'neutral'
+              : state.outcome?.kind === 'draw'
+                ? 'draw'
+                : state.outcome?.kind === 'win' && state.outcome.winnerId === 'left'
+                  ? 'winner'
+                  : 'loser',
             ...(match.projection.data?.viewerSeat === 'player-one' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -973,6 +1226,13 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
           {
             ...participants[1],
             score: rightPoints,
+            outcome: cancelled
+              ? 'neutral'
+              : state.outcome?.kind === 'draw'
+                ? 'draw'
+                : state.outcome?.kind === 'win' && state.outcome.winnerId === 'right'
+                  ? 'winner'
+                  : 'loser',
             ...(match.projection.data?.viewerSeat === 'player-two' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -1010,9 +1270,16 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
               ]
             : []),
           { label: 'COMBAT', onPress: () => navigate('/combat'), tone: 'primary' },
+          { label: 'View History', onPress: () => navigate('/history') },
           { label: 'Active games', onPress: () => navigate('/combat/active') },
         ]}
       />
+      {!cancelled ? <ResultDefinitions answers={state.answers} /> : null}
+      {historyStatus === 'pending' ? (
+        <p className="game-message" role="status">
+          Result saved. History sync will retry when this page is reopened.
+        </p>
+      ) : null}
       {rematchMessage ? (
         <p className="game-message" role="status" aria-live="polite">
           {rematchMessage}
@@ -1024,21 +1291,119 @@ function PracticeCombatResultView({ matchId }: { matchId: string }) {
 
 function RankedDailyResultView({ matchId }: { matchId: string }) {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { client, user } = useAuth();
+  const accountRepository = useMemo(
+    () => (client ? new AccountRepository(client) : null),
+    [client],
+  );
   const match = useRankedDailyCombatMatch(matchId);
   const current = match.current;
   const participants = participantPair(match.identities.data);
+  const playerOnePoints = current
+    ? projectedCombatPoints({
+        mode: current.mode,
+        puzzleCount: current.mode === 'go' ? (current.goPuzzleCount ?? 5) : 1,
+        hardMode: current.hardMode,
+        moves: current.moves,
+        seat: 'player-one',
+      })
+    : 0;
+  const playerTwoPoints = current
+    ? projectedCombatPoints({
+        mode: current.mode,
+        puzzleCount: current.mode === 'go' ? (current.goPuzzleCount ?? 5) : 1,
+        hardMode: current.hardMode,
+        moves: current.moves,
+        seat: 'player-two',
+      })
+    : 0;
+  const historyInFlight = useRef(false);
+  const [historyStatus, setHistoryStatus] = useState<'idle' | 'saved' | 'pending'>('idle');
+
+  useEffect(() => {
+    if (
+      !accountRepository ||
+      !user ||
+      !current ||
+      !['won', 'lost', 'expired'].includes(current.status) ||
+      !current.endedAt ||
+      historyInFlight.current ||
+      historyStatus !== 'idle'
+    ) {
+      return;
+    }
+    const viewerSeat = current.viewerSeat ?? 'player-one';
+    const opponentSeat = viewerSeat === 'player-one' ? 'player-two' : 'player-one';
+    const opponentIndex = opponentSeat === 'player-one' ? 0 : 1;
+    const result =
+      current.winnerId === null ? 'Draw' : current.winnerId === viewerSeat ? 'Won' : 'Lost';
+    historyInFlight.current = true;
+    void accountRepository
+      .saveHistory(
+        createCombatHistoryRow({
+          gameId: current.id,
+          userId: user.id,
+          scope: 'daily',
+          mode: current.mode,
+          ranked: true,
+          sourceKind: 'ranked-queue',
+          result,
+          terminalReason:
+            current.status === 'expired'
+              ? 'timeout'
+              : current.mode === 'og' &&
+                  current.moves.some((move) => move.tiles.every((tile) => tile.state === 'correct'))
+                ? 'solve'
+                : current.winnerId === null
+                  ? 'draw'
+                  : 'points',
+          wordLength: current.wordLength,
+          difficulty: normalizedDifficulty(current.difficulty),
+          hardMode: current.hardMode,
+          puzzleCount: current.mode === 'go' ? (current.goPuzzleCount ?? 5) : 1,
+          playerPoints: viewerSeat === 'player-one' ? playerOnePoints : playerTwoPoints,
+          opponentPoints: opponentSeat === 'player-one' ? playerOnePoints : playerTwoPoints,
+          completedAt: current.endedAt,
+          opponent: {
+            publicProfileId: participants[opponentIndex].publicProfileId ?? null,
+            displayName: participants[opponentIndex].displayName,
+          },
+        }),
+      )
+      .then(async () => {
+        setHistoryStatus('saved');
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['account-history', user.id] }),
+          queryClient.invalidateQueries({ queryKey: ['account-stats', user.id] }),
+        ]);
+      })
+      .catch(() => setHistoryStatus('pending'))
+      .finally(() => {
+        historyInFlight.current = false;
+      });
+  }, [
+    accountRepository,
+    current,
+    historyStatus,
+    participants,
+    playerOnePoints,
+    playerTwoPoints,
+    queryClient,
+    user,
+  ]);
   if (match.projection.isPending) {
     return (
       <div className="route-loading" role="status" aria-live="polite">
-        <p>Loading trusted Ranked Daily result…</p>
+        <p>Loading Ranked Daily results…</p>
       </div>
     );
   }
   if (!current || !['won', 'lost', 'expired', 'cancelled'].includes(current.status)) {
     return (
       <MatchGate
-        title="Trusted result unavailable"
-        description="The private authority has not returned a terminal Ranked Daily projection."
+        title="Results unavailable"
+        description="This Ranked Daily game does not have a completed result yet."
       />
     );
   }
@@ -1059,15 +1424,22 @@ function RankedDailyResultView({ matchId }: { matchId: string }) {
           cancelled
             ? 'Cancellation occurred before the first accepted move. No rating result was created.'
             : match.settlement
-              ? `Trusted settlement applied: ${match.settlement.oldRating} → ${match.settlement.newRating}.`
-              : 'Terminal authority is durable. Trusted settlement is reconciling.'
+              ? `Rating updated: ${match.settlement.oldRating} → ${match.settlement.newRating}.`
+              : 'The game is complete. The rating update is pending.'
         }
-        statusLabel={cancelled ? 'No result' : 'Trusted authority'}
+        statusLabel={cancelled ? 'No result' : 'Complete'}
         statusTone={cancelled ? 'muted' : 'green'}
         participants={[
           {
             ...participants[0],
-            score: current.moves.filter((move) => move.playerId === 'player-one').length,
+            score: playerOnePoints,
+            outcome: cancelled
+              ? 'neutral'
+              : current.winnerId === null
+                ? 'draw'
+                : current.winnerId === 'player-one'
+                  ? 'winner'
+                  : 'loser',
             ...(current.viewerSeat === 'player-one' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -1076,7 +1448,14 @@ function RankedDailyResultView({ matchId }: { matchId: string }) {
           },
           {
             ...participants[1],
-            score: current.moves.filter((move) => move.playerId === 'player-two').length,
+            score: playerTwoPoints,
+            outcome: cancelled
+              ? 'neutral'
+              : current.winnerId === null
+                ? 'draw'
+                : current.winnerId === 'player-two'
+                  ? 'winner'
+                  : 'loser',
             ...(current.viewerSeat === 'player-two' && match.settlement
               ? {
                   ratingChange: `${match.settlement.ratingDelta >= 0 ? '+' : ''}${match.settlement.ratingDelta}`,
@@ -1085,16 +1464,22 @@ function RankedDailyResultView({ matchId }: { matchId: string }) {
           },
         ]}
         evidence={{
-          label: 'Answer authority',
+          label: 'Answer',
           value: cancelled
             ? 'Not revealed'
-            : 'Held in the private Ranked Daily authority; public projection remains answerless',
+            : 'Available when the completed result finishes loading',
         }}
         actions={[
           { label: 'Daily COMBAT', onPress: () => navigate('/combat/daily'), tone: 'primary' },
-          { label: 'COMBAT', onPress: () => navigate('/combat') },
+          { label: 'View History', onPress: () => navigate('/history') },
+          { label: 'Active games', onPress: () => navigate('/combat/active') },
         ]}
       />
+      {historyStatus === 'pending' ? (
+        <p className="game-message" role="status">
+          Result saved. History sync will retry when this page is reopened.
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -1146,8 +1531,8 @@ export function LiveMatchPage() {
   if (!repository) {
     return (
       <MatchGate
-        title="Live service unavailable"
-        description="The privacy-safe spectator projection cannot be loaded in this environment."
+        title="Live games unavailable"
+        description="Live games cannot be loaded right now."
       />
     );
   }
@@ -1155,7 +1540,7 @@ export function LiveMatchPage() {
     return (
       <div className="route-loading" role="status" aria-live="polite" aria-busy="true">
         <span aria-hidden="true" />
-        <p>Loading privacy-safe Live evidence…</p>
+        <p>Loading Live game…</p>
       </div>
     );
   }
@@ -1171,7 +1556,6 @@ export function LiveMatchPage() {
               ? live.error.message
               : 'The game is private, Daily, waiting, expired, or no longer eligible for Live.'
           }
-          privacyNote="Exact-ID lookup uses the same eligibility boundary as the Live list. No participant session or answer fallback is attempted."
           actions={[
             {
               label: 'Back to Live',
@@ -1201,7 +1585,7 @@ export function LiveMatchPage() {
         actorRows={actors}
         participants={participants}
         contextLabel={`Spectator · ${game.mode.toUpperCase()} · ${game.wordLength} letters · ${game.ranked ? 'ranked' : 'unranked'} · puzzle ${game.progress.currentPuzzleIndex + 1}${game.goPuzzleCount ? ` of ${game.goPuzzleCount}` : ''}`}
-        message={`${game.progress.moveCount} accepted ${game.progress.moveCount === 1 ? 'turn' : 'turns'} · spectator projection updated ${new Date(game.updatedAt).toLocaleTimeString()}`}
+        message={`${game.progress.moveCount} ${game.progress.moveCount === 1 ? 'turn' : 'turns'} played · updated ${new Date(game.updatedAt).toLocaleTimeString()}`}
         compact={game.wordLength > 10}
         readOnly
       />
@@ -1210,10 +1594,7 @@ export function LiveMatchPage() {
           Back to Live
         </ButtonLink>
         <Disclosure label="Spectator privacy" meta="Read-only">
-          <p role="status">
-            Scored moves only. No keyboard, drafts, answers, raw account identifiers, or mutation
-            capabilities are exposed.
-          </p>
+          <p role="status">You can watch scored moves, but only the players can make a move.</p>
         </Disclosure>
       </div>
     </div>

@@ -1,4 +1,4 @@
-import { createBrowserRouter } from 'react-router';
+import { createBrowserRouter, redirect as routeRedirect } from 'react-router';
 import { AppShell, RouteError, RouteLoading } from './AppShell';
 import { LegacyRedirect } from './LegacyRedirect';
 
@@ -83,9 +83,14 @@ export const router = createBrowserRouter([
       },
       {
         path: 'definitions',
-        lazy: async () => {
-          const module = await import('../features/more/MorePages');
-          return { Component: () => <module.WordExplorerPage definitionOnly /> };
+        loader: ({ request }) => {
+          const source = new URL(request.url);
+          const target = new URLSearchParams();
+          const word = source.searchParams.get('word') ?? source.searchParams.get('q');
+          if (word) target.set('word', word);
+          const length = source.searchParams.get('length');
+          if (length) target.set('length', length);
+          return routeRedirect(`/word-explorer${target.size ? `?${target}` : ''}`);
         },
       },
       {

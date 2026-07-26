@@ -142,9 +142,7 @@ describe('truthful supporting surfaces', () => {
 
   it('does not fabricate guest inventory or COMBAT calendar completion', () => {
     const { unmount } = renderSupporting(MarketplacePage, '/marketplace');
-    expect(
-      screen.getByText(/Guest coins and inventory remain only in this local namespace/),
-    ).toBeVisible();
+    expect(screen.getByText(/Guest coins and inventory stay on this device/)).toBeVisible();
     expect(screen.getAllByText('Owned 0')).toHaveLength(2);
     expect(screen.queryByText(/Owned [1-9]/)).not.toBeInTheDocument();
     unmount();
@@ -241,6 +239,46 @@ describe('truthful supporting surfaces', () => {
     await user.click(screen.getByRole('button', { name: 'Next' }));
     expect(screen.getByText('Page 2 of 2')).toBeVisible();
     expect(screen.getAllByText('Valid game word')).toHaveLength(5);
+  });
+
+  it('loads only the selected word length and honors direct word selection and sorting', async () => {
+    const load = vi.spyOn(wordListProvider, 'load').mockImplementation(async (length) => ({
+      schemaVersion: 1,
+      revision: `supporting-ui-${length}`,
+      wordLength: length,
+      answers: {
+        casual: length === 2 ? ['aa'] : [],
+        standard: length === 2 ? ['aa'] : [],
+        expert: length === 2 ? ['aa'] : [],
+      },
+      validGuesses: length === 2 ? ['aa', 'ab', 'zz'] : [],
+      definitions: {
+        aa: [{ partOfSpeech: 'noun', text: 'A two-letter test entry.' }],
+      },
+    }));
+    renderSupporting(WordExplorerPage, '/word-explorer?word=aa');
+
+    expect(await screen.findByRole('heading', { name: 'AA' })).toBeVisible();
+    expect(screen.getByLabelText('Word length')).toHaveValue('2');
+    expect(screen.getByText('A two-letter test entry.')).toBeVisible();
+    expect(load).toHaveBeenCalledTimes(1);
+    expect(load).toHaveBeenLastCalledWith(2, expect.any(AbortSignal));
+
+    fireEvent.input(screen.getByLabelText('Sort'), { target: { value: 'za' } });
+    expect(screen.getByLabelText('Sort')).toHaveValue('za');
+    expect(document.querySelector('.word-search')).toHaveAttribute('data-sort', 'za');
+    await expect
+      .poll(() =>
+        screen
+          .getAllByRole('button', { name: /Valid game word/ })
+          .map((button) => button.textContent),
+      )
+      .toEqual([
+        expect.stringMatching(/^ZZ/),
+        expect.stringMatching(/^AB/),
+        expect.stringMatching(/^AA/),
+      ]);
+    expect(load).toHaveBeenCalledTimes(1);
   });
 
   it('renders only approved public avatar and accent fields', async () => {

@@ -90,7 +90,7 @@ export function usePracticeCombatMatch(gameId: string) {
   });
   const storageKey = `amordle:combat-draft:${identity.kind === 'authenticated' ? identity.userId : 'guest'}:${gameId}`;
   const [draft, setDraft] = useState(() => sessionStorage.getItem(storageKey) ?? '');
-  const [message, setMessage] = useState('Loading the durable participant projection…');
+  const [message, setMessage] = useState('Loading match…');
   const [saving, setSaving] = useState(false);
   const settlement = null as {
     outcome: 'win' | 'loss' | 'draw';
@@ -118,7 +118,7 @@ export function usePracticeCombatMatch(gameId: string) {
       reconcile: async () => {
         await queryClient.invalidateQueries({ queryKey });
       },
-      onError: () => setMessage('Connection changed. Durable polling remains active.'),
+      onError: () => setMessage('Connection changed. Reconnecting…'),
     });
     reconciler.start();
     return () => reconciler.stop();
@@ -147,25 +147,33 @@ export function usePracticeCombatMatch(gameId: string) {
           state: reduced.state,
         });
         queryClient.setQueryData(queryKey, accepted);
+        if (
+          accepted.kind === 'cooperative-participant' &&
+          (accepted.state.status === 'terminal' || accepted.state.status === 'cancelled')
+        ) {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['combat', 'active'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'hub'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'lobbies'] }),
+          ]);
+        }
         setMessage(
           reduced.state.status === 'holding'
             ? 'Puzzle solved and saved. Advancing after the evidence hold.'
             : reduced.state.status === 'terminal' || reduced.state.status === 'cancelled'
               ? current.ranked
-                ? 'Terminal result saved. Trusted shell settlement is reconciling.'
-                : 'Terminal result saved. No rating mutation was attempted.'
+                ? 'Game complete. Rating update pending.'
+                : 'Game complete. Ratings were unchanged.'
               : 'Move accepted and saved. Waiting for the other participant.',
         );
         return true;
       } catch (error) {
-        await projection.refetch();
-        setMessage(
-          error instanceof PracticeCombatConflictError
-            ? 'The match changed in another tab. Durable state was reloaded; retry your action.'
-            : error instanceof Error
-              ? error.message
-              : 'The participant update could not be saved.',
-        );
+        if (error instanceof PracticeCombatConflictError) {
+          await projection.refetch();
+          setMessage('The game changed. Review the latest turn and try again.');
+        } else {
+          setMessage('Your move was not submitted. Try again.');
+        }
         return false;
       } finally {
         setSaving(false);
