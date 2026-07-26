@@ -53,7 +53,7 @@ async function saveProfile(
   await page.getByLabel(input.accent ?? 'Aurora').check();
   await page.getByLabel('Public bio').fill(input.bio);
   await page.getByRole('button', { name: 'Save player profile' }).click();
-  await expect(page.getByText('Player profile saved by account authority.')).toBeVisible();
+  await expect(page.getByRole('status')).toHaveText('Player profile saved.');
 }
 
 async function writePendingLobbyIntent(
@@ -251,8 +251,9 @@ test.describe('protected Preview account, profile, and Practice COMBAT recovery'
       await expect(openLobby).toBeVisible();
       await openLobby.getByRole('button', { name: 'Join lobby' }).click();
       await expect(playerBPage).toHaveURL(new RegExp(`/combat/match/${gameId}$`));
-      await expect(playerBPage.getByText(playerAName, { exact: false }).first()).toBeVisible();
-      await expect(playerBPage.getByText(playerBName, { exact: false }).first()).toBeVisible();
+      const matchStatus = playerBPage.locator('header[aria-label="Match status"]');
+      await expect(matchStatus.getByText(playerAName, { exact: true })).toBeVisible();
+      await expect(matchStatus.getByText(playerBName, { exact: true })).toBeVisible();
       await attachScreenshot(testInfo, playerBPage, 'mobile-joined-practice-match.png');
 
       await anonymousPage.goto(`/combat/live/${gameId}`);
@@ -340,17 +341,17 @@ test.describe('protected Preview account, profile, and Practice COMBAT recovery'
       }
       await playerAPage.keyboard.type(answer);
       await playerAPage.keyboard.press('Enter');
-      await expect(playerAPage.getByRole('link', { name: 'Review result' })).toBeVisible({
+      await expect(playerAPage.getByRole('link', { name: 'View results' })).toBeVisible({
         timeout: 15_000,
       });
-      await expect(playerBPage.getByRole('link', { name: 'Review result' })).toBeVisible({
+      await expect(playerBPage.getByRole('link', { name: 'View results' })).toBeVisible({
         timeout: 15_000,
       });
       await playerAPage.reload();
       await playerBPage.reload();
-      await expect(playerAPage.getByRole('link', { name: 'Review result' })).toBeVisible();
-      await expect(playerBPage.getByRole('link', { name: 'Review result' })).toBeVisible();
-      await playerAPage.getByRole('link', { name: 'Review result' }).click();
+      await expect(playerAPage.getByRole('link', { name: 'View results' })).toBeVisible();
+      await expect(playerBPage.getByRole('link', { name: 'View results' })).toBeVisible();
+      await playerAPage.getByRole('link', { name: 'View results' }).click();
       await expect(playerAPage.getByText(/won|drawn/i).first()).toBeVisible();
       await attachScreenshot(testInfo, playerAPage, 'desktop-terminal-practice-result.png');
 

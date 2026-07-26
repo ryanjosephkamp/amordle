@@ -240,12 +240,9 @@ test.describe('protected Preview full multiplayer parity', () => {
       await seedRankedPracticeCleanupIntent(playerOnePage, playerOne.userId, harness.runId, 'one');
       await seedRankedPracticeCleanupIntent(playerTwoPage, playerTwo.userId, harness.runId, 'two');
       await playerOnePage.getByRole('button', { name: 'Find ranked opponent' }).click();
-      await expect(
-        playerOnePage.getByText(
-          'Ranked Practice search accepted by the server-owned reservation service.',
-          { exact: true },
-        ),
-      ).toBeVisible({ timeout: 30_000 });
+      await expect(playerOnePage.locator('.game-message')).toHaveText('Your search is active.', {
+        timeout: 30_000,
+      });
       await playerTwoPage.getByRole('button', { name: 'Find ranked opponent' }).click();
       await expect
         .poll(
@@ -260,7 +257,7 @@ test.describe('protected Preview full multiplayer parity', () => {
           },
           { timeout: 30_000 },
         )
-        .toMatch(/Ranked Practice search accepted|matched|finalizing/i);
+        .toMatch(/Your search is active|matched|finalizing/i);
       await harness.discoverAndRegisterAuthoritativeCombatForUsers(
         users.map(({ userId }) => userId),
       );
@@ -301,7 +298,7 @@ test.describe('protected Preview full multiplayer parity', () => {
       );
       await turnPage.keyboard.type('qq');
       await turnPage.keyboard.press('Enter');
-      await expect(turnPage.getByText('Save authoritative COMBAT command failed.')).toBeVisible();
+      await expect(turnPage.getByText('That word is not in the game list.')).toBeVisible();
       const afterInvalid = await harness.admin.rpc('inspect_amordle_combat_e2e_v2', {
         p_run_id: harness.runId,
         p_game_id: rankedGameId,
@@ -319,11 +316,13 @@ test.describe('protected Preview full multiplayer parity', () => {
       );
       await turnPage.keyboard.type(rankedAnswer);
       await turnPage.keyboard.press('Enter');
-      await expect(turnPage.getByRole('link', { name: 'Review trusted result' })).toBeVisible({
+      await expect(turnPage.getByRole('link', { name: 'View results' })).toBeVisible({
         timeout: 30_000,
       });
-      await turnPage.getByRole('link', { name: 'Review trusted result' }).click();
-      await expect(turnPage.getByText(/Server reconstruction settled the rating/i)).toBeVisible({
+      await turnPage.getByRole('link', { name: 'View results' }).click();
+      await expect(
+        turnPage.getByText(/Ranked Practice OG complete\. Rating \d+ → \d+\./i),
+      ).toBeVisible({
         timeout: 30_000,
       });
 
@@ -356,7 +355,7 @@ test.describe('protected Preview full multiplayer parity', () => {
       );
       await dailyTurnPage.keyboard.type(dailyAnswer);
       await dailyTurnPage.keyboard.press('Enter');
-      await expect(dailyTurnPage.getByRole('link', { name: 'Review trusted result' })).toBeVisible({
+      await expect(dailyTurnPage.getByRole('link', { name: 'View results' })).toBeVisible({
         timeout: 30_000,
       });
 
@@ -418,14 +417,14 @@ test.describe('protected Preview full multiplayer parity', () => {
       await privateTurnPage.keyboard.type(privateAnswer[0]);
       await privateTurnPage.keyboard.press('Enter');
       const conflictMessage = privateTurnPage.getByText(
-        'The match changed in another tab. Durable state was reloaded; retry your action.',
+        'The game changed. Review the latest turn and try again.',
         { exact: true },
       );
       await expect
         .poll(async () => {
           if (
             await privateTurnPage
-              .getByRole('link', { name: 'Review result' })
+              .getByRole('link', { name: 'View results' })
               .isVisible()
               .catch(() => false)
           ) {
@@ -440,10 +439,10 @@ test.describe('protected Preview full multiplayer parity', () => {
         ).toBeEnabled();
         await privateTurnPage.keyboard.press('Enter');
       }
-      await expect(privateTurnPage.getByRole('link', { name: 'Review result' })).toBeVisible({
+      await expect(privateTurnPage.getByRole('link', { name: 'View results' })).toBeVisible({
         timeout: 30_000,
       });
-      await privateTurnPage.getByRole('link', { name: 'Review result' }).click();
+      await privateTurnPage.getByRole('link', { name: 'View results' }).click();
       await privateTurnPage.getByRole('button', { name: 'Request rematch' }).click();
       await expect(privateTurnPage.getByText(/Rematch requested/i)).toBeVisible();
       await harness.registerRow('multiplayer_practice_rematch_requests', {
