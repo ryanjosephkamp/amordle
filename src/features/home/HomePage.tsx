@@ -46,7 +46,7 @@ export function HomePage() {
           <RuledList>
             {authStatus === 'loading' ? (
               <p className="support-state" role="status">
-                Checking the identity namespace before reading local sessions…
+                Checking for saved games…
               </p>
             ) : resume ? (
               <div className="record-row record-row--resume">
@@ -109,7 +109,7 @@ export function HomePage() {
           <section className="progress-block">
             <h2>Local progress</h2>
             {authStatus === 'loading' ? (
-              <p role="status">Checking the account namespace…</p>
+              <p role="status">Loading account data…</p>
             ) : (
               <>
                 <strong>Level {level.level}</strong>
@@ -122,7 +122,7 @@ export function HomePage() {
                   {level.currentLevelXp} / {level.nextLevelCost} XP
                 </p>
                 <p>{progression.coins} coins</p>
-                <small>Saved in this identity namespace.</small>
+                <small>Saved for this player.</small>
               </>
             )}
           </section>

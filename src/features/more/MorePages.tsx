@@ -124,12 +124,16 @@ function accountHistoryProjection(row: AccountHistoryRow): HistoryProjection {
   const area = String(entry.area ?? 'area unavailable').toLowerCase();
   const result = String(entry.result ?? entry.status ?? 'Completed');
   const details = String(entry.summary ?? 'No additional result summary was recorded.');
+  const opponent =
+    typeof entry.opponent === 'object' && entry.opponent !== null && !Array.isArray(entry.opponent)
+      ? String((entry.opponent as Record<string, unknown>).displayName ?? '')
+      : '';
   return {
     id: row.id,
-    game: `${source} ${area} · ${mode.toUpperCase()}`,
+    game: String(entry.lane ?? `${source} ${area} · ${mode.toUpperCase()}`),
     result,
     details,
-    context: String(entry.context ?? 'Account history'),
+    context: opponent ? `vs. ${opponent}` : String(entry.context ?? 'Account history'),
     completedAt: Number.isNaN(Date.parse(row.completed_at))
       ? 'Date unavailable'
       : new Date(row.completed_at).toLocaleDateString(),
@@ -145,7 +149,7 @@ function localHistoryProjection(session: LocalSoloProjection): HistoryProjection
     game: session.label,
     result: session.result ?? 'In progress',
     details: `${session.acceptedGuesses} accepted ${session.acceptedGuesses === 1 ? 'guess' : 'guesses'}${session.mode === 'go' ? ` · ${session.completedPuzzles}/${session.puzzleCount} puzzles solved` : ''}`,
-    context: `Identity-scoped local ${session.scope}`,
+    context: `Saved on this device · ${session.scope}`,
     completedAt: new Date(session.updatedAt).toLocaleDateString(),
     area: 'solo',
     source: session.scope,
@@ -255,33 +259,43 @@ export function HistoryPage() {
       </div>
       <div className="history-ledger" role="table" aria-label="Completed games">
         <div className="history-row history-row--head" role="row">
-          <span>Game</span>
-          <span>Result</span>
-          <span>Details</span>
-          <span>Context</span>
-          <span>Completed</span>
+          <span role="columnheader">Game</span>
+          <span role="columnheader">Result</span>
+          <span role="columnheader">Details</span>
+          <span role="columnheader">Context</span>
+          <span role="columnheader">Completed</span>
         </div>
         {!loading && !failed
           ? visible.map((row) => (
               <div className="history-row" role="row" key={row.id}>
-                <strong>{row.game}</strong>
-                <span className={resultClassName(row.result)}>{row.result}</span>
-                <span>{row.details}</span>
-                <span>{row.context}</span>
-                <time>{row.completedAt}</time>
+                <strong role="rowheader" data-label="Game">
+                  {row.game}
+                </strong>
+                <span role="cell" data-label="Result" className={resultClassName(row.result)}>
+                  {row.result}
+                </span>
+                <span role="cell" data-label="Details">
+                  {row.details}
+                </span>
+                <span role="cell" data-label="Context">
+                  {row.context}
+                </span>
+                <time role="cell" data-label="Completed">
+                  {row.completedAt}
+                </time>
               </div>
             ))
           : null}
       </div>
       {loading ? (
         <p className="support-state" role="status">
-          Loading identity-scoped history…
+          Loading your history…
         </p>
       ) : null}
       {failed ? (
         <div className="support-state" role="alert">
           <strong>History could not be loaded.</strong>
-          <span>The current local namespace remains isolated and unchanged.</span>
+          <span>Your saved games on this device remain unchanged.</span>
           <Button onClick={() => void history.refetch()}>Retry history</Button>
         </div>
       ) : null}
@@ -290,7 +304,7 @@ export function HistoryPage() {
           {rows.length === 0
             ? user
               ? 'No account history records are available.'
-              : 'No completed Solo sessions exist in this local identity namespace.'
+              : 'No completed Solo games are saved on this device.'
             : 'No completed records match these filters.'}
         </p>
       ) : null}
@@ -329,10 +343,16 @@ export function StatsPage() {
           ]
         : localRows;
   const soloRows = rows.filter((row) => row.area === 'solo');
+  const combatRows = rows.filter((row) => row.area === 'combat');
   const soloWins = soloRows.filter((row) => row.result.toLowerCase() === 'won').length;
   const soloLosses = soloRows.filter((row) => row.result.toLowerCase() === 'lost').length;
   const winRate =
     soloRows.length === 0 ? '—' : `${Math.round((soloWins / soloRows.length) * 100)}%`;
+  const combatWins = combatRows.filter((row) => row.result.toLowerCase() === 'won').length;
+  const combatLosses = combatRows.filter((row) => row.result.toLowerCase() === 'lost').length;
+  const combatDraws = combatRows.filter((row) => row.result.toLowerCase() === 'draw').length;
+  const combatWinRate =
+    combatRows.length === 0 ? '—' : `${Math.round((combatWins / combatRows.length) * 100)}%`;
   const breakdown = [
     ['OG Daily', 'daily', 'og'],
     ['OG Practice', 'practice', 'og'],
@@ -349,8 +369,8 @@ export function StatsPage() {
         eyebrow="Private to you"
         description={
           user
-            ? 'Derived from the latest account history projection and account-scoped progression.'
-            : 'Derived only from completed sessions and progression in this local guest namespace.'
+            ? 'Derived from your saved account History and progression.'
+            : 'Derived only from completed guest games and progression saved on this device.'
         }
         actions={<ButtonLink to="/leaderboards">Public Leaderboard</ButtonLink>}
       />
@@ -407,6 +427,54 @@ export function StatsPage() {
           ) : null}
         </section>
         <section>
+          <SectionHeading title="COMBAT performance" />
+          {loading ? (
+            <p className="support-state" role="status">
+              Loading COMBAT statistics…
+            </p>
+          ) : null}
+          {!loading && !failed ? (
+            <>
+              <div className="metric-row">
+                <Metric value={String(combatRows.length)} label="Recorded" tone="ice" />
+                <Metric value={String(combatWins)} label="Wins" tone="green" />
+                <Metric value={String(combatLosses)} label="Losses" />
+                <Metric value={String(combatDraws)} label="Draws" />
+                <Metric value={combatWinRate} label="Win rate" />
+              </div>
+              {combatRows.length > 0 ? (
+                <div className="stats-breakdown" role="table" aria-label="COMBAT results by lane">
+                  {(['daily', 'practice'] as const).flatMap((source) =>
+                    (['og', 'go'] as const).map((mode) => {
+                      const matching = combatRows.filter(
+                        (row) => row.source === source && row.mode === mode,
+                      );
+                      return (
+                        <div className="stat-row" role="row" key={`${source}:${mode}`}>
+                          <strong role="rowheader">
+                            {source === 'daily' ? 'Daily' : 'Practice'} {mode.toUpperCase()}
+                          </strong>
+                          <span role="cell">{matching.length} played</span>
+                          <span role="cell">
+                            {matching.filter((row) => row.result.toLowerCase() === 'won').length}{' '}
+                            wins
+                          </span>
+                          <span role="cell">
+                            {matching.filter((row) => row.result.toLowerCase() === 'lost').length}{' '}
+                            losses
+                          </span>
+                        </div>
+                      );
+                    }),
+                  )}
+                </div>
+              ) : (
+                <p className="empty-state">No completed COMBAT games are in History yet.</p>
+              )}
+            </>
+          ) : null}
+        </section>
+        <section>
           <SectionHeading title="Progression" />
           {authStatus === 'loading' ? (
             <p className="support-state" role="status">
@@ -420,10 +488,10 @@ export function StatsPage() {
               <Metric value={String(progression.unlockedDailies.length)} label="Daily unlocks" />
             </div>
           )}
-          <SectionHeading title="Multiplayer ratings" />
+          <SectionHeading title="Ranked ratings" />
           <p className="empty-state">
-            No private rating projection is available on this surface. Eligible public rows appear
-            only on Leaderboards after the ranking authority returns them.
+            Public ratings for opted-in players appear on Leaderboards. Your completed ranked games
+            remain available in History.
           </p>
         </section>
       </div>
@@ -437,7 +505,9 @@ export function StatsPage() {
 
 export function LeaderboardsPage() {
   const [bucket, setBucket] = useState('Practice OG');
-  const { client, status: authStatus, user } = useAuth();
+  const [nameSearch, setNameSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const { client } = useAuth();
   const repository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
   const bucketKey =
     {
@@ -448,12 +518,20 @@ export function LeaderboardsPage() {
     }[bucket] ?? 'multiplayer:og';
   const leaderboard = useQuery({
     queryKey: ['public-leaderboard', bucketKey],
-    enabled: Boolean(repository && user),
-    queryFn: () => repository!.getLeaderboard(bucketKey),
+    enabled: Boolean(repository),
+    queryFn: () => repository!.getLeaderboard(bucketKey, 100, 0),
     staleTime: 30_000,
     retry: 1,
   });
-  const rows = leaderboard.data ?? [];
+  const rows = (leaderboard.data ?? []).filter((row) =>
+    row.display_name
+      .toLocaleLowerCase('en-US')
+      .includes(nameSearch.trim().toLocaleLowerCase('en-US')),
+  );
+  const pageSize = 20;
+  const pageCount = Math.max(1, Math.ceil(rows.length / pageSize));
+  const visiblePage = Math.min(page, pageCount);
+  const visibleRows = rows.slice((visiblePage - 1) * pageSize, visiblePage * pageSize);
   return (
     <div className="page">
       <PageHeader
@@ -467,44 +545,94 @@ export function LeaderboardsPage() {
             className={bucket === value ? 'is-selected' : ''}
             type="button"
             key={value}
-            onClick={() => setBucket(value)}
+            onClick={() => {
+              setBucket(value);
+              setPage(1);
+            }}
           >
             {value}
           </button>
         ))}
       </div>
-      <RuledList label={`${bucket} ranking`}>
-        {rows.map((row) => (
-          <div className="leader-row" key={row.public_profile_id}>
-            <span>{row.rank}</span>
-            <PublicAvatar
-              displayName={row.display_name}
-              accent={profileAccent(row.accent_color)}
-              avatarUrl={row.avatar_url}
-            />
-            <div>
-              <strong>{row.display_name}</strong>
-              <small>{row.provisional ? 'Provisional' : 'Established'}</small>
-            </div>
-            <strong>{row.rating}</strong>
-            <ButtonLink to={`/players/${row.public_profile_id}`}>View</ButtonLink>
+      <label className="leaderboard-search">
+        Search player names
+        <input
+          type="search"
+          value={nameSearch}
+          onChange={(event) => {
+            setNameSearch(event.target.value);
+            setPage(1);
+          }}
+        />
+      </label>
+      <div className="leaderboard-table" role="table" aria-label={`${bucket} ranking`}>
+        <div className="leaderboard-row leaderboard-row--head" role="row">
+          <span role="columnheader">Rank</span>
+          <span role="columnheader">Player</span>
+          <span role="columnheader">Rating</span>
+          <span role="columnheader">Move</span>
+          <span role="columnheader">Peak</span>
+          <span role="columnheader">Games</span>
+          <span role="columnheader">W–L–D</span>
+        </div>
+        {visibleRows.map((row) => (
+          <div className="leaderboard-row" role="row" key={row.public_profile_id}>
+            <span role="cell">{row.rank}</span>
+            <span className="leaderboard-player" role="cell">
+              <PublicAvatar
+                displayName={row.display_name}
+                accent={profileAccent(row.accent_color)}
+                avatarUrl={row.avatar_url}
+              />
+              <span>
+                <ButtonLink to={`/players/${row.public_profile_id}`} tone="quiet">
+                  {row.display_name}
+                </ButtonLink>
+                <small>{row.provisional ? 'Provisional' : 'Established'}</small>
+              </span>
+            </span>
+            <strong role="cell">{row.rating}</strong>
+            <span role="cell">
+              {row.latest_rating_delta > 0 ? '+' : ''}
+              {row.latest_rating_delta}
+            </span>
+            <span role="cell">{row.peak_rating}</span>
+            <span role="cell">{row.games_played}</span>
+            <span role="cell">
+              {row.wins}–{row.losses}–{row.draws}
+            </span>
           </div>
         ))}
-        {authStatus === 'loading' ? <p role="status">Checking ranking access…</p> : null}
-        {leaderboard.isPending && user ? <p role="status">Loading public ranking…</p> : null}
-        {leaderboard.isError && user ? (
+        {leaderboard.isPending ? <p role="status">Loading public ranking…</p> : null}
+        {leaderboard.isError ? (
           <div className="support-state" role="alert">
             <strong>Public ranking could not be loaded.</strong>
             <Button onClick={() => void leaderboard.refetch()}>Retry ranking</Button>
           </div>
         ) : null}
-        {!user && authStatus !== 'loading' ? (
-          <p className="empty-state">Sign in to view the privacy-filtered ranked projection.</p>
-        ) : null}
-        {!leaderboard.isPending && !leaderboard.isError && user && rows.length === 0 ? (
+        {!leaderboard.isPending && !leaderboard.isError && rows.length === 0 ? (
           <p className="empty-state">No opted-in public profiles qualify for this bucket.</p>
         ) : null}
-      </RuledList>
+      </div>
+      {rows.length > pageSize ? (
+        <nav className="word-pagination" aria-label="Leaderboard pages">
+          <Button
+            disabled={visiblePage === 1}
+            onClick={() => setPage((current) => Math.max(1, current - 1))}
+          >
+            Previous
+          </Button>
+          <span>
+            Page {visiblePage} of {pageCount}
+          </span>
+          <Button
+            disabled={visiblePage === pageCount}
+            onClick={() => setPage((current) => Math.min(pageCount, current + 1))}
+          >
+            Next
+          </Button>
+        </nav>
+      ) : null}
     </div>
   );
 }
@@ -521,7 +649,7 @@ export function MarketplacePage() {
   const buy = async (kind: 'reveal' | 'remove') => {
     const cost = kind === 'reveal' ? 25 : 40;
     if (economyPending || coins === undefined) {
-      setMessage('Economy authority is not ready. No purchase was attempted.');
+      setMessage('Your coin balance is still loading. No purchase was attempted.');
       return;
     }
     if (coins < cost) {
@@ -566,8 +694,8 @@ export function MarketplacePage() {
       ) : null}
       {!user && authStatus !== 'loading' ? (
         <p className="neutral-band">
-          Guest coins and inventory remain only in this local namespace. Sign in for private account
-          hydration; guest items never merge implicitly.
+          Guest coins and inventory stay on this device. Sign in to use account inventory; guest
+          items do not merge into an account automatically.
         </p>
       ) : null}
       <div className="market-grid">
@@ -690,7 +818,7 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
         <PageHeader
           title="Player unavailable"
           eyebrow="Public player card"
-          description="No approved public projection exists for this identifier."
+          description="This player does not have an available public profile."
         />
         <ButtonLink to="/leaderboards">Return to Leaderboards</ButtonLink>
       </div>
@@ -713,7 +841,7 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
           <h2>{displayName}</h2>
           <p>{bio || 'No public bio.'}</p>
           <StatusDot>
-            {publicView ? 'Public projection' : user ? 'Account-scoped editor' : 'Guest preview'}
+            {publicView ? 'Public profile' : user ? 'Your profile' : 'Guest preview'}
           </StatusDot>
         </div>
       </section>
@@ -748,7 +876,7 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
             event.preventDefault();
             setSaveStatus('');
             if (!repository || !user) {
-              setSaveStatus('Sign in before saving an account-owned public projection.');
+              setSaveStatus('Sign in before saving a public profile.');
               return;
             }
             setSaving(true);
@@ -758,7 +886,7 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
               queryClient.setQueryData(profileQueryKey, saved);
               setDraft(savedDraft);
               setBaseline(savedDraft);
-              setSaveStatus('Player profile saved by account authority.');
+              setSaveStatus('Player profile saved.');
             } catch (error: unknown) {
               setSaveStatus(error instanceof Error ? error.message : 'Profile save failed.');
             } finally {
@@ -865,54 +993,111 @@ export function ProfilePage({ publicView = false }: { publicView?: boolean }) {
   );
 }
 
-const curatedDefinitions: Readonly<Record<string, string>> = {
-  crane: 'A large bird with long legs and neck.',
-  crank: 'A bent part of an axle or shaft.',
-  crash: 'To collide forcefully.',
-  crate: 'A large shipping container.',
-};
-
 const WORD_EXPLORER_PAGE_SIZE = 25;
 
-export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: boolean }) {
-  const [query, setQuery] = useState(definitionOnly ? 'crane' : '');
-  const [selected, setSelected] = useState(definitionOnly ? 'crane' : '');
+export function WordExplorerPage() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const initialParameters = useMemo(() => new URLSearchParams(location.search), [location.search]);
+  const initialWord = (initialParameters.get('word') ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  const initialQuery = (initialParameters.get('q') ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z]/g, '');
+  const initialLengthValue = Number(initialParameters.get('length'));
+  const initialLength =
+    initialWord.length >= 2 && initialWord.length <= 35
+      ? initialWord.length
+      : Number.isInteger(initialLengthValue) && initialLengthValue >= 2 && initialLengthValue <= 35
+        ? initialLengthValue
+        : 5;
+  const [query, setQuery] = useState(initialQuery);
+  const [selected, setSelected] = useState(initialWord);
+  const [length, setLength] = useState(initialLength);
+  const [sort, setSort] = useState<'az' | 'za'>('az');
   const [page, setPage] = useState(1);
   const [copyStatus, setCopyStatus] = useState('');
   const normalizedQuery = query
     .trim()
     .toLowerCase()
     .replace(/[^a-z]/g, '');
-  const length =
-    normalizedQuery.length >= 2 && normalizedQuery.length <= 35 ? normalizedQuery.length : 5;
   const words = useQuery({
     queryKey: ['word-explorer', length],
     queryFn: ({ signal }) => wordListProvider.load(length, signal),
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
   });
-  const filteredWords = (words.data?.validGuesses ?? []).filter(
-    (word) => !normalizedQuery || word.includes(normalizedQuery),
-  );
-  const pageSize = definitionOnly ? 10 : WORD_EXPLORER_PAGE_SIZE;
+  const filteredWords = [...(words.data?.validGuesses ?? [])]
+    .filter((word) => !normalizedQuery || word.includes(normalizedQuery))
+    .sort((left, right) => {
+      const ascending = left < right ? -1 : left > right ? 1 : 0;
+      return sort === 'az' ? ascending : -ascending;
+    });
+  const pageSize = WORD_EXPLORER_PAGE_SIZE;
   const pageCount = Math.max(1, Math.ceil(filteredWords.length / pageSize));
   const visiblePage = Math.min(page, pageCount);
   const visibleWords = filteredWords.slice((visiblePage - 1) * pageSize, visiblePage * pageSize);
-  const selectedWord = visibleWords.includes(selected)
-    ? selected
-    : (visibleWords[0] ?? normalizedQuery);
+  const selectedWord =
+    selected && words.data?.validGuesses.includes(selected)
+      ? selected
+      : (visibleWords[0] ?? normalizedQuery);
   const isValidGuess = Boolean(selectedWord && words.data?.validGuesses.includes(selectedWord));
-  const definition = selectedWord ? curatedDefinitions[selectedWord] : undefined;
+  const definitions = selectedWord ? (words.data?.definitions?.[selectedWord] ?? []) : [];
   return (
     <div className="page">
       <PageHeader
-        title={definitionOnly ? 'Definitions' : 'Word Explorer'}
+        title="Word Explorer"
         eyebrow="Word data"
-        description="Explore the sanctioned game lexicon without exposing active answers."
+        description="Explore the game’s valid-word list without exposing active answers."
       />
       <div className="explorer-layout">
         <section>
-          <div className="word-search">
+          <div className="word-search" data-sort={sort}>
+            <div className="word-explorer-controls">
+              <label>
+                Word length
+                <select
+                  value={length}
+                  onChange={(event) => {
+                    const next = Number(event.target.value);
+                    setLength(next);
+                    setQuery('');
+                    setSelected('');
+                    setPage(1);
+                    setCopyStatus('');
+                    navigate(`/word-explorer?length=${next}`, { replace: true });
+                  }}
+                >
+                  {Array.from({ length: 34 }, (_, index) => index + 2).map((value) => (
+                    <option value={value} key={value}>
+                      {value} letters
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                Sort
+                <select
+                  value={sort}
+                  onInput={(event) => {
+                    setSort(event.currentTarget.value === 'za' ? 'za' : 'az');
+                    setSelected('');
+                    setPage(1);
+                  }}
+                  onChange={(event) => {
+                    setSort(event.target.value === 'za' ? 'za' : 'az');
+                    setSelected('');
+                    setPage(1);
+                  }}
+                >
+                  <option value="az">A–Z</option>
+                  <option value="za">Z–A</option>
+                </select>
+              </label>
+            </div>
             <label className="search-control">
               <Icon name="search" />
               <span className="sr-only">Search words</span>
@@ -923,6 +1108,13 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
                   setSelected('');
                   setPage(1);
                   setCopyStatus('');
+                  const next = event.target.value
+                    .trim()
+                    .toLowerCase()
+                    .replace(/[^a-z]/g, '');
+                  const parameters = new URLSearchParams({ length: String(length) });
+                  if (next) parameters.set('q', next);
+                  navigate(`/word-explorer?${parameters}`, { replace: true });
                 }}
                 placeholder="Search words"
               />
@@ -938,7 +1130,7 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
           <RuledList>
             {words.isPending ? (
               <p className="support-state" role="status">
-                Loading sanctioned valid guesses…
+                Loading valid game words…
               </p>
             ) : null}
             {words.isError ? (
@@ -959,6 +1151,9 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
                     onClick={() => {
                       setSelected(word);
                       setCopyStatus('');
+                      navigate(`/word-explorer?length=${length}&word=${encodeURIComponent(word)}`, {
+                        replace: true,
+                      });
                     }}
                   >
                     <strong>{word.toUpperCase()}</strong>
@@ -968,7 +1163,7 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
                 ))
               : null}
             {!words.isPending && !words.isError && filteredWords.length === 0 ? (
-              <p className="empty-state">No sanctioned valid guess matched this search.</p>
+              <p className="empty-state">No valid game word matched this search.</p>
             ) : null}
           </RuledList>
           {!words.isPending && !words.isError && filteredWords.length > pageSize ? (
@@ -1007,18 +1202,25 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
               <h2>{selectedWord.toUpperCase()}</h2>
               <p>
                 {selectedWord.length} letters ·{' '}
-                {isValidGuess ? 'Sanctioned valid guess' : 'No sanctioned valid-guess match'}
+                {isValidGuess ? 'Valid game word' : 'No valid-game-word match'}
               </p>
               <hr />
               <h3>Definitions</h3>
               <StatusDot tone="ice">
-                Source: {definition ? 'bundled curated metadata' : 'fallback required'}
+                {definitions.length > 0 ? 'Definition available' : 'Definition unavailable'}
               </StatusDot>
-              {definition ? (
-                <p className="definition-copy">{definition}</p>
+              {definitions.length > 0 ? (
+                <ul className="definition-copy">
+                  {definitions.map((entry, index) => (
+                    <li key={`${selectedWord}:${index}`}>
+                      {entry.partOfSpeech ? <em>{entry.partOfSpeech}: </em> : null}
+                      {entry.text}
+                    </li>
+                  ))}
+                </ul>
               ) : (
                 <p className="definition-copy">
-                  No bundled definition is available. Use the explicit search fallback below.
+                  No definition is available. Search Google for this word.
                 </p>
               )}
               <div className="word-actions">
@@ -1055,8 +1257,8 @@ export function WordExplorerPage({ definitionOnly = false }: { definitionOnly?: 
         </section>
       </div>
       <p className="privacy-band">
-        <Icon name="lock" /> This surface reports valid-guess membership only. Answer-pool and
-        active-answer membership are never identified.
+        <Icon name="lock" /> This page shows which words can be played. It never identifies current
+        or future answers.
       </p>
     </div>
   );
@@ -1078,7 +1280,7 @@ export function SettingsPage() {
       <div className="page page--narrow">
         <PageHeader title="Settings" eyebrow="Player system" />
         <p className="support-state" role="status">
-          Hydrating private account settings…
+          Loading account settings…
         </p>
       </div>
     );
@@ -1174,7 +1376,7 @@ function SettingsForm({
       }
       setSaveStatus(
         userId
-          ? 'Settings saved locally and to the account projection.'
+          ? 'Settings saved to this device and your account.'
           : 'Guest settings saved on this device.',
       );
     } catch (error) {
@@ -1296,7 +1498,7 @@ function SettingsForm({
               <>
                 <SettingGroup
                   label="Private Practice requests"
-                  description="Server-owned preference; blocks always take precedence."
+                  description="Choose whether other players can send you private Practice requests."
                 >
                   <Button
                     disabled={privatePreference.isPending || !privateRepository}
@@ -1326,7 +1528,7 @@ function SettingsForm({
                 <div className="setting-group setting-group--stacked">
                   <div>
                     <h3>Blocked public players</h3>
-                    <p>Choose players from sanctioned public profile cards.</p>
+                    <p>Choose a player from their public profile.</p>
                   </div>
                   {blockTargetProfile.isPending && blockTarget ? (
                     <p role="status">Loading the selected public player…</p>
@@ -1382,7 +1584,7 @@ function SettingsForm({
               </>
             ) : (
               <p className="neutral-band">
-                Sign in to manage server-owned private-request preferences and blocks.
+                Sign in to manage private Practice requests and blocked players.
               </p>
             )}
           </section>
@@ -1391,17 +1593,17 @@ function SettingsForm({
             meta={userId ? 'Account-scoped' : 'Guest · local'}
           >
             <p>
-              Reset removes only this identity namespace from this browser. It never deletes the
+              Reset removes only this player’s local data from this browser. It never deletes the
               account, another account’s data, or server history.
             </p>
             <Button tone="danger" onClick={() => setResetOpen(true)}>
-              Reset this browser namespace
+              Reset local player data
             </Button>
             {resetOpen ? (
               <div className="confirmation-bar" role="alertdialog" aria-label="Confirm local reset">
                 <p>
-                  Remove this identity’s local sessions, history, settings, progression,
-                  continuation and consumable operations, and notifications?
+                  Remove this player’s local sessions, history, settings, progression, continuation
+                  and consumable operations, and notifications?
                 </p>
                 <Button
                   tone="danger"
@@ -1437,7 +1639,7 @@ function SettingsForm({
               </div>
             ) : null}
           </Disclosure>
-          <div className="button-row">
+          <div className="button-row settings-save-bar">
             <Button tone="primary" onClick={() => void save()}>
               Save settings
             </Button>
@@ -1499,8 +1701,8 @@ export function HelpPage() {
           <div className="prose">
             <p>Solo Practice is configurable and remains available to guests on this device.</p>
             <p>
-              Solo Daily follows the local calendar day. Daily COMBAT follows UTC and requires
-              authenticated server authority.
+              Solo Daily follows the local calendar day. Daily COMBAT follows UTC and requires you
+              to sign in.
             </p>
           </div>
         ) : null}
@@ -1554,8 +1756,8 @@ export function HelpPage() {
               COMBAT.
             </p>
             <p>
-              Guest progress stays local. Public profiles are opt-in projections; answers, raw auth
-              identifiers, private matches, and account data remain protected.
+              Guest progress stays local. Public profiles are opt-in; answers, raw auth identifiers,
+              private matches, and account data remain protected.
             </p>
           </div>
         ) : null}
@@ -1581,7 +1783,7 @@ export function HelpPage() {
       <Disclosure label="Recovery & accessibility" meta="Keyboard, sound, offline">
         <p>
           Tile meaning never depends on color alone. Sound is optional, reduced motion is respected,
-          and saved local Solo Practice remains available when network authority is unavailable.
+          and saved local Solo Practice remains available when the network is unavailable.
         </p>
       </Disclosure>
       <Disclosure label="More help" meta="Feedback, About">
@@ -1718,8 +1920,8 @@ export function AboutPage() {
         </p>
         <h2>Private by design</h2>
         <p>
-          Guest progress is local. Public profiles are opt-in projections. Daily answers, account
-          data, private matches, and developer operations remain protected by server authority.
+          Guest progress is local. Public profiles are opt-in. Daily answers, account data, private
+          matches, and developer tools remain protected by server-side access controls.
         </p>
         <h2>Credits</h2>
         <p>
@@ -1770,7 +1972,7 @@ export function AuthPage() {
         {authStatus === 'loading' ? <p role="status">Checking the signed-in session…</p> : null}
         {user ? (
           <div className="success-banner" role="status">
-            Session verified. Account-owned data will use its isolated namespace.
+            Sign-in confirmed. Your account data is ready.
           </div>
         ) : null}
         <Button

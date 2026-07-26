@@ -78,7 +78,7 @@ test('identity-local reset includes continuation and notification state only for
   });
 
   await page.locator('summary').filter({ hasText: 'Account & local data' }).click();
-  await page.getByRole('button', { name: 'Reset this browser namespace' }).click();
+  await page.getByRole('button', { name: 'Reset local player data' }).click();
   await expect(page.getByRole('alertdialog', { name: 'Confirm local reset' })).toContainText(
     'continuation and consumable operations, and notifications',
   );

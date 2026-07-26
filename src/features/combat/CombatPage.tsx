@@ -1,5 +1,5 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink, useLocation, useNavigate } from 'react-router';
 
 import { useAuth } from '../../app/auth-context';
@@ -14,6 +14,7 @@ import {
 import { CombatPreviewRepository } from '../../services/combat-preview-repository';
 import {
   AuthoritativeCombatRepository,
+  type RankedPracticeQueue,
   type UnrankedDailyLobby,
 } from '../../services/authoritative-combat-repository';
 import {
@@ -41,10 +42,23 @@ import {
   readRankedPracticeSearchState,
   writeRankedPracticeSearchState,
 } from '../../services/pending-ranked-practice';
+import {
+  attachRankedDailyRequest,
+  clearLegacyRankedDailyRequestId,
+  clearRankedDailySearchIntent,
+  createRankedDailySearchIntent,
+  readLegacyRankedDailyRequestId,
+  readRankedDailySearchIntent,
+  type RankedDailySearchIntent,
+  writeRankedDailySearchIntent,
+} from '../../services/pending-ranked-daily';
 import { PublicRepository } from '../../services/public-repository';
 import { PrivateRequestRepository } from '../../services/private-request-repository';
-import type { PrivateRequestProjection } from '../../services/combat-preview-projections';
-import type { RematchProjection } from '../../services/combat-preview-projections';
+import type {
+  PrivateRequestProjection,
+  RankedDailyQueueProjection,
+  RematchProjection,
+} from '../../services/combat-preview-projections';
 import type { Json } from '../../types/database';
 import type { PublicProfileProjection } from '../../types/services';
 import {
@@ -59,6 +73,8 @@ import {
   type CombatPreviewParticipant,
 } from './components';
 import { choosePracticeAnswers } from './usePracticeCombatMatch';
+import { combatPlayerCopy } from './player-copy';
+import { useRankedSearchController, type RankedSearchPhase } from './ranked-search-controller';
 
 const tabs = [
   ['/combat', 'Overview'],
@@ -132,6 +148,13 @@ export function CombatPage() {
     () => (client ? new PrivateRequestRepository(client) : null),
     [client],
   );
+  const ownerProfile = useQuery({
+    queryKey: ['owner-public-profile', user?.id],
+    enabled: Boolean(publicRepository && user),
+    queryFn: () => publicRepository!.getMyProfile(),
+    staleTime: 30_000,
+    retry: 1,
+  });
   const [message, setMessage] = useState('');
   const [busy, setBusy] = useState(false);
   const [mode, setMode] = useState<'og' | 'go'>('og');
@@ -142,16 +165,20 @@ export function CombatPage() {
   const [timeLimitMs, setTimeLimitMs] = useState<number | null>(null);
   const [rankedMode, setRankedMode] = useState<'og' | 'go'>('og');
   const [rankedHardMode, setRankedHardMode] = useState(false);
-  const [rankedRequestId, setRankedRequestId] = useState<string | null>(() =>
-    sessionStorage.getItem('amordle:ranked-daily-request'),
-  );
+  const [rankedDailyIntent, setRankedDailyIntent] = useState<RankedDailySearchIntent | null>(null);
+  const [legacyRankedDailyRequestId, setLegacyRankedDailyRequestId] = useState<string | null>(null);
   const [rankedPracticeRequestId, setRankedPracticeRequestId] = useState<string | null>(() =>
     sessionStorage.getItem('amordle:ranked-practice-request'),
   );
   const [rankedPracticeTimed, setRankedPracticeTimed] = useState(false);
-  const [finalizingDaily, setFinalizingDaily] = useState(false);
-  const [finalizingPractice, setFinalizingPractice] = useState(false);
-  const [practiceFinalizeFailed, setPracticeFinalizeFailed] = useState(false);
+  const [rankedDailyAction, setRankedDailyAction] = useState<'creating' | 'cancelling' | null>(
+    null,
+  );
+  const [rankedPracticeAction, setRankedPracticeAction] = useState<
+    'creating' | 'cancelling' | null
+  >(null);
+  const rankedDailyCreateInFlight = useRef(false);
+  const rankedPracticeCreateInFlight = useRef(false);
   const [privateTarget, setPrivateTarget] = useState(() =>
     (new URLSearchParams(location.search).get('target') ?? '').toLowerCase(),
   );
@@ -160,10 +187,30 @@ export function CombatPage() {
     setPrivateTarget((new URLSearchParams(location.search).get('target') ?? '').toLowerCase());
   }, [location.search]);
 
+  const rankedRequestId =
+    rankedDailyIntent !== null && user !== null && rankedDailyIntent.ownerNamespace === user.id
+      ? rankedDailyIntent.requestId
+      : legacyRankedDailyRequestId;
+  const rankedPracticeSearchOwned =
+    user !== null &&
+    readRankedPracticeSearchState(sessionStorage, user.id)?.requestId === rankedPracticeRequestId;
+
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      setRankedDailyIntent(null);
+      setLegacyRankedDailyRequestId(null);
+      setRankedPracticeRequestId(null);
+      return;
+    }
+    const daily = readRankedDailySearchIntent(sessionStorage, user.id);
+    setRankedDailyIntent(daily);
+    if (daily) {
+      setRankedMode(daily.mode);
+      setRankedHardMode(daily.hardMode);
+    }
+    setLegacyRankedDailyRequestId(readLegacyRankedDailyRequestId(sessionStorage));
     const restored = readRankedPracticeSearchState(sessionStorage, user.id);
-    if (restored?.requestId) setRankedPracticeRequestId(restored.requestId);
+    setRankedPracticeRequestId(restored?.requestId ?? null);
   }, [user]);
 
   const lobbies = useQuery({
@@ -220,7 +267,7 @@ export function CombatPage() {
     retry: 1,
   });
   const rankedQueue = useQuery({
-    queryKey: ['combat', 'ranked-daily-queue', rankedRequestId],
+    queryKey: ['combat', 'ranked-daily-queue', user?.id, rankedRequestId],
     enabled: Boolean(previewRepository && user && rankedRequestId && section === 'daily'),
     queryFn: () => previewRepository!.loadRankedDailyQueue(rankedRequestId!),
     refetchInterval: 5_000,
@@ -228,9 +275,13 @@ export function CombatPage() {
     retry: 1,
   });
   const rankedPracticeQueue = useQuery({
-    queryKey: ['combat', 'ranked-practice-queue', rankedPracticeRequestId],
+    queryKey: ['combat', 'ranked-practice-queue', user?.id, rankedPracticeRequestId],
     enabled: Boolean(
-      authoritativeRepository && user && rankedPracticeRequestId && section === 'practice',
+      authoritativeRepository &&
+      user &&
+      rankedPracticeRequestId &&
+      rankedPracticeSearchOwned &&
+      section === 'practice',
     ),
     queryFn: () => authoritativeRepository!.getRankedPracticeStatus(rankedPracticeRequestId!),
     refetchInterval: 5_000,
@@ -251,181 +302,155 @@ export function CombatPage() {
   });
 
   useEffect(() => {
-    if (
-      section !== 'daily' ||
-      !rankedRequestId ||
-      !rankedQueue.isSuccess ||
-      (rankedQueue.data !== null &&
-        rankedQueue.data.status !== 'cancelled' &&
-        rankedQueue.data.status !== 'expired')
-    ) {
+    if (!user || !legacyRankedDailyRequestId || !rankedQueue.isSuccess || rankedDailyIntent) {
       return;
     }
-    sessionStorage.removeItem('amordle:ranked-daily-request');
-    setRankedRequestId(null);
-    setMessage('The stored Ranked Daily request is no longer active and has been cleared.');
-  }, [rankedQueue.data, rankedQueue.isSuccess, rankedRequestId, section]);
-
-  useEffect(() => {
+    const queue = rankedQueue.data;
     if (
-      section !== 'daily' ||
-      !previewRepository ||
-      rankedQueue.data?.status !== 'queued' ||
-      !rankedRequestId ||
-      busy
-    )
-      return;
-    const timer = window.setTimeout(() => {
-      setBusy(true);
-      void previewRepository
-        .claimRankedDailyQueue(rankedRequestId)
-        .then((queue) => {
-          queryClient.setQueryData(['combat', 'ranked-daily-queue', rankedRequestId], queue);
-          setMessage(
-            queue.status === 'matched'
-              ? 'Ranked Daily opponent matched. Finalizing the private-authority game…'
-              : 'Ranked Daily queue is still waiting for a compatible opponent.',
-          );
-        })
-        .catch((error: unknown) =>
-          setMessage(error instanceof Error ? error.message : 'Ranked Daily claim failed.'),
-        )
-        .finally(() => setBusy(false));
-    }, 750);
-    return () => window.clearTimeout(timer);
-  }, [busy, previewRepository, queryClient, rankedQueue.data?.status, rankedRequestId, section]);
-
-  useEffect(() => {
-    if (
-      !previewRepository ||
-      section !== 'daily' ||
-      rankedQueue.data?.status !== 'matched' ||
-      finalizingDaily ||
-      !rankedRequestId
-    )
-      return;
-    setFinalizingDaily(true);
-    void previewRepository
-      .finalizeRankedDailyQueue(rankedQueue.data)
-      .then(({ gameId }) => {
-        sessionStorage.removeItem('amordle:ranked-daily-request');
-        setRankedRequestId(null);
-        navigate(`/combat/match/${gameId}`);
-      })
-      .catch((error: unknown) =>
-        setMessage(error instanceof Error ? error.message : 'Ranked Daily finalization failed.'),
-      )
-      .finally(() => setFinalizingDaily(false));
-  }, [finalizingDaily, navigate, previewRepository, rankedQueue.data, rankedRequestId, section]);
-
-  useEffect(() => {
-    const queue = rankedPracticeQueue.data;
-    if (
-      section !== 'practice' ||
-      !rankedPracticeRequestId ||
-      !rankedPracticeQueue.isSuccess ||
-      (queue !== undefined &&
-        queue !== null &&
-        queue.status !== 'cancelled' &&
-        queue.status !== 'expired')
+      queue &&
+      queue.status !== 'cancelled' &&
+      queue.status !== 'expired' &&
+      queue.dailyDateKey === utcDateKey()
     ) {
+      const adopted = attachRankedDailyRequest(
+        createRankedDailySearchIntent({
+          ownerNamespace: user.id,
+          dailyDateKey: queue.dailyDateKey,
+          mode: queue.mode,
+          hardMode: queue.hardMode,
+          requestedAt: queue.queuedAt,
+        }),
+        queue.requestId,
+      );
+      writeRankedDailySearchIntent(sessionStorage, adopted);
+      setRankedDailyIntent(adopted);
+      setLegacyRankedDailyRequestId(null);
       return;
     }
-    clearRankedPracticeSearchState(sessionStorage);
-    setRankedPracticeRequestId(null);
-    setMessage('The stored Ranked Practice search is no longer active and has been cleared.');
-  }, [rankedPracticeQueue.data, rankedPracticeQueue.isSuccess, rankedPracticeRequestId, section]);
-
-  useEffect(() => {
-    if (
-      section !== 'practice' ||
-      !authoritativeRepository ||
-      rankedPracticeQueue.data?.status !== 'queued' ||
-      !rankedPracticeRequestId ||
-      busy
-    ) {
-      return;
-    }
-    const timer = window.setTimeout(() => {
-      setBusy(true);
-      void authoritativeRepository
-        .claimRankedPractice({
-          requestId: rankedPracticeRequestId,
-          actionId: crypto.randomUUID(),
-        })
-        .then((queue) => {
-          queryClient.setQueryData(
-            ['combat', 'ranked-practice-queue', rankedPracticeRequestId],
-            queue,
-          );
-          setMessage(
-            queue.status === 'matched'
-              ? 'Ranked Practice opponent matched. Finalizing the shared game…'
-              : 'Ranked Practice is still searching for a compatible opponent.',
-          );
-        })
-        .catch((error: unknown) =>
-          setMessage(error instanceof Error ? error.message : 'Ranked Practice claim failed.'),
-        )
-        .finally(() => setBusy(false));
-    }, 750);
-    return () => window.clearTimeout(timer);
+    clearLegacyRankedDailyRequestId(sessionStorage);
+    setLegacyRankedDailyRequestId(null);
   }, [
-    busy,
-    authoritativeRepository,
-    queryClient,
-    rankedPracticeQueue.data?.status,
-    rankedPracticeRequestId,
-    section,
-  ]);
-
-  useEffect(() => {
-    const queue = rankedPracticeQueue.data;
-    if (
-      section !== 'practice' ||
-      !authoritativeRepository ||
-      queue?.status !== 'matched' ||
-      !queue.matchedGameId ||
-      finalizingPractice ||
-      practiceFinalizeFailed
-    ) {
-      return;
-    }
-    setFinalizingPractice(true);
-    void authoritativeRepository
-      .finalizeRankedPractice({
-        requestId: queue.requestId,
-        gameId: queue.matchedGameId,
-        actionId: crypto.randomUUID(),
-      })
-      .then((projection) => {
-        clearRankedPracticeSearchState(sessionStorage);
-        setRankedPracticeRequestId(null);
-        queryClient.setQueryData(
-          ['combat', 'match', projection.id, 'authoritative-v2', user?.id],
-          projection,
-        );
-        navigate(`/combat/match/${projection.id}`);
-      })
-      .catch((error: unknown) => {
-        setPracticeFinalizeFailed(true);
-        setMessage(error instanceof Error ? error.message : 'Ranked Practice finalization failed.');
-      })
-      .finally(() => setFinalizingPractice(false));
-  }, [
-    authoritativeRepository,
-    finalizingPractice,
-    navigate,
-    practiceFinalizeFailed,
-    queryClient,
-    rankedPracticeQueue.data,
-    section,
+    legacyRankedDailyRequestId,
+    rankedDailyIntent,
+    rankedQueue.data,
+    rankedQueue.isSuccess,
     user,
   ]);
 
+  const claimRankedDaily = useCallback(async () => {
+    if (!previewRepository || !rankedRequestId) {
+      throw new Error('Ranked Daily search is unavailable.');
+    }
+    return previewRepository.claimRankedDailyQueue(rankedRequestId);
+  }, [previewRepository, rankedRequestId]);
+  const updateRankedDailyQueue = useCallback(
+    (queue: RankedDailyQueueProjection) => {
+      if (!rankedRequestId) return;
+      queryClient.setQueryData(['combat', 'ranked-daily-queue', user?.id, rankedRequestId], queue);
+      if (queue.status === 'matched') setMessage('Rival found. Preparing your game…');
+    },
+    [queryClient, rankedRequestId, user?.id],
+  );
+  const finalizeRankedDaily = useCallback(
+    async (queue: RankedDailyQueueProjection) => {
+      if (!previewRepository || !user) throw new Error('Ranked Daily finalization is unavailable.');
+      const { gameId } = await previewRepository.finalizeRankedDailyQueue(queue);
+      clearRankedDailySearchIntent(sessionStorage, user.id);
+      setRankedDailyIntent(null);
+      queryClient.invalidateQueries({ queryKey: ['combat', 'participant-summaries'] });
+      navigate(`/combat/match/${gameId}`);
+    },
+    [navigate, previewRepository, queryClient, user],
+  );
+  const endRankedDailySearch = useCallback(() => {
+    if (user) clearRankedDailySearchIntent(sessionStorage, user.id);
+    clearLegacyRankedDailyRequestId(sessionStorage);
+    setRankedDailyIntent(null);
+    setLegacyRankedDailyRequestId(null);
+    setMessage('That Ranked Daily search is no longer active.');
+  }, [user]);
+  const handleRankedDailyReconciliationError = useCallback(() => {
+    setMessage('Your search is still active. We’ll keep trying to connect you.');
+  }, []);
+  const dailySearch = useRankedSearchController({
+    enabled: section === 'daily' && Boolean(previewRepository && user && rankedRequestId),
+    requestId: rankedRequestId,
+    queue: rankedQueue.data,
+    queueUpdatedAt: rankedQueue.dataUpdatedAt,
+    claim: claimRankedDaily,
+    finalize: finalizeRankedDaily,
+    onQueueUpdate: updateRankedDailyQueue,
+    onTerminal: endRankedDailySearch,
+    onTransientError: handleRankedDailyReconciliationError,
+  });
+
+  const claimRankedPractice = useCallback(async () => {
+    if (!authoritativeRepository || !rankedPracticeRequestId) {
+      throw new Error('Ranked Practice search is unavailable.');
+    }
+    return authoritativeRepository.claimRankedPractice({
+      requestId: rankedPracticeRequestId,
+      actionId: crypto.randomUUID(),
+    });
+  }, [authoritativeRepository, rankedPracticeRequestId]);
+  const updateRankedPracticeQueue = useCallback(
+    (queue: RankedPracticeQueue) => {
+      if (!rankedPracticeRequestId) return;
+      queryClient.setQueryData(
+        ['combat', 'ranked-practice-queue', user?.id, rankedPracticeRequestId],
+        queue,
+      );
+      if (queue.status === 'matched') setMessage('Rival found. Preparing your game…');
+    },
+    [queryClient, rankedPracticeRequestId, user?.id],
+  );
+  const finalizeRankedPractice = useCallback(
+    async (queue: RankedPracticeQueue) => {
+      if (!authoritativeRepository || !queue.matchedGameId) {
+        throw new Error('Ranked Practice finalization is unavailable.');
+      }
+      const projection = await authoritativeRepository.finalizeRankedPractice({
+        requestId: queue.requestId,
+        gameId: queue.matchedGameId,
+        actionId: `amordle-ranked-practice-finalize:${queue.requestId}`,
+      });
+      clearRankedPracticeSearchState(sessionStorage);
+      setRankedPracticeRequestId(null);
+      queryClient.setQueryData(
+        ['combat', 'match', projection.id, 'authoritative-v2', user?.id],
+        projection,
+      );
+      navigate(`/combat/match/${projection.id}`);
+    },
+    [authoritativeRepository, navigate, queryClient, user?.id],
+  );
+  const endRankedPracticeSearch = useCallback(() => {
+    clearRankedPracticeSearchState(sessionStorage);
+    setRankedPracticeRequestId(null);
+    setMessage('That Ranked Practice search is no longer active.');
+  }, []);
+  const handleRankedPracticeReconciliationError = useCallback(() => {
+    setMessage('Your search is still active. We’ll keep trying to connect you.');
+  }, []);
+  const practiceSearch = useRankedSearchController({
+    enabled:
+      section === 'practice' &&
+      Boolean(
+        authoritativeRepository && user && rankedPracticeRequestId && rankedPracticeSearchOwned,
+      ),
+    requestId: rankedPracticeRequestId,
+    queue: rankedPracticeQueue.data,
+    queueUpdatedAt: rankedPracticeQueue.dataUpdatedAt,
+    claim: claimRankedPractice,
+    finalize: finalizeRankedPractice,
+    onQueueUpdate: updateRankedPracticeQueue,
+    onTerminal: endRankedPracticeSearch,
+    onTransientError: handleRankedPracticeReconciliationError,
+  });
+
   const requireAccount = (): boolean => {
     if (status === 'authenticated' && user && transport && previewRepository) return true;
-    setMessage('Sign in before using durable COMBAT services.');
+    setMessage('Sign in to create, join, or resume COMBAT games.');
     return false;
   };
 
@@ -519,7 +544,7 @@ export function CombatPage() {
         ['combat', 'match', lobby.id, 'cooperative-preview', user.id],
         joined,
       );
-      setMessage('Lobby joined. Participant-only shared state is ready.');
+      setMessage('Lobby joined. The game is ready.');
       navigate(`/combat/match/${lobby.id}`);
     } catch (error) {
       await lobbies.refetch();
@@ -549,37 +574,78 @@ export function CombatPage() {
   };
 
   const enterRankedDaily = async () => {
-    if (!requireAccount() || !previewRepository) return;
-    setBusy(true);
+    if (!requireAccount() || !previewRepository || !user || rankedDailyCreateInFlight.current) {
+      return;
+    }
+    rankedDailyCreateInFlight.current = true;
+    setRankedDailyAction('creating');
     try {
+      const dailyDateKey = utcDateKey();
+      const fingerprint = `${dailyDateKey}:${rankedMode}:${rankedHardMode ? 'hard' : 'normal'}`;
+      const restored = readRankedDailySearchIntent(sessionStorage, user.id);
+      if (restored?.requestId && restored.fingerprint !== fingerprint) {
+        setRankedDailyIntent(restored);
+        setMessage('Cancel your current Ranked Daily search before changing its settings.');
+        return;
+      }
+      const intent =
+        restored && restored.fingerprint === fingerprint
+          ? restored
+          : createRankedDailySearchIntent({
+              ownerNamespace: user.id,
+              dailyDateKey,
+              mode: rankedMode,
+              hardMode: rankedHardMode,
+              requestedAt: new Date().toISOString(),
+            });
+      writeRankedDailySearchIntent(sessionStorage, intent);
+      setRankedDailyIntent(intent);
+      if (intent.requestId) {
+        setMessage(combatPlayerCopy.searchQueued);
+        return;
+      }
       const queue = await previewRepository.createRankedDailyQueue({
-        mode: rankedMode,
-        dailyDateKey: utcDateKey(),
-        hardMode: rankedHardMode,
-        idempotencyKey: `amordle-ranked-daily:${utcDateKey()}:${rankedMode}:${rankedHardMode}`,
+        mode: intent.mode,
+        dailyDateKey: intent.dailyDateKey,
+        hardMode: intent.hardMode,
+        idempotencyKey: intent.idempotencyKey,
       });
-      sessionStorage.setItem('amordle:ranked-daily-request', queue.requestId);
-      setRankedRequestId(queue.requestId);
-      setMessage('Ranked Daily queue accepted. Matching uses retained private authority.');
+      const attached = attachRankedDailyRequest(intent, queue.requestId);
+      writeRankedDailySearchIntent(sessionStorage, attached);
+      setRankedDailyIntent(attached);
+      queryClient.setQueryData(['combat', 'ranked-daily-queue', user.id, queue.requestId], queue);
+      setMessage(combatPlayerCopy.searchQueued);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Ranked Daily queue failed.');
+      setMessage(
+        error instanceof Error ? error.message : 'Ranked Daily search could not be started.',
+      );
     } finally {
-      setBusy(false);
+      rankedDailyCreateInFlight.current = false;
+      setRankedDailyAction(null);
     }
   };
 
   const cancelRankedDaily = async () => {
-    if (!previewRepository || !rankedRequestId) return;
-    setBusy(true);
+    if (!previewRepository || !rankedRequestId || !user) return;
+    setRankedDailyAction('cancelling');
     try {
-      await previewRepository.cancelRankedDailyQueue(rankedRequestId);
-      sessionStorage.removeItem('amordle:ranked-daily-request');
-      setRankedRequestId(null);
-      setMessage('Ranked Daily queue cancelled. No game or rating result was created.');
+      const queue = await previewRepository.cancelRankedDailyQueue(rankedRequestId);
+      if (queue.status === 'cancelled' || queue.status === 'expired') {
+        clearRankedDailySearchIntent(sessionStorage, user.id);
+        clearLegacyRankedDailyRequestId(sessionStorage);
+        setRankedDailyIntent(null);
+        setLegacyRankedDailyRequestId(null);
+        setMessage('Ranked Daily search cancelled.');
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Ranked Daily cancellation failed.');
+      await rankedQueue.refetch();
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'The cancellation could not be confirmed. Your search is still being checked.',
+      );
     } finally {
-      setBusy(false);
+      setRankedDailyAction(null);
     }
   };
 
@@ -663,9 +729,16 @@ export function CombatPage() {
   };
 
   const enterRankedPractice = async () => {
-    if (!requireAccount() || !authoritativeRepository || !user) return;
-    setBusy(true);
-    setPracticeFinalizeFailed(false);
+    if (
+      !requireAccount() ||
+      !authoritativeRepository ||
+      !user ||
+      rankedPracticeCreateInFlight.current
+    ) {
+      return;
+    }
+    rankedPracticeCreateInFlight.current = true;
+    setRankedPracticeAction('creating');
     try {
       const configuration = {
         mode,
@@ -701,41 +774,43 @@ export function CombatPage() {
         attachRankedPracticeRequest(search, queue.requestId),
       );
       setRankedPracticeRequestId(queue.requestId);
-      const claimed =
-        queue.status === 'queued'
-          ? await authoritativeRepository.claimRankedPractice({
-              requestId: queue.requestId,
-              actionId: crypto.randomUUID(),
-            })
-          : queue;
-      queryClient.setQueryData(['combat', 'ranked-practice-queue', queue.requestId], claimed);
-      setMessage(
-        claimed.status === 'matched'
-          ? 'Ranked Practice opponent matched. Finalizing the shared game…'
-          : 'Ranked Practice search accepted by the server-owned reservation service.',
+      queryClient.setQueryData(
+        ['combat', 'ranked-practice-queue', user.id, queue.requestId],
+        queue,
       );
+      setMessage(combatPlayerCopy.searchQueued);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Ranked Practice search failed.');
+      setMessage(
+        error instanceof Error ? error.message : 'Ranked Practice search could not be started.',
+      );
     } finally {
-      setBusy(false);
+      rankedPracticeCreateInFlight.current = false;
+      setRankedPracticeAction(null);
     }
   };
 
   const cancelRankedPractice = async () => {
     if (!authoritativeRepository || !rankedPracticeRequestId) return;
-    setBusy(true);
+    setRankedPracticeAction('cancelling');
     try {
-      await authoritativeRepository.cancelRankedPractice({
+      const queue = await authoritativeRepository.cancelRankedPractice({
         requestId: rankedPracticeRequestId,
         actionId: crypto.randomUUID(),
       });
-      clearRankedPracticeSearchState(sessionStorage);
-      setRankedPracticeRequestId(null);
-      setMessage('Ranked Practice search cancelled.');
+      if (queue.status === 'cancelled' || queue.status === 'expired') {
+        clearRankedPracticeSearchState(sessionStorage);
+        setRankedPracticeRequestId(null);
+        setMessage('Ranked Practice search cancelled.');
+      }
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : 'Ranked Practice cancellation failed.');
+      await rankedPracticeQueue.refetch();
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : 'The cancellation could not be confirmed. Your search is still being checked.',
+      );
     } finally {
-      setBusy(false);
+      setRankedPracticeAction(null);
     }
   };
 
@@ -863,9 +938,17 @@ export function CombatPage() {
 
   const participant: CombatPreviewParticipant = {
     key: 'viewer',
-    displayName: status === 'authenticated' ? 'Signed-in player' : 'Guest',
-    shortLabel: status === 'authenticated' ? 'YOU' : 'G',
+    displayName:
+      ownerProfile.data?.displayName ?? (status === 'authenticated' ? 'Account' : 'Guest'),
+    shortLabel: ownerProfile.data?.displayName
+      ? ownerProfile.data.displayName.slice(0, 2).toLocaleUpperCase('en-US')
+      : status === 'authenticated'
+        ? 'YOU'
+        : 'G',
     tone: 'ember',
+    publicProfileId: ownerProfile.data?.publicProfileId ?? null,
+    avatarUrl: ownerProfile.data?.avatarUrl ?? null,
+    accentColor: ownerProfile.data?.accentColor ?? null,
   };
   const activeGames = Array.from(
     new Map(
@@ -910,8 +993,9 @@ export function CombatPage() {
             <DailyPanel
               mode={rankedMode}
               hardMode={rankedHardMode}
-              queueStatus={rankedQueue.data?.status ?? null}
-              busy={busy || finalizingDaily}
+              searchPhase={dailySearch.phase}
+              rankedAction={rankedDailyAction}
+              busy={busy}
               onMode={setRankedMode}
               onHardMode={setRankedHardMode}
               onEnter={() => void enterRankedDaily()}
@@ -932,6 +1016,10 @@ export function CombatPage() {
                 puzzleCount={puzzleCount}
                 timeLimitMs={timeLimitMs}
                 busy={busy}
+                locked={
+                  rankedPracticeAction !== null ||
+                  ['queued', 'matched'].includes(practiceSearch.phase)
+                }
                 onMode={setMode}
                 onWordLength={setWordLength}
                 onDifficulty={setDifficulty}
@@ -942,8 +1030,8 @@ export function CombatPage() {
               />
               <RankedPracticePanel
                 timed={rankedPracticeTimed}
-                status={rankedPracticeQueue.data?.status ?? null}
-                busy={busy || finalizingPractice}
+                searchPhase={practiceSearch.phase}
+                rankedAction={rankedPracticeAction}
                 onTimed={setRankedPracticeTimed}
                 onEnter={() => void enterRankedPractice()}
                 onCancel={() => void cancelRankedPractice()}
@@ -983,7 +1071,7 @@ export function CombatPage() {
                 participant={participant}
                 busy={busy}
                 loading={lobbies.isPending}
-                error={lobbies.isError ? 'Practice lobbies could not be loaded safely.' : null}
+                error={lobbies.isError ? 'Practice lobbies could not be loaded.' : null}
                 onRetry={() => void lobbies.refetch()}
                 onJoin={(lobby) => void joinLobby(lobby)}
                 onCancel={(lobby) => void cancelLobby(lobby)}
@@ -1004,36 +1092,32 @@ export function CombatPage() {
             <LivePanel
               games={live.data ?? []}
               loading={live.isPending}
-              error={live.isError ? 'Privacy-safe Live games could not be loaded.' : null}
+              error={live.isError ? 'Live games could not be loaded.' : null}
               onRetry={() => void live.refetch()}
             />
           ) : null}
         </div>
         <aside className="combat-rail">
-          <h2>Capability boundary</h2>
+          <h2>COMBAT guide</h2>
           <dl className="data-list">
             <div>
               <dt>Unranked Practice</dt>
-              <dd>Durable shared play</dd>
+              <dd>Casual public games</dd>
             </div>
             <div>
               <dt>Ranked Daily</dt>
-              <dd>Private authority</dd>
+              <dd>One ranked game each day</dd>
             </div>
             <div>
               <dt>Ranked Practice</dt>
-              <dd>Server authority v2</dd>
+              <dd>Matchmaking and ratings</dd>
             </div>
             <div>
               <dt>Public Live</dt>
-              <dd>Privacy-safe v3</dd>
+              <dd>Read-only spectating</dd>
             </div>
           </dl>
-          <p>
-            Unranked Practice persists accepted participant updates before confirmation. Like the
-            accepted shell, ordinary turns are participant-authored; this lane never mutates
-            ratings.
-          </p>
+          <p>Choose Daily for today’s challenge or Practice for custom games and matchmaking.</p>
           <ButtonLink to="/help">Read COMBAT help</ButtonLink>
         </aside>
       </div>
@@ -1056,10 +1140,10 @@ function LivePanel({
     <>
       <SectionHeading title="Live Practice exchange" />
       <p className="privacy-band">
-        Read-only scored evidence · Daily, custom, private-request, and rematch games excluded
+        Watch eligible public Practice games. Spectators cannot make moves.
       </p>
       <RuledList>
-        {loading ? <p role="status">Loading privacy-safe Live projections…</p> : null}
+        {loading ? <p role="status">Loading Live games…</p> : null}
         {error ? (
           <div className="support-state" role="alert">
             <strong>{error}</strong>
@@ -1107,7 +1191,7 @@ function Overview({
         <section>
           <Icon name="daily" />
           <h2>Daily</h2>
-          <p>UTC day · private answer authority · ranked queue.</p>
+          <p>One UTC challenge each day · ranked or unranked.</p>
           <ButtonLink to="/combat/daily">Open Daily</ButtonLink>
         </section>
         <section>
@@ -1126,11 +1210,10 @@ function Overview({
         </section>
       </div>
       <CombatUnavailablePanel
-        title="Ranked Practice authority online"
-        statusLabel="Server-owned"
+        title="Ranked Practice is ready"
+        statusLabel="Online"
         statusTone="green"
-        description="FIFO reservations, answer selection, validation, moves, clocks, outcomes, and Elo settlement are validated behind participant-only RPCs."
-        privacyNote="Active answers, seeds, raw Auth identifiers, and participant-authored result claims never enter the browser projection."
+        description="Search for a compatible rival, play, and receive your rating update when the game ends."
       />
     </div>
   );
@@ -1139,7 +1222,8 @@ function Overview({
 function DailyPanel({
   mode,
   hardMode,
-  queueStatus,
+  searchPhase,
+  rankedAction,
   busy,
   onMode,
   onHardMode,
@@ -1152,7 +1236,8 @@ function DailyPanel({
 }: {
   mode: 'og' | 'go';
   hardMode: boolean;
-  queueStatus: string | null;
+  searchPhase: RankedSearchPhase;
+  rankedAction: 'creating' | 'cancelling' | null;
   busy: boolean;
   onMode: (mode: 'og' | 'go') => void;
   onHardMode: (value: boolean) => void;
@@ -1163,13 +1248,20 @@ function DailyPanel({
   onJoinUnranked: (lobby: UnrankedDailyLobby) => void;
   onCancelUnranked: (lobby: UnrankedDailyLobby) => void;
 }) {
+  const searchActive =
+    rankedAction !== null || ['queued', 'claiming', 'matched', 'finalizing'].includes(searchPhase);
+  const preparingGame = searchPhase === 'matched' || searchPhase === 'finalizing';
   return (
     <>
       <SectionHeading title="Daily COMBAT" meta={`${utcDateKey()} · UTC`} />
       <form className="practice-form" onSubmit={(event) => event.preventDefault()}>
         <label>
           Mode
-          <select value={mode} onChange={(event) => onMode(event.target.value as 'og' | 'go')}>
+          <select
+            value={mode}
+            disabled={searchActive}
+            onChange={(event) => onMode(event.target.value as 'og' | 'go')}
+          >
             <option value="og">OG</option>
             <option value="go">GO</option>
           </select>
@@ -1182,26 +1274,31 @@ function DailyPanel({
           <input
             type="checkbox"
             checked={hardMode}
+            disabled={searchActive}
             onChange={(event) => onHardMode(event.target.checked)}
           />{' '}
           Hard Mode
         </label>
-        <Button tone="primary" disabled={busy} onClick={onCreateUnranked}>
+        <Button tone="primary" disabled={busy || searchActive} onClick={onCreateUnranked}>
           Create unranked Daily lobby
         </Button>
-        <Button tone="primary" disabled={busy || queueStatus === 'queued'} onClick={onEnter}>
-          {queueStatus === 'matched'
-            ? 'Finalizing…'
-            : queueStatus === 'queued'
-              ? 'Searching…'
-              : 'Enter ranked Daily'}
+        <Button tone="primary" disabled={rankedAction !== null || searchActive} onClick={onEnter}>
+          {rankedAction === 'creating' ? 'Starting search…' : 'Enter ranked Daily'}
         </Button>
-        {queueStatus === 'queued' ? (
-          <Button disabled={busy} onClick={onCancel}>
+        {searchActive ? (
+          <Button disabled={rankedAction !== null || preparingGame} onClick={onCancel}>
             Cancel search
           </Button>
         ) : null}
       </form>
+      {searchActive ? (
+        <div className="ranked-search-status" role="status" aria-live="polite">
+          <span className="ranked-search-indicator" aria-hidden="true" />
+          <strong>
+            {preparingGame ? 'Rival found. Preparing your game…' : combatPlayerCopy.searching}
+          </strong>
+        </div>
+      ) : null}
       <p className="privacy-band">
         <Icon name="lock" /> Fixed five letters · no clock · separate unranked and ranked claims ·
         never public Live
@@ -1243,6 +1340,7 @@ function PracticeForm({
   puzzleCount,
   timeLimitMs,
   busy,
+  locked,
   onMode,
   onWordLength,
   onDifficulty,
@@ -1258,6 +1356,7 @@ function PracticeForm({
   puzzleCount: 5 | 7 | 10;
   timeLimitMs: number | null;
   busy: boolean;
+  locked: boolean;
   onMode: (value: 'og' | 'go') => void;
   onWordLength: (value: number) => void;
   onDifficulty: (value: 'casual' | 'standard' | 'expert') => void;
@@ -1272,7 +1371,11 @@ function PracticeForm({
       <form className="practice-form" onSubmit={(event) => event.preventDefault()}>
         <label>
           Mode
-          <select value={mode} onChange={(event) => onMode(event.target.value as 'og' | 'go')}>
+          <select
+            value={mode}
+            disabled={locked}
+            onChange={(event) => onMode(event.target.value as 'og' | 'go')}
+          >
             <option value="og">OG</option>
             <option value="go">GO</option>
           </select>
@@ -1285,6 +1388,7 @@ function PracticeForm({
             max="35"
             step="1"
             value={wordLength}
+            disabled={locked}
             onChange={(event) => onWordLength(Number(event.target.value))}
           />
         </label>
@@ -1292,6 +1396,7 @@ function PracticeForm({
           Difficulty
           <select
             value={difficulty}
+            disabled={locked}
             onChange={(event) =>
               onDifficulty(event.target.value as 'casual' | 'standard' | 'expert')
             }
@@ -1306,6 +1411,7 @@ function PracticeForm({
             GO chain
             <select
               value={puzzleCount}
+              disabled={locked}
               onChange={(event) => onPuzzleCount(Number(event.target.value) as 5 | 7 | 10)}
             >
               <option value="5">5 puzzles</option>
@@ -1318,6 +1424,7 @@ function PracticeForm({
           Clock
           <select
             value={timeLimitMs ?? 'none'}
+            disabled={locked}
             onChange={(event) =>
               onTimeLimit(event.target.value === 'none' ? null : Number(event.target.value))
             }
@@ -1336,18 +1443,18 @@ function PracticeForm({
           <input
             type="checkbox"
             checked={hardMode}
+            disabled={locked}
             onChange={(event) => onHardMode(event.target.checked)}
           />{' '}
           Hard Mode
         </label>
-        <Button tone="primary" disabled={busy} onClick={onCreate}>
+        <Button tone="primary" disabled={busy || locked} onClick={onCreate}>
           Create public lobby
         </Button>
         <ButtonLink to="/leaderboards">Find a player for a private request</ButtonLink>
       </form>
       <p className="privacy-band">
-        This lane provides durable, recoverable shared play. Like the accepted shell, ordinary turns
-        are participant-authored; it is not cheat-resistant or rating-eligible.
+        Public Practice is unranked. Games save automatically and do not change ratings.
       </p>
     </>
   );
@@ -1355,53 +1462,55 @@ function PracticeForm({
 
 function RankedPracticePanel({
   timed,
-  status,
-  busy,
+  searchPhase,
+  rankedAction,
   onTimed,
   onEnter,
   onCancel,
 }: {
   timed: boolean;
-  status: string | null;
-  busy: boolean;
+  searchPhase: RankedSearchPhase;
+  rankedAction: 'creating' | 'cancelling' | null;
   onTimed: (value: boolean) => void;
   onEnter: () => void;
   onCancel: () => void;
 }) {
+  const searchActive = ['queued', 'claiming', 'matched', 'finalizing'].includes(searchPhase);
+  const preparingGame = searchPhase === 'matched' || searchPhase === 'finalizing';
   return (
     <section className="support-state" aria-labelledby="ranked-practice-title">
       <h2 id="ranked-practice-title">Ranked Practice</h2>
       <p>
         Uses the same mode, length, Hard Mode, difficulty, and GO chain selected above. Ranked
-        matchmaking supports untimed or the shell’s five-minute lane.
+        matchmaking supports untimed or five-minute games.
       </p>
       <label className="check-control">
         <input
           type="checkbox"
           checked={timed}
-          disabled={status === 'queued' || status === 'matched'}
+          disabled={searchActive}
           onChange={(event) => onTimed(event.target.checked)}
         />{' '}
         Five-minute player clocks
       </label>
-      <Button
-        tone="primary"
-        disabled={busy || status === 'queued' || status === 'matched'}
-        onClick={onEnter}
-      >
-        {status === 'matched'
-          ? 'Finalizing ranked match…'
-          : status === 'queued'
-            ? 'Searching…'
-            : 'Find ranked opponent'}
+      <Button tone="primary" disabled={rankedAction !== null || searchActive} onClick={onEnter}>
+        {rankedAction === 'creating' ? 'Starting search…' : 'Find ranked opponent'}
       </Button>
-      {status === 'queued' ? (
-        <Button disabled={busy} onClick={onCancel}>
+      {searchActive ? (
+        <Button disabled={rankedAction !== null || preparingGame} onClick={onCancel}>
           Cancel ranked search
         </Button>
       ) : null}
+      {searchActive ? (
+        <div className="ranked-search-status" role="status" aria-live="polite">
+          <span className="ranked-search-indicator" aria-hidden="true" />
+          <strong>
+            {preparingGame ? 'Rival found. Preparing your game…' : combatPlayerCopy.searching}
+          </strong>
+        </div>
+      ) : null}
       <p className="privacy-band">
-        Server-owned FIFO matching, answers, accepted turns, clocks, outcomes, and Elo settlement
+        Ranked games use matched settings and update ratings after the result.
       </p>
     </section>
   );
@@ -1424,8 +1533,8 @@ function PrivateRequestComposer({
     <section className="support-state" aria-labelledby="private-practice-title">
       <h2 id="private-practice-title">Private Practice request</h2>
       <p>
-        Choose an eligible public player from a sanctioned player card, then send the current
-        Practice configuration. Preferences and blocks are enforced by the retained service.
+        Choose an eligible player from a public profile, then send the current Practice settings.
+        Private-game preferences and blocked-player settings are respected.
       </p>
       {resolving ? <p role="status">Loading the selected public player…</p> : null}
       {profile ? (
@@ -1528,8 +1637,7 @@ function RematchRequestList({
                 {request.mode.toUpperCase()} · {request.wordLength} letters
               </strong>
               <small>
-                {request.timeLimitMs ? `${request.timeLimitMs / 1_000}s` : 'untimed'} · private
-                participant handoff
+                {request.timeLimitMs ? `${request.timeLimitMs / 1_000}s` : 'untimed'} · private game
               </small>
             </div>
             {request.capabilities.canAccept ? (
@@ -1577,9 +1685,9 @@ function ActivePanel({
 }) {
   return (
     <>
-      <SectionHeading title="Participant games" />
+      <SectionHeading title="Your active games" />
       <RuledList>
-        {loading ? <p role="status">Loading safe game summaries…</p> : null}
+        {loading ? <p role="status">Loading active games…</p> : null}
         {error ? (
           <div className="support-state" role="alert">
             <strong>{error}</strong>
@@ -1594,7 +1702,7 @@ function ActivePanel({
                 {game.mode.toUpperCase()} {game.scope}
               </strong>
               <small>
-                {game.wordLength} letters · {game.ranked ? 'ranked' : 'unranked'} · safe summary
+                {game.wordLength} letters · {game.ranked ? 'ranked' : 'unranked'}
               </small>
             </div>
             <ButtonLink tone="primary" to={`/combat/match/${game.id}`}>
@@ -1603,7 +1711,7 @@ function ActivePanel({
           </div>
         ))}
         {games.length === 0 && !loading && !error ? (
-          <p className="empty-state">No participant games currently require attention.</p>
+          <p className="empty-state">No active COMBAT games.</p>
         ) : null}
       </RuledList>
     </>
@@ -1632,7 +1740,7 @@ function LobbyList({
   return (
     <>
       <SectionHeading title="Open public Practice lobbies" />
-      {loading ? <p role="status">Loading answerless public lobbies…</p> : null}
+      {loading ? <p role="status">Loading public Practice lobbies…</p> : null}
       {error ? (
         <div className="support-state" role="alert">
           <strong>{error}</strong>
@@ -1643,9 +1751,18 @@ function LobbyList({
         <CombatLobbyPanel
           key={lobby.id}
           title={`${lobby.mode.toUpperCase()} · ${lobby.wordLength} letters`}
-          description="Answerless public waiting projection"
+          description="Public Practice lobby"
           statusLabel={lobby.viewerSeat === 'player-one' ? 'Your lobby' : 'Open'}
-          host={participant}
+          host={
+            lobby.viewerSeat === 'player-one'
+              ? participant
+              : {
+                  key: `private:${lobby.id}`,
+                  displayName: 'Private player',
+                  shortLabel: '—',
+                  tone: 'ember',
+                }
+          }
           waitingLabel="waiting"
           waitingDescription="A second signed-in account may claim this seat."
           settings={lobbySettings(lobby)}
@@ -1667,7 +1784,7 @@ function LobbyList({
         />
       ))}
       {lobbies.length === 0 && !loading && !error ? (
-        <p className="empty-state">No answerless public Practice lobbies are open.</p>
+        <p className="empty-state">No public Practice lobbies are open.</p>
       ) : null}
     </>
   );

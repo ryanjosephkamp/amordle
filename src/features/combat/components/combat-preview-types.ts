@@ -8,6 +8,9 @@ export interface CombatPreviewParticipant {
   readonly displayName: string;
   readonly shortLabel: string;
   readonly tone: 'ember' | 'ice';
+  readonly publicProfileId?: string | null;
+  readonly avatarUrl?: string | null;
+  readonly accentColor?: string | null;
 }
 
 export interface CombatPreviewAction {

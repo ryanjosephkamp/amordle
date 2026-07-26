@@ -84,6 +84,13 @@ test('Home does not request answer banks', async ({ page }) => {
   expect(requestedWordBanks).toEqual([]);
 });
 
+test('Definitions redirects to the canonical Word Explorer selection', async ({ page }) => {
+  await page.goto('/definitions?q=crane&length=5');
+  await expect(page).toHaveURL(/\/word-explorer\?word=crane&length=5$/);
+  await expect(page.getByRole('heading', { name: 'Word Explorer' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'CRANE' })).toBeVisible();
+});
+
 test('invalid Solo route segments fail before requesting a word bank', async ({ page }) => {
   const requestedWordBanks: string[] = [];
   page.on('request', (request) => {
@@ -165,26 +172,34 @@ test('mobile Calendar initially reveals today and preserves later manual horizon
         if (!today) return false;
         const panelBox = panel.getBoundingClientRect();
         const todayBox = today.getBoundingClientRect();
-        return (
-          panel.scrollLeft > 0 &&
-          todayBox.left >= panelBox.left - 1 &&
-          todayBox.right <= panelBox.right + 1
-        );
+        return todayBox.left >= panelBox.left - 1 && todayBox.right <= panelBox.right + 1;
       }),
     )
     .toBe(true);
 
   await page.locator('.calendar-panel').evaluate((panel) => {
-    panel.scrollLeft = 0;
+    panel.scrollLeft = panel.scrollWidth;
   });
   await page.waitForTimeout(100);
-  expect(await page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft)).toBe(0);
+  const manualScroll = await page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft);
+  expect(manualScroll).toBeGreaterThan(0);
 
   await page.getByRole('button', { name: 'Previous month' }).click();
   await page.getByRole('button', { name: 'Next month' }).click();
   await expect
-    .poll(() => page.locator('.calendar-panel').evaluate((panel) => panel.scrollLeft))
-    .toBeGreaterThan(0);
+    .poll(() =>
+      page.locator('.calendar-panel').evaluate((panel) => {
+        const today = panel.querySelector<HTMLElement>('.calendar-day.is-today');
+        if (!today) return false;
+        const maximum = Math.max(0, panel.scrollWidth - panel.clientWidth);
+        const expected = Math.min(
+          maximum,
+          Math.max(0, today.offsetLeft + today.offsetWidth / 2 - panel.clientWidth / 2),
+        );
+        return Math.abs(panel.scrollLeft - expected) <= 1;
+      }),
+    )
+    .toBe(true);
 });
 
 test('a low-balance mobile player can select an exact past Daily lane before purchase', async ({

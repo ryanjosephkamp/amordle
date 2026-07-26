@@ -12,22 +12,22 @@ import {
   type AuthoritativeCombatProjection,
   type RankedPracticeSettlement,
 } from '../../services/authoritative-combat-repository';
+import { combatCommandFailure } from '../../services/combat-command-failure';
 import { RealtimeReconciler } from '../../services/realtime-reconciler';
 import { readSoundEnabled, soundEngine } from '../../services/sound-controller';
+import { combatPlayerCopy } from './player-copy';
 
 function commandMessage(projection: AuthoritativeCombatProjection): string {
   if (projection.status === 'holding') {
-    return 'Puzzle solved and saved. Advancing after the durable evidence hold.';
+    return combatPlayerCopy.holding;
   }
   if (projection.status === 'completed') {
-    return projection.ranked
-      ? 'Terminal result is server-owned. Ranked settlement is reconciling.'
-      : 'Terminal Daily result saved. No rating mutation was attempted.';
+    return combatPlayerCopy.completed;
   }
   if (projection.status === 'cancelled') {
-    return 'The game was cancelled before an eligible terminal result.';
+    return combatPlayerCopy.cancelled;
   }
-  return 'Move accepted by the server. Waiting for the next participant action.';
+  return combatPlayerCopy.moveAccepted;
 }
 
 export function useAuthoritativeCombatMatch(gameId: string) {
@@ -58,7 +58,7 @@ export function useAuthoritativeCombatMatch(gameId: string) {
   });
   const storageKey = `amordle:combat-draft:${identity.kind === 'authenticated' ? identity.userId : 'guest'}:${gameId}`;
   const [draft, setDraft] = useState(() => sessionStorage.getItem(storageKey) ?? '');
-  const [message, setMessage] = useState('Loading server-authoritative COMBAT state…');
+  const [message, setMessage] = useState<string>(combatPlayerCopy.loadingMatch);
   const [saving, setSaving] = useState(false);
   const [settlement, setSettlement] = useState<RankedPracticeSettlement | null>(null);
   const [clockNow, setClockNow] = useState(() => Date.now());
@@ -81,8 +81,7 @@ export function useAuthoritativeCombatMatch(gameId: string) {
       reconcile: async () => {
         await queryClient.invalidateQueries({ queryKey });
       },
-      onError: () =>
-        setMessage('Realtime invalidation changed. Durable five-second polling remains active.'),
+      onError: () => setMessage('Connection changed. Reconnecting…'),
     });
     reconciler.start();
     return () => reconciler.stop();
@@ -107,15 +106,19 @@ export function useAuthoritativeCombatMatch(gameId: string) {
           ...(input.guess === undefined ? {} : { guess: input.guess }),
         });
         queryClient.setQueryData(queryKey, accepted);
+        if (accepted.status === 'completed' || accepted.status === 'cancelled') {
+          await Promise.all([
+            queryClient.invalidateQueries({ queryKey: ['combat', 'active'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'hub'] }),
+            queryClient.invalidateQueries({ queryKey: ['combat', 'lobbies'] }),
+          ]);
+        }
         setMessage(commandMessage(accepted));
         return true;
       } catch (error) {
-        await projection.refetch();
-        setMessage(
-          error instanceof Error
-            ? `${error.message} Durable state was reread before another action.`
-            : 'The authoritative command failed. Durable state was reread.',
-        );
+        const failure = combatCommandFailure(error);
+        if (failure.reread) await projection.refetch();
+        setMessage(failure.message);
         return false;
       } finally {
         setSaving(false);

@@ -301,7 +301,7 @@ export function CalendarPage() {
               <strong>60 coins</strong>
               <p>{progression.coins} coins available</p>
               {selectedAllowed ? (
-                <p>This past Daily is already available in this identity namespace.</p>
+                <p>This past Daily is already available for this player.</p>
               ) : unlockShortfall > 0 ? (
                 <p>{unlockShortfall} coin shortfall</p>
               ) : (
@@ -362,13 +362,13 @@ export function CalendarPage() {
             label="OG Daily records"
             meta={`${completedDaily.filter((session) => session.mode === 'og').length} local`}
           >
-            <p>Only completed Daily OG sessions found in this identity namespace are counted.</p>
+            <p>Only completed Daily OG games for this player are counted.</p>
           </Disclosure>
           <Disclosure
             label="GO Daily records"
             meta={`${completedDaily.filter((session) => session.mode === 'go').length} local`}
           >
-            <p>Only completed Daily GO sessions found in this identity namespace are counted.</p>
+            <p>Only completed Daily GO games for this player are counted.</p>
           </Disclosure>
         </aside>
       </div>

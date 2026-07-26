@@ -96,6 +96,36 @@ function updateClient(data: ReturnType<typeof returnedRow> | null) {
 }
 
 describe('COMBAT preview repository', () => {
+  it('defensively excludes completed and cancelled games from Active summaries', async () => {
+    const playing = returnedRow();
+    const completed = {
+      ...returnedRow({ ...cooperativeProjection(), id: 'practice-complete', status: 'won' }),
+      ended_at: nextAt,
+      winner_player_id: 'player-one',
+    };
+    const rows = [playing, completed].map((row) => {
+      const result = { ...row } as Partial<typeof row>;
+      delete result.projection;
+      return result;
+    });
+    const limit = vi.fn(async () => ({ data: rows, error: null }));
+    const order = vi.fn(() => ({ limit }));
+    const or = vi.fn(() => ({ order }));
+    const select = vi.fn(() => ({ or }));
+    const from = vi.fn(() => ({ select }));
+
+    await expect(
+      new CombatPreviewRepository({
+        from,
+      } as unknown as AmordleSupabaseClient).listParticipantSummaries(playerOne),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        id: 'practice-1',
+        status: 'playing',
+      }),
+    ]);
+  });
+
   it('uses all existing optimistic-concurrency columns for cooperative Practice updates', async () => {
     const fixture = updateClient(returnedRow());
     const result = await new CombatPreviewRepository(fixture.client).updateCooperativeProjection({

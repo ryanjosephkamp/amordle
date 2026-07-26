@@ -695,7 +695,7 @@ export class AuthoritativeCombatRepository {
   }
 
   async listActive(limit = 50): Promise<AuthoritativeCombatProjection[]> {
-    return z
+    const projections = z
       .array(authoritativeCombatProjectionSchema)
       .parse(
         await callRpc(
@@ -705,6 +705,12 @@ export class AuthoritativeCombatRepository {
           'List authoritative COMBAT games',
         ),
       );
+    return projections.filter(
+      (projection) =>
+        projection.status === 'waiting' ||
+        projection.status === 'playing' ||
+        projection.status === 'holding',
+    );
   }
 
   async saveCommand(input: {

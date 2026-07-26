@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, NavLink, Outlet, ScrollRestoration, useLocation, useNavigate } from 'react-router';
 import { Button } from '../components/Button';
 import { Icon, type IconName } from '../components/Icon';
 import { useNotificationProjection } from '../features/supporting/use-notification-projection';
+import { PublicRepository } from '../services/public-repository';
 import { useAuth } from './auth-context';
 
 const primaryNav: Array<{ to: string; label: string; icon: IconName; end?: boolean }> = [
@@ -17,7 +18,6 @@ const moreNav = [
   ['/marketplace', 'Marketplace'],
   ['/leaderboards', 'Leaderboards'],
   ['/word-explorer', 'Word Explorer'],
-  ['/definitions', 'Definitions'],
   ['/profile', 'Profile'],
   ['/settings', 'Settings'],
   ['/help', 'Help'],
@@ -37,11 +37,23 @@ function HeaderAccount({
   onOpen,
   authenticated,
   loading,
+  displayName,
+  avatarUrl,
 }: {
   onOpen: () => void;
   authenticated: boolean;
   loading: boolean;
+  displayName?: string;
+  avatarUrl?: string | null;
 }) {
+  const initials =
+    displayName
+      ?.trim()
+      .split(/\s+/)
+      .slice(0, 2)
+      .map((part) => part[0])
+      .join('')
+      .toLocaleUpperCase('en-US') || (authenticated ? 'A' : 'G');
   return (
     <button
       className="account-button"
@@ -49,8 +61,10 @@ function HeaderAccount({
       onClick={onOpen}
       aria-label={authenticated ? 'Open account menu' : 'Sign in or open account menu'}
     >
-      <span className="avatar">{authenticated ? 'A' : 'G'}</span>
-      <span>{loading ? 'Loading' : authenticated ? 'Account' : 'Guest'}</span>
+      <span className="avatar">
+        {avatarUrl ? <img src={avatarUrl} alt="" referrerPolicy="no-referrer" /> : initials}
+      </span>
+      <span>{loading ? 'Loading' : authenticated ? (displayName ?? 'Account') : 'Guest'}</span>
       <span className="presence" aria-hidden="true" />
     </button>
   );
@@ -123,12 +137,42 @@ export function AppShell() {
   const navigate = useNavigate();
   const location = useLocation();
   const focus = new URLSearchParams(location.search).get('focus') === '1';
-  const { service: authService, status: authStatus, user, identity } = useAuth();
+  const { client, service: authService, status: authStatus, user, identity } = useAuth();
   const authenticated = authStatus === 'authenticated';
   const accountOpen = accountOpenAt === location.pathname;
   const moreOpen = moreOpenAt === location.pathname;
   const notificationsOpen = notificationsOpenAt === location.pathname;
   const notifications = useNotificationProjection(identity, authStatus !== 'loading');
+  const publicRepository = useMemo(() => (client ? new PublicRepository(client) : null), [client]);
+  const [ownerProfile, setOwnerProfile] = useState<{
+    readonly ownerId: string;
+    readonly displayName: string;
+    readonly avatarUrl: string | null;
+  } | null>(null);
+  useEffect(() => {
+    let active = true;
+    if (!publicRepository || !authenticated || !user) return () => undefined;
+    void publicRepository
+      .getMyProfile()
+      .then((profile) => {
+        if (active && profile) {
+          setOwnerProfile({
+            ownerId: user.id,
+            displayName: profile.displayName ?? 'Account',
+            avatarUrl: profile.avatarUrl,
+          });
+        }
+      })
+      .catch(() => {
+        // The account control remains usable with its privacy-safe fallback.
+      });
+    return () => {
+      active = false;
+    };
+  }, [authenticated, publicRepository, user]);
+  const currentOwnerProfile = ownerProfile?.ownerId === user?.id ? ownerProfile : null;
+  const accountName = currentOwnerProfile?.displayName;
+  const accountAvatar = currentOwnerProfile?.avatarUrl ?? null;
 
   useEffect(() => {
     const close = (event: KeyboardEvent) => {
@@ -206,6 +250,8 @@ export function AppShell() {
             }}
             authenticated={authenticated}
             loading={authStatus === 'loading'}
+            {...(accountName ? { displayName: accountName } : {})}
+            avatarUrl={accountAvatar}
           />
         </div>
       </header>
@@ -244,8 +290,16 @@ export function AppShell() {
             >
               <Icon name="close" />
             </Button>
-            <span className="avatar avatar--large">{authenticated ? 'A' : 'G'}</span>
-            <h2>{authenticated ? 'Signed-in account' : 'Guest play'}</h2>
+            <span className="avatar avatar--large">
+              {accountAvatar ? (
+                <img src={accountAvatar} alt="" referrerPolicy="no-referrer" />
+              ) : authenticated ? (
+                (accountName?.slice(0, 2).toLocaleUpperCase('en-US') ?? 'A')
+              ) : (
+                'G'
+              )}
+            </span>
+            <h2>{authenticated ? (accountName ?? 'Signed-in account') : 'Guest play'}</h2>
             <p>
               {authenticated
                 ? `Account session verified${user?.email ? ` for ${user.email}` : ''}. Account data remains private.`
