@@ -1,0 +1,249 @@
+{
+  "revision": "7cf03cea4eef62e8611e639d5d8afc2f42adfe0e",
+  "generatedAt": "2026-07-20T00:29:14.000Z",
+  "fetchedAt": "2026-07-21T00:24:15.081Z",
+  "source": {
+    "datasetId": "ryanjosephkamp/english-openlist",
+    "bundledFrom": "https://amordle.vercel.app/api/word-lists/manifest"
+  },
+  "entries": [
+    {
+      "length": 2,
+      "url": "/word-lists/bundled/words_length_2.json",
+      "answers": 134,
+      "validGuesses": 134,
+      "status": "served"
+    },
+    {
+      "length": 3,
+      "url": "/word-lists/bundled/words_length_3.json",
+      "answers": 1109,
+      "validGuesses": 1109,
+      "status": "served"
+    },
+    {
+      "length": 4,
+      "url": "/word-lists/bundled/words_length_4.json",
+      "answers": 2000,
+      "validGuesses": 4276,
+      "status": "served"
+    },
+    {
+      "length": 5,
+      "url": "/word-lists/bundled/words_length_5.json",
+      "answers": 2175,
+      "validGuesses": 9776,
+      "status": "served"
+    },
+    {
+      "length": 6,
+      "url": "/word-lists/bundled/words_length_6.json",
+      "answers": 2962,
+      "validGuesses": 18128,
+      "status": "served"
+    },
+    {
+      "length": 7,
+      "url": "/word-lists/bundled/words_length_7.json",
+      "answers": 3809,
+      "validGuesses": 29982,
+      "status": "served"
+    },
+    {
+      "length": 8,
+      "url": "/word-lists/bundled/words_length_8.json",
+      "answers": 4496,
+      "validGuesses": 41781,
+      "status": "served"
+    },
+    {
+      "length": 9,
+      "url": "/word-lists/bundled/words_length_9.json",
+      "answers": 4808,
+      "validGuesses": 47763,
+      "status": "served"
+    },
+    {
+      "length": 10,
+      "url": "/word-lists/bundled/words_length_10.json",
+      "answers": 4729,
+      "validGuesses": 46220,
+      "status": "served"
+    },
+    {
+      "length": 11,
+      "url": "/word-lists/bundled/words_length_11.json",
+      "answers": 4479,
+      "validGuesses": 41452,
+      "status": "served"
+    },
+    {
+      "length": 12,
+      "url": "/word-lists/bundled/words_length_12.json",
+      "answers": 4142,
+      "validGuesses": 35447,
+      "status": "served"
+    },
+    {
+      "length": 13,
+      "url": "/word-lists/bundled/words_length_13.json",
+      "answers": 3726,
+      "validGuesses": 28691,
+      "status": "served"
+    },
+    {
+      "length": 14,
+      "url": "/word-lists/bundled/words_length_14.json",
+      "answers": 3296,
+      "validGuesses": 22449,
+      "status": "served"
+    },
+    {
+      "length": 15,
+      "url": "/word-lists/bundled/words_length_15.json",
+      "answers": 2881,
+      "validGuesses": 17152,
+      "status": "served"
+    },
+    {
+      "length": 16,
+      "url": "/word-lists/bundled/words_length_16.json",
+      "answers": 2349,
+      "validGuesses": 11407,
+      "status": "served"
+    },
+    {
+      "length": 17,
+      "url": "/word-lists/bundled/words_length_17.json",
+      "answers": 2000,
+      "validGuesses": 7729,
+      "status": "served"
+    },
+    {
+      "length": 18,
+      "url": "/word-lists/bundled/words_length_18.json",
+      "answers": 2000,
+      "validGuesses": 5190,
+      "status": "served"
+    },
+    {
+      "length": 19,
+      "url": "/word-lists/bundled/words_length_19.json",
+      "answers": 2000,
+      "validGuesses": 3537,
+      "status": "served"
+    },
+    {
+      "length": 20,
+      "url": "/word-lists/bundled/words_length_20.json",
+      "answers": 2000,
+      "validGuesses": 2245,
+      "status": "served"
+    },
+    {
+      "length": 21,
+      "url": "/word-lists/bundled/words_length_21.json",
+      "answers": 1429,
+      "validGuesses": 1429,
+      "status": "served"
+    },
+    {
+      "length": 22,
+      "url": "/word-lists/bundled/words_length_22.json",
+      "answers": 886,
+      "validGuesses": 886,
+      "status": "served"
+    },
+    {
+      "length": 23,
+      "url": "/word-lists/bundled/words_length_23.json",
+      "answers": 617,
+      "validGuesses": 617,
+      "status": "served"
+    },
+    {
+      "length": 24,
+      "url": "/word-lists/bundled/words_length_24.json",
+      "answers": 403,
+      "validGuesses": 403,
+      "status": "served"
+    },
+    {
+      "length": 25,
+      "url": "/word-lists/bundled/words_length_25.json",
+      "answers": 276,
+      "validGuesses": 276,
+      "status": "served"
+    },
+    {
+      "length": 26,
+      "url": "/word-lists/bundled/words_length_26.json",
+      "answers": 185,
+      "validGuesses": 185,
+      "status": "served"
+    },
+    {
+      "length": 27,
+      "url": "/word-lists/bundled/words_length_27.json",
+      "answers": 110,
+      "validGuesses": 110,
+      "status": "served"
+    },
+    {
+      "length": 28,
+      "url": "/word-lists/bundled/words_length_28.json",
+      "answers": 83,
+      "validGuesses": 83,
+      "status": "served"
+    },
+    {
+      "length": 29,
+      "url": "/word-lists/bundled/words_length_29.json",
+      "answers": 64,
+      "validGuesses": 64,
+      "status": "served"
+    },
+    {
+      "length": 30,
+      "url": "/word-lists/bundled/words_length_30.json",
+      "answers": 49,
+      "validGuesses": 49,
+      "status": "served"
+    },
+    {
+      "length": 31,
+      "url": "/word-lists/bundled/words_length_31.json",
+      "answers": 31,
+      "validGuesses": 31,
+      "status": "served"
+    },
+    {
+      "length": 32,
+      "url": "/word-lists/bundled/words_length_32.json",
+      "answers": 21,
+      "validGuesses": 21,
+      "status": "served"
+    },
+    {
+      "length": 33,
+      "url": "/word-lists/bundled/words_length_33.json",
+      "answers": 16,
+      "validGuesses": 16,
+      "status": "served"
+    },
+    {
+      "length": 34,
+      "url": "/word-lists/bundled/words_length_34.json",
+      "answers": 12,
+      "validGuesses": 12,
+      "status": "served"
+    },
+    {
+      "length": 35,
+      "url": "/word-lists/bundled/words_length_35.json",
+      "answers": 11,
+      "validGuesses": 11,
+      "status": "served"
+    }
+  ]
+}
