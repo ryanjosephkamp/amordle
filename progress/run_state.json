@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "runId": "amordle_terminal_greenfield_2026_07_27",
+  "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
+  "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
+  "currentStage": "stage-1",
+  "currentCheckpoint": "stage-1-local-candidate",
+  "status": "in-progress",
+  "lastGreenCommit": null,
+  "preview": {
+    "deploymentId": null,
+    "url": null,
+    "protected": null
+  },
+  "cleanup": {
+    "lastRunId": null,
+    "zeroResidue": null
+  },
+  "blocker": null,
+  "updatedAt": "2026-07-27T22:04:17Z"
+}

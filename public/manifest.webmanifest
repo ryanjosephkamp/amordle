@@ -1,0 +1,10 @@
+{
+  "name": "Amordle",
+  "short_name": "Amordle",
+  "description": "Solo, Daily, and competitive word games.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#11181c",
+  "theme_color": "#35a3ad",
+  "icons": []
+}

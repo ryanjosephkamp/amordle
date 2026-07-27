@@ -1,0 +1,54 @@
+'use client';
+
+import { useQuery } from '@tanstack/react-query';
+import { loadHistory, loadProgress } from '@/adapters/supabase/account';
+import { AccountGate } from '@/components/route-states';
+import { useAuth } from '@/components/providers';
+
+export function PrivateStats() {
+  return (
+    <AccountGate>
+      <PrivateStatsInner />
+    </AccountGate>
+  );
+}
+
+function PrivateStatsInner() {
+  const auth = useAuth();
+  const userId = auth.user?.id ?? '';
+  const progress = useQuery({
+    queryKey: ['progress', userId],
+    queryFn: () => loadProgress(userId),
+    enabled: Boolean(userId),
+  });
+  const history = useQuery({
+    queryKey: ['history', userId],
+    queryFn: () => loadHistory(userId),
+    enabled: Boolean(userId),
+  });
+  if (!progress.data || !history.data) return <p aria-live="polite">Loading statistics…</p>;
+  const wins = history.data.filter((row) => row.entry.result === 'won').length;
+  const guesses = history.data.reduce((sum, row) => sum + row.entry.acceptedGuesses, 0);
+  return (
+    <div className="metric-grid">
+      <Metric label="Level" value={progress.data.level} />
+      <Metric label="XP" value={progress.data.xp} />
+      <Metric label="Daily streak" value={progress.data.dailyStreak} />
+      <Metric label="Completed games" value={history.data.length} />
+      <Metric label="Wins" value={wins} />
+      <Metric
+        label="Average guesses"
+        value={history.data.length ? (guesses / history.data.length).toFixed(1) : '—'}
+      />
+    </div>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="metric">
+      <span>{label}</span>
+      <strong className="mono">{value}</strong>
+    </div>
+  );
+}
