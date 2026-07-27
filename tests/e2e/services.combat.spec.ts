@@ -318,9 +318,12 @@ test.describe.serial('protected Preview services', () => {
     });
     expect(refreshResponse.status).toBe(200);
     expect(await refreshResponse.json()).toMatchObject({ objectCount: 34 });
-    const manifestResponse = await fetch(`${baseURL}/api/word-lists/manifest`, {
-      headers: bypassHeaders(),
-    });
+    const manifestResponse = await fetch(
+      `${baseURL}/api/word-lists/manifest?candidate=${encodeURIComponent(runId)}`,
+      {
+        headers: bypassHeaders(),
+      },
+    );
     expect(manifestResponse.status).toBe(200);
     const manifest = (await manifestResponse.json()) as {
       manifest: { entries: Array<{ length: number; url: string }> };
