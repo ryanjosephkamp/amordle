@@ -6,7 +6,7 @@
   "currentStage": "stage-1",
   "currentCheckpoint": "stage-1-local-candidate",
   "status": "in-progress",
-  "lastGreenCommit": null,
+  "lastGreenCommit": "f2632725171792e2b42d05fce7ee3333cef8762b",
   "preview": {
     "deploymentId": null,
     "url": null,
@@ -17,5 +17,5 @@
     "zeroResidue": null
   },
   "blocker": null,
-  "updatedAt": "2026-07-27T22:04:17Z"
+  "updatedAt": "2026-07-27T22:06:00Z"
 }
