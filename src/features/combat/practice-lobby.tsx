@@ -255,7 +255,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
         ) : available.length ? (
           <div className="data-list">
             {available.map((row) => (
-              <div className="data-row" key={row.id}>
+              <div className="data-row" data-game-id={row.id} key={row.id}>
                 <div>
                   <strong>
                     {row.projection.mode.toUpperCase()} · {row.projection.wordLength} letters
