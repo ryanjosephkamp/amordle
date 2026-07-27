@@ -82,8 +82,14 @@ function verifyGoldenRefs() {
     "local golden tag resolves to expected commit",
   );
   check(
-    git("rev-list", "--parents", "-n", "1", "HEAD").split(" ").length === 1,
-    "current lineage root has no parent",
+    (() => {
+      const roots = git("rev-list", "--max-parents=0", "HEAD").split("\n");
+      return (
+        roots.length === 1 &&
+        git("rev-list", "--parents", "-n", "1", roots[0]).split(" ").length === 1
+      );
+    })(),
+    "current lineage has exactly one parentless root",
   );
 }
 

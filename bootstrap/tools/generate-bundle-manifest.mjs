@@ -14,6 +14,7 @@ const excludedDirectories = new Set([
   ".codex-internal",
   ".next",
   ".pnpm-store",
+  ".temp",
   ".tooling",
   ".turbo",
   ".vercel",

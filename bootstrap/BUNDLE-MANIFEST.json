@@ -318,8 +318,8 @@
     },
     {
       "path": "bootstrap/tools/generate-bundle-manifest.mjs",
-      "bytes": 3728,
-      "sha256": "d555fcc05399fd7f34fc381d20187906b2f3a0fb7575c7ea724be4a0b3ef8296"
+      "bytes": 3739,
+      "sha256": "947ab584efb83c5e757582e1a854b40d74dca992a2222a3450cbe9261987b9dc"
     },
     {
       "path": "bootstrap/tools/generate-classification.mjs",
@@ -328,53 +328,8 @@
     },
     {
       "path": "bootstrap/validate-bootstrap.mjs",
-      "bytes": 10799,
-      "sha256": "f3ae78441cfa2743221692ebac9ad6707f3410493adbeb9082ef2a91b5c28b1f"
-    },
-    {
-      "path": "supabase/.temp/cli-latest",
-      "bytes": 8,
-      "sha256": "0daaac4eb443724f347b3d1df0dbacffb1e0755f345412d1f9032eb664aa9b18"
-    },
-    {
-      "path": "supabase/.temp/gotrue-version",
-      "bytes": 8,
-      "sha256": "e6c218273814702bad8360e669b924aecf34ae896659a7946133679d7df9bc9a"
-    },
-    {
-      "path": "supabase/.temp/linked-project.json",
-      "bytes": 131,
-      "sha256": "f81963684e72e1051b43e6db211528520b697a77c11830b793b2f8285beea160"
-    },
-    {
-      "path": "supabase/.temp/pooler-url",
-      "bytes": 92,
-      "sha256": "1854f504b1621ef1df6cab4eac9036c3c2c9c05ea204aad5fb01291bb3daf723"
-    },
-    {
-      "path": "supabase/.temp/postgres-version",
-      "bytes": 10,
-      "sha256": "c698b0ad787708e9c1334ca246ef8bb2a6fbd69b5863ea8b24f60b3c9e057732"
-    },
-    {
-      "path": "supabase/.temp/project-ref",
-      "bytes": 20,
-      "sha256": "e9714c0f2faff9961f15e25d310b2897bc90388417fceb5b10b3486403747432"
-    },
-    {
-      "path": "supabase/.temp/rest-version",
-      "bytes": 5,
-      "sha256": "b25de4a023eef82d4780a9f7816c5685ca35437308a9d457585eece9945485dc"
-    },
-    {
-      "path": "supabase/.temp/storage-migration",
-      "bytes": 33,
-      "sha256": "5eefa09f2bf47edfbd65e0307f2ebf6eec935a663b45e36cbd9395c3f10695d0"
-    },
-    {
-      "path": "supabase/.temp/storage-version",
-      "bytes": 7,
-      "sha256": "1905431fd51eb24224b488b3240d946db77611efd5ae30e6ad6467cb8039a0ea"
+      "bytes": 10970,
+      "sha256": "21ec49503441badad127210ec8630902dcefb4cf11d49b949842b1f22803b413"
     },
     {
       "path": "supabase/config.toml",
