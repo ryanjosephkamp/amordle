@@ -16,6 +16,7 @@
     "lint": "scripts/node24.sh node_modules/eslint/bin/eslint.js . --max-warnings 0",
     "typecheck": "scripts/node24.sh node_modules/@typescript/native/bin/tsc --noEmit",
     "verify:bootstrap": "scripts/node24.sh scripts/verify-bootstrap-baseline.mjs",
+    "verify:word-assets": "scripts/node24.sh scripts/verify-word-assets.mjs",
     "verify:parity": "scripts/node24.sh scripts/verify-parity-registry.mjs",
     "verify:boundaries": "scripts/node24.sh scripts/scan-boundaries.mjs",
     "verify:apis": "scripts/node24.sh scripts/verify-api-count.mjs",
@@ -28,8 +29,9 @@
     "test:visual": "PLAYWRIGHT_BROWSERS_PATH=.codex-internal/playwright scripts/node24.sh node_modules/playwright/cli.js test --project=visual",
     "test:acceptance:local": "pnpm check && pnpm test:domain && pnpm test:browser && pnpm test:e2e:fixture && pnpm test:visual",
     "test:acceptance": "scripts/node24.sh scripts/run-hosted-acceptance.mjs",
-    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build && pnpm verify:bootstrap && pnpm verify:boundaries && pnpm verify:parity && pnpm verify:apis && pnpm verify:budgets",
+    "check": "pnpm format:check && pnpm lint && pnpm typecheck && pnpm build && pnpm verify:bootstrap && pnpm verify:word-assets && pnpm verify:boundaries && pnpm verify:parity && pnpm verify:apis && pnpm verify:budgets",
     "generate:parity": "scripts/node24.sh scripts/generate-parity-registry.mjs",
+    "generate:word-assets": "scripts/node24.sh scripts/generate-word-assets.mjs",
     "generate:types": "supabase gen types typescript --linked --schema public,brrrdle_private"
   },
   "dependencies": {

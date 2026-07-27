@@ -32,10 +32,7 @@ describe('versioned word assets', () => {
   it('validates every selected-length source independently', async () => {
     const versions = new Set<string>();
     for (let length = 2; length <= 35; length += 1) {
-      const file = path.resolve(
-        process.cwd(),
-        `bootstrap/source-data/word-lists/words_length_${length}.json`,
-      );
+      const file = path.resolve(process.cwd(), `data/word-lists/words_length_${length}.json`);
       const raw = await readFile(file, 'utf8');
       const bank = bankSchema.parse(JSON.parse(raw));
       versions.add(bank.metadata.version);

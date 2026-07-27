@@ -9,7 +9,7 @@ import { getBlobToken } from './config';
 
 const sourceManifestSchema = z
   .object({
-    version: z.string().min(1),
+    revision: z.string().min(1),
   })
   .passthrough();
 
@@ -54,7 +54,7 @@ async function existingUrl(pathname: string, token: string): Promise<string | nu
 export async function publishWordLists(): Promise<PublishedManifest> {
   const token = getBlobToken();
   if (!token) throw new Error('WORD_STORAGE_UNAVAILABLE');
-  const root = path.resolve(process.cwd(), 'bootstrap/source-data/word-lists');
+  const root = path.resolve(process.cwd(), 'data/word-lists');
   const sourceManifest = sourceManifestSchema.parse(
     JSON.parse(await readFile(path.join(root, 'manifest.json'), 'utf8')),
   );
@@ -63,7 +63,7 @@ export async function publishWordLists(): Promise<PublishedManifest> {
   for (let length = 2; length <= 35; length += 1) {
     const content = await readFile(path.join(root, `words_length_${length}.json`), 'utf8');
     const sha256 = digest(content);
-    const pathname = `word-lists/objects/${sourceManifest.version}/${length}-${sha256}.json`;
+    const pathname = `word-lists/objects/${sourceManifest.revision}/${length}-${sha256}.json`;
     const current = await existingUrl(pathname, token);
     const blob =
       current ??
@@ -87,7 +87,7 @@ export async function publishWordLists(): Promise<PublishedManifest> {
 
   const manifest = publishedManifestSchema.parse({
     schemaVersion: 1,
-    revision: sourceManifest.version,
+    revision: sourceManifest.revision,
     publishedAt: new Date().toISOString(),
     entries,
   });

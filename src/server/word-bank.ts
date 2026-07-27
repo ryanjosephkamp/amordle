@@ -36,10 +36,7 @@ export async function loadWordBank(length: number): Promise<WordBank> {
   if (!Number.isInteger(length) || length < 2 || length > 35) {
     throw new Error('Word length must be an integer from 2 to 35.');
   }
-  const file = path.resolve(
-    process.cwd(),
-    `bootstrap/source-data/word-lists/words_length_${length}.json`,
-  );
+  const file = path.resolve(process.cwd(), `data/word-lists/words_length_${length}.json`);
   const parsed = wordBankSchema.parse(JSON.parse(await readFile(file, 'utf8')));
   if (parsed.metadata.length !== length) {
     throw new Error('Word-list length metadata does not match the request.');

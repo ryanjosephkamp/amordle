@@ -49,9 +49,7 @@ for (const [name, measured] of Object.entries({ home, game })) {
   }
 }
 
-const bootstrapWordBytes = statSync(
-  resolve(root, 'bootstrap/source-data/word-lists/words_length_35.json'),
-).size;
+const bootstrapWordBytes = statSync(resolve(root, 'data/word-lists/words_length_35.json')).size;
 if (bootstrapWordBytes <= 0) throw new Error('Word-list fixture is empty.');
 process.stdout.write(
   `PASS compressed budgets home ${home.js}B JS/${home.css}B CSS; game ${game.js}B JS/${game.css}B CSS\n`,
