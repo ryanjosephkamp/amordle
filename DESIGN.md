@@ -1,7 +1,9 @@
 # Amordle Stage 1 Design Foundation
 
-Status: functional terminal foundation; final visual direction remains gated
-for Stage 2 approval.
+Status: Stage 1 functional terminal foundation is green. Three coordinated
+Stage 2 boards and their provenance manifest are ready under
+`design/references/stage2/`; final visual direction remains gated for explicit
+approval.
 
 ## Scene and strategy
 
@@ -69,7 +71,9 @@ operation or decorate page load. Respect `prefers-reduced-motion`.
 
 ## Stage 2 gate
 
-Stage 2 concepts will record exact copy, palette, typography, component and
-container rules, icon treatment, responsive behavior, SHA-256, dimensions,
-provenance, and binding role. Stage 1 functionality and service contracts
-remain immutable through that review.
+The proposed Stage 2 concepts record exact copy, palette, typography, component
+and container rules, icon treatment, responsive behavior, SHA-256, dimensions,
+provenance, binding role, and required corrections in
+`design/references/stage2/reference-manifest.json`. They are not approved yet.
+Stage 1 functionality and service contracts remain immutable through that
+review.

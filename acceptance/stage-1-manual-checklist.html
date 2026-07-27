@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle Stage 1 Manual Checklist</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        max-width: 54rem;
+        margin: 0 auto;
+        padding: 2rem;
+        color: #111;
+        background: #fff;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        overflow-wrap: anywhere;
+      }
+      fieldset {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        border: 1px solid #777;
+      }
+      label {
+        display: block;
+        margin: 0.75rem 0;
+      }
+      input {
+        width: 1.15rem;
+        height: 1.15rem;
+        margin-right: 0.5rem;
+        vertical-align: text-bottom;
+      }
+      .notice {
+        padding: 0.75rem;
+        border: 2px solid #111;
+      }
+      @media (max-width: 42rem) {
+        body {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 1 Manual Checklist</h1>
+      <p>
+        Candidate:
+        <code>https://amordle-p1qp5fpnk-ryanjosephkamps-projects.vercel.app</code>
+      </p>
+      <p class="notice">
+        Use Vercel team authentication. Never copy automation credentials into a URL, chat,
+        screenshot, or browser extension.
+      </p>
+
+      <fieldset>
+        <legend>Public and Solo</legend>
+        <label><input type="checkbox" />Home makes the next action clear.</label>
+        <label><input type="checkbox" />Home requests no word bank.</label>
+        <label
+          ><input type="checkbox" />Solo OG supports physical/on-screen input, reload, result,
+          share, sound, and Focus Mode.</label
+        >
+        <label
+          ><input type="checkbox" />Solo GO labels evidence and holds a solved answer for two
+          seconds.</label
+        >
+        <label
+          ><input type="checkbox" />Lengths 2, 5, 7, 10, and 35 have no horizontal document
+          overflow.</label
+        >
+        <label
+          ><input type="checkbox" />A visited Solo route restores offline and no Auth/API/COMBAT
+          response is cached.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Account and economy</legend>
+        <label
+          ><input type="checkbox" />Registration, sign-in, sign-out, and recovery are clear.</label
+        >
+        <label><input type="checkbox" />Account switching exposes no prior account state.</label>
+        <label
+          ><input type="checkbox" />Profile, Settings, History, Calendar, Marketplace, Stats, public
+          player, and Leaderboard states are meaningful.</label
+        >
+        <label
+          ><input type="checkbox" />Past Daily shows price and new balance and does not charge on
+          selection or cancel.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>COMBAT</legend>
+        <label
+          ><input type="checkbox" />Public Practice creates and joins in separate signed-in
+          contexts.</label
+        >
+        <label
+          ><input type="checkbox" />Accepted turns alternate and rejected input spends no
+          turn.</label
+        >
+        <label><input type="checkbox" />Refresh restores the authoritative match.</label>
+        <label
+          ><input type="checkbox" />Ranked, Daily, private, rematch, Active, Lobby, Live, result,
+          and reconnect language is clear.</label
+        >
+        <label
+          ><input type="checkbox" />Spectator state has no mutation action, answer, or private
+          identifier.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Accessibility and responsive behavior</legend>
+        <label><input type="checkbox" />Keyboard focus is visible.</label>
+        <label><input type="checkbox" />Required desktop/mobile widths remain usable.</label>
+        <label
+          ><input type="checkbox" />200% zoom, reduced motion, forced colors, and dark mode preserve
+          operation.</label
+        >
+        <label><input type="checkbox" />Tile meaning does not depend on color alone.</label>
+        <label><input type="checkbox" />Screen-reader order and announcements are useful.</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Operational boundaries</legend>
+        <label
+          ><input type="checkbox" />Preview is protected and Production is not under review.</label
+        >
+        <label><input type="checkbox" />Exactly three HTTP interfaces remain.</label>
+        <label><input type="checkbox" />Admin refresh exposes bounded metadata only.</label>
+        <label
+          ><input type="checkbox" />No merge or Production release is requested from this
+          checklist.</label
+        >
+      </fieldset>
+
+      <p>
+        Record route, viewport, account state, expected behavior, actual behavior, and a screenshot
+        containing no secret or unrelated player data.
+      </p>
+    </main>
+  </body>
+</html>

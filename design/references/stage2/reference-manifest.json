@@ -1,0 +1,187 @@
+{
+  "schemaVersion": 1,
+  "status": "awaiting-user-approval",
+  "createdAt": "2026-07-27T22:57:00Z",
+  "stage1Candidate": {
+    "commit": "cdde62caf7f3a0daf135efbe611cbb92393f54df",
+    "deploymentId": "dpl_tfnrGgi2sAtugLJR69DDCjyyc9ks",
+    "previewUrl": "https://amordle-p1qp5fpnk-ryanjosephkamps-projects.vercel.app"
+  },
+  "referencePolicy": {
+    "informationArchitecture": ["Lichess"],
+    "structuralResearchOnly": ["Lichess source"],
+    "moodOnly": ["macOS Terminal", "Grok Build"],
+    "excluded": [
+      "historical Amordle concepts",
+      "historical Amordle screenshots",
+      "rejected frontend code",
+      "fire and ice styling",
+      "cyberpunk atmosphere"
+    ],
+    "rasterAssetPassRequired": false
+  },
+  "designSystem": {
+    "palette": {
+      "backgroundLight": "oklch(0.985 0.004 200)",
+      "surfaceLight": "oklch(0.955 0.008 205)",
+      "inkLight": "oklch(0.205 0.018 220)",
+      "accentLight": "oklch(0.65 0.10 200)",
+      "correctLight": "oklch(0.63 0.15 145)",
+      "presentLight": "oklch(0.72 0.14 85)",
+      "absentLight": "oklch(0.58 0.018 220)"
+    },
+    "typography": {
+      "prose": "Geist",
+      "dataAndBoards": "Geist Mono",
+      "rule": "Compact fixed scale; no oversized marketing display type"
+    },
+    "components": [
+      "open information rails",
+      "one-pixel separators",
+      "eight-pixel controls",
+      "twelve-pixel structural panels only",
+      "forty-four-pixel minimum targets",
+      "code-native boards, keyboards, tables, controls, and icons"
+    ],
+    "responsive": [
+      "desktop top navigation",
+      "mobile reachable bottom navigation",
+      "game status, board, and keyboard remain in the usable viewport",
+      "tables become labeled rows without horizontal document overflow"
+    ],
+    "iconTreatment": "Simple outlined system icons at text weight; icons never carry meaning without labels."
+  },
+  "concepts": [
+    {
+      "id": "STAGE2-HOME-SOLO-01",
+      "path": "design/references/stage2/home-solo-reference-board.png",
+      "sha256": "3a6eb5c52f91ca413de64c5da1d8f7ed83538c7829cb40ba3da05c4dfc1e74d1",
+      "width": 1586,
+      "height": 992,
+      "provenance": {
+        "generator": "OpenAI Image Gen",
+        "date": "2026-07-27",
+        "inputEvidenceRun": "e2e_20260727T225614646Z_cdde62ca_39e41df9"
+      },
+      "bindingRole": [
+        "desktop Home and navigation",
+        "mobile Home and bottom navigation",
+        "desktop Solo OG active game",
+        "mobile Solo GO evidence and active game"
+      ],
+      "visibleCopy": [
+        "Your next word is ready.",
+        "Play Solo or challenge a friend.",
+        "Play Solo",
+        "Invite to COMBAT",
+        "Daily streak",
+        "Next word in",
+        "Today",
+        "COMBAT",
+        "1 active match",
+        "Your turn",
+        "How to play",
+        "Game settings",
+        "Stats",
+        "Solo · OG · 5 letters · Standard",
+        "Hard Mode",
+        "Evidence",
+        "Puzzle 3 of 5"
+      ],
+      "responsiveBehavior": "Desktop separates attention, active match, and support rails; mobile preserves the same priority and moves primary destinations to a bottom rail."
+    },
+    {
+      "id": "STAGE2-COMBAT-01",
+      "path": "design/references/stage2/combat-reference-board.png",
+      "sha256": "fa801d21f16014aa4958381af1109e884b13383e6029db451b4f5c0edc36d9f3",
+      "width": 1586,
+      "height": 992,
+      "provenance": {
+        "generator": "OpenAI Image Gen",
+        "date": "2026-07-27",
+        "inputEvidenceRun": "e2e_20260727T225614646Z_cdde62ca_39e41df9"
+      },
+      "bindingRole": [
+        "desktop and mobile public waiting",
+        "desktop and mobile active COMBAT",
+        "result and rematch state",
+        "read-only spectator state"
+      ],
+      "visibleCopy": [
+        "Public Practice",
+        "Waiting for another player",
+        "No rankings",
+        "Same puzzle",
+        "Cancel",
+        "How COMBAT works",
+        "Your turn",
+        "Opponent’s turn",
+        "You won!",
+        "Rematch",
+        "New opponent",
+        "Back to lobby",
+        "Live",
+        "Correct",
+        "Present",
+        "Absent",
+        "Empty"
+      ],
+      "responsiveBehavior": "Desktop gives both players equal board weight; mobile compresses boards without changing turn authority; spectator removes all mutation controls."
+    },
+    {
+      "id": "STAGE2-ACCOUNT-DATA-01",
+      "path": "design/references/stage2/account-data-reference-board.png",
+      "sha256": "07a7ded3af34c341674f18110d2f5d8300f7ee6c7e41e85827d89fecb37ebcf0",
+      "width": 1586,
+      "height": 992,
+      "provenance": {
+        "generator": "OpenAI Image Gen",
+        "date": "2026-07-27",
+        "inputEvidenceRun": "e2e_20260727T225614646Z_cdde62ca_39e41df9"
+      },
+      "bindingRole": [
+        "Calendar and past-Daily purchase",
+        "Stats and rating distributions",
+        "History and Leaderboards",
+        "Profile and Settings",
+        "mobile Word Explorer and word refresh status"
+      ],
+      "visibleCopy": [
+        "Calendar",
+        "Today",
+        "Locked",
+        "Unlock for 60 coins?",
+        "Price",
+        "New balance",
+        "No coins are spent until you confirm.",
+        "Stats",
+        "Rating (provisional)",
+        "History",
+        "Leaderboard",
+        "Public profile preview",
+        "Hard Mode (default)",
+        "Sound effects",
+        "Theme",
+        "Save changes",
+        "Word Explorer",
+        "Refreshed",
+        "Refresh failed",
+        "Retry"
+      ],
+      "responsiveBehavior": "Dense desktop tables use fixed labels and quiet rules; mobile purchase and Explorer states stack into labeled rows with persistent action clarity."
+    }
+  ],
+  "intentionalCorrections": [
+    "OG has one puzzle; any generated OG puzzle-count label is non-binding.",
+    "GO puzzle counts remain exactly 5, 7, or 10; generated three-puzzle samples are layout placeholders.",
+    "Past-Daily unlocks spend in-game coins, not money; binding confirmation copy is 'No coins are spent until you confirm.'",
+    "Generated dates, names, scores, ratings, balances, timers, and footer years are sample content only.",
+    "The existing 237 functional clauses, routes, APIs, service authority, and persisted rules remain binding over every raster detail."
+  ],
+  "approval": {
+    "approved": false,
+    "approvedAt": null,
+    "approvedBy": null,
+    "notes": null
+  }
+}

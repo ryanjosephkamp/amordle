@@ -444,13 +444,12 @@ test.describe.serial('protected Preview services', () => {
     for (const user of users) expect(serializedProjection).not.toContain(user.id);
 
     await spectatorPage.goto(`${baseURL}/combat/live`);
-    await expect(spectatorPage.getByText('Public Practice').first()).toBeVisible({
-      timeout: 15_000,
-    });
+    const spectatorPanel = spectatorPage.locator('.spectator-game').first();
+    await expect(spectatorPanel).toBeVisible({ timeout: 15_000 });
+    await expect(spectatorPanel).toContainText('Public Practice');
     await expect(spectatorPage.getByRole('button', { name: 'Submit guess' })).toHaveCount(0);
-    await spectatorPage.screenshot({
+    await spectatorPanel.screenshot({
       path: path.join(evidenceDir, 'sanitized-spectator.png'),
-      fullPage: true,
     });
     await event('spectator_projection_verified', { gameId, canMutate: false });
   });
