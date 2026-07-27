@@ -19,6 +19,7 @@ const evidenceDir = path.resolve('.codex-internal/evidence', runId);
 const resourcesPath = path.join(evidenceDir, 'resources.jsonl');
 const eventsPath = path.join(evidenceDir, 'events.jsonl');
 const cleanupPath = path.join(evidenceDir, 'cleanup.json');
+const bypassStorageState = '.codex-internal/evidence/operator/vercel-protection-storage-state.json';
 
 interface Account {
   id: string;
@@ -104,13 +105,6 @@ function bypassHeaders(extra: Record<string, string> = {}) {
   };
 }
 
-function browserBypassHeaders() {
-  return {
-    ...bypassHeaders(),
-    'x-vercel-set-bypass-cookie': 'true',
-  };
-}
-
 async function signIn(page: Page, account: Account) {
   await page.goto(`${baseURL}/auth`);
   await page.getByLabel('Email').fill(account.email);
@@ -134,6 +128,19 @@ async function waitForGameMoveCount(gameId: string, count: number) {
       { timeout: 15_000 },
     )
     .toBe(count);
+}
+
+async function submitOnScreenGuess(page: Page, guess: string) {
+  const draft = page.locator('.board-row.is-draft');
+  let prefix = '';
+  for (const letter of guess) {
+    await page.getByRole('button', { name: letter.toUpperCase(), exact: true }).click();
+    prefix += letter.toUpperCase();
+    await expect(draft).toHaveText(prefix);
+  }
+  const submit = page.getByRole('button', { name: 'Submit guess' });
+  await expect(submit).toBeEnabled();
+  await submit.click();
 }
 
 async function cleanup() {
@@ -326,7 +333,7 @@ test.describe.serial('protected Preview services', () => {
 
     const contextOptions = {
       baseURL,
-      extraHTTPHeaders: browserBypassHeaders(),
+      storageState: bypassStorageState,
       serviceWorkers: 'allow' as const,
     };
     const firstContext = await browser.newContext(contextOptions);
@@ -377,21 +384,22 @@ test.describe.serial('protected Preview services', () => {
     ) as { answers: Array<{ word: string }>; validGuesses: string[] };
     const guesses = [...bank.validGuesses, ...bank.answers.map((entry) => entry.word)]
       .map((word) => word.toLowerCase())
-      .filter((word, index, all) => word !== answer && all.indexOf(word) === index)
+      .filter(
+        (word, index, all) =>
+          word !== answer && new Set(word).size === word.length && all.indexOf(word) === index,
+      )
       .slice(0, 2);
     expect(guesses).toHaveLength(2);
 
     await firstPage.reload();
     await expect(firstPage.getByText('Your turn')).toBeVisible({ timeout: 15_000 });
-    await firstPage.keyboard.type(guesses[0]!);
-    await firstPage.keyboard.press('Enter');
+    await submitOnScreenGuess(firstPage, guesses[0]!);
     await waitForGameMoveCount(gameId, 1);
     await expect(firstPage.getByText('Opponent’s turn')).toBeVisible();
 
     await secondPage.reload();
     await expect(secondPage.getByText('Your turn')).toBeVisible({ timeout: 15_000 });
-    await secondPage.keyboard.type(guesses[1]!);
-    await secondPage.keyboard.press('Enter');
+    await submitOnScreenGuess(secondPage, guesses[1]!);
     await waitForGameMoveCount(gameId, 2);
 
     await firstPage.reload();

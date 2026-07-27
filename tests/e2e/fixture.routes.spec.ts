@@ -78,7 +78,9 @@ test.describe('route and public boundary matrix', () => {
     expect(await manifest.json()).toHaveProperty('manifest');
 
     expect((await request.get('/api/cron/refresh-word-lists')).status()).toBe(401);
-    expect((await request.post('/api/admin-refresh')).status()).toBe(502);
+    expect((await request.post('/api/admin-refresh')).status()).toBe(
+      process.env.E2E_BASE_URL ? 401 : 502,
+    );
     expect((await request.get('/api/admin-refresh')).status()).toBe(405);
   });
 

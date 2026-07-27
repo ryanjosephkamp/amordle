@@ -2,8 +2,10 @@ import { defineConfig, devices } from '@playwright/test';
 
 const baseURL = process.env.E2E_BASE_URL ?? 'http://127.0.0.1:3000';
 const protectionBypass = process.env.E2E_VERCEL_BYPASS_SECRET;
+const bypassStorageState = '.codex-internal/evidence/operator/vercel-protection-storage-state.json';
 
 export default defineConfig({
+  globalSetup: './tests/e2e/global-setup.ts',
   testDir: './tests/e2e',
   outputDir: 'test-results',
   fullyParallel: false,
@@ -12,14 +14,7 @@ export default defineConfig({
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL,
-    ...(protectionBypass
-      ? {
-          extraHTTPHeaders: {
-            'x-vercel-protection-bypass': protectionBypass,
-            'x-vercel-set-bypass-cookie': 'true',
-          },
-        }
-      : {}),
+    ...(protectionBypass ? { storageState: bypassStorageState } : {}),
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
