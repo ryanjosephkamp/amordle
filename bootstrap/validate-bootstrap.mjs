@@ -64,7 +64,7 @@ function verifyGoldenRefs() {
     "refs/remotes/origin/codex/pre-terminal-greenfield-golden-2026-07-26";
   const goldenBranchRef = (() => {
     try {
-      git("rev-parse", "--verify", localGoldenBranch);
+      git("show-ref", "--verify", "--quiet", localGoldenBranch);
       return localGoldenBranch;
     } catch {
       return remoteGoldenBranch;

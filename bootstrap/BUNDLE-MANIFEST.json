@@ -328,8 +328,8 @@
     },
     {
       "path": "bootstrap/validate-bootstrap.mjs",
-      "bytes": 10970,
-      "sha256": "21ec49503441badad127210ec8630902dcefb4cf11d49b949842b1f22803b413"
+      "bytes": 10980,
+      "sha256": "e4a4b7b7228c04a2818f0fb07c8c04a317212580b8c265a09e44198800086c66"
     },
     {
       "path": "supabase/config.toml",
