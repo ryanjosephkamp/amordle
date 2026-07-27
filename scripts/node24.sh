@@ -1,7 +1,17 @@
 #!/bin/sh
 set -eu
 
-local_node=".tooling/node-v24.18.0-darwin-arm64/bin/node"
+case "$(uname -s)" in
+  Darwin) node_platform="darwin" ;;
+  Linux) node_platform="linux" ;;
+  *) node_platform="unsupported" ;;
+esac
+case "$(uname -m)" in
+  arm64|aarch64) node_arch="arm64" ;;
+  x86_64|amd64) node_arch="x64" ;;
+  *) node_arch="unsupported" ;;
+esac
+local_node=".tooling/node-v24.18.0-${node_platform}-${node_arch}/bin/node"
 if [ -x "$local_node" ]; then
   exec "$local_node" "$@"
 fi
