@@ -698,7 +698,7 @@ export async function createUnrankedPractice(input: {
       player_two_user_id: null,
       ranked: false,
       authority_version: 0,
-      source_kind: 'public_practice',
+      source_kind: 'public_lobby',
       visibility_kind: 'public',
       state_version: 0,
       move_count: 0,

@@ -100,8 +100,14 @@ async function createAccount(index: number, role: 'admin' | 'player'): Promise<A
 function bypassHeaders(extra: Record<string, string> = {}) {
   return {
     'x-vercel-protection-bypass': bypassSecret,
-    'x-vercel-set-bypass-cookie': 'true',
     ...extra,
+  };
+}
+
+function browserBypassHeaders() {
+  return {
+    ...bypassHeaders(),
+    'x-vercel-set-bypass-cookie': 'true',
   };
 }
 
@@ -277,7 +283,6 @@ test.describe.serial('protected Preview services', () => {
 
     const publicResponse = await fetch(`${baseURL}/`, {
       headers: bypassHeaders(),
-      redirect: 'manual',
     });
     expect(publicResponse.status).toBe(200);
 
@@ -321,7 +326,7 @@ test.describe.serial('protected Preview services', () => {
 
     const contextOptions = {
       baseURL,
-      extraHTTPHeaders: bypassHeaders(),
+      extraHTTPHeaders: browserBypassHeaders(),
       serviceWorkers: 'allow' as const,
     };
     const firstContext = await browser.newContext(contextOptions);
