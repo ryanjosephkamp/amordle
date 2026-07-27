@@ -21,6 +21,7 @@
       }
     ],
     "paths": {
+      "@/adapters/supabase/*": ["./src/adapters/cloud/*"],
       "@/*": ["./src/*"]
     }
   },
