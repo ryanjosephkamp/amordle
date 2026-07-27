@@ -1,0 +1,620 @@
+{
+  "schemaVersion": 1,
+  "package": "amordle-terminal-greenfield-bootstrap",
+  "preparedDate": "2026-07-26",
+  "lineage": {
+    "branch": "codex/terminal-greenfield-bootstrap-2026-07-26",
+    "history": "orphan"
+  },
+  "recovery": {
+    "branch": "codex/pre-terminal-greenfield-golden-2026-07-26",
+    "tag": "amordle-pre-terminal-greenfield-golden-2026-07-26",
+    "commit": "43556d99e6e59ff77135ff347da3bc9be056fedf",
+    "trackedPaths": 303
+  },
+  "shell": {
+    "repository": "https://github.com/ryanjosephkamp/brrrdle-dev",
+    "tag": "phase-58-final-functional-shell-golden-2026-07-13",
+    "commit": "062624b2fb7c8d039a2eba3aec5b059c26628a11",
+    "role": "read-only behavioral authority"
+  },
+  "services": {
+    "githubRepository": "ryanjosephkamp/amordle",
+    "supabaseProjectRef": "squqdstdvbsvhagfuzgj",
+    "vercelProjectId": "prj_8DsbwXWKUtUz7dQl9xoPCgFUuxzH",
+    "productionDeployment": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
+  },
+  "migrations": {
+    "count": 45,
+    "checksumLedger": "supabase/migrations.sha256"
+  },
+  "classification": {
+    "sourcePaths": 303,
+    "retain": 49,
+    "transform": 43,
+    "goldenOnly": 189,
+    "remove": 22
+  },
+  "files": [
+    {
+      "path": ".env.example",
+      "bytes": 1076,
+      "sha256": "7cc7d6e9304f53ff020714535378a68f7c60b5dc45dc3f7940199d8593e2db76"
+    },
+    {
+      "path": ".gitignore",
+      "bytes": 498,
+      "sha256": "b3ace10de27a049a735f46cb24441a141b0528bd18f386c2fa266792f7f164cf"
+    },
+    {
+      "path": ".node-version",
+      "bytes": 8,
+      "sha256": "55075b5ec4e8b31936cbbc282b8829116d1fd48f2f2f1856dee592a6650700ce"
+    },
+    {
+      "path": ".npmrc",
+      "bytes": 68,
+      "sha256": "da1e4d99f86ae502288effa20341d7e092678071d296c61b652ec8a04e2f9d98"
+    },
+    {
+      "path": ".prettierignore",
+      "bytes": 144,
+      "sha256": "1c1ff90844b3efd71e9f51d20f4db378a70a2916d3191a0730219b2c1d30180a"
+    },
+    {
+      "path": ".prettierrc.json",
+      "bytes": 89,
+      "sha256": "ebe733191f06a29fdd34a4683327d9a36c008ed8da564d8e7def1c700d7463ff"
+    },
+    {
+      "path": ".vercelignore",
+      "bytes": 163,
+      "sha256": "7242907f18bfa24199c97a31f87d3b127188b3c2ab353037a7bb638256c15950"
+    },
+    {
+      "path": "AGENTS.md",
+      "bytes": 3005,
+      "sha256": "4beda7656f9d666e2bfe59a3db7f8ff7cafd505675ce8e6b714207a097b4ee02"
+    },
+    {
+      "path": "README.md",
+      "bytes": 1002,
+      "sha256": "86b4805b415eea06aee06af6d956fbdb47463f513744bbd5bd60f009630eaee3"
+    },
+    {
+      "path": "bootstrap/BACKEND-AND-SERVICES-CONTRACT.md",
+      "bytes": 10084,
+      "sha256": "e2365c9556fb3da49c6d534b177cdfe0fc2d9347cd8a05193171c42dd3728cca"
+    },
+    {
+      "path": "bootstrap/BOOTSTRAP-INSTRUCTIONS.md",
+      "bytes": 1817,
+      "sha256": "95901aeb311ba8d109b766b73cac430ddb1b8b2bfd04be67668089fb25814c85"
+    },
+    {
+      "path": "bootstrap/CLEANUP-INSTRUCTIONS.md",
+      "bytes": 3160,
+      "sha256": "f8f10a73df331d4402632b33e201fe69cba898a1d442be5fd80636f31f3bce64"
+    },
+    {
+      "path": "bootstrap/CONSTITUTION.md",
+      "bytes": 3511,
+      "sha256": "f553fea8912f55194272525f6fdccf57feaa20e668fa59adb6aefb2bde864751"
+    },
+    {
+      "path": "bootstrap/DECISION-LEDGER.md",
+      "bytes": 3603,
+      "sha256": "375d1ec36ec6ff5431c36d24a11434629d81488fd7e2f902cce4be0d9db64399"
+    },
+    {
+      "path": "bootstrap/FUNCTIONAL-CONTRACT.md",
+      "bytes": 32091,
+      "sha256": "76ed86072ab193f1995a5dd1caf557d5ed950a9a6282f204e48edc9d8e139ec7"
+    },
+    {
+      "path": "bootstrap/PLAN-MODE-PROMPT.md",
+      "bytes": 2209,
+      "sha256": "831f0a760935c6c1574a40408599966c5dd93d8986112585bff1fafdca71e2f0"
+    },
+    {
+      "path": "bootstrap/PRODUCT-BRIEF.md",
+      "bytes": 3831,
+      "sha256": "2f1837bcafca36370998936ca9d6e706e438b2b0566180bd8b01a2a7173fbd4c"
+    },
+    {
+      "path": "bootstrap/REFERENCE-MANIFEST.md",
+      "bytes": 1822,
+      "sha256": "92a5a73f2da79d33ef7572a734cb94c4c79b2484020f7a67438d086917262f9c"
+    },
+    {
+      "path": "bootstrap/SOURCE-REFERENCE-MANIFEST.md",
+      "bytes": 6862,
+      "sha256": "192ea135a3235710f18c0e52cd383b986c09319da15b3ccee0d2f816fc824e9b"
+    },
+    {
+      "path": "bootstrap/TESTING-AND-ACCEPTANCE-CONTRACT.md",
+      "bytes": 11512,
+      "sha256": "08c2a15f1812c157a430b70b83f6e29d61d63ab2fde10e386ad61fb5aa5dbe97"
+    },
+    {
+      "path": "bootstrap/TRACKED-PATH-CLASSIFICATION.tsv",
+      "bytes": 80449,
+      "sha256": "9bc29d94088c91030f2a210efd677c52611471b40c20177d300b4c96f78954c1"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/manifest.json",
+      "bytes": 5904,
+      "sha256": "4dc7cd30e3972b94d4435096081ba3cfc0ca6fcd099e9971d2ce63d4b7382561"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_10.json",
+      "bytes": 705363,
+      "sha256": "c464b479fd63f05f826b170b7f0a783f4ebfedfccf3de2520fe205ec6dbdf924"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_11.json",
+      "bytes": 683810,
+      "sha256": "f7f8d333ebd2c93955ae4d28be519db4ea86628e074ba653dad7c6f9db4a9362"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_12.json",
+      "bytes": 631578,
+      "sha256": "43be6c20ac26926a38bbdcbcce5df798e18511d686415a79bc56d0768b08541b"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_13.json",
+      "bytes": 552671,
+      "sha256": "b870605e9e280a5dff6274197df7d8bd23df9189a79a74903119159245f80ba6"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_14.json",
+      "bytes": 467794,
+      "sha256": "feda4352a14741f055579c78d505e0cb131e6918bea7fb10fa113a0b6f0ec65a"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_15.json",
+      "bytes": 386988,
+      "sha256": "72aa20c955c3e67b31d3ba96514ccb2d249f5d3f062f1df68810da892020e6af"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_16.json",
+      "bytes": 282970,
+      "sha256": "cde30cf81440e41898266cbee3710231ed147f7ef33758e2307b05eb49cd54b9"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_17.json",
+      "bytes": 213045,
+      "sha256": "5faf1f70f5de03c42ed569ace7e06c0a478596a7755b357d51e35d7166095d1b"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_18.json",
+      "bytes": 169455,
+      "sha256": "b7dcfbe425c4c6cc0f85fe1ecad76521924372c4311fbcf9480e13572ab0c708"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_19.json",
+      "bytes": 140279,
+      "sha256": "c6527dc835776a22874592ff09261cb7c79b6ac96952b6fe60a5287213005d22"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_2.json",
+      "bytes": 3009,
+      "sha256": "45a011d8ae2b06d0c201be59e1138e3206f935793e582f00bc46dc892102a363"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_20.json",
+      "bytes": 116100,
+      "sha256": "ff138b61fe2b4e4d373d387ad60fe8aa9b2c0d49243446f196255ab1bef06250"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_21.json",
+      "bytes": 81918,
+      "sha256": "123d1de4531b3b9e3d001c96aff2d192639914be70e1d78c0fc68abc39e497ae"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_22.json",
+      "bytes": 52738,
+      "sha256": "642a284e9b215a3af565ae924870ccd21388e4d08db637c14306af0c4ab7358f"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_23.json",
+      "bytes": 38101,
+      "sha256": "1580c96bed0bdfb64f4b6f647209e3aececfe15743eab7b9232c89c8847dcbb8"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_24.json",
+      "bytes": 25853,
+      "sha256": "52eb8fb0de604cba503077b0bb253a02c39aee8761b072433e10271e4ab12e64"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_25.json",
+      "bytes": 18404,
+      "sha256": "c202bf3b00f754962df1f76921acf095b22d0076b9dbdc5e7baa51192307c2e3"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_26.json",
+      "bytes": 12859,
+      "sha256": "d4e83daccc817b9419ff91a3e341260d0c73f715575c27f39fff4cdf3febf8cf"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_27.json",
+      "bytes": 8054,
+      "sha256": "03f8f33ae15def423c0d41642e0d567d712457ef459a854a95ee3033d600f47f"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_28.json",
+      "bytes": 6356,
+      "sha256": "a2ebdbffd9ae3de6f6e1b27c478a22e06f96d6c43d72bf829120485d06309582"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_29.json",
+      "bytes": 5135,
+      "sha256": "329d12fef0f8c08802f2fe23d81194d8511a11147647f30ecebd81eef2aa4b63"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_3.json",
+      "bytes": 23753,
+      "sha256": "d4d14336cb2ec61833d6b6cf905b7342359a479194242fdb6ee96c2f9a27dbf3"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_30.json",
+      "bytes": 4138,
+      "sha256": "1f9ee33aa2d7fd808250ff82066eb44016541591667944bbfe50e85fe52733e8"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_31.json",
+      "bytes": 2850,
+      "sha256": "121bf604a0e0e62e074e9267aa58749625be08dc33e2bf3d106c1502db750f55"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_32.json",
+      "bytes": 2122,
+      "sha256": "9617806224e729cca6e6abe984fcaadb3788d42b87e11fcdb48636fec763e46c"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_33.json",
+      "bytes": 1759,
+      "sha256": "8139faf55bde1ae052385af5d54f5c1273380949a8d0c48f12e90df69ef1845c"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_34.json",
+      "bytes": 1459,
+      "sha256": "e49d5784edfcb9a9091b768d8e8a24d094d3d337d4e61cb42a063119b4c21ecb"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_35.json",
+      "bytes": 1398,
+      "sha256": "19cbb0bdc9eb67274f992bb96507578947133282b633f1249c04e4a0aff91301"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_4.json",
+      "bytes": 62396,
+      "sha256": "68eb0a0ce6f5ccee7c42366a25cb3b7696d83c16b2238fb4926707902cb77cd6"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_5.json",
+      "bytes": 115647,
+      "sha256": "f86ea8f09c2261f9d5b7e0495a004f2b55e90ffd225f2a742b1131a57fa415fb"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_6.json",
+      "bytes": 216932,
+      "sha256": "576a396289de47ccbd3863d6597feaccc610d4abfbd7e09ae68f0aeb073ea793"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_7.json",
+      "bytes": 372655,
+      "sha256": "28b944107b3759e649ac291ed423eb75254c525061eb63c63ca3a4dc7541cfe5"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_8.json",
+      "bytes": 549975,
+      "sha256": "496c4300d7513a09f0ab28abaf8bf35074f475523131dcb27ae3737c4b2ebe49"
+    },
+    {
+      "path": "bootstrap/source-data/word-lists/words_length_9.json",
+      "bytes": 674588,
+      "sha256": "017e6d3afe713b7100af613376f3cdd92ad848f57b1809cb9c46801c7589750d"
+    },
+    {
+      "path": "bootstrap/tools/generate-bundle-manifest.mjs",
+      "bytes": 3728,
+      "sha256": "d555fcc05399fd7f34fc381d20187906b2f3a0fb7575c7ea724be4a0b3ef8296"
+    },
+    {
+      "path": "bootstrap/tools/generate-classification.mjs",
+      "bytes": 5511,
+      "sha256": "6b95e0f35abfa2be7503c1b21c8a23c54e5fe9a8913093b41369fc2b86fc872a"
+    },
+    {
+      "path": "bootstrap/validate-bootstrap.mjs",
+      "bytes": 10799,
+      "sha256": "f3ae78441cfa2743221692ebac9ad6707f3410493adbeb9082ef2a91b5c28b1f"
+    },
+    {
+      "path": "supabase/.temp/cli-latest",
+      "bytes": 8,
+      "sha256": "0daaac4eb443724f347b3d1df0dbacffb1e0755f345412d1f9032eb664aa9b18"
+    },
+    {
+      "path": "supabase/.temp/gotrue-version",
+      "bytes": 8,
+      "sha256": "e6c218273814702bad8360e669b924aecf34ae896659a7946133679d7df9bc9a"
+    },
+    {
+      "path": "supabase/.temp/linked-project.json",
+      "bytes": 131,
+      "sha256": "f81963684e72e1051b43e6db211528520b697a77c11830b793b2f8285beea160"
+    },
+    {
+      "path": "supabase/.temp/pooler-url",
+      "bytes": 92,
+      "sha256": "1854f504b1621ef1df6cab4eac9036c3c2c9c05ea204aad5fb01291bb3daf723"
+    },
+    {
+      "path": "supabase/.temp/postgres-version",
+      "bytes": 10,
+      "sha256": "c698b0ad787708e9c1334ca246ef8bb2a6fbd69b5863ea8b24f60b3c9e057732"
+    },
+    {
+      "path": "supabase/.temp/project-ref",
+      "bytes": 20,
+      "sha256": "e9714c0f2faff9961f15e25d310b2897bc90388417fceb5b10b3486403747432"
+    },
+    {
+      "path": "supabase/.temp/rest-version",
+      "bytes": 5,
+      "sha256": "b25de4a023eef82d4780a9f7816c5685ca35437308a9d457585eece9945485dc"
+    },
+    {
+      "path": "supabase/.temp/storage-migration",
+      "bytes": 33,
+      "sha256": "5eefa09f2bf47edfbd65e0307f2ebf6eec935a663b45e36cbd9395c3f10695d0"
+    },
+    {
+      "path": "supabase/.temp/storage-version",
+      "bytes": 7,
+      "sha256": "1905431fd51eb24224b488b3240d946db77611efd5ae30e6ad6467cb8039a0ea"
+    },
+    {
+      "path": "supabase/config.toml",
+      "bytes": 341,
+      "sha256": "8ef644637731f5b8bea1b9040f63121cf6e25f536ff7e7abe39a00824a1e863f"
+    },
+    {
+      "path": "supabase/migrations.sha256",
+      "bytes": 6029,
+      "sha256": "f73fc5e4260585a93035c4dc2b5bb9216d5576124c55f652d4a66b1369fd14bf"
+    },
+    {
+      "path": "supabase/migrations/20260526012500_phase8_accounts.sql",
+      "bytes": 2904,
+      "sha256": "b6d5f52f228987978127e3cfe410dc76a23c991e28582c7aa2886d4a60ba48b6"
+    },
+    {
+      "path": "supabase/migrations/20260604024500_phase23_live_multiplayer.sql",
+      "bytes": 8957,
+      "sha256": "3923a2587b32712c4f9217524848e6653be62080e2beb4890222079a32ae0053"
+    },
+    {
+      "path": "supabase/migrations/20260604033000_phase23_competitive_multiplayer.sql",
+      "bytes": 10515,
+      "sha256": "058080e5109f5b9537d63669341de2a97d6c1816a4658018b0837105fa874f73"
+    },
+    {
+      "path": "supabase/migrations/20260604050824_phase23_online_multiplayer_fixes.sql",
+      "bytes": 4345,
+      "sha256": "c7e68fba2197596cec7e30adf9fb528756b98bc0c381763f375ad16a226961ef"
+    },
+    {
+      "path": "supabase/migrations/20260604202631_phase23_multiplayer_grants_reset_forfeit.sql",
+      "bytes": 809,
+      "sha256": "cc0db80c578e766f7d16be63b40fdd7adfbbab8908cdcda4a80d1fd3c665d9ab"
+    },
+    {
+      "path": "supabase/migrations/20260604210000_phase23_live_policy_recursion_fix.sql",
+      "bytes": 940,
+      "sha256": "bd931fa12ab7c7da0befaa75b9f0160a36366cf5e864f7b2b151314a7209929d"
+    },
+    {
+      "path": "supabase/migrations/20260604211000_phase23_live_join_policy_fix.sql",
+      "bytes": 630,
+      "sha256": "e7d2dc23a91f0ab140db196f81be9d7d9fc66e6f2e51e3d6ca71517f143430dd"
+    },
+    {
+      "path": "supabase/migrations/20260604211500_phase23_live_matched_lobby_visibility.sql",
+      "bytes": 638,
+      "sha256": "0f5de6d3e34629fe7e9d6909e260147a12fcf37231d8adf98722a64e741280db"
+    },
+    {
+      "path": "supabase/migrations/20260604223000_phase23_daily_multiplayer_claims.sql",
+      "bytes": 5550,
+      "sha256": "bd30360847f63f6a8bf8c1df5d59ac23651bcd3a4c6bb0adea7622c9b033a6a6"
+    },
+    {
+      "path": "supabase/migrations/20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+      "bytes": 3119,
+      "sha256": "60b85321d29084f2fad5d84653520995bf41842acc00e07aa9bbdaaeca35f68e"
+    },
+    {
+      "path": "supabase/migrations/20260605223500_phase23_stage6_daily_claim_release.sql",
+      "bytes": 3824,
+      "sha256": "d839483549d8a3ff03a7f813c8217c97c4b9a16bfc6077eb5458d3a46ad2772b"
+    },
+    {
+      "path": "supabase/migrations/20260615235440_phase26_live_v1_authenticated_spectator_projection.sql",
+      "bytes": 8185,
+      "sha256": "74faf075d3d4617567d66b3b117fae108ea2803158531d5a7bdba41fa5be860d"
+    },
+    {
+      "path": "supabase/migrations/20260616054019_phase27_trusted_settlement_ranked_queue.sql",
+      "bytes": 32049,
+      "sha256": "c10cf16373fc7e78aee9ea0b0abc8d2bbfe1185c76e3fe8cc8e66601936c03c2"
+    },
+    {
+      "path": "supabase/migrations/20260616055149_phase27_settlement_rpc_unambiguous_profile_upsert.sql",
+      "bytes": 4100,
+      "sha256": "c8ccdf4408e92ac7fad1e5dc19c2a4b85a51a41e830d823ac4184b40fe122644"
+    },
+    {
+      "path": "supabase/migrations/20260616165434_phase27_ranked_queue_game_finalization.sql",
+      "bytes": 16915,
+      "sha256": "6a73b22922dd6693240c748b64cce78a4d4b396644a7dc70f6ce69bcc572339a"
+    },
+    {
+      "path": "supabase/migrations/20260618004638_phase28_live_spectator_v2_daily_terminal_hold.sql",
+      "bytes": 10511,
+      "sha256": "63d526b14e242ef0cfb65805748a2b8776e6c31f00c170953f41c2fe5f9b42eb"
+    },
+    {
+      "path": "supabase/migrations/20260621003033_phase29_public_profile_rls.sql",
+      "bytes": 13591,
+      "sha256": "fb1ec0df10608664a921f6edae37054a8f704d611fe56e0a018199193dbaf96d"
+    },
+    {
+      "path": "supabase/migrations/20260623011923_phase30_public_ranked_leaderboard_rpc.sql",
+      "bytes": 6306,
+      "sha256": "2d6fcbc61872b5f6d5218f3b4c8dd8925fffa7aad05b0b57f205252e9b0b9284"
+    },
+    {
+      "path": "supabase/migrations/20260623235121_phase31_practice_rematch_requests.sql",
+      "bytes": 30381,
+      "sha256": "67a0d63f61189680d1f987630851d1b1dc6f9f87e53ada39ba1b53f39aa18f13"
+    },
+    {
+      "path": "supabase/migrations/20260624233635_phase32_participant_identity_rpc.sql",
+      "bytes": 7120,
+      "sha256": "9286b66fef567d143e1e7e06e2d9c155bf199663425dad0e1f9a0d41a12ea136"
+    },
+    {
+      "path": "supabase/migrations/20260626000925_phase33_timed_ranked_practice.sql",
+      "bytes": 60756,
+      "sha256": "2d38a2c50566e31b241702dec49f50a678f0a3a505b8c979c839b4d19e42ebe6"
+    },
+    {
+      "path": "supabase/migrations/20260627230835_phase35_ranked_live_identity_spectator_profiles.sql",
+      "bytes": 10242,
+      "sha256": "cd7c0da86a8ff5ea1c402f3cdeea6bd82c47e59a5101e3b5cb7805912e2eba4d"
+    },
+    {
+      "path": "supabase/migrations/20260630215141_phase38_public_spectator_projection.sql",
+      "bytes": 9035,
+      "sha256": "170b38a5a9da0b003541dda2d23d9e7a0b35c122747d9f6d730c0e35cf79955b"
+    },
+    {
+      "path": "supabase/migrations/20260630220251_phase38_daily_claim_rpc_anon_revoke.sql",
+      "bytes": 1111,
+      "sha256": "4809b727cbc036a4bbc14fad6d4989a4231cba33f6a2b3822e4d968aff758bec"
+    },
+    {
+      "path": "supabase/migrations/20260701221500_phase40_private_match_requests.sql",
+      "bytes": 34490,
+      "sha256": "fe27cf98a83608a5b11dab2ae83d05c17876d8cc9f8334a7f853418dac6f8c20"
+    },
+    {
+      "path": "supabase/migrations/20260701232434_phase40_private_match_accept_contract_repair.sql",
+      "bytes": 10586,
+      "sha256": "94672cbb0b1f93c2b384e1d5704197f819c5ba4acbfb5b77a572c8ad52f30d9b"
+    },
+    {
+      "path": "supabase/migrations/20260703152720_phase42_site_stats_dashboard_rpc.sql",
+      "bytes": 8820,
+      "sha256": "e04a38c4cca099f4fc8535936c039bbfb5c1f30b1c4cfc328121a1bc998c6ab3"
+    },
+    {
+      "path": "supabase/migrations/20260703154556_phase42_browser_grant_rls_repair.sql",
+      "bytes": 3947,
+      "sha256": "843b23d300f276b816e26c644ce592665469080e5b47a6bdb23359e46b649e74"
+    },
+    {
+      "path": "supabase/migrations/20260703160756_phase42_ranked_result_rls_recursion_repair.sql",
+      "bytes": 1173,
+      "sha256": "4e77d91fedf92a79b8462a89c7db076e174eb8ddcc1e3420d6b208e1b11bfc55"
+    },
+    {
+      "path": "supabase/migrations/20260703230106_phase43_ranked_queue_matching_fairness.sql",
+      "bytes": 8830,
+      "sha256": "c1a2cdbd9c32d434291eadece0b34893ebd05c86793df89a44f85872d49efc9c"
+    },
+    {
+      "path": "supabase/migrations/20260708202000_phase50_ranked_practice_fifo_matchmaking.sql",
+      "bytes": 4446,
+      "sha256": "376cb6363a9dcea7be6dc11925054837e269c625a89d1700dc81b8870ba382de"
+    },
+    {
+      "path": "supabase/migrations/20260710061039_phase55_ranked_daily_multiplayer.sql",
+      "bytes": 211276,
+      "sha256": "7e71de944f6c3f3a89b947a5cd2b8dcc45a1049fa8391f552f8ecb02308dadf4"
+    },
+    {
+      "path": "supabase/migrations/20260710180608_phase55_ranked_daily_contract_repair.sql",
+      "bytes": 24312,
+      "sha256": "078e0e44e2151841666ec1a6c9f133544df5c280e3eb9d53aba36590bac27c14"
+    },
+    {
+      "path": "supabase/migrations/20260710183654_phase55_ranked_daily_queue_matched_at_repair.sql",
+      "bytes": 1167,
+      "sha256": "a865791b87280d14fd0f44dcbed4a5da072bee7d329e58dc6d1a135ca506f637"
+    },
+    {
+      "path": "supabase/migrations/20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+      "bytes": 2918,
+      "sha256": "4fdde5ae912617f002eec9df698c417c55b96028c8393a08a283eca4f46aae3f"
+    },
+    {
+      "path": "supabase/migrations/20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+      "bytes": 3861,
+      "sha256": "f13da197325f5799cf98a04f5faa250ec0608d1733c241fc0dccac4b99038432"
+    },
+    {
+      "path": "supabase/migrations/20260711001811_phase56_private_request_center_and_anti_spam.sql",
+      "bytes": 16100,
+      "sha256": "8848a57785b04da2631a3a9dbafa9a591d0213d04c9e888984c467e309c4e925"
+    },
+    {
+      "path": "supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql",
+      "bytes": 11025,
+      "sha256": "8fbbaf6a8f6ec2fb5398716d2f06161666743367b0330999c20adabd6265a209"
+    },
+    {
+      "path": "supabase/migrations/20260711212934_post_phase57_spectator_termination_transparency.sql",
+      "bytes": 20270,
+      "sha256": "d079f996ea2ccfa588332a8db19d7a637ac0be30713b45f951d3b222cf1c98c8"
+    },
+    {
+      "path": "supabase/migrations/20260712175405_phase58_go_chain_selector_v2.sql",
+      "bytes": 7312,
+      "sha256": "b8b486f1503e21f1854919fb0b9893c6f516a96b97bf784b1d4dfbd291eecb62"
+    },
+    {
+      "path": "supabase/migrations/20260712190338_phase58_go_chain_selector_v2_bigint_overflow_repair.sql",
+      "bytes": 846,
+      "sha256": "3b12c91703ba5231a0c1c05e7ea7d7a8dceeb0dd8629e05ae10c1c29c0c23f24"
+    },
+    {
+      "path": "supabase/migrations/20260719212914_post_phase58_ranked_practice_claim_idempotence.sql",
+      "bytes": 11415,
+      "sha256": "07884cc5129f8f3b99c6d524aa4751bee59ff9823b6133d91b798125853eba3f"
+    },
+    {
+      "path": "supabase/migrations/20260724221000_amordle_authoritative_word_catalog.sql",
+      "bytes": 7032560,
+      "sha256": "02fce23b77b6d0839fbbf958653cb23c805ed7f7aff3976ba20ccb2d87a246a2"
+    },
+    {
+      "path": "supabase/migrations/20260724222000_amordle_authoritative_combat_v2.sql",
+      "bytes": 106756,
+      "sha256": "7943f43efa3f5e7894974dce8454c7815f3eea6e062a9366ce7b31a84ade3767"
+    },
+    {
+      "path": "supabase/migrations/20260724223000_amordle_live_spectator_privacy_v3.sql",
+      "bytes": 18008,
+      "sha256": "52d204250852bb11720cc1cbcdc5c7b1dcb4355cc04b7c410c85cd47fa4b3398"
+    },
+    {
+      "path": "vercel.json",
+      "bytes": 210,
+      "sha256": "9f4b80c46aa9a621691365fef79629ed9f7680f00871b74e2aa2c955737dc043"
+    }
+  ]
+}
