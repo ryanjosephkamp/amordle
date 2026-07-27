@@ -1,7 +1,10 @@
 import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
-  distDir: 'dist',
+  // Vercel's Next.js builder requires the conventional directory when it
+  // packages functions. Keep the isolated local build output used by the
+  // repository's verification scripts everywhere else.
+  distDir: process.env.VERCEL ? '.next' : 'dist',
   poweredByHeader: false,
   reactStrictMode: true,
   typedRoutes: true,
