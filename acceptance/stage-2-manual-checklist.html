@@ -53,10 +53,13 @@
   <body>
     <main>
       <h1>Amordle Stage 2 v4 Manual Review Checklist</h1>
-      <p>Application commit: <code>813bbe13711349feafd5d7c170f4f814d71f1994</code></p>
+      <p>
+        Protected Preview:
+        <code>https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app</code>
+      </p>
+      <p>Application commit: <code>59517db8a47da2740f286ae8e93b6a73fc2715f1</code></p>
       <p class="notice">
-        The protected v4 Preview is pending credential rotation and deployment. Do not review the
-        existing superseded v2 deployment as v4. Never copy credentials into chat, URLs,
+        Use Vercel team authentication. Never copy automation or Blob credentials into chat, URLs,
         screenshots, issues, browser extensions, or commits.
       </p>
 
@@ -64,8 +67,8 @@
         <legend>Alt-Screen TUI authority</legend>
         <label><input type="checkbox" />The app reads as one fullscreen terminal program.</label>
         <label
-          ><input type="checkbox" />Titlebar, route path, textual navigation, buffer, rules,
-          prompts, and status line form one shell.</label
+          ><input type="checkbox" />Titlebar, path, textual navigation, buffer, rules, prompts, and
+          status line form one shell.</label
         >
         <label><input type="checkbox" />Current routes and actions use clear inverse video.</label>
         <label><input type="checkbox" />Rows align without decorative card nesting.</label>
@@ -133,6 +136,10 @@
           controls.</label
         >
         <label
+          ><input type="checkbox" />The mobile status line follows the complete keyboard and crosses
+          no letter, Submit, or Delete control.</label
+        >
+        <label
           ><input type="checkbox" />Recovery, outcome, settlement, and rematch states are
           clear.</label
         >
@@ -182,7 +189,7 @@
       <fieldset>
         <legend>Hosted evidence and cleanup</legend>
         <label
-          ><input type="checkbox" />The reviewed URL resolves to the exact v4 application
+          ><input type="checkbox" />The reviewed URL resolves to the exact application
           commit.</label
         >
         <label><input type="checkbox" />Vercel Deployment Protection is active.</label>
@@ -191,13 +198,22 @@
           ><input type="checkbox" />Disposable users prove sign-in, COMBAT, recovery, results, and
           privacy-safe spectation.</label
         >
-        <label
-          ><input type="checkbox" />Cleanup proves zero database, Auth, Storage, and Blob
-          residue.</label
-        >
+        <label><input type="checkbox" />Cleanup proves zero database and Auth residue.</label>
         <label
           ><input type="checkbox" />Production, default branch, migrations, real accounts, and the
           locked shell are unchanged.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Security follow-up</legend>
+        <label
+          ><input type="checkbox" />Rotate or revoke the exposed Preview-scoped Vercel Blob
+          credential after review access is no longer needed.</label
+        >
+        <label
+          ><input type="checkbox" />Do not record that credential in any review note, screenshot,
+          URL, issue, commit, or chat.</label
         >
       </fieldset>
 

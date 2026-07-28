@@ -2,7 +2,8 @@
   "schemaVersion": 1,
   "status": "implemented-functional-shell-authority",
   "createdAt": "2026-07-28T16:37:33Z",
-  "applicationCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
+  "initialImplementationCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
+  "applicationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
   "direction": "alt-screen-terminal",
   "purpose": "tui-looking fully functional shell; future visual options deferred",
   "designAuthority": "DESIGN.md",
@@ -36,5 +37,12 @@
   ],
   "behavioralChanges": [],
   "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
-  "fidelityLedger": "design/references/stage2/v4-alt-screen-shell-2026-07-28/fidelity-ledger.json"
+  "fidelityLedger": "design/references/stage2/v4-alt-screen-shell-2026-07-28/fidelity-ledger.json",
+  "finalCandidate": {
+    "deploymentId": "dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN",
+    "url": "https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app",
+    "protected": true,
+    "acceptance": "green",
+    "zeroDisposableResidue": true
+  }
 }

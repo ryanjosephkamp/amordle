@@ -12,7 +12,7 @@ does not claim that v4 is Amordle's permanent final art direction.
 Amordle is presented as one fullscreen, alternate-screen terminal application:
 
 - a Mac Terminal-like titlebar, route path, textual navigation row, terminal
-  buffer, and pinned status line;
+  buffer, and compact bottom status line;
 - SF Mono-compatible system typography throughout visible product UI;
 - inverse-video selection, aligned data rows, box-drawing rules, prompt
   markers, numbered game rows, a visible cursor, and rectangular terminal
@@ -57,3 +57,8 @@ Blob publication, APIs, routes, migrations, or service authority.
   and status line.
 - `fidelity-ledger.json` records the concept-to-browser comparison and
   intentional deviations.
+- The final protected Preview resolves exactly to application commit
+  `59517db8a47da2740f286ae8e93b6a73fc2715f1`; hosted fixture, service, and
+  visual acceptance are green.
+- The mobile game status line is in document flow after the complete keyboard,
+  with a hosted geometry assertion preventing control overlap.

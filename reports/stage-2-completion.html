@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Amordle Stage 2 v4 Delivery Report</title>
+    <title>Amordle Stage 2 v4 Completion Report</title>
     <style>
       :root {
         color-scheme: light;
@@ -67,11 +67,10 @@
   </head>
   <body>
     <main>
-      <h1>Amordle Stage 2 v4 Delivery Report</h1>
+      <h1>Amordle Stage 2 v4 Completion Report</h1>
       <p class="notice">
-        The Alt-Screen TUI v4 functional shell is implemented and locally green. Its protected
-        Preview and hosted acceptance remain blocked until the exposed Vercel Blob read/write
-        credential is rotated or revoked.
+        The Alt-Screen TUI v4 functional shell is implemented, protected, and review-ready. No merge
+        or Production release is authorized.
       </p>
 
       <table>
@@ -81,20 +80,20 @@
             <td><code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code></td>
           </tr>
           <tr>
-            <th>v4 application commit</th>
-            <td><code>813bbe13711349feafd5d7c170f4f814d71f1994</code></td>
+            <th>Application candidate</th>
+            <td><code>59517db8a47da2740f286ae8e93b6a73fc2715f1</code></td>
           </tr>
           <tr>
-            <th>Current evidence head</th>
-            <td><code>f04c81a95aaea17d890f260064521634445d5fd4</code></td>
+            <th>Preview deployment</th>
+            <td><code>dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN</code></td>
+          </tr>
+          <tr>
+            <th>Protected Preview</th>
+            <td><code>https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app</code></td>
           </tr>
           <tr>
             <th>Visual authority</th>
             <td><code>design/references/stage2/v4-alt-screen-shell-2026-07-28</code></td>
-          </tr>
-          <tr>
-            <th>Existing Preview</th>
-            <td><code>dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV</code> (superseded v2 candidate)</td>
           </tr>
           <tr>
             <th>Contracts</th>
@@ -121,12 +120,12 @@
           compact HUD; and terminal key grid.
         </li>
         <li>
-          Mobile gameplay without an obstructing route dock, with visible menu access, 44px targets,
-          and an unobstructed keyboard.
+          Mobile gameplay without a route dock, with 44px controls and a status line that follows
+          the complete keyboard instead of crossing it.
         </li>
         <li>
-          Shared framing across Daily, Calendar, economy, COMBAT, account/data, Word Explorer,
-          support, Admin, and exceptional states.
+          Shared terminal framing across Daily, Calendar, economy, COMBAT, account/data, Word
+          Explorer, support, Admin, and exceptional states.
         </li>
         <li>
           Opaque forced-colors and reduced-motion fallbacks that do not depend on translucency,
@@ -136,13 +135,13 @@
 
       <h2>Preserved behavior</h2>
       <p>
-        v4 is presentation-only. It changes no game rule, controller, persistence envelope, route,
-        API, RPC, Auth/Supabase/Realtime/Blob authority, migration, or word-bank loading contract.
-        Home requests no word bank and game or Explorer contexts retain selected-length-only
-        loading.
+        v4 changes presentation only. It changes no game rule, controller, persistence envelope,
+        route, API, RPC, Auth/Supabase/Realtime/Blob authority, migration, or word-bank loading
+        contract. Home requests no word bank and game or Explorer contexts retain
+        selected-length-only loading.
       </p>
 
-      <h2>Local verification</h2>
+      <h2>Verification</h2>
       <table>
         <thead>
           <tr>
@@ -168,6 +167,10 @@
             <td>12 tests green across Chromium, Firefox, and WebKit</td>
           </tr>
           <tr>
+            <td><code>pnpm test:e2e:services</code></td>
+            <td>1 hosted journey green</td>
+          </tr>
+          <tr>
             <td><code>pnpm test:visual</code></td>
             <td>5 tests green</td>
           </tr>
@@ -176,52 +179,78 @@
             <td>Green</td>
           </tr>
           <tr>
-            <td><code>pnpm test:e2e:services</code></td>
-            <td>Pending the blocked protected Preview</td>
-          </tr>
-          <tr>
             <td><code>pnpm test:acceptance</code></td>
-            <td>Pending the blocked protected Preview</td>
+            <td>Green at the exact application commit and Preview</td>
           </tr>
           <tr>
             <td>Bundles</td>
-            <td>Home 173,586 B JS / 13,379 B CSS; game 179,475 B JS / 15,773 B CSS</td>
+            <td>Home 173,586 B JS / 13,383 B CSS; game 179,475 B JS / 15,777 B CSS</td>
           </tr>
           <tr>
-            <td>Local mobile vitals</td>
-            <td>LCP 120 ms; INP 32 ms; CLS 0.0003232403939022726</td>
+            <td>Hosted mobile vitals</td>
+            <td>LCP 368 ms; INP 32 ms; CLS 0.0003232403939022726</td>
           </tr>
         </tbody>
       </table>
+
+      <h2>Visual evidence</h2>
+      <ul>
+        <li>Seven concept-to-browser comparison points.</li>
+        <li>35 visual-matrix captures across seven major surface groups.</li>
+        <li>16 Home/Solo captures across all eight required widths.</li>
+        <li>
+          System light/dark, 320px stress, 390px mobile, 200% zoom, reduced motion, and forced
+          colors.
+        </li>
+        <li>
+          11 protected-service account/data and COMBAT waiting, active, recovery, result/rematch,
+          and spectator captures.
+        </li>
+        <li>Native-size inspection, copy comparison, and documented intentional deviations.</li>
+      </ul>
+
+      <h2>Protected services and cleanup</h2>
       <p>
-        Browser review covered Home, Solo, COMBAT, Stats, and Word Explorer, including 320px, 390px,
-        1440px, 200% zoom, forced colors, reduced motion, and all required widths. The v4 fidelity
-        ledger records native-size inspection, seven cross-surface comparison points, above-the-fold
-        copy comparison, and intentional deviations.
+        Evidence root:
+        <code>.codex-internal/evidence/e2e_20260728T200719276Z_59517db8_4a8bd4f6</code>
+      </p>
+      <p>
+        Three disposable Auth users and one public Practice game proved real UI sign-in, candidate
+        word publication, signed-in account/data routes, alternating accepted turns, refresh
+        recovery, terminal result/rematch, privacy-safe read-only spectation, and non-overlapping
+        mobile controls.
+      </p>
+      <p>
+        Contexts closed before deletion. Cleanup succeeded on the first attempt with zero database
+        and Auth residue. No real player or Auth record was selected. The commit-scoped Preview
+        manifest remains intentionally as candidate evidence.
       </p>
 
-      <h2>Hosted evidence still required</h2>
-      <ol>
-        <li>Rotate or revoke the exposed Amordle Vercel Blob read/write credential.</li>
-        <li>Refresh ignored local Preview secret custody without printing values.</li>
-        <li>Deploy the exact private v4 candidate to a protected Preview.</li>
-        <li>Run hosted services and acceptance tests against that exact deployment.</li>
-        <li>Prove zero disposable-resource residue and record the final evidence.</li>
-      </ol>
-      <p>
-        The existing v2 Preview and cleanup receipt remain historical evidence, not evidence for v4.
-      </p>
+      <h2>Operational boundaries</h2>
+      <ul>
+        <li>Vercel SSO protection is active.</li>
+        <li>The deployment resolves exactly to the application commit above.</li>
+        <li>Project settings were restored to <code>Other / dist / automatic build</code>.</li>
+        <li>Frozen Production remains Ready and unchanged.</li>
+        <li>
+          The private repository, default branch, 45 migrations, Supabase project, real accounts,
+          recovery refs, and locked shell remain unchanged.
+        </li>
+      </ul>
 
-      <h2>Security stop and review boundary</h2>
+      <h2>Security follow-up</h2>
       <p class="notice">
-        The credential value is intentionally absent. Do not place it in chat, URLs, screenshots,
-        issues, commits, or logs. No deployment or hosted mutation may resume before confirmed
-        rotation or revocation.
+        The owner explicitly authorized this run with the previously exposed Preview-scoped Vercel
+        Blob credential. Its value is absent from repository artifacts. OIDC replacement was not
+        available for the existing connection. Rotate or revoke the credential after this run, and
+        never place it in chat, URLs, screenshots, issues, commits, or logs.
       </p>
+
+      <h2>Current gate</h2>
       <p>
-        Production, the default branch, migrations, real accounts/player data, recovery refs, and
-        the locked shell remain unchanged. No merge, Production release, schema change, branch
-        deletion, stash inspection, or real-account deletion is authorized.
+        Stop at manual review of the protected Preview. No merge, Production release, schema change,
+        default-branch change, branch deletion, stash inspection, or real-account deletion is
+        authorized.
       </p>
     </main>
   </body>

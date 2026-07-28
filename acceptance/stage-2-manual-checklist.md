@@ -1,14 +1,13 @@
 # Amordle Stage 2 v4 Manual Review Checklist
 
+Protected Preview:
+`https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app`
+
 Application commit:
-`813bbe13711349feafd5d7c170f4f814d71f1994`
+`59517db8a47da2740f286ae8e93b6a73fc2715f1`
 
-Protected Preview: pending credential rotation and v4 deployment. The existing
-`dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV` deployment is the superseded v2 candidate
-and must not be reviewed as v4.
-
-Never copy credentials into a URL, chat, screenshot, browser extension, issue,
-or commit.
+Use Vercel team authentication. Never copy automation or Blob credentials into
+a URL, chat, screenshot, browser extension, issue, or commit.
 
 ## Alt-Screen TUI authority
 
@@ -54,6 +53,8 @@ or commit.
       an unmistakable hierarchy.
 - [ ] Mobile presents the opponent summary without duplicating or obstructing
       the viewer’s controls.
+- [ ] The mobile status line follows the complete keyboard and never crosses
+      any letter, Submit, or Delete control.
 - [ ] Recovery, outcome, settlement, and rematch states are clear.
 - [ ] Active, Lobby, Live, and notifications use player-facing
       alternating-turn language.
@@ -90,15 +91,22 @@ or commit.
 
 ## Hosted evidence and cleanup
 
-- [ ] The reviewed URL resolves to the exact v4 application commit above.
+- [ ] The reviewed URL resolves to the exact application commit above.
 - [ ] The candidate is protected by Vercel Deployment Protection.
 - [ ] Hosted `pnpm test:e2e:services` and `pnpm test:acceptance` are green.
 - [ ] Real disposable users prove sign-in, COMBAT turns, refresh recovery,
       results/rematch, and privacy-safe spectation.
 - [ ] Every disposable resource is registered and the cleanup receipt proves
-      zero database, Auth, Storage, and Blob residue.
+      zero database and Auth residue.
 - [ ] Production, the default branch, migrations, real accounts, and the locked
       shell are unchanged.
+
+## Security follow-up
+
+- [ ] After review access is no longer needed, rotate or revoke the exposed
+      Preview-scoped Vercel Blob read/write credential.
+- [ ] Do not record that credential in any review note, screenshot, URL, issue,
+      commit, or chat.
 
 ## Review boundary
 

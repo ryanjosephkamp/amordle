@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "status": "local-functional-shell-fidelity-green",
+  "status": "final-protected-preview-functional-shell-fidelity-green",
   "direction": "alt-screen-terminal",
   "conceptSha256": "6a451804bd8371e8cab7b4695c0347bdd5c6f3e6de1b1b7b421623ced96280e4",
   "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
@@ -33,7 +33,7 @@
     {
       "name": "mobile-translation",
       "concept": "edge-to-edge terminal with unobstructed touch keyboard",
-      "render": "390px game removes route dock, retains menu, and keeps 44px keys visible",
+      "render": "390px game removes the route dock; the status line follows the complete 44px-key keyboard without overlay",
       "status": "pass"
     },
     {
@@ -54,15 +54,27 @@
     "shell-home-320x844-stress.png",
     "solo-390x844-mobile.png",
     "solo-200-percent-forced-colors.png",
-    "Browser/IAB Home, Solo, COMBAT, Stats, and Word Explorer at 1280x720"
+    "Browser/IAB Home, Solo, COMBAT, Stats, and Word Explorer at 1280x720",
+    "35 hosted visual-matrix captures across seven major surface groups",
+    "16 hosted Home/Solo width captures across 320, 360, 390, 412, 768, 960, 1440, and 1920 pixels",
+    "11 protected-service account/data and COMBAT captures"
   ],
   "aboveFoldCopyDiff": "Launcher order matches the concept. Existing accessible heading retained; descriptions identify real routes.",
   "intentionalDeviations": [
     "Real HomeAttention data remains in its own ruled region.",
     "Authoritative status facts remain above the desktop board.",
     "Generated guesses and answers are excluded.",
-    "Mobile games retain a menu but remove the route dock.",
+    "Mobile games retain a menu, remove the route dock, and place the status line after the keyboard.",
     "System light mode remains supported."
   ],
-  "hostedCandidate": null
+  "hostedCandidate": {
+    "applicationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+    "deploymentId": "dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN",
+    "url": "https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app",
+    "protected": true,
+    "serviceEvidenceRunId": "e2e_20260728T200719276Z_59517db8_4a8bd4f6",
+    "mobileGameStatusGeometry": "pass",
+    "cleanupAttempt": 1,
+    "zeroDisposableResidue": true
+  }
 }

@@ -1,25 +1,19 @@
-# Amordle Stage 2 v4 Delivery Report
+# Amordle Stage 2 v4 Completion Report
 
-## Current outcome
+## Outcome
 
-The Alt-Screen TUI v4 functional shell is implemented and locally green. It
-replaces Quiet Workbench v2 as the active presentation authority while
-preserving the working Stage 1 application behavior.
+The Alt-Screen TUI v4 functional shell is implemented, protected, and
+review-ready. It replaces Quiet Workbench v2 as the active presentation
+authority while preserving the complete Stage 1 application behavior.
 
-The v4 candidate is **not yet deployed**. A Vercel Blob read/write credential
-was exposed in local tool output during deployment preparation. A fresh,
-read-only pull of the Preview environment at `2026-07-28T16:46:53Z` confirmed
-that the credential had not been rotated. Preview deployment, hosted service
-tests, and final hosted evidence remain halted until the account owner rotates
-or revokes it.
-
-| Item                  | Current authority                                                                 |
+| Item                  | Final authority                                                                   |
 | --------------------- | --------------------------------------------------------------------------------- |
 | Branch                | `codex/amordle-terminal-greenfield-implementation-2026-07-27`                     |
-| v4 application commit | `813bbe13711349feafd5d7c170f4f814d71f1994`                                        |
-| Current evidence head | `f04c81a95aaea17d890f260064521634445d5fd4`                                        |
-| v4 visual authority   | `design/references/stage2/v4-alt-screen-shell-2026-07-28`                         |
-| Existing Preview      | `dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV` (superseded v2 candidate)                      |
+| Application candidate | `59517db8a47da2740f286ae8e93b6a73fc2715f1`                                        |
+| Preview deployment    | `dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN`                                                |
+| Protected Preview     | `https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app`                   |
+| Visual authority      | `design/references/stage2/v4-alt-screen-shell-2026-07-28`                         |
+| Service evidence      | `.codex-internal/evidence/e2e_20260728T200719276Z_59517db8_4a8bd4f6`              |
 | Supabase              | `squqdstdvbsvhagfuzgj`                                                            |
 | Migration ledger      | 45/45; SHA-256 `f73fc5e4260585a93035c4dc2b5bb9216d5576124c55f652d4a66b1369fd14bf` |
 | Bootstrap baseline    | 107/107 immutable files                                                           |
@@ -39,8 +33,8 @@ or revokes it.
   treatment, evidence glyphs, compact HUD/status language, and a terminal key
   grid.
 - A mobile translation that removes the route dock during gameplay, preserves
-  the menu, keeps 44px touch controls, and leaves the on-screen keyboard
-  unobstructed.
+  the menu, keeps 44px touch controls, and places the status line after the
+  complete on-screen keyboard instead of over it.
 - Shared terminal framing for Daily, Calendar, economy, COMBAT, account/data,
   Word Explorer, support, Admin, and exceptional states.
 - Forced-colors and reduced-motion fallbacks that preserve hierarchy without
@@ -48,8 +42,8 @@ or revokes it.
 
 ## Preserved behavior and boundaries
 
-The v4 change is presentation-only. It does not change game or GO rules, Daily
-selection, controllers, persistence envelopes, word-bank loading, Auth,
+The v4 work changes presentation only. It does not change game or GO rules,
+Daily selection, controllers, persistence envelopes, word-bank loading, Auth,
 Supabase, Realtime, Blob publication, routes, APIs, RPCs, migrations, or
 service authority.
 
@@ -60,59 +54,101 @@ service authority.
 - Production, the default branch, the 45 migrations, real accounts/player
   data, recovery refs, and locked shell remain unchanged.
 
-## Local verification
+## Verification
 
-| Gate                         | Result                                                     |
-| ---------------------------- | ---------------------------------------------------------- |
-| `pnpm check`                 | Green                                                      |
-| `pnpm test:domain`           | 4 files; 18 tests green                                    |
-| `pnpm test:browser`          | 1 file; 3 tests green                                      |
-| `pnpm test:e2e:fixture`      | 12 tests green across Chromium, Firefox, and WebKit        |
-| `pnpm test:visual`           | 5 tests green                                              |
-| `pnpm test:acceptance:local` | Green                                                      |
-| `pnpm test:e2e:services`     | Not run against v4; requires the blocked protected Preview |
-| `pnpm test:acceptance`       | Pending the blocked protected Preview                      |
-| Accessibility                | No serious or critical representative-route axe findings   |
-| Home bundle                  | 173,586 B compressed JavaScript; 13,379 B CSS              |
-| Gameplay bundle              | 179,475 B compressed JavaScript; 15,773 B CSS              |
-| Local mobile vitals          | LCP 120 ms; INP 32 ms; CLS 0.0003232403939022726           |
-| HTTP interfaces              | Exactly 3                                                  |
+| Gate                         | Result                                                                                                      |
+| ---------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `pnpm check`                 | Green                                                                                                       |
+| `pnpm test:domain`           | 4 files; 18 tests green                                                                                     |
+| `pnpm test:browser`          | 1 file; 3 tests green                                                                                       |
+| `pnpm test:e2e:fixture`      | 12 tests green across Chromium, Firefox, and WebKit                                                         |
+| `pnpm test:e2e:services`     | 1 serial protected-Preview journey green                                                                    |
+| `pnpm test:visual`           | 5 tests green                                                                                               |
+| `pnpm test:acceptance:local` | Green for the v4 presentation; final repair rechecked with `pnpm check`, domain, browser, and visual suites |
+| `pnpm test:acceptance`       | Green at the exact final application commit and Preview                                                     |
+| Accessibility                | No serious or critical representative-route axe findings                                                    |
+| Home bundle                  | 173,586 B compressed JavaScript; 13,383 B CSS                                                               |
+| Gameplay bundle              | 179,475 B compressed JavaScript; 15,777 B CSS                                                               |
+| Hosted mobile vitals         | LCP 368 ms; INP 32 ms; CLS 0.0003232403939022726                                                            |
+| HTTP interfaces              | Exactly 3                                                                                                   |
 
-Local browser review covered Home, Solo, COMBAT, Stats, and Word Explorer.
-Evidence includes 320px dark mode, 390px mobile gameplay, 1440px dark mode,
-200% zoom, forced colors, reduced motion, and every required responsive width.
-A real local Solo guess entered through the on-screen keyboard was accepted.
+Hosted acceptance also proves that the mobile game status line begins after
+the complete keyboard. All Submit/Delete controls remain visible and
+unobstructed at 390 × 844.
 
-The fidelity ledger is
+## Visual evidence
+
+The final fidelity ledger is
 `design/references/stage2/v4-alt-screen-shell-2026-07-28/fidelity-ledger.json`.
-It records native-size inspection, seven cross-surface comparison points,
-above-the-fold copy comparison, and intentional behavior-preserving
-deviations.
 
-## Hosted evidence still required
+- Seven concept-to-browser comparison points covering terminal frame,
+  alternate-screen hierarchy, selection, game anatomy, mobile translation,
+  dense/support surfaces, and accessibility fallbacks.
+- 35 visual-matrix captures: five states for each of seven major surface
+  groups.
+- 16 Home/Solo captures across 320, 360, 390, 412, 768, 960, 1440, and 1920
+  widths.
+- System light and dark, 320px stress, 390px mobile, 200% zoom, reduced motion,
+  and forced-colors evidence.
+- 11 protected-service captures for signed-in account/data surfaces and COMBAT
+  waiting, active, recovery, result/rematch, and privacy-safe spectation.
+- Native-size inspection, above-the-fold copy comparison, and documented
+  intentional deviations.
 
-After confirmed credential rotation, the remaining authorized sequence is:
+## Protected service evidence and cleanup
 
-1. refresh ignored local Preview secret custody without printing values;
-2. deploy the exact private v4 candidate to a protected Preview;
-3. run `pnpm test:e2e:services` and `pnpm test:acceptance` against that exact
-   deployment;
-4. register every disposable resource, close contexts, perform bounded exact
-   cleanup, and prove zero residue;
-5. record the exact deployment ID, hosted screenshots, service identities,
-   cleanup receipt, final evidence commit, and known-good rollback target.
+The final hosted evidence root is:
 
-The existing Preview and its earlier zero-residue receipt remain valid
-historical v2 evidence, but they are not evidence for the v4 candidate.
+`.codex-internal/evidence/e2e_20260728T200719276Z_59517db8_4a8bd4f6`
 
-## Security stop and review boundary
+The run registered three disposable Auth users, one public Practice game, and
+one non-disposable commit-scoped Preview manifest before mutation. It proved:
 
-The exposed credential value is intentionally absent from repository
-artifacts. Do not paste it into chat, URLs, screenshots, issues, commits, or
-logs. The account owner must rotate or revoke the Amordle Vercel Blob
-read/write credential and confirm completion before any Preview or hosted
-mutation resumes.
+- real UI sign-in in three isolated contexts;
+- candidate word publication with 34 bounded objects;
+- five resolved signed-in account/data surfaces;
+- public match creation and join;
+- two alternating accepted turns and refresh recovery;
+- a third terminal winning move and result/rematch state;
+- sanitized read-only spectation with no answer/private identifier in the
+  spectator RPC payload and no mutation control;
+- mobile keyboard/status geometry with no overlap.
 
-This report does not authorize a merge, Production release, default-branch
-change, schema change, branch deletion, stash inspection, or real-account
-deletion.
+Contexts closed before deletion. Dependent database rows and the exact game
+were deleted before the three disposable Auth users. Cleanup succeeded on the
+first attempt with zero database residue and zero Auth residue. No real player
+or Auth record was selected for deletion. The commit-scoped Preview manifest
+is retained intentionally as candidate evidence.
+
+## Preview and operational boundaries
+
+- Anonymous access receives the expected Vercel SSO protection response.
+- Deployment metadata resolves exactly to application commit
+  `59517db8a47da2740f286ae8e93b6a73fc2715f1`.
+- Vercel project settings were restored after the Preview build to
+  `Other / dist / automatic build`.
+- Production deployment `dpl_739mtwiXc9pZPef3pxsKumwC9DfG` remains Ready and
+  unchanged.
+- Repository remains private; default branch remains
+  `bootstrap/greenfield-2026-07-20`.
+- Supabase remains 45/45 with no schema change.
+- Locked shell commit remains
+  `062624b2fb7c8d039a2eba3aec5b059c26628a11`.
+- Existing recovery refs and ignored local secret custody remain intact.
+
+## Security follow-up
+
+A Preview-scoped Vercel Blob read/write credential was exposed in local tool
+output during deployment preparation. Its value is intentionally absent from
+all repository artifacts. OIDC replacement was attempted but the existing Blob
+connection rejected it as not enabled for that environment.
+
+The owner explicitly authorized this hosted run before rotation. The
+credential still must be rotated or revoked afterward. Do not paste it into
+chat, URLs, screenshots, issues, commits, or logs.
+
+## Current gate
+
+Stop at manual review of the protected Preview. This report does not authorize
+a merge, Production release, default-branch change, schema change, branch
+deletion, stash inspection, or real-account deletion.

@@ -4,15 +4,16 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v4-alt-screen-shell-local-green",
-  "status": "resumed-owner-authorized-preview-risk",
-  "lastGreenCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
+  "currentCheckpoint": "stage-2-v4-final-protected-preview-candidate",
+  "status": "review-ready",
+  "lastGreenCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
   "visualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
     "packageCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
     "recommendedDirection": "alt-screen-terminal",
     "approvalStatus": "user-authorized-functional-shell",
-    "approvedAt": "2026-07-28T16:37:33Z"
+    "approvedAt": "2026-07-28T16:37:33Z",
+    "finalImplementationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1"
   },
   "candidateVisualReference": {
     "package": "design/references/stage2/v3-macos-liquid-terminal-2026-07-28",
@@ -22,7 +23,7 @@
     "createdAt": "2026-07-28T15:54:48Z"
   },
   "localAcceptance": {
-    "candidateCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
+    "candidateCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
     "check": "green",
     "domainTests": 18,
     "browserComponentTests": 3,
@@ -35,34 +36,49 @@
     },
     "homeCompressedBytes": {
       "js": 173586,
-      "css": 13379
+      "css": 13383
     },
     "gameCompressedBytes": {
       "js": 179475,
-      "css": 15773
+      "css": 15777
     }
   },
+  "hostedAcceptance": {
+    "candidateCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+    "fixtureE2E": 12,
+    "serviceE2E": 1,
+    "visualE2E": 5,
+    "mobileVitals": {
+      "lcpMs": 368,
+      "inpMs": 32,
+      "cls": 0.0003232403939022726
+    },
+    "mobileGameStatusGeometry": "pass"
+  },
   "preview": {
-    "deploymentId": "dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV",
-    "url": "https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN",
+    "url": "https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "supersededByLocalCandidate": true
+    "applicationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+    "supersededByLocalCandidate": false,
+    "projectSettingsRestored": true
   },
   "cleanup": {
-    "lastRunId": "e2e_20260728T041602844Z_ef840721_c179a917",
+    "lastRunId": "e2e_20260728T200719276Z_59517db8_4a8bd4f6",
+    "attempt": 1,
     "zeroResidue": true
   },
-  "blocker": {
+  "securityFollowUp": {
     "code": "vercel-blob-credential-exposed-in-tool-output",
     "scope": "ignored local Preview environment custody",
-    "requiredResolution": "Account owner still needs to rotate or revoke the exposed Vercel Blob read/write credential after this explicitly authorized continuation.",
-    "externalMutationsHalted": false,
+    "requiredResolution": "Account owner still needs to rotate or revoke the exposed Vercel Blob read/write credential after the explicitly authorized hosted run.",
+    "ownerAuthorizedHostedRun": true,
     "lastReadOnlyRotationCheck": "2026-07-28T16:51:14Z",
     "rotationCheckResult": "unchanged",
     "consecutiveBlockedGoalTurns": 0,
     "ownerAuthorizedContinuationAt": "2026-07-28T19:59:04Z",
     "oidcReplacementAttempt": "rejected-environment-not-allowed"
   },
-  "reportStatus": "v4-local-delivery-paired-reports-current-hosted-evidence-pending",
-  "updatedAt": "2026-07-28T19:59:04Z"
+  "reportStatus": "v4-final-paired-reports-and-manual-checklist-review-ready",
+  "updatedAt": "2026-07-28T20:08:52Z"
 }
