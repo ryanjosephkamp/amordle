@@ -1,91 +1,87 @@
-# Amordle Stage 2 Design Authority
+# Amordle Alt-Screen TUI Shell
 
-Status: Quiet Workbench v2 was explicitly approved on 2026-07-28 as the
-binding Stage 2 visual authority. Stage 1 behavior, routes, service contracts,
-and persistence remain unchanged while the presentation layer is implemented.
+Status: the user authorized the literal Alt-Screen TUI shell on 2026-07-28 as
+the active presentation authority. It supersedes Quiet Workbench v2 and the
+unapproved macOS Liquid Terminal v3 proposal. Those packages remain immutable
+provenance under `design/references/stage2/`; neither remains binding.
 
-## Approved authority
+This authority is intentionally a fully functional shell, not a final promise
+about Amordle's eventual visual identity. Future design exploration may replace
+it without changing the working game or service architecture.
 
-The governing package is
-`design/references/stage2/v2-terminal-workbench-2026-07-27/`. Its
-`reference-manifest.json`, `component-anatomy.md`, `copy-register.md`, and four
-coordinated approval boards bind the Stage 2 implementation.
+## Scene and thesis
 
-The original Stage 2 v1 package remains unapproved provenance. Generated
-values, words, dates, names, icons, and raster placement are not implementation
-authority. Higher product, functional, backend, testing, and accessibility
-contracts always win.
+A player opens Amordle in a browser and immediately reads it as a polished,
+fullscreen terminal application. The interface uses the spatial grammar of a
+modern alternate-screen TUI—path lines, inverse-video selection, aligned rows,
+rules, prompts, and pinned status—while every action remains clickable,
+touchable, screen-reader legible, and understandable without terminal
+experience.
 
-## Scene and strategy
+The browser contains one Mac Terminal-like window. The window may use subtle
+translucency and blur; its content does not use nested glass. Hierarchy comes
+from alignment and selection, not cards, capsules, or decorative panels.
 
-A player opens Amordle at a desk, on a train, or in bed under whatever ambient
-light their system theme already reflects, and wants the board to become
-immediately legible without visual ceremony.
+## Typography and palette
 
-Use a restrained product palette: neutral system surfaces and one sky-teal
-accent occupying less than ten percent of the interface. Color communicates
-interaction and evidence; it is not decoration.
+- Use `ui-monospace`, `SFMono-Regular`, `"SF Mono"`, Menlo, Monaco, Consolas,
+  and the bundled Geist Mono as the fallback sequence. Do not redistribute
+  Apple font files.
+- Use the monospace stack throughout visible product UI, including controls,
+  prose, forms, boards, tables, prompts, and status.
+- Follow the system light/dark preference. Dark mode is a restrained graphite
+  terminal; light mode is an opaque, high-contrast Terminal Basic translation.
+- Cyan marks focus and the current prompt. Green, amber, slate, and red retain
+  their semantic game and error roles. Color never carries meaning alone.
 
-## Theme
+## Shell grammar
 
-- Follow the system light/dark preference by default.
-- Use true neutral or brand-hued neutral backgrounds, never cream, parchment,
-  atmospheric texture, or ornamental gradients.
-- Keep material depth subtle and removable. No glass is required for state
-  meaning.
+- Desktop: one Terminal-like window with a thin titlebar, decorative traffic
+  lights, route path, textual navigation row, terminal buffer, and status line.
+- Mobile: an edge-to-edge terminal viewport. Non-game routes use a compact
+  textual route rail; active games keep only the menu and status line so the
+  board and keyboard remain unobstructed.
+- Current selection uses inverse video. Hover and keyboard focus use the same
+  component vocabulary.
+- Work regions use box-drawing corners and rules. Forms, lists, tables, game
+  panes, empty states, errors, and dialogs remain part of the same buffer
+  instead of becoming detached cards.
+- Prompts and shortcut notation are visual and informational. Typed commands
+  are never required.
 
-## Color tokens
+## Gameplay grammar
 
-Use OKLCH values throughout.
+- Solo and COMBAT use numbered rows, contiguous fixed-width cells, a visible
+  active cursor, a compact evidence line, rectangular terminal keys, and terse
+  status facts.
+- Board state remains readable by symbol and text as well as color.
+- The game controller, physical keyboard input, on-screen keyboard, Focus Mode,
+  persistence, sound, sharing, definitions, timers, polling, Realtime
+  invalidation, and recovery behavior remain unchanged.
 
-| Token      | Light                    | Dark                     | Role              |
-| ---------- | ------------------------ | ------------------------ | ----------------- |
-| Background | `oklch(0.985 0.004 200)` | `oklch(0.145 0.012 220)` | Page              |
-| Surface    | `oklch(0.955 0.008 205)` | `oklch(0.205 0.014 220)` | Panels and rails  |
-| Ink        | `oklch(0.205 0.018 220)` | `oklch(0.94 0.008 205)`  | Primary text      |
-| Muted      | `oklch(0.45 0.018 220)`  | `oklch(0.72 0.014 210)`  | Secondary text    |
-| Border     | `oklch(0.84 0.012 210)`  | `oklch(0.34 0.016 220)`  | Separation        |
-| Accent     | `oklch(0.65 0.10 200)`   | `oklch(0.74 0.105 200)`  | Actions and focus |
-| Correct    | `oklch(0.63 0.15 145)`   | `oklch(0.70 0.15 145)`   | Exact evidence    |
-| Present    | `oklch(0.72 0.14 85)`    | `oklch(0.78 0.14 85)`    | Present evidence  |
-| Absent     | `oklch(0.58 0.018 220)`  | `oklch(0.46 0.018 220)`  | Absent evidence   |
-| Removed    | `oklch(0.52 0.06 25)`    | `oklch(0.66 0.07 25)`    | Removed key       |
-| Danger     | `oklch(0.58 0.20 28)`    | `oklch(0.70 0.18 28)`    | Destructive/error |
+## Component rules
 
-## Typography
+- Controls have default, hover, focus, active, disabled, loading, error, and
+  selected states where applicable.
+- Use square or two-pixel corners. Full pills and segmented capsules are not
+  part of this shell.
+- Use 44-pixel minimum touch targets even when controls visually resemble TUI
+  rows or keys.
+- Use standard semantic HTML underneath the visual grammar. Box-drawing glyphs
+  are decorative and hidden from assistive technology where appropriate.
+- Forced colors removes translucency, background effects, and decorative
+  traffic lights. Reduced motion disables the cursor blink.
 
-- Geist for prose, headings, labels, and standard controls.
-- Geist Mono for boards, status lines, tables, shortcuts, clocks, and data.
-- Use a compact fixed type scale. Do not use fluid display typography in the
-  product shell.
-- Cap explanatory prose at 72 characters per line.
+## Prohibited presentation
 
-## Layout and components
+Do not add generic SaaS cards, glossy glass widgets, app-style segmented
+navigation, floating inspectors, giant marketing headings, cyberpunk effects,
+Matrix imagery, scanlines, CRT distortion, code rain, excessive glow, fake
+command output, or terminal-only interaction.
 
-- Desktop uses a top navigation rail with clear grouped destinations.
-- Mobile uses reachable bottom navigation where it improves play.
-- Gameplay keeps status, board, and keyboard together in the usable viewport.
-- Prefer open rails, lists, tables, and controlled scroll regions over repeated
-  cards.
-- All controls have default, hover, focus, active, disabled, loading, and error
-  states where applicable.
-- Standard radius: 4px controls and 0–4px work regions. Full-pill is limited
-  to true compact status tokens.
-- Semantic z-index layers: navigation, dropdown, sticky game status, backdrop,
-  modal, toast, tooltip.
+## Behavioral boundary
 
-## Motion
-
-Use 150–250ms state transitions with an ease-out curve. Motion may confirm
-state, reveal accepted tiles, or support GO transitions. It may not delay
-operation or decorate page load. Respect `prefers-reduced-motion`.
-
-## Stage 2 implementation
-
-Quiet Workbench makes the terminal identity structural: compact command and
-context rails, titled ruled work regions, aligned data, low-radius controls,
-persistent human-readable status, and game-first composition. It does not
-simulate a shell, require typed commands, or use terminal theatrics.
-
-Implementation proceeds slice by slice against the approved fidelity ledger.
-Stage 1 functionality and service contracts remain immutable throughout.
+This authority is presentation-only. The 237 requirements, route URLs, three
+HTTP interfaces, domain rules, persistence envelopes, Supabase adapters and
+RPCs, word-list loading boundaries, 45 migrations, and immutable bootstrap
+baseline remain unchanged.

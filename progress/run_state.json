@@ -4,32 +4,54 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v3-visual-reference-approval-gate",
-  "status": "awaiting-user-approval",
+  "currentCheckpoint": "stage-2-v4-alt-screen-shell-local-green",
+  "status": "local-acceptance-green",
   "lastGreenCommit": "ef8407216afde5bc4639411b210678b731090dee",
   "visualReference": {
-    "package": "design/references/stage2/v2-terminal-workbench-2026-07-27",
-    "packageCommit": "dfc610ac9a5fbe645da92418d550037be10096cf",
-    "recommendedDirection": "quiet-workbench",
-    "approvalStatus": "approved",
-    "approvedAt": "2026-07-28T03:30:40Z"
+    "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
+    "packageCommit": null,
+    "recommendedDirection": "alt-screen-terminal",
+    "approvalStatus": "user-authorized-functional-shell",
+    "approvedAt": "2026-07-28T16:37:33Z"
   },
   "candidateVisualReference": {
     "package": "design/references/stage2/v3-macos-liquid-terminal-2026-07-28",
     "packageCommit": "5454a0e33406076a3c6e0c36c9835c6c467496ee",
     "recommendedDirection": "mac-shell-grok-core",
-    "approvalStatus": "pending-user-approval",
+    "approvalStatus": "superseded-unapproved-provenance",
     "createdAt": "2026-07-28T15:54:48Z"
+  },
+  "localAcceptance": {
+    "candidateCommit": null,
+    "check": "green",
+    "domainTests": 18,
+    "browserComponentTests": 3,
+    "fixtureE2E": 12,
+    "visualE2E": 5,
+    "mobileVitals": {
+      "lcpMs": 120,
+      "inpMs": 32,
+      "cls": 0.0003232403939022726
+    },
+    "homeCompressedBytes": {
+      "js": 173586,
+      "css": 13379
+    },
+    "gameCompressedBytes": {
+      "js": 179475,
+      "css": 15773
+    }
   },
   "preview": {
     "deploymentId": "dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV",
     "url": "https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app",
-    "protected": true
+    "protected": true,
+    "supersededByLocalCandidate": true
   },
   "cleanup": {
     "lastRunId": "e2e_20260728T041602844Z_ef840721_c179a917",
     "zeroResidue": true
   },
   "blocker": null,
-  "updatedAt": "2026-07-28T15:58:49Z"
+  "updatedAt": "2026-07-28T16:39:52Z"
 }

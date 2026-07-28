@@ -6,6 +6,7 @@ import { AppShell } from '@/components/app-shell';
 import { PwaController } from '@/components/pwa-controller';
 import { LegacyRouteBridge } from '@/components/legacy-route-bridge';
 import './globals.css';
+import './tui-shell.css';
 
 export const metadata: Metadata = {
   title: {

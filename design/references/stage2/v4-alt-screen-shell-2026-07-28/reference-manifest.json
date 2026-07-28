@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "status": "implemented-functional-shell-authority",
+  "createdAt": "2026-07-28T16:37:33Z",
+  "direction": "alt-screen-terminal",
+  "purpose": "tui-looking fully functional shell; future visual options deferred",
+  "designAuthority": "DESIGN.md",
+  "supersedes": [
+    "design/references/stage2/v2-terminal-workbench-2026-07-27",
+    "design/references/stage2/v3-macos-liquid-terminal-2026-07-28"
+  ],
+  "concept": {
+    "path": "/Users/noir/.codex/generated_images/019fa428-4efe-7e50-9314-cc34fd5e910b/call_eseSA1Asdu1GcfqBEQilO5Uq.png",
+    "sha256": "6a451804bd8371e8cab7b4695c0347bdd5c6f3e6de1b1b7b421623ced96280e4",
+    "width": 1536,
+    "height": 1024,
+    "provenance": "OpenAI Image Gen planning concept, 2026-07-28",
+    "bindingRole": [
+      "single terminal window",
+      "SF Mono compatible system typography",
+      "alternate-screen hierarchy",
+      "inverse-video selection",
+      "numbered game rows and active cursor",
+      "rectangular terminal keyboard",
+      "mobile terminal translation",
+      "no nested glass or generic cards"
+    ]
+  },
+  "presentationInterfaces": [
+    "AppShell",
+    "RouteHeader",
+    "WorkbenchRegion",
+    "Alt-Screen token layer",
+    "Solo and COMBAT game presentation"
+  ],
+  "behavioralChanges": [],
+  "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
+  "fidelityLedger": "design/references/stage2/v4-alt-screen-shell-2026-07-28/fidelity-ledger.json"
+}

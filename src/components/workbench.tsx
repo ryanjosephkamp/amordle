@@ -10,10 +10,22 @@ export function WorkbenchRegion({
   return (
     <section className={`workbench-region ${className}`.trim()} aria-labelledby={id}>
       <header className="workbench-region-header">
+        <span className="region-corner" aria-hidden="true">
+          ┌─
+        </span>
         <h2 id={id}>{title}</h2>
+        <span className="region-rule" aria-hidden="true" />
         {status && <div className="workbench-region-status">{status}</div>}
+        <span className="region-corner is-end" aria-hidden="true">
+          ┐
+        </span>
       </header>
       <div className="workbench-region-body">{children}</div>
+      <div className="workbench-region-footer" aria-hidden="true">
+        <span>└</span>
+        <span />
+        <span>┘</span>
+      </div>
     </section>
   );
 }

@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "status": "local-functional-shell-fidelity-green",
+  "direction": "alt-screen-terminal",
+  "conceptSha256": "6a451804bd8371e8cab7b4695c0347bdd5c6f3e6de1b1b7b421623ced96280e4",
+  "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
+  "nativeSizeInspected": true,
+  "comparisonPoints": [
+    {
+      "name": "native-terminal-frame",
+      "concept": "thin titlebar, traffic lights, centered title",
+      "render": "one responsive root window; decorative lights disappear in forced colors",
+      "status": "pass"
+    },
+    {
+      "name": "alternate-screen-hierarchy",
+      "concept": "path, launcher, buffer, bottom status",
+      "render": "shared path, textual navigation, main buffer, and status line",
+      "status": "pass"
+    },
+    {
+      "name": "inverse-video-selection",
+      "concept": "active launcher row and visible shortcuts",
+      "render": "current route and Home command use inverse video; rows remain clickable",
+      "status": "pass"
+    },
+    {
+      "name": "gameplay-anatomy",
+      "concept": "numbered rows, contiguous cells, cursor, evidence, and keys",
+      "render": "Solo and COMBAT use the shared cell/key grammar with active cursor",
+      "status": "pass"
+    },
+    {
+      "name": "mobile-translation",
+      "concept": "edge-to-edge terminal with unobstructed touch keyboard",
+      "render": "390px game removes route dock, retains menu, and keeps 44px keys visible",
+      "status": "pass"
+    },
+    {
+      "name": "dense-and-support-surfaces",
+      "concept": "aligned rows rather than generic cards",
+      "render": "COMBAT, data, forms, tables, Word Explorer, and states use shared rules",
+      "status": "pass"
+    },
+    {
+      "name": "accessibility-fallback",
+      "concept": "terminal hierarchy without reliance on material or color",
+      "render": "forced colors is opaque and in-flow; reduced motion stops cursor blink",
+      "status": "pass"
+    }
+  ],
+  "nativeEvidence": [
+    "shell-home-1440x1024-dark.png",
+    "shell-home-320x844-stress.png",
+    "solo-390x844-mobile.png",
+    "solo-200-percent-forced-colors.png",
+    "Browser/IAB Home, Solo, COMBAT, Stats, and Word Explorer at 1280x720"
+  ],
+  "aboveFoldCopyDiff": "Launcher order matches the concept. Existing accessible heading retained; descriptions identify real routes.",
+  "intentionalDeviations": [
+    "Real HomeAttention data remains in its own ruled region.",
+    "Authoritative status facts remain above the desktop board.",
+    "Generated guesses and answers are excluded.",
+    "Mobile games retain a menu but remove the route dock.",
+    "System light mode remains supported."
+  ],
+  "hostedCandidate": null
+}

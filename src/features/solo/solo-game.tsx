@@ -59,10 +59,23 @@ function now(): string {
   return new Date().toISOString();
 }
 
-function BoardRow({ row, length, label }: { row?: GuessRow; length: number; label: string }) {
+function BoardRow({
+  row,
+  length,
+  label,
+  number,
+}: {
+  row?: GuessRow;
+  length: number;
+  label: string;
+  number: number;
+}) {
   return (
     <div className="board-entry" role="presentation">
       {row?.kind === 'seeded' && <span className="board-entry-label">SEED EVIDENCE</span>}
+      <span className="board-row-number" aria-hidden="true">
+        {String(number).padStart(2, '0')}
+      </span>
       <div className="board-row" role="row" aria-label={label}>
         {Array.from({ length }, (_, index) => {
           const tile = row?.tiles[index];
@@ -95,30 +108,37 @@ function DraftRow({
   draft,
   length,
   revealed,
+  number,
 }: {
   draft: string;
   length: number;
   revealed: Record<string, string>;
+  number: number;
 }) {
   return (
-    <div className="board-row is-draft" role="row" aria-label="Current guess and locked hints">
-      {Array.from({ length }, (_, index) => {
-        const revealedLetter = revealed[String(index)];
-        return (
-          <div
-            className={`tile ${revealedLetter ? 'is-revealed' : ''}`}
-            role="cell"
-            aria-label={
-              revealedLetter
-                ? `Revealed ${revealedLetter.toUpperCase()} in position ${index + 1}`
-                : `Draft position ${index + 1}`
-            }
-            key={index}
-          >
-            {(revealedLetter ?? draft[index])?.toUpperCase() ?? ''}
-          </div>
-        );
-      })}
+    <div className="board-entry" role="presentation">
+      <span className="board-row-number" aria-hidden="true">
+        {String(number).padStart(2, '0')}
+      </span>
+      <div className="board-row is-draft" role="row" aria-label="Current guess and locked hints">
+        {Array.from({ length }, (_, index) => {
+          const revealedLetter = revealed[String(index)];
+          return (
+            <div
+              className={`tile ${revealedLetter ? 'is-revealed' : ''}`}
+              role="cell"
+              aria-label={
+                revealedLetter
+                  ? `Revealed ${revealedLetter.toUpperCase()} in position ${index + 1}`
+                  : `Draft position ${index + 1}`
+              }
+              key={index}
+            >
+              {(revealedLetter ?? draft[index])?.toUpperCase() ?? ''}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -577,11 +597,12 @@ export function SoloGame({
           <span>{session.status.toUpperCase()}</span>
         </div>
         <div className="game-board" role="table" aria-label="Guess board">
-          {currentRows.map((row) => (
+          {currentRows.map((row, index) => (
             <BoardRow
               key={row.id}
               row={row}
               length={settings.length}
+              number={index + 1}
               label={
                 row.kind === 'seeded'
                   ? `Seeded evidence: ${row.guess}`
@@ -594,6 +615,7 @@ export function SoloGame({
               draft={session.draft}
               length={settings.length}
               revealed={session.revealedPositions}
+              number={currentRows.length + 1}
             />
           )}
           {Array.from({
@@ -605,6 +627,12 @@ export function SoloGame({
             <BoardRow
               key={`empty:${index}`}
               length={settings.length}
+              number={
+                currentRows.length +
+                (!isTerminal && session.status === 'active' ? 1 : 0) +
+                index +
+                1
+              }
               label={`Empty attempt ${acceptedRows.length + index + 2}`}
             />
           ))}
@@ -613,7 +641,7 @@ export function SoloGame({
       </div>
 
       <div className="game-message" aria-live="assertive">
-        <span aria-hidden="true">› </span>
+        <span aria-hidden="true">❯ </span>
         {session.rejection ??
           (session.status === 'holding'
             ? 'Solved. Carrying that answer into the next puzzle…'

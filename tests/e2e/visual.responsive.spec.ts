@@ -91,6 +91,48 @@ const professionalVariants = [
 ] as const;
 
 test.describe('responsive and alternate presentation evidence', () => {
+  test('Alt-Screen TUI shell remains structural and gameplay-first', async ({ page }, testInfo) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/');
+    await expect(page.locator('.app-shell')).toBeVisible();
+    await expect(page.locator('.terminal-titlebar')).toContainText('amordle — play');
+    await expect(page.locator('.context-rail')).toContainText('amordle / home');
+    await expect(page.locator('.command-row.is-primary')).toContainText('solo practice');
+    await expect(page.locator('.workbench-region-footer')).toHaveCount(2);
+    await expect(page.locator('.terminal-statusbar')).toBeVisible();
+    await page.screenshot({
+      path: testInfo.outputPath('alt-screen-home-1440x1024-dark.png'),
+      animations: 'disabled',
+      fullPage: true,
+    });
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.emulateMedia({ colorScheme: 'light' });
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=45');
+    await expect(page.locator('.app-shell.is-game-surface')).toBeVisible();
+    await expect(page.locator('.mobile-nav')).toHaveCount(0);
+    await expect(page.getByRole('button', { name: /more navigation/i })).toBeVisible();
+    await expect(page.locator('.board-row-number').first()).toHaveText('01');
+    await expect(page.locator('.board-row.is-draft .tile').first()).toBeVisible();
+    const terminalFit = await page.evaluate(() => {
+      const keyboard = document.querySelector('.keyboard')?.getBoundingClientRect();
+      const status = document.querySelector('.terminal-statusbar')?.getBoundingClientRect();
+      if (!keyboard || !status) return null;
+      return {
+        keyboardBottom: keyboard.bottom,
+        statusTop: status.top,
+      };
+    });
+    expect(terminalFit).not.toBeNull();
+    expect(terminalFit!.keyboardBottom).toBeLessThanOrEqual(terminalFit!.statusTop + 1);
+    await page.screenshot({
+      path: testInfo.outputPath('alt-screen-solo-390x844-light.png'),
+      animations: 'disabled',
+      fullPage: true,
+    });
+  });
+
   test('Home and active gameplay remain contained at every required width', async ({
     page,
   }, testInfo) => {

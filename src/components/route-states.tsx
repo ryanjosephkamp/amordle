@@ -12,6 +12,9 @@ export function RouteHeader({ title, children }: PropsWithChildren<{ title: stri
   return (
     <header className="route-header">
       <div className="route-title-line">
+        <span className="route-prompt" aria-hidden="true">
+          ❯
+        </span>
         <h1>{title}</h1>
         <span aria-hidden="true" />
       </div>
