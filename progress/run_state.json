@@ -56,7 +56,10 @@
     "code": "vercel-blob-credential-exposed-in-tool-output",
     "scope": "ignored local Preview environment custody",
     "requiredResolution": "Account owner rotates or revokes the exposed Vercel Blob read/write credential and confirms completion before Preview deployment or hosted acceptance.",
-    "externalMutationsHalted": true
+    "externalMutationsHalted": true,
+    "lastReadOnlyRotationCheck": "2026-07-28T16:46:53Z",
+    "rotationCheckResult": "unchanged"
   },
-  "updatedAt": "2026-07-28T16:43:00Z"
+  "reportStatus": "v4-local-delivery-paired-reports-current-hosted-evidence-pending",
+  "updatedAt": "2026-07-28T16:46:53Z"
 }

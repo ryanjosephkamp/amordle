@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Amordle Stage 2 Completion Report</title>
+    <title>Amordle Stage 2 v4 Delivery Report</title>
     <style>
       :root {
         color-scheme: light;
@@ -67,10 +67,11 @@
   </head>
   <body>
     <main>
-      <h1>Amordle Stage 2 Completion Report</h1>
+      <h1>Amordle Stage 2 v4 Delivery Report</h1>
       <p class="notice">
-        Quiet Workbench v2 is implemented and green. The protected Preview is ready for manual
-        review; no merge or Production release is authorized.
+        The Alt-Screen TUI v4 functional shell is implemented and locally green. Its protected
+        Preview and hosted acceptance remain blocked until the exposed Vercel Blob read/write
+        credential is rotated or revoked.
       </p>
 
       <table>
@@ -80,26 +81,27 @@
             <td><code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code></td>
           </tr>
           <tr>
-            <th>Application candidate</th>
-            <td><code>ef8407216afde5bc4639411b210678b731090dee</code></td>
+            <th>v4 application commit</th>
+            <td><code>813bbe13711349feafd5d7c170f4f814d71f1994</code></td>
           </tr>
           <tr>
-            <th>Preview deployment</th>
-            <td><code>dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV</code></td>
+            <th>Current evidence head</th>
+            <td><code>f04c81a95aaea17d890f260064521634445d5fd4</code></td>
           </tr>
           <tr>
-            <th>Preview URL</th>
-            <td>
-              <code>https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app</code>
-            </td>
+            <th>Visual authority</th>
+            <td><code>design/references/stage2/v4-alt-screen-shell-2026-07-28</code></td>
           </tr>
           <tr>
-            <th>Supabase</th>
-            <td><code>squqdstdvbsvhagfuzgj</code>; 45/45 immutable migrations</td>
+            <th>Existing Preview</th>
+            <td><code>dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV</code> (superseded v2 candidate)</td>
           </tr>
           <tr>
             <th>Contracts</th>
-            <td>107/107 bootstrap baseline; 237/237 parity rows; exactly 3 HTTP interfaces</td>
+            <td>
+              237/237 parity; 107/107 bootstrap baseline; 45/45 migrations; exactly 3 HTTP
+              interfaces
+            </td>
           </tr>
         </tbody>
       </table>
@@ -107,42 +109,40 @@
       <h2>Delivered</h2>
       <ul>
         <li>
-          Terminal-derived command bar, context rail, work regions, status language, desktop/mobile
-          navigation, Focus Mode, and equal-quality light/dark themes.
+          One alternate-screen terminal frame with a Mac Terminal-like titlebar, path, textual
+          navigation, main buffer, and compact status line.
         </li>
         <li>
-          Redesigned Home, Solo OG/GO, Daily, Calendar, Marketplace, and progression surfaces.
+          SF Mono-compatible typography, box-drawing rules, prompt markers, inverse selection,
+          aligned rows, restrained cursor behavior, and rectangular controls.
         </li>
         <li>
-          Redesigned COMBAT lobby, waiting, active match, mobile turn hierarchy, recovery,
-          result/rematch, notifications, Active, and privacy-safe spectation.
+          Terminal launcher Home; numbered Solo and COMBAT rows; contiguous cells; evidence glyphs;
+          compact HUD; and terminal key grid.
         </li>
         <li>
-          Redesigned Auth, Profile, public player, Settings, History, Stats, Leaderboards, Word
-          Explorer, Help, Feedback, About, Admin, and global exceptional states.
+          Mobile gameplay without an obstructing route dock, with visible menu access, 44px targets,
+          and an unobstructed keyboard.
         </li>
         <li>
-          Text-first, low-radius, one-rule anatomy; non-color evidence glyphs; 44px mobile controls;
-          structural loading rows; player-facing editorial language.
+          Shared framing across Daily, Calendar, economy, COMBAT, account/data, Word Explorer,
+          support, Admin, and exceptional states.
+        </li>
+        <li>
+          Opaque forced-colors and reduced-motion fallbacks that do not depend on translucency,
+          color, or cursor animation.
         </li>
       </ul>
 
-      <h2>Professional visual acceptance</h2>
-      <ul>
-        <li>35 major-surface comparisons, five per surface.</li>
-        <li>16 Home/Solo captures across all eight required widths.</li>
-        <li>
-          System light/dark, 320px stress, 390px mobile, 200% zoom, reduced motion, and forced
-          colors.
-        </li>
-        <li>Every surface scores at least 43/50 and terminal authenticity at least 4/5.</li>
-        <li>
-          No cyberpunk, fire/ice, atmospheric texture, glass, excessive glow, scanline, code-rain,
-          or generic SaaS-card treatment.
-        </li>
-      </ul>
+      <h2>Preserved behavior</h2>
+      <p>
+        v4 is presentation-only. It changes no game rule, controller, persistence envelope, route,
+        API, RPC, Auth/Supabase/Realtime/Blob authority, migration, or word-bank loading contract.
+        Home requests no word bank and game or Explorer contexts retain selected-length-only
+        loading.
+      </p>
 
-      <h2>Verification</h2>
+      <h2>Local verification</h2>
       <table>
         <thead>
           <tr>
@@ -156,81 +156,72 @@
             <td>Green</td>
           </tr>
           <tr>
-            <td>Domain</td>
+            <td><code>pnpm test:domain</code></td>
             <td>18 tests green</td>
           </tr>
           <tr>
-            <td>Browser components</td>
+            <td><code>pnpm test:browser</code></td>
             <td>3 tests green</td>
           </tr>
           <tr>
-            <td>Fixture E2E</td>
+            <td><code>pnpm test:e2e:fixture</code></td>
             <td>12 tests green across Chromium, Firefox, and WebKit</td>
           </tr>
           <tr>
-            <td>Protected service E2E</td>
-            <td>1 serial real-service journey green</td>
+            <td><code>pnpm test:visual</code></td>
+            <td>5 tests green</td>
           </tr>
           <tr>
-            <td>Visual</td>
-            <td>4 tests green; 52 captures plus vitals</td>
-          </tr>
-          <tr>
-            <td>Local acceptance</td>
+            <td><code>pnpm test:acceptance:local</code></td>
             <td>Green</td>
           </tr>
           <tr>
-            <td>Hosted acceptance</td>
-            <td>Green at exact candidate commit</td>
+            <td><code>pnpm test:e2e:services</code></td>
+            <td>Pending the blocked protected Preview</td>
           </tr>
           <tr>
-            <td>Accessibility</td>
-            <td>No serious or critical representative-route axe findings</td>
+            <td><code>pnpm test:acceptance</code></td>
+            <td>Pending the blocked protected Preview</td>
           </tr>
           <tr>
-            <td>Home bundle</td>
-            <td>173,198 B JS; 9,220 B CSS compressed</td>
+            <td>Bundles</td>
+            <td>Home 173,586 B JS / 13,379 B CSS; game 179,475 B JS / 15,773 B CSS</td>
           </tr>
           <tr>
-            <td>Gameplay bundle</td>
-            <td>179,129 B JS; 11,135 B CSS compressed</td>
-          </tr>
-          <tr>
-            <td>Hosted mobile vitals</td>
-            <td>LCP 380 ms; INP 32 ms; CLS 0</td>
+            <td>Local mobile vitals</td>
+            <td>LCP 120 ms; INP 32 ms; CLS 0.0003232403939022726</td>
           </tr>
         </tbody>
       </table>
-
-      <h2>Service evidence and cleanup</h2>
       <p>
-        Final evidence:
-        <code>.codex-internal/evidence/e2e_20260728T041602844Z_ef840721_c179a917</code>
-      </p>
-      <p>
-        Three disposable Auth users and one exact public Practice game proved resolved account
-        surfaces, create/join, alternating turns, refresh recovery, terminal result/rematch, and
-        sanitized read-only spectation. Cleanup succeeded on the first attempt with zero database
-        and Auth residue. No real account was selected.
+        Browser review covered Home, Solo, COMBAT, Stats, and Word Explorer, including 320px, 390px,
+        1440px, 200% zoom, forced colors, reduced motion, and all required widths. The v4 fidelity
+        ledger records native-size inspection, seven cross-surface comparison points, above-the-fold
+        copy comparison, and intentional deviations.
       </p>
 
-      <h2>Preserved boundaries</h2>
-      <ul>
-        <li>Production <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code> remains unchanged.</li>
-        <li>Vercel project settings are restored to Other / dist / automatic build.</li>
-        <li>Repository remains private; default branch remains unchanged.</li>
-        <li>Supabase remains 45/45 with no schema change.</li>
-        <li>Locked shell commit remains <code>062624b2fb7c8d039a2eba3aec5b059c26628a11</code>.</li>
-        <li>
-          No merge, Production release, stash inspection, branch deletion, or real-user deletion
-          occurred.
-        </li>
-      </ul>
-
-      <h2>Current gate</h2>
+      <h2>Hosted evidence still required</h2>
+      <ol>
+        <li>Rotate or revoke the exposed Amordle Vercel Blob read/write credential.</li>
+        <li>Refresh ignored local Preview secret custody without printing values.</li>
+        <li>Deploy the exact private v4 candidate to a protected Preview.</li>
+        <li>Run hosted services and acceptance tests against that exact deployment.</li>
+        <li>Prove zero disposable-resource residue and record the final evidence.</li>
+      </ol>
       <p>
-        Stop for manual review of the protected Preview. A merge or release requires separate
-        authorization.
+        The existing v2 Preview and cleanup receipt remain historical evidence, not evidence for v4.
+      </p>
+
+      <h2>Security stop and review boundary</h2>
+      <p class="notice">
+        The credential value is intentionally absent. Do not place it in chat, URLs, screenshots,
+        issues, commits, or logs. No deployment or hosted mutation may resume before confirmed
+        rotation or revocation.
+      </p>
+      <p>
+        Production, the default branch, migrations, real accounts/player data, recovery refs, and
+        the locked shell remain unchanged. No merge, Production release, schema change, branch
+        deletion, stash inspection, or real-account deletion is authorized.
       </p>
     </main>
   </body>

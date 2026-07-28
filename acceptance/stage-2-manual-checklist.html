@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Amordle Stage 2 Manual Review Checklist</title>
+    <title>Amordle Stage 2 v4 Manual Review Checklist</title>
     <style>
       :root {
         color-scheme: light;
@@ -52,49 +52,44 @@
   </head>
   <body>
     <main>
-      <h1>Amordle Stage 2 Manual Review Checklist</h1>
-      <p>
-        Candidate:
-        <code>https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app</code>
-      </p>
-      <p>Commit: <code>ef8407216afde5bc4639411b210678b731090dee</code></p>
+      <h1>Amordle Stage 2 v4 Manual Review Checklist</h1>
+      <p>Application commit: <code>813bbe13711349feafd5d7c170f4f814d71f1994</code></p>
       <p class="notice">
-        Use Vercel team authentication. Never copy automation credentials into a URL, chat,
-        screenshot, browser extension, or issue.
+        The protected v4 Preview is pending credential rotation and deployment. Do not review the
+        existing superseded v2 deployment as v4. Never copy credentials into chat, URLs,
+        screenshots, issues, browser extensions, or commits.
       </p>
 
       <fieldset>
-        <legend>Terminal/TUI design authority</legend>
+        <legend>Alt-Screen TUI authority</legend>
+        <label><input type="checkbox" />The app reads as one fullscreen terminal program.</label>
         <label
-          ><input type="checkbox" />The app feels like a calm word-game workbench, not a themed SaaS
-          dashboard or fake shell.</label
+          ><input type="checkbox" />Titlebar, route path, textual navigation, buffer, rules,
+          prompts, and status line form one shell.</label
+        >
+        <label><input type="checkbox" />Current routes and actions use clear inverse video.</label>
+        <label><input type="checkbox" />Rows align without decorative card nesting.</label>
+        <label
+          ><input type="checkbox" />Terminal grammar supports comprehension and never requires typed
+          commands.</label
         >
         <label
-          ><input type="checkbox" />Command bar, context rail, work regions, status, and actions are
-          coherent.</label
+          ><input type="checkbox" />Light and dark modes feel deliberate and Mac
+          Terminal-derived.</label
         >
         <label
-          ><input type="checkbox" />Typography is compact without harming explanation
-          readability.</label
-        >
-        <label><input type="checkbox" />Light and dark modes feel equally intentional.</label>
-        <label><input type="checkbox" />Evidence meaning never depends on color alone.</label>
-        <label
-          ><input type="checkbox" />No forbidden spectacle, glass, glow, scanlines, code rain, or
-          decorative card nesting appears.</label
+          ><input type="checkbox" />No Matrix effect, scanline, CRT distortion, neon spectacle, code
+          rain, fake command spam, nested glass, or SaaS-card grid appears.</label
         >
       </fieldset>
 
       <fieldset>
         <legend>Home and navigation</legend>
         <label
-          ><input type="checkbox" />Home makes Solo, Daily, and COMBAT actions immediately
-          clear.</label
+          ><input type="checkbox" />Home uses a compact launcher with clear route
+          descriptions.</label
         >
-        <label
-          ><input type="checkbox" />Desktop/mobile navigation clearly marks the current
-          route.</label
-        >
+        <label><input type="checkbox" />Desktop/mobile navigation marks the current route.</label>
         <label><input type="checkbox" />MORE works with pointer, keyboard, and Escape.</label>
         <label><input type="checkbox" />Focus Mode preserves the standard game session.</label>
         <label><input type="checkbox" />Home requests no word bank.</label>
@@ -103,13 +98,17 @@
       <fieldset>
         <legend>Solo, Daily, and economy</legend>
         <label
-          ><input type="checkbox" />Solo OG/GO keep board, status, evidence, tools, and keyboard
-          dominant.</label
+          ><input type="checkbox" />Numbered board, cursor, evidence, status, tools, and keyboard
+          remain dominant.</label
         >
         <label><input type="checkbox" />Physical and on-screen input stay synchronized.</label>
         <label
-          ><input type="checkbox" />320px and 390px show complete Submit/Delete controls without
-          overflow.</label
+          ><input type="checkbox" />320px and 390px keep Submit/Delete visible without overflow or
+          obstruction.</label
+        >
+        <label
+          ><input type="checkbox" />Evidence remains understandable without color, in forced colors,
+          and at 200% zoom.</label
         >
         <label
           ><input type="checkbox" />Calendar explains local Solo versus UTC COMBAT dates.</label
@@ -123,43 +122,43 @@
       <fieldset>
         <legend>COMBAT</legend>
         <label
-          ><input type="checkbox" />Waiting clearly says both players receive the same
-          puzzle.</label
+          ><input type="checkbox" />Waiting is a clear transcript rather than a scaffold.</label
         >
         <label
-          ><input type="checkbox" />Desktop boards are symmetric and mobile preserves
-          opponent-before-viewer priority.</label
+          ><input type="checkbox" />Participant panes, clock/turn state, and playable board have a
+          clear hierarchy.</label
         >
         <label
-          ><input type="checkbox" />Turn, recovery, result, and rematch states are
-          unmistakable.</label
+          ><input type="checkbox" />Mobile opponent summary does not duplicate or obstruct
+          controls.</label
         >
         <label
-          ><input type="checkbox" />All lanes use understandable alternating-turn language.</label
+          ><input type="checkbox" />Recovery, outcome, settlement, and rematch states are
+          clear.</label
         >
         <label
-          ><input type="checkbox" />Spectator mode is read-only and exposes no private identifier or
-          unsolved answer.</label
+          ><input type="checkbox" />Spectation is read-only and exposes no private identifier, seed,
+          answer, or mutation control.</label
         >
       </fieldset>
 
       <fieldset>
         <legend>Account, data, and support</legend>
         <label
-          ><input type="checkbox" />Auth clearly separates sign-in/create-account and says guest
-          games stay separate.</label
+          ><input type="checkbox" />Auth separates Sign in/Create account and explains guest
+          isolation.</label
         >
-        <label><input type="checkbox" />Profile and Settings feel like workbench surfaces.</label>
+        <label><input type="checkbox" />Profile and Settings use aligned terminal rows.</label>
         <label
-          ><input type="checkbox" />History, Stats, and Leaderboards remain readable on desktop and
-          mobile.</label
-        >
-        <label
-          ><input type="checkbox" />Word Explorer loads one selected length and never identifies an
-          active answer.</label
+          ><input type="checkbox" />History, Stats, and Leaderboards retain readable density on
+          desktop and mobile.</label
         >
         <label
-          ><input type="checkbox" />Support/Admin and exceptional states share the same hierarchy
+          ><input type="checkbox" />Word Explorer loads one length and reveals no active
+          answer.</label
+        >
+        <label
+          ><input type="checkbox" />Support, Admin, and exceptional states share the same hierarchy
           and tone.</label
         >
       </fieldset>
@@ -167,35 +166,49 @@
       <fieldset>
         <legend>Accessibility and responsiveness</legend>
         <label><input type="checkbox" />Keyboard focus is visible and logical.</label>
-        <label><input type="checkbox" />All eight required widths remain usable.</label>
-        <label><input type="checkbox" />200% zoom creates no horizontal document overflow.</label>
         <label
-          ><input type="checkbox" />Reduced motion and forced colors preserve meaning and
-          operation.</label
+          ><input type="checkbox" />Controls work at 320, 360, 390, 412, 768, 960, 1440, and
+          1920px.</label
+        >
+        <label><input type="checkbox" />200% zoom creates no horizontal overflow.</label>
+        <label><input type="checkbox" />Reduced motion removes cursor blinking.</label>
+        <label
+          ><input type="checkbox" />Forced colors uses opaque system colors and preserves
+          hierarchy.</label
         >
         <label><input type="checkbox" />Mobile touch targets remain at least 44px.</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Hosted evidence and cleanup</legend>
         <label
-          ><input type="checkbox" />Screen-reader labels and status announcements are useful.</label
+          ><input type="checkbox" />The reviewed URL resolves to the exact v4 application
+          commit.</label
+        >
+        <label><input type="checkbox" />Vercel Deployment Protection is active.</label>
+        <label><input type="checkbox" />Hosted services and acceptance tests are green.</label>
+        <label
+          ><input type="checkbox" />Disposable users prove sign-in, COMBAT, recovery, results, and
+          privacy-safe spectation.</label
+        >
+        <label
+          ><input type="checkbox" />Cleanup proves zero database, Auth, Storage, and Blob
+          residue.</label
+        >
+        <label
+          ><input type="checkbox" />Production, default branch, migrations, real accounts, and the
+          locked shell are unchanged.</label
         >
       </fieldset>
 
       <fieldset>
         <legend>Review boundary</legend>
-        <label
-          ><input type="checkbox" />The candidate is protected and Production is not under
-          review.</label
-        >
         <label><input type="checkbox" />Exactly three HTTP interfaces remain.</label>
         <label
-          ><input type="checkbox" />No merge, release, schema, default-branch, or real-account
-          action is requested.</label
+          ><input type="checkbox" />No merge, Production release, schema change, branch deletion,
+          stash inspection, or real-account deletion is requested.</label
         >
       </fieldset>
-
-      <p>
-        Record route, viewport, account state, expected behavior, actual behavior, and a screenshot
-        containing no secret or unrelated player data.
-      </p>
     </main>
   </body>
 </html>
