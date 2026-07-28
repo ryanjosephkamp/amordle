@@ -5,7 +5,7 @@
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
   "currentCheckpoint": "stage-2-v4-alt-screen-shell-local-green",
-  "status": "local-acceptance-green",
+  "status": "blocked-pending-secret-rotation",
   "lastGreenCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
   "visualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
@@ -52,6 +52,11 @@
     "lastRunId": "e2e_20260728T041602844Z_ef840721_c179a917",
     "zeroResidue": true
   },
-  "blocker": null,
-  "updatedAt": "2026-07-28T16:41:12Z"
+  "blocker": {
+    "code": "vercel-blob-credential-exposed-in-tool-output",
+    "scope": "ignored local Preview environment custody",
+    "requiredResolution": "Account owner rotates or revokes the exposed Vercel Blob read/write credential and confirms completion before Preview deployment or hosted acceptance.",
+    "externalMutationsHalted": true
+  },
+  "updatedAt": "2026-07-28T16:43:00Z"
 }
