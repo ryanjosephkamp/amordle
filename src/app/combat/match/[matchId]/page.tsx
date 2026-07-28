@@ -10,7 +10,7 @@ export default async function CombatMatchPage({
   return (
     <div className="route-frame game-route">
       <RouteHeader title="COMBAT match">
-        <p className="mono">Match {matchId}</p>
+        <p>Your board, the opponent board, and the next valid action stay together.</p>
       </RouteHeader>
       <MatchController gameId={matchId} />
     </div>

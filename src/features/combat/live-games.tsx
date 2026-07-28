@@ -20,7 +20,7 @@ export function LiveGames() {
     );
   }
   if (!games.data.length) {
-    return <p className="prose">No privacy-safe public Practice games are live right now.</p>;
+    return <p className="prose">No public Practice games are available to watch right now.</p>;
   }
   return (
     <div className="spectator-list">
@@ -43,7 +43,7 @@ function SpectatorGamePanel({ game }: { game: SpectatorGame }) {
             {game.ranked ? 'Ranked Practice' : 'Public Practice'} · {game.outcome.label}
           </p>
         </div>
-        <span className="badge">{game.status}</span>
+        <span className="badge">READ ONLY</span>
       </header>
       <div className="dual-board">
         {game.players.map((player) => (
@@ -61,16 +61,23 @@ function SpectatorGamePanel({ game }: { game: SpectatorGame }) {
                     role="row"
                     key={`${player.seat}:${move.puzzleIndex}:${moveIndex}`}
                   >
-                    {move.tiles.map((tile, tileIndex) => (
-                      <div
-                        className={`tile is-${tile.state}`}
-                        role="cell"
-                        aria-label={`${tile.letter}, ${tile.state}`}
-                        key={`${tileIndex}:${tile.letter}`}
-                      >
-                        {tile.letter.toUpperCase()}
-                      </div>
-                    ))}
+                    {move.tiles.map((tile, tileIndex) => {
+                      const glyph =
+                        tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×';
+                      return (
+                        <div
+                          className={`tile is-${tile.state}`}
+                          role="cell"
+                          aria-label={`${tile.letter}, ${tile.state}`}
+                          key={`${tileIndex}:${tile.letter}`}
+                        >
+                          <span className="tile-letter">{tile.letter.toUpperCase()}</span>
+                          <span className="tile-evidence" aria-hidden="true">
+                            {glyph}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 ))}
             </div>

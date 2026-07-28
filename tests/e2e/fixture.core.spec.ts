@@ -5,7 +5,7 @@ test.describe('core browser coverage', () => {
     page,
   }) => {
     const routes: Array<[string, RegExp]> = [
-      ['/', /your next word is ready/i],
+      ['/', /choose your next game/i],
       ['/play/solo', /solo setup/i],
       ['/auth', /account/i],
       ['/combat/active', /active combat/i],
@@ -22,7 +22,7 @@ test.describe('core browser coverage', () => {
 
   test('plays and restores a real five-letter Solo Practice game', async ({ page }) => {
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=0');
-    await expect(page.getByRole('heading', { name: 'Practice OG' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
     await page.getByRole('button', { name: /Sound on/i }).click();
 
     const answer = await page.evaluate(async () => {
@@ -44,8 +44,8 @@ test.describe('core browser coverage', () => {
 
     await page.reload();
     await expect(page.getByRole('heading', { name: 'You solved it' })).toBeVisible();
-    await expect(page.getByRole('table', { name: 'Guess board' })).toContainText(
-      (answer as string).toUpperCase(),
-    );
+    await expect(
+      page.getByRole('row', { name: new RegExp(`Accepted guess: ${answer as string}`, 'i') }),
+    ).toBeVisible();
   });
 });

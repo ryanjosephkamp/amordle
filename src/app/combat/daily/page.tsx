@@ -5,7 +5,7 @@ export default function CombatDailyPage() {
   return (
     <div className="route-frame">
       <RouteHeader title="Daily COMBAT">
-        <p>Five-letter UTC Daily lanes. The database selects answers and owns every turn.</p>
+        <p>Five-letter UTC Daily lanes. Both players receive the same puzzle and saved turns.</p>
       </RouteHeader>
       <DailyLobby />
     </div>

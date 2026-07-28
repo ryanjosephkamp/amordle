@@ -5,7 +5,7 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     page,
   }) => {
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=19');
-    await expect(page.getByRole('heading', { name: 'Practice OG' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
     await page.getByRole('button', { name: /Sound on/i }).click();
 
     const samples = await page.evaluate(async () => {
@@ -49,7 +49,7 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await page.goto(`${page.url()}&focus=1`);
     await expect(page.locator('.topbar')).toHaveCount(0);
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
-    await page.getByRole('link', { name: 'Exit focus' }).click();
+    await page.getByRole('link', { name: /Exit focus/i }).click();
     await expect(page.locator('.topbar')).toBeVisible();
   });
 
@@ -61,10 +61,10 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await page.waitForFunction(() => 'serviceWorker' in navigator);
     await page.evaluate(() => navigator.serviceWorker.ready);
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Practice OG' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
     await context.setOffline(true);
     await page.reload();
-    await expect(page.getByRole('heading', { name: 'Practice OG' })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
     const forbidden = await page.evaluate(async () => {
       const requests: string[] = [];
       for (const name of await caches.keys()) {

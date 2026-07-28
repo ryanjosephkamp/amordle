@@ -5,27 +5,27 @@ const lanes = [
   {
     href: '/combat/practice',
     title: 'Practice',
-    description: 'Public unranked matches and compatible ranked matchmaking.',
+    description: 'Create an open match or find a compatible ranked opponent.',
   },
   {
     href: '/combat/daily',
     title: 'Daily',
-    description: 'Five-letter UTC lanes with database-owned answers and turns.',
+    description: 'Play today’s shared five-letter puzzle in UTC lanes.',
   },
   {
     href: '/combat/active',
     title: 'Active',
-    description: 'Resume participant-owned waiting, playing, and recent terminal games.',
+    description: 'Resume waiting, playing, and recently completed games.',
   },
   {
     href: '/combat/lobby',
     title: 'Lobby',
-    description: 'Private requests, preferences, blocks, and accepted matches.',
+    description: 'Send and manage private Practice requests.',
   },
   {
     href: '/combat/live',
     title: 'Live',
-    description: 'Sanitized public spectation with participant privacy intact.',
+    description: 'Watch public Practice matches in read-only mode.',
   },
 ] as const;
 
@@ -33,9 +33,7 @@ export default function CombatPage() {
   return (
     <div className="route-frame">
       <RouteHeader title="COMBAT">
-        <p>
-          Alternating-turn word games with recoverable state and server-authoritative ranked play.
-        </p>
+        <p>Alternating-turn word games that stay safe through refreshes and reconnects.</p>
       </RouteHeader>
       <div className="route-grid">
         {lanes.map((lane) => (

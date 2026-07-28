@@ -78,7 +78,8 @@
 }
 
 .game-status-facts .save-state {
-  color: var(--correct);
+  color: var(--correct-text);
+  text-transform: uppercase;
 }
 
 .game-status-facts .save-state.is-error {
@@ -237,7 +238,7 @@
 }
 
 .game-message > span {
-  color: var(--accent);
+  color: var(--accent-text);
   font-weight: 800;
 }
 

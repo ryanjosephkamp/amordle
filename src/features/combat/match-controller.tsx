@@ -346,6 +346,7 @@ function RankedDailyMatch({
           acceptedAt: move.createdAt,
         }))}
         length={5}
+        viewerSeat={viewerSeat}
       />
       {!terminal && (
         <CombatInput
@@ -361,19 +362,19 @@ function RankedDailyMatch({
       </p>
       {!terminal && (
         <button type="button" onClick={forfeit} disabled={pending}>
-          {game.moves.length ? 'Forfeit match' : 'Cancel before play'}
+          {game.moves.length ? 'FORFEIT MATCH' : 'CANCEL BEFORE PLAY'}
         </button>
       )}
       {terminal && game.status !== 'cancelled' && (
         <div className="result-panel">
           <h2>Ranked result</h2>
-          <p>The terminal result is durable. Rating settlement is idempotent.</p>
+          <p>The result is final. Update your rating to finish this match.</p>
           <div className="action-row">
             <button className="primary" onClick={settle} disabled={pending}>
-              Settle rating
+              UPDATE RATING
             </button>
             <Link className="button" href={`/combat/results/${game.id}`}>
-              View result
+              VIEW RESULT
             </Link>
           </div>
         </div>
@@ -427,9 +428,15 @@ function LegacyMatch({
                   : 'Opponent’s turn'
         }
       />
+      {game.status === 'waiting' && (
+        <div className="combat-wait-state" role="status">
+          <strong>Waiting for another player</strong>
+          <span>Both players get the same puzzle.</span>
+        </div>
+      )}
       {game.mode === 'go' && currentPuzzleIndex > 0 && (
         <div className="seeded-evidence">
-          <h2>Chain evidence</h2>
+          <h2>SEED EVIDENCE</h2>
           {Array.from({ length: currentPuzzleIndex }, (_, puzzleIndex) => {
             const solvedMove = game.moves.find(
               (move) =>
@@ -446,7 +453,7 @@ function LegacyMatch({
           })}
         </div>
       )}
-      <MoveBoards moves={game.moves} length={game.wordLength} />
+      <MoveBoards moves={game.moves} length={game.wordLength} viewerSeat={seat} />
       {!terminal && game.status === 'playing' && (
         <CombatInput
           draft={draft}
@@ -464,7 +471,7 @@ function LegacyMatch({
           <h2>Answer</h2>
           <p className="mono">{game.answer.toUpperCase()}</p>
           <Link className="button primary" href={`/combat/results/${game.id}`}>
-            View result
+            VIEW RESULT
           </Link>
           {sanctionedWords && (
             <RematchActions sourceGameId={game.id} sanctionedWords={sanctionedWords} />
@@ -533,7 +540,7 @@ function RematchActions({
           disabled={act.isPending}
           onClick={() => act.mutate({ action: 'request' })}
         >
-          Request rematch
+          REQUEST REMATCH
         </button>
       ) : latest.viewer_can_accept ? (
         <div className="action-row">
@@ -542,13 +549,13 @@ function RematchActions({
             disabled={act.isPending}
             onClick={() => act.mutate({ action: 'accept', request: latest })}
           >
-            Accept rematch
+            ACCEPT REMATCH
           </button>
           <button
             disabled={act.isPending}
             onClick={() => act.mutate({ action: 'decline', request: latest })}
           >
-            Decline
+            DECLINE
           </button>
         </div>
       ) : latest.viewer_can_cancel ? (
@@ -556,7 +563,7 @@ function RematchActions({
           disabled={act.isPending}
           onClick={() => act.mutate({ action: 'cancel', request: latest })}
         >
-          Cancel rematch request
+          CANCEL REMATCH REQUEST
         </button>
       ) : null}
       <p aria-live="polite">{message}</p>
@@ -605,6 +612,12 @@ function AuthoritativeMatch({
                 : 'Opponent’s turn'
         }
       />
+      {game.status === 'waiting' && (
+        <div className="combat-wait-state" role="status">
+          <strong>Waiting for another player</strong>
+          <span>Both players get the same puzzle.</span>
+        </div>
+      )}
       <div className="combat-score" aria-label="Match score">
         {game.players.map((participant) => (
           <div key={participant.seat}>
@@ -621,7 +634,7 @@ function AuthoritativeMatch({
       </div>
       {game.seededRows.length > 0 && (
         <div className="seeded-evidence">
-          <h2>Chain evidence</h2>
+          <h2>SEED EVIDENCE</h2>
           {game.seededRows.map((row) => (
             <TileRow key={row.sourcePuzzleIndex} guess={row.guess} tiles={row.tiles} />
           ))}
@@ -638,6 +651,7 @@ function AuthoritativeMatch({
             acceptedAt: move.createdAt,
           }))}
         length={game.wordLength}
+        viewerSeat={game.viewerSeat}
       />
       {!terminal && game.status === 'playing' && (
         <CombatInput
@@ -653,7 +667,7 @@ function AuthoritativeMatch({
       </p>
       {!terminal && game.capabilities.canForfeit && (
         <button type="button" onClick={forfeit} disabled={pending}>
-          Forfeit match
+          FORFEIT MATCH
         </button>
       )}
       {terminal && (
@@ -667,11 +681,11 @@ function AuthoritativeMatch({
           <div className="action-row">
             {game.capabilities.canSettleRating && (
               <button className="primary" onClick={settle} disabled={pending}>
-                Settle rating
+                UPDATE RATING
               </button>
             )}
             <Link className="button" href={`/combat/results/${game.id}`}>
-              View result
+              VIEW RESULT
             </Link>
           </div>
         </div>
@@ -712,13 +726,16 @@ function CombatHeader({
 }) {
   return (
     <header className="game-status">
-      <div>
+      <div className="game-mode-lockup">
+        <span className="game-context">COMBAT / MATCH</span>
         <h1 id="combat-heading">{title}</h1>
-        <p className="mono">{detail}</p>
       </div>
-      <strong className="badge" aria-live="polite">
-        {status}
-      </strong>
+      <div className="game-status-facts">
+        <span>{detail.toUpperCase()}</span>
+        <strong className="combat-turn-state" aria-live="polite">
+          {status.toUpperCase()}
+        </strong>
+      </div>
     </header>
   );
 }
@@ -726,6 +743,7 @@ function CombatHeader({
 function MoveBoards({
   moves,
   length,
+  viewerSeat,
 }: {
   moves: Array<{
     id: string;
@@ -735,6 +753,7 @@ function MoveBoards({
     acceptedAt: string;
   }>;
   length: number;
+  viewerSeat: 'player-one' | 'player-two';
 }) {
   const bySeat = useMemo(
     () => ({
@@ -743,11 +762,16 @@ function MoveBoards({
     }),
     [moves],
   );
+  const opponentSeat = viewerSeat === 'player-one' ? 'player-two' : 'player-one';
   return (
     <div className="dual-board">
-      {(['player-one', 'player-two'] as const).map((seat) => (
-        <section key={seat} aria-label={`${seat.replace('-', ' ')} board`}>
-          <h2>{seat === 'player-one' ? 'Player one' : 'Player two'}</h2>
+      {([viewerSeat, opponentSeat] as const).map((seat) => (
+        <section
+          className={seat === viewerSeat ? 'is-viewer' : 'is-opponent'}
+          key={seat}
+          aria-label={`${seat === viewerSeat ? 'your' : 'opponent'} board`}
+        >
+          <h2>{seat === viewerSeat ? 'YOU' : 'OPPONENT'}</h2>
           <div className="compact-board">
             {bySeat[seat].map((move) => (
               <TileRow key={move.id} guess={move.guess} tiles={move.tiles} />
@@ -769,16 +793,22 @@ function TileRow({
 }) {
   return (
     <div className="board-row" role="row" aria-label={guess}>
-      {tiles.map((tile, index) => (
-        <div
-          key={`${index}:${tile.letter}`}
-          className={`tile is-${tile.state}`}
-          role="cell"
-          aria-label={`${tile.letter}, ${tile.state}`}
-        >
-          {tile.letter.toUpperCase()}
-        </div>
-      ))}
+      {tiles.map((tile, index) => {
+        const glyph = tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×';
+        return (
+          <div
+            key={`${index}:${tile.letter}`}
+            className={`tile is-${tile.state}`}
+            role="cell"
+            aria-label={`${tile.letter}, ${tile.state}`}
+          >
+            <span className="tile-letter">{tile.letter.toUpperCase()}</span>
+            <span className="tile-evidence" aria-hidden="true">
+              {glyph}
+            </span>
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -853,10 +883,10 @@ function CombatInput({
       </div>
       <div className="action-row">
         <button className="primary" disabled={disabled || draft.length !== length} onClick={submit}>
-          Submit guess
+          SUBMIT
         </button>
         <button disabled={disabled || !draft} onClick={() => setDraft(draft.slice(0, -1))}>
-          Delete
+          DELETE
         </button>
       </div>
     </div>

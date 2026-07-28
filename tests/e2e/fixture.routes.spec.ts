@@ -58,7 +58,7 @@ test.describe('route and public boundary matrix', () => {
       if (/word-lists|words_length_\d+/.test(request.url())) wordRequests.push(request.url());
     });
     await page.goto('/');
-    await expect(page.getByRole('heading', { name: /your next word is ready/i })).toBeVisible();
+    await expect(page.getByRole('heading', { name: /choose your next game/i })).toBeVisible();
     expect(wordRequests).toEqual([]);
 
     await page.goto(
@@ -67,7 +67,10 @@ test.describe('route and public boundary matrix', () => {
     await expect(page).toHaveURL(
       /\/play\/solo\/practice\/go\?length=7&difficulty=expert&count=7&hard=1&generation=4$/,
     );
-    await expect(page.getByText(/7 letters · puzzle 1\/7 · Hard Mode/i)).toBeVisible();
+    await expect(page.getByRole('heading', { name: /GO run/i })).toBeVisible();
+    await expect(page.locator('.game-status')).toContainText(/7 letters/i);
+    await expect(page.locator('.game-status')).toContainText(/1 \/ 7 puzzles/i);
+    await expect(page.locator('.game-status')).toContainText(/Hard Mode/i);
   });
 
   test('the three HTTP interfaces expose only retained public method behavior', async ({

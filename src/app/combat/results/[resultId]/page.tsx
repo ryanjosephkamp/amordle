@@ -10,7 +10,7 @@ export default async function CombatResultPage({
   return (
     <div className="route-frame game-route">
       <RouteHeader title="COMBAT result">
-        <p>Terminal evidence, revealed answers, points, and settlement state.</p>
+        <p>Review the final boards, answers, points, rating, and available next match.</p>
       </RouteHeader>
       <MatchController gameId={resultId} />
     </div>

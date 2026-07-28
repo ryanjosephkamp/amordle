@@ -560,8 +560,8 @@ export function SoloGame({
           <span className={`save-state is-${saveState}`} aria-live="polite">
             {saveState === 'saved'
               ? signedInUserId
-                ? 'SAVED TO YOUR ACCOUNT'
-                : 'SAVED ON THIS DEVICE'
+                ? 'Saved to your account'
+                : 'Saved on this device'
               : saveState === 'saving'
                 ? 'SAVING…'
                 : saveState === 'syncing'
