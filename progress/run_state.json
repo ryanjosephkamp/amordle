@@ -4,43 +4,44 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v4-final-protected-preview-candidate",
-  "status": "review-ready",
-  "lastGreenCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+  "currentCheckpoint": "stage-2-v5-local-acceptance-green-hosted-blocked",
+  "status": "blocked-pending-preview-credential-rotation",
+  "lastGreenCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
   "visualReference": {
+    "package": "design/references/stage2/v5-quiet-system-shell-responsive-play-2026-07-28",
+    "packageCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
+    "recommendedDirection": "quiet-system-shell-responsive-play",
+    "approvalStatus": "user-authorized-implementation",
+    "approvedAt": "2026-07-28T22:14:10Z",
+    "finalImplementationCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852"
+  },
+  "candidateVisualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
     "packageCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
     "recommendedDirection": "alt-screen-terminal",
-    "approvalStatus": "user-authorized-functional-shell",
-    "approvedAt": "2026-07-28T16:37:33Z",
-    "finalImplementationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1"
-  },
-  "candidateVisualReference": {
-    "package": "design/references/stage2/v3-macos-liquid-terminal-2026-07-28",
-    "packageCommit": "5454a0e33406076a3c6e0c36c9835c6c467496ee",
-    "recommendedDirection": "mac-shell-grok-core",
-    "approvalStatus": "superseded-unapproved-provenance",
-    "createdAt": "2026-07-28T15:54:48Z"
+    "approvalStatus": "superseded-provenance",
+    "createdAt": "2026-07-28T16:37:33Z"
   },
   "localAcceptance": {
-    "candidateCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+    "candidateCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
     "check": "green",
     "domainTests": 18,
-    "browserComponentTests": 3,
+    "browserComponentTests": 6,
     "fixtureE2E": 12,
-    "visualE2E": 5,
+    "visualE2E": 6,
+    "responsivePlayMatrix": "9/9 green",
     "mobileVitals": {
-      "lcpMs": 120,
-      "inpMs": 32,
-      "cls": 0.0003232403939022726
+      "lcpMs": 104,
+      "inpMs": 40,
+      "cls": 0
     },
     "homeCompressedBytes": {
-      "js": 173586,
-      "css": 13383
+      "js": 173388,
+      "css": 14273
     },
     "gameCompressedBytes": {
-      "js": 179475,
-      "css": 15777
+      "js": 179940,
+      "css": 18074
     }
   },
   "hostedAcceptance": {
@@ -60,7 +61,7 @@
     "url": "https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
-    "supersededByLocalCandidate": false,
+    "supersededByLocalCandidate": true,
     "projectSettingsRestored": true
   },
   "cleanup": {
@@ -77,8 +78,9 @@
     "rotationCheckResult": "unchanged",
     "consecutiveBlockedGoalTurns": 0,
     "ownerAuthorizedContinuationAt": "2026-07-28T19:59:04Z",
-    "oidcReplacementAttempt": "rejected-environment-not-allowed"
+    "oidcReplacementAttempt": "rejected-environment-not-allowed",
+    "v5HostedAcceptanceStatus": "blocked-before-mutation-missing-protected-preview-context"
   },
-  "reportStatus": "v4-final-paired-reports-and-manual-checklist-review-ready",
-  "updatedAt": "2026-07-28T20:08:52Z"
+  "reportStatus": "v5-local-checkpoint-ready-hosted-evidence-blocked",
+  "updatedAt": "2026-07-28T22:16:07Z"
 }
