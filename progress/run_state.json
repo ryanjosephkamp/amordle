@@ -6,10 +6,10 @@
   "currentStage": "stage-2",
   "currentCheckpoint": "stage-2-v4-alt-screen-shell-local-green",
   "status": "local-acceptance-green",
-  "lastGreenCommit": "ef8407216afde5bc4639411b210678b731090dee",
+  "lastGreenCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
   "visualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
-    "packageCommit": null,
+    "packageCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
     "recommendedDirection": "alt-screen-terminal",
     "approvalStatus": "user-authorized-functional-shell",
     "approvedAt": "2026-07-28T16:37:33Z"
@@ -22,7 +22,7 @@
     "createdAt": "2026-07-28T15:54:48Z"
   },
   "localAcceptance": {
-    "candidateCommit": null,
+    "candidateCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
     "check": "green",
     "domainTests": 18,
     "browserComponentTests": 3,
@@ -53,5 +53,5 @@
     "zeroResidue": true
   },
   "blocker": null,
-  "updatedAt": "2026-07-28T16:39:52Z"
+  "updatedAt": "2026-07-28T16:41:12Z"
 }
