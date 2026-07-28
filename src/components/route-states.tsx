@@ -8,9 +8,30 @@ import { useAuth } from './providers';
 export function RouteHeader({ title, children }: PropsWithChildren<{ title: string }>) {
   return (
     <header className="route-header">
-      <h1>{title}</h1>
+      <div className="route-title-line">
+        <h1>{title}</h1>
+        <span aria-hidden="true" />
+      </div>
       {children}
     </header>
+  );
+}
+
+export function WorkbenchRegion({
+  title,
+  status,
+  children,
+  className = '',
+}: PropsWithChildren<{ title: string; status?: ReactNode; className?: string }>) {
+  const id = `region-${title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`;
+  return (
+    <section className={`workbench-region ${className}`.trim()} aria-labelledby={id}>
+      <header className="workbench-region-header">
+        <h2 id={id}>{title}</h2>
+        {status && <div className="workbench-region-status">{status}</div>}
+      </header>
+      <div className="workbench-region-body">{children}</div>
+    </section>
   );
 }
 
@@ -20,11 +41,10 @@ export function StatusPanel({
   action,
 }: PropsWithChildren<{ title: string; action?: ReactNode }>) {
   return (
-    <section className="status-panel" aria-labelledby={`status-${title.replaceAll(' ', '-')}`}>
-      <h2 id={`status-${title.replaceAll(' ', '-')}`}>{title}</h2>
+    <WorkbenchRegion title={title} className="status-panel" status="STATUS">
       <div className="prose">{children}</div>
       {action && <div className="action-row">{action}</div>}
-    </section>
+    </WorkbenchRegion>
   );
 }
 
