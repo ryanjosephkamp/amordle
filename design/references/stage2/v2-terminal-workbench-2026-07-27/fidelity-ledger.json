@@ -1,14 +1,18 @@
 {
-  "schemaVersion": 1,
-  "status": "pending-implementation",
+  "schemaVersion": 2,
+  "status": "local-fidelity-green-hosted-state-evidence-pending",
+  "approvedDirection": "quiet-workbench",
+  "conceptPackage": "design/references/stage2/v2-terminal-workbench-2026-07-27",
+  "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
   "requiredComparisonsPerSurface": 5,
   "requiredViewports": [
     "1440x1024-light",
     "1440x1024-dark",
     "390x844-mobile",
-    "320-or-360-stress",
-    "200-percent-or-forced-colors-or-reduced-motion"
+    "320x844-stress",
+    "200-percent-forced-colors"
   ],
+  "scoreScale": "1-5",
   "scoreCategories": [
     "coherence",
     "hierarchy",
@@ -27,42 +31,461 @@
     "terminalAuthenticity": 4,
     "forbiddenAntiPatterns": 0
   },
-  "surfaces": [
+  "forbiddenAntiPatternsObserved": [],
+  "entries": [
     {
-      "id": "shell-home",
+      "surface": "shell-home",
       "concepts": ["approval-board-home-solo.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "shell-home-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Binding copy is exact: Choose your next game; fixture attention replaces generated match samples."
+        },
+        {
+          "path": "shell-home-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No material copy deviation."
+        },
+        {
+          "path": "shell-home-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Commands remain first; account attention follows below the fold."
+        },
+        {
+          "path": "shell-home-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No copy removal; descriptions wrap without document overflow."
+        },
+        {
+          "path": "shell-home-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Primary commands and status remain visible at effective 360px width."
+        }
+      ],
+      "scores": {
+        "coherence": 5,
+        "hierarchy": 5,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 4,
+        "responsiveTranslation": 5,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 46
+      },
+      "intentionalDeviation": "The implementation uses a wider two-column command workspace and omits generated icon decoration; real Home attention data remains authoritative.",
+      "status": "pass"
     },
     {
-      "id": "solo",
+      "surface": "solo",
       "concepts": ["approval-board-home-solo.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "solo-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "OG PUZZLE, status facts, and Ready for your guess are exact."
+        },
+        {
+          "path": "solo-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Blank initial board replaces generated sample guesses."
+        },
+        {
+          "path": "solo-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "All game controls remain in the first viewport; the legend is an explicitly focusable internal rail."
+        },
+        {
+          "path": "solo-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Submit and Delete remain fully visible after the intrinsic-width repair."
+        },
+        {
+          "path": "solo-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Non-color evidence glyphs and controls remain operable."
+        }
+      ],
+      "scores": {
+        "coherence": 5,
+        "hierarchy": 5,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 5,
+        "responsiveTranslation": 5,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 5,
+        "total": 48
+      },
+      "intentionalDeviation": "The live implementation centers a larger blank playfield and keeps Practice tools in a ruled action rail; generated guesses and answers are never used as authority.",
+      "status": "pass"
     },
     {
-      "id": "daily-economy",
+      "surface": "daily-economy",
       "concepts": ["approval-board-data-account.png", "approval-board-mobile-states.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "daily-economy-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Daily calendar and local-versus-UTC explanation are implementation-authoritative."
+        },
+        {
+          "path": "daily-economy-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No material copy deviation."
+        },
+        {
+          "path": "daily-economy-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "The implemented recent-35-days calendar replaces the generated month sample."
+        },
+        {
+          "path": "daily-economy-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Date labels remain readable without horizontal overflow."
+        },
+        {
+          "path": "daily-economy-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Selection and purchase boundaries remain explicit."
+        }
+      ],
+      "scores": {
+        "coherence": 5,
+        "hierarchy": 4,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 4,
+        "responsiveTranslation": 4,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 44
+      },
+      "intentionalDeviation": "The contract requires a rolling 35-day view and delays any unlock confirmation until a past date is selected; generated balances and dates are excluded.",
+      "status": "pass"
     },
     {
-      "id": "combat",
+      "surface": "combat",
       "concepts": ["approval-board-combat.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "combat-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "COMBAT is correctly described as alternating-turn play."
+        },
+        {
+          "path": "combat-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Practice, Daily, Active, Lobby, and Live remain visible as ruled destinations."
+        },
+        {
+          "path": "combat-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Destination descriptions stack without fake real-time terminology."
+        },
+        {
+          "path": "combat-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No route or action is removed at the stress width."
+        },
+        {
+          "path": "combat-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Navigation and lane descriptions preserve order and contrast."
+        }
+      ],
+      "scores": {
+        "coherence": 4,
+        "hierarchy": 4,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 4,
+        "responsiveTranslation": 4,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 43
+      },
+      "intentionalDeviation": "The local matrix uses the non-mutating COMBAT overview. Waiting, active, recovery, result/rematch, and spectator states are captured only with protected disposable users.",
+      "status": "pass-local-hosted-state-evidence-pending"
     },
     {
-      "id": "account-data",
+      "surface": "account-data",
       "concepts": ["approval-board-data-account.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "account-data-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "The unavailable state replaces fabricated account statistics in the local fixture."
+        },
+        {
+          "path": "account-data-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Private data authority remains explicit."
+        },
+        {
+          "path": "account-data-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Player summary and service status remain intact on mobile."
+        },
+        {
+          "path": "account-data-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Nested status regions reflow without clipping."
+        },
+        {
+          "path": "account-data-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Status hierarchy remains legible at effective 360px width."
+        }
+      ],
+      "scores": {
+        "coherence": 4,
+        "hierarchy": 4,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 4,
+        "responsiveTranslation": 5,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 44
+      },
+      "intentionalDeviation": "Local evidence intentionally shows the unavailable boundary. Profile, Settings, Stats, History, and Leaderboard are captured with real disposable accounts only on the protected Preview.",
+      "status": "pass-local-hosted-state-evidence-pending"
     },
     {
-      "id": "words-support",
+      "surface": "words-support",
       "concepts": ["approval-board-mobile-states.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "words-support-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Accepted-guess and answer-eligible language is exact and never identifies an active answer."
+        },
+        {
+          "path": "words-support-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Revision metadata is intentionally shortened to eight characters."
+        },
+        {
+          "path": "words-support-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "The implemented definition fallback replaces generated dictionary content."
+        },
+        {
+          "path": "words-support-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Controls stack and word rows remain readable."
+        },
+        {
+          "path": "words-support-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Search controls and result hierarchy preserve keyboard order."
+        }
+      ],
+      "scores": {
+        "coherence": 5,
+        "hierarchy": 5,
+        "density": 4,
+        "spacing": 4,
+        "typography": 5,
+        "interactionStateCompleteness": 4,
+        "responsiveTranslation": 5,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 46
+      },
+      "intentionalDeviation": "No generated definition is shipped. The selected word uses the implemented curated-definition fallback and explicit external search action.",
+      "status": "pass"
     },
     {
-      "id": "exceptional-states",
+      "surface": "exceptional-states",
       "concepts": ["approval-board-mobile-states.png"],
-      "status": "pending"
+      "comparisons": [
+        {
+          "path": "exceptional-states-1440x1024-light.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Account service unavailable is the exact fixture state."
+        },
+        {
+          "path": "exceptional-states-1440x1024-dark.png",
+          "viewport": "1440x1024",
+          "browser": "Chromium",
+          "theme": "system-dark",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No implementation-facing error text is exposed."
+        },
+        {
+          "path": "exceptional-states-390x844-mobile.png",
+          "viewport": "390x844",
+          "browser": "Chromium",
+          "theme": "system-light",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "Nested workbench status remains compact and readable."
+        },
+        {
+          "path": "exceptional-states-320x844-stress.png",
+          "viewport": "320x844",
+          "browser": "Chromium",
+          "theme": "system-dark-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "No status label or recovery context is removed."
+        },
+        {
+          "path": "exceptional-states-200-percent-forced-colors.png",
+          "viewport": "720x900 at 200% zoom",
+          "browser": "Chromium",
+          "theme": "forced-colors-reduced-motion",
+          "nativeSizeInspected": true,
+          "aboveFoldCopyDiff": "System outlines replace palette cues without losing hierarchy."
+        }
+      ],
+      "scores": {
+        "coherence": 5,
+        "hierarchy": 5,
+        "density": 4,
+        "spacing": 5,
+        "typography": 5,
+        "interactionStateCompleteness": 5,
+        "responsiveTranslation": 5,
+        "copyQuality": 5,
+        "accessibility": 5,
+        "terminalAuthenticity": 4,
+        "total": 48
+      },
+      "intentionalDeviation": "Exceptional states use text-first ruled status regions and structural skeleton rows; the generated icon and spinner treatments are deliberately excluded.",
+      "status": "pass"
     }
   ],
-  "entries": []
+  "nativeSizeReview": {
+    "method": "view_image original-size comparison",
+    "conceptsInspected": [
+      "approval-board-home-solo.png",
+      "approval-board-combat.png",
+      "approval-board-data-account.png",
+      "approval-board-mobile-states.png"
+    ],
+    "implementationSamplesInspected": [
+      "shell-home-1440x1024-light.png",
+      "solo-1440x1024-dark.png",
+      "solo-390x844-mobile.png",
+      "combat-1440x1024-dark.png",
+      "daily-economy-390x844-mobile.png",
+      "account-data-390x844-mobile.png",
+      "words-support-390x844-mobile.png",
+      "exceptional-states-200-percent-forced-colors.png"
+    ]
+  },
+  "automatedResult": {
+    "test": "pnpm test:visual",
+    "tests": 4,
+    "matrixComparisons": 35,
+    "requiredWidthScreenshots": 16,
+    "reflowForcedColorsScreenshots": 1,
+    "status": "green"
+  }
 }

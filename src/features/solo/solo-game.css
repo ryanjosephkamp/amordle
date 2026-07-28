@@ -245,6 +245,8 @@
 .keyboard {
   display: flex;
   width: min(42rem, 100%);
+  min-width: 0;
+  max-width: 100%;
   margin-inline: auto;
   flex-direction: column;
   gap: 0.35rem;
@@ -278,6 +280,8 @@
 
 .keyboard-row {
   display: flex;
+  min-width: 0;
+  max-width: 100%;
   justify-content: center;
   gap: clamp(0.16rem, 0.7vw, 0.35rem);
 }
@@ -353,6 +357,16 @@ button.key.is-removed {
     grid-template-rows: auto auto auto auto auto;
     gap: 0.55rem;
     padding: 0.6rem 0.45rem max(4.2rem, env(safe-area-inset-bottom));
+  }
+
+  .game-layout > *,
+  .game-status-facts,
+  .game-board-region,
+  .evidence-legend,
+  .game-tools,
+  .keyboard {
+    min-width: 0;
+    max-width: 100%;
   }
 
   .game-status {

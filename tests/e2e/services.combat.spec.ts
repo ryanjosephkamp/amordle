@@ -110,7 +110,7 @@ async function signIn(page: Page, account: Account) {
   await page.getByLabel('Email').fill(account.email);
   await page.getByLabel('Password').fill(account.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
-  await expect(page.getByRole('heading', { name: 'Signed in' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: /account status/i })).toBeVisible();
 }
 
 async function waitForGameMoveCount(gameId: string, count: number) {
@@ -350,6 +350,52 @@ test.describe.serial('protected Preview services', () => {
     await signIn(secondPage, playerTwo!);
     await signIn(spectatorPage, spectator!);
 
+    await firstPage.setViewportSize({ width: 1440, height: 1024 });
+    await firstPage.emulateMedia({ colorScheme: 'light' });
+    await firstPage.goto(`${baseURL}/profile`);
+    await expect(firstPage.getByRole('heading', { name: 'PUBLIC PROFILE' })).toBeVisible();
+    await firstPage.screenshot({
+      path: path.join(evidenceDir, 'account-profile-desktop-light.png'),
+      fullPage: true,
+    });
+    await firstPage.emulateMedia({ colorScheme: 'dark' });
+    await firstPage.goto(`${baseURL}/settings`);
+    await expect(firstPage.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await firstPage.screenshot({
+      path: path.join(evidenceDir, 'account-settings-desktop-dark.png'),
+      fullPage: true,
+    });
+    await secondPage.setViewportSize({ width: 390, height: 844 });
+    await secondPage.emulateMedia({ colorScheme: 'light' });
+    await secondPage.goto(`${baseURL}/stats`);
+    await expect(secondPage.getByRole('heading', { name: 'Your stats' })).toBeVisible();
+    await secondPage.screenshot({
+      path: path.join(evidenceDir, 'account-stats-mobile-light.png'),
+      fullPage: true,
+    });
+    await secondPage.goto(`${baseURL}/history`);
+    await expect(secondPage.getByRole('heading', { name: 'History' })).toBeVisible();
+    await secondPage.screenshot({
+      path: path.join(evidenceDir, 'account-history-mobile-light.png'),
+      fullPage: true,
+    });
+    await spectatorPage.setViewportSize({ width: 390, height: 844 });
+    await spectatorPage.emulateMedia({ colorScheme: 'dark' });
+    await spectatorPage.goto(`${baseURL}/leaderboards`);
+    await expect(spectatorPage.getByRole('heading', { name: 'Leaderboards' })).toBeVisible();
+    await spectatorPage.screenshot({
+      path: path.join(evidenceDir, 'account-leaderboard-mobile-dark.png'),
+      fullPage: true,
+    });
+    await event('account_visual_evidence_captured', { screenshots: 5 });
+
+    await firstPage.setViewportSize({ width: 1440, height: 1024 });
+    await firstPage.emulateMedia({ colorScheme: 'light' });
+    await secondPage.setViewportSize({ width: 1440, height: 1024 });
+    await secondPage.emulateMedia({ colorScheme: 'dark' });
+    await spectatorPage.setViewportSize({ width: 1440, height: 1024 });
+    await spectatorPage.emulateMedia({ colorScheme: 'light' });
+
     await firstPage.goto(`${baseURL}/combat/practice?length=5`);
     await expect(firstPage.getByRole('heading', { name: 'Create or find a match' })).toBeVisible();
     await firstPage.getByRole('button', { name: 'Create public unranked' }).click();
@@ -367,6 +413,10 @@ test.describe.serial('protected Preview services', () => {
     });
     await event('public_practice_created', { gameId });
     await expect(firstPage.getByText('Waiting for another player')).toBeVisible();
+    await firstPage.screenshot({
+      path: path.join(evidenceDir, 'combat-waiting-desktop-light.png'),
+      fullPage: true,
+    });
 
     await secondPage.goto(`${baseURL}/combat/practice?length=5`);
     const targetRow = secondPage.locator(`[data-game-id="${gameId}"]`);
@@ -374,6 +424,12 @@ test.describe.serial('protected Preview services', () => {
     await targetRow.getByRole('button', { name: 'Join' }).click();
     await expect(secondPage).toHaveURL(new RegExp(`/combat/match/${gameId}$`));
     await expect(secondPage.getByText('Opponent’s turn')).toBeVisible();
+    await secondPage.setViewportSize({ width: 390, height: 844 });
+    await secondPage.screenshot({
+      path: path.join(evidenceDir, 'combat-active-mobile-dark.png'),
+      fullPage: true,
+    });
+    await secondPage.setViewportSize({ width: 1440, height: 1024 });
 
     const { data: rawGame, error: gameError } = await admin
       .from('async_multiplayer_games')
@@ -413,6 +469,15 @@ test.describe.serial('protected Preview services', () => {
     });
     await event('alternating_turns_recovered', { gameId, acceptedMoves: 2 });
 
+    await submitOnScreenGuess(firstPage, answer);
+    await waitForGameMoveCount(gameId, 3);
+    await expect(firstPage.getByText('Match complete').first()).toBeVisible({ timeout: 15_000 });
+    await firstPage.screenshot({
+      path: path.join(evidenceDir, 'combat-result-rematch-desktop-light.png'),
+      fullPage: true,
+    });
+    await event('combat_result_visual_captured', { gameId, terminalMoveCount: 3 });
+
     const anonymous = createClient<Database>(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
@@ -448,6 +513,10 @@ test.describe.serial('protected Preview services', () => {
     await expect(spectatorPanel).toBeVisible({ timeout: 15_000 });
     await expect(spectatorPanel).toContainText('Public Practice');
     await expect(spectatorPage.getByRole('button', { name: 'Submit guess' })).toHaveCount(0);
+    await spectatorPage.screenshot({
+      path: path.join(evidenceDir, 'combat-spectator-desktop-light.png'),
+      fullPage: true,
+    });
     await spectatorPanel.screenshot({
       path: path.join(evidenceDir, 'sanitized-spectator.png'),
     });

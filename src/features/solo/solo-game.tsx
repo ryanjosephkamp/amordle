@@ -125,7 +125,7 @@ function DraftRow({
 
 function EvidenceLegend() {
   return (
-    <div className="evidence-legend" aria-label="Tile evidence legend">
+    <div className="evidence-legend" aria-label="Tile evidence legend" tabIndex={0}>
       <span>
         <b aria-hidden="true">✓</b> Correct spot
       </span>
@@ -544,7 +544,7 @@ export function SoloGame({
             {settings.mode.toUpperCase()} {settings.mode === 'go' ? 'RUN' : 'PUZZLE'}
           </h1>
         </div>
-        <div className="game-status-facts">
+        <div className="game-status-facts" aria-label="Game status facts" tabIndex={0}>
           <span>
             <b>{settings.length}</b> LETTERS
           </span>
