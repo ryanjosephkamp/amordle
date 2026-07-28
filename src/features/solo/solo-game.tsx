@@ -61,22 +61,32 @@ function now(): string {
 
 function BoardRow({ row, length, label }: { row?: GuessRow; length: number; label: string }) {
   return (
-    <div className="board-row" role="row" aria-label={label}>
-      {Array.from({ length }, (_, index) => {
-        const tile = row?.tiles[index];
-        return (
-          <div
-            key={index}
-            className={`tile ${tile ? `is-${tile.state}` : ''}`}
-            role="cell"
-            aria-label={
-              tile ? `${tile.letter.toUpperCase()}, ${tile.state}` : `Empty position ${index + 1}`
-            }
-          >
-            {tile?.letter.toUpperCase() ?? ''}
-          </div>
-        );
-      })}
+    <div className="board-entry" role="presentation">
+      {row?.kind === 'seeded' && <span className="board-entry-label">SEED EVIDENCE</span>}
+      <div className="board-row" role="row" aria-label={label}>
+        {Array.from({ length }, (_, index) => {
+          const tile = row?.tiles[index];
+          const glyph =
+            tile?.state === 'correct' ? '✓' : tile?.state === 'present' ? '~' : tile ? '×' : '';
+          return (
+            <div
+              key={index}
+              className={`tile ${tile ? `is-${tile.state}` : ''}`}
+              role="cell"
+              aria-label={
+                tile ? `${tile.letter.toUpperCase()}, ${tile.state}` : `Empty position ${index + 1}`
+              }
+            >
+              <span className="tile-letter">{tile?.letter.toUpperCase() ?? ''}</span>
+              {glyph && (
+                <span className="tile-evidence" aria-hidden="true">
+                  {glyph}
+                </span>
+              )}
+            </div>
+          );
+        })}
+      </div>
     </div>
   );
 }
@@ -109,6 +119,25 @@ function DraftRow({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+function EvidenceLegend() {
+  return (
+    <div className="evidence-legend" aria-label="Tile evidence legend">
+      <span>
+        <b aria-hidden="true">✓</b> Correct spot
+      </span>
+      <span>
+        <b aria-hidden="true">~</b> Present elsewhere
+      </span>
+      <span>
+        <b aria-hidden="true">×</b> Not in word
+      </span>
+      <span>
+        <b aria-hidden="true">—</b> Removed key
+      </span>
     </div>
   );
 }
@@ -507,32 +536,46 @@ export function SoloGame({
   return (
     <section className="game-layout" aria-labelledby="game-heading">
       <header className="game-status">
-        <div>
+        <div className="game-mode-lockup">
+          <span className="game-context">
+            SOLO / {dailyDate ? `DAILY / ${dailyDate}` : 'PRACTICE'}
+          </span>
           <h1 id="game-heading">
-            {dailyDate ? 'Daily' : 'Practice'} {settings.mode.toUpperCase()}
+            {settings.mode.toUpperCase()} {settings.mode === 'go' ? 'RUN' : 'PUZZLE'}
           </h1>
-          <p className="mono">
-            {settings.length} letters
-            {settings.mode === 'go'
-              ? ` · puzzle ${session.puzzleIndex + 1}/${settings.goCount}`
-              : ''}
-            {settings.hardMode ? ' · Hard Mode' : ''}
-          </p>
         </div>
-        <div className="save-state" aria-live="polite">
-          {saveState === 'saved'
-            ? signedInUserId
-              ? 'Synced'
-              : 'Saved on this device'
-            : saveState === 'saving'
-              ? 'Saving…'
-              : saveState === 'syncing'
-                ? 'Syncing…'
-                : 'Saved locally · cloud retry needed'}
+        <div className="game-status-facts">
+          <span>
+            <b>{settings.length}</b> LETTERS
+          </span>
+          <span>
+            <b>{acceptedRows.length}</b> / {budget} ATTEMPTS
+          </span>
+          {settings.mode === 'go' && (
+            <span>
+              <b>{session.puzzleIndex + 1}</b> / {settings.goCount} PUZZLES
+            </span>
+          )}
+          {settings.hardMode && <span>HARD MODE</span>}
+          <span className={`save-state is-${saveState}`} aria-live="polite">
+            {saveState === 'saved'
+              ? signedInUserId
+                ? 'SAVED TO YOUR ACCOUNT'
+                : 'SAVED ON THIS DEVICE'
+              : saveState === 'saving'
+                ? 'SAVING…'
+                : saveState === 'syncing'
+                  ? 'SYNCING…'
+                  : 'LOCAL SAVE OK · CLOUD RETRY NEEDED'}
+          </span>
         </div>
       </header>
 
       <div className="game-board-region">
+        <div className="game-region-header" aria-hidden="true">
+          <span>GUESS BOARD</span>
+          <span>{session.status.toUpperCase()}</span>
+        </div>
         <div className="game-board" role="table" aria-label="Guess board">
           {currentRows.map((row) => (
             <BoardRow
@@ -566,9 +609,11 @@ export function SoloGame({
             />
           ))}
         </div>
+        <EvidenceLegend />
       </div>
 
       <div className="game-message" aria-live="assertive">
+        <span aria-hidden="true">› </span>
         {session.rejection ??
           (session.status === 'holding'
             ? 'Solved. Carrying that answer into the next puzzle…'
@@ -576,7 +621,7 @@ export function SoloGame({
               ? 'Solved. Nice work.'
               : session.status === 'lost'
                 ? 'No attempts remain.'
-                : 'Enter a word and press Enter.')}
+                : 'Ready for your guess.')}
       </div>
 
       {isPractice && session.status === 'active' && (
@@ -586,14 +631,14 @@ export function SoloGame({
             disabled={(economy.data?.reveal_one_letter ?? 0) < 1}
             onClick={() => void applyReveal()}
           >
-            Reveal letter · {economy.data?.reveal_one_letter ?? 0}
+            REVEAL LETTER · {economy.data?.reveal_one_letter ?? 0}
           </button>
           <button
             type="button"
             disabled={(economy.data?.remove_incorrect_letters ?? 0) < 1}
             onClick={() => void applyRemoval()}
           >
-            Remove letters · {economy.data?.remove_incorrect_letters ?? 0}
+            REMOVE LETTERS · {economy.data?.remove_incorrect_letters ?? 0}
           </button>
           <button
             type="button"
@@ -607,7 +652,7 @@ export function SoloGame({
                 : saveLocalSound(ownerNamespace, next));
             }}
           >
-            Sound {soundEnabled ? 'on' : 'off'}
+            SOUND {soundEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
       )}
@@ -630,7 +675,7 @@ export function SoloGame({
                   aria-label="Submit guess"
                   disabled={session.status !== 'active'}
                 >
-                  Enter
+                  SUBMIT
                 </button>
               )}
               {[...row].map((letter) => (
@@ -653,7 +698,7 @@ export function SoloGame({
                   aria-label="Delete letter"
                   disabled={session.status !== 'active'}
                 >
-                  Delete
+                  DELETE
                 </button>
               )}
             </div>
@@ -667,7 +712,7 @@ export function SoloGame({
           <p>Continue with one more attempt, or reveal the answer and keep this loss final.</p>
           <div className="action-row">
             <button className="primary" onClick={() => void continueGame()}>
-              Continue ·{' '}
+              CONTINUE ·{' '}
               {continuationCost({
                 wordLength: settings.length,
                 completionPercentage: completionPercentage(session),
@@ -676,7 +721,7 @@ export function SoloGame({
               coins
             </button>
             <button onClick={() => void issue({ type: 'reveal-answer', now: now() })}>
-              Reveal answer
+              REVEAL ANSWER
             </button>
           </div>
         </section>
@@ -697,7 +742,7 @@ export function SoloGame({
               className="primary"
               onClick={() => void navigator.clipboard.writeText(shareText)}
             >
-              Copy result
+              COPY RESULT
             </button>
             <a
               className="button"
@@ -707,10 +752,10 @@ export function SoloGame({
               target="_blank"
               rel="noreferrer"
             >
-              Find definition
+              FIND DEFINITION
             </a>
             <Link className="button" href="/play/solo">
-              Play again
+              PLAY AGAIN
             </Link>
           </div>
         </section>

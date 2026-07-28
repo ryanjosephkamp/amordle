@@ -7,6 +7,7 @@ import { selectDailyAnswers } from '@/domain/selectors';
 import type { GameMode, GameSettings } from '@/domain/game';
 import { canLoadDailyAnswers, getOwnerNamespace } from '@/server/identity';
 import Link from 'next/link';
+import { StatusPanel } from '@/components/route-states';
 
 interface Props {
   params: Promise<{ localDate: string; mode: string }>;
@@ -25,15 +26,19 @@ export default async function SoloDailyPage({ params }: Props) {
   if (!(await canLoadDailyAnswers(localDate, mode))) {
     return (
       <div className="route-frame is-narrow">
-        <section className="status-panel">
-          <h1>Past Daily locked</h1>
+        <StatusPanel
+          title="Locked Daily"
+          action={
+            <Link className="button primary" href={`/calendar?date=${localDate}&mode=${mode}`}>
+              REVIEW IN CALENDAR
+            </Link>
+          }
+        >
           <p>
-            This {mode.toUpperCase()} Daily costs 60 coins to unlock. No answer data was loaded.
+            Unlock this date to play or view results. This {mode.toUpperCase()} Daily costs 60
+            coins. No coins are spent until you confirm.
           </p>
-          <Link className="button primary" href={`/calendar?date=${localDate}&mode=${mode}`}>
-            Review in Calendar
-          </Link>
-        </section>
+        </StatusPanel>
       </div>
     );
   }

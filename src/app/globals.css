@@ -958,26 +958,30 @@ th {
 }
 
 .calendar-strip {
-  display: flex;
+  display: grid;
   max-width: 100%;
-  gap: 0.5rem;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  padding-block: 0.25rem 0.75rem;
-  scroll-snap-type: x proximity;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 0;
+  border-top: var(--rule);
+  border-inline-start: var(--rule);
 }
 
 button.calendar-day {
-  min-width: 7rem;
-  min-height: 5.5rem;
+  min-width: 0;
+  min-height: 4.5rem;
   flex-direction: column;
   align-items: flex-start;
   justify-content: space-between;
-  scroll-snap-align: start;
+  border: 0;
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  border-radius: 0;
+  background: var(--background);
+  padding: 0.55rem;
+  font-size: 0.72rem;
 }
 
 button.calendar-day.is-selected {
-  border-color: var(--accent);
   background: var(--accent-soft);
   box-shadow: inset 0 -2px var(--accent);
 }
@@ -1276,6 +1280,19 @@ button.calendar-day.is-selected {
   .confirmation-panel {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  button.calendar-day {
+    min-height: 3.5rem;
+    padding: 0.35rem;
+    font-size: 0.65rem;
+  }
+
+  .calendar-day strong {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: 0.58rem;
+    text-overflow: ellipsis;
   }
 
   .workbench-region-body {

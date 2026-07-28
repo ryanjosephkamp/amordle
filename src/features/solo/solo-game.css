@@ -1,60 +1,142 @@
 .game-layout {
   display: grid;
-  width: min(68rem, 100%);
-  min-height: calc(100dvh - 4rem);
+  width: min(72rem, 100%);
+  min-height: calc(100dvh - 5rem);
   margin-inline: auto;
-  grid-template-rows: auto minmax(0, 1fr) auto auto;
-  gap: 0.8rem;
-  padding: 1rem max(0.7rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-bottom));
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: 0.75rem;
+  padding: 1rem max(0.75rem, env(safe-area-inset-left)) max(1rem, env(safe-area-inset-bottom));
 }
 
 .game-status {
   position: sticky;
   z-index: var(--z-sticky);
-  top: 4rem;
+  top: 5rem;
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   justify-content: space-between;
   gap: 1rem;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
   background: var(--background);
-  padding-block: 0.25rem 0.5rem;
 }
 
 .is-focus .game-status {
   top: 0;
 }
 
-.game-status h1,
-.game-status p {
-  margin: 0;
+.game-mode-lockup {
+  display: flex;
+  min-width: 12rem;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.2rem;
+  border-inline-end: var(--rule);
+  padding: 0.65rem 0.8rem;
+}
+
+.game-context {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+  font-weight: 650;
+  letter-spacing: 0.035em;
 }
 
 .game-status h1 {
+  margin: 0;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 1.1rem;
-  letter-spacing: -0.02em;
+  font-size: 1rem;
+  letter-spacing: -0.015em;
 }
 
-.game-status p,
-.save-state {
+.game-status-facts {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.game-status-facts > span {
+  display: inline-flex;
+  min-height: 100%;
+  align-items: center;
+  gap: 0.25rem;
+  border-inline-start: var(--rule);
+  padding: 0.55rem 0.7rem;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  letter-spacing: 0.025em;
+  white-space: nowrap;
+}
+
+.game-status-facts b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.game-status-facts .save-state {
+  color: var(--correct);
+}
+
+.game-status-facts .save-state.is-error {
+  color: var(--present);
 }
 
 .game-board-region {
   min-height: 0;
   overflow: auto;
   overscroll-behavior: contain;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
   scrollbar-gutter: stable;
+}
+
+.game-region-header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: flex;
+  min-height: 2rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-bottom: var(--rule);
+  background: var(--surface);
+  padding: 0.4rem 0.7rem;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.66rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
 }
 
 .game-board {
   display: flex;
-  width: min(32rem, 100%);
+  width: min(32rem, max-content);
   min-width: min-content;
   margin-inline: auto;
   flex-direction: column;
   gap: 0.32rem;
+  padding: 1.25rem 1rem 0.75rem;
+}
+
+.board-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.board-entry-label {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.62rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-align: center;
 }
 
 .board-row {
@@ -64,35 +146,49 @@
 }
 
 .tile {
+  position: relative;
   display: grid;
   width: clamp(1.7rem, 10vw, 3.2rem);
   max-width: calc((100vw - 2rem) / 5.6);
   aspect-ratio: 1;
   place-items: center;
   border: 1px solid var(--border);
-  border-radius: 0.35rem;
-  background: var(--surface);
+  border-radius: 0.2rem;
+  background: var(--background);
   font-family: var(--font-geist-mono), monospace;
   font-size: clamp(0.78rem, 4vw, 1.45rem);
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile-letter {
+  line-height: 1;
+}
+
+.tile-evidence {
+  position: absolute;
+  right: 0.16rem;
+  bottom: 0.06rem;
+  font-size: 0.52em;
+  line-height: 1;
 }
 
 .tile.is-correct {
   border-color: var(--correct);
-  background: var(--correct);
-  color: oklch(0.15 0.03 145);
+  border-bottom: 4px double var(--correct);
+  background: color-mix(in oklch, var(--correct) 28%, var(--background));
 }
 
 .tile.is-present {
   border-color: var(--present);
-  background: var(--present);
-  color: oklch(0.18 0.03 85);
+  border-bottom: 3px dashed var(--present);
+  background: color-mix(in oklch, var(--present) 25%, var(--background));
 }
 
 .tile.is-absent {
   border-color: var(--absent);
-  background: var(--absent);
-  color: oklch(0.98 0 0);
+  border-bottom: 3px solid var(--absent);
+  background: color-mix(in oklch, var(--absent) 24%, var(--background));
 }
 
 .board-row.is-draft .tile {
@@ -103,13 +199,46 @@
 .board-row.is-draft .tile.is-revealed {
   border-style: double;
   border-width: 3px;
-  background: var(--surface-strong);
+  background: var(--accent-soft);
+}
+
+.evidence-legend {
+  display: flex;
+  max-width: 42rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.4rem 1rem;
+  margin: 0 auto;
+  border-top: var(--rule);
+  padding: 0.65rem 1rem;
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.64rem;
+}
+
+.evidence-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+}
+
+.evidence-legend b {
+  color: var(--ink);
 }
 
 .game-message {
-  min-height: 2rem;
+  min-height: 2.5rem;
+  border-block: var(--rule);
+  padding: 0.55rem 0.75rem;
   color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.78rem;
   text-align: center;
+}
+
+.game-message > span {
+  color: var(--accent);
+  font-weight: 800;
 }
 
 .keyboard {
@@ -127,12 +256,23 @@
   margin-inline: auto;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.5rem;
+  gap: 0;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
 }
 
 .game-tools button {
-  min-height: 2.75rem;
-  font-size: 0.8rem;
+  min-height: var(--control-height);
+  flex: 1 1 auto;
+  border: 0;
+  border-inline-end: var(--rule);
+  border-radius: 0;
+  background: var(--background);
+  font-size: 0.68rem;
+}
+
+.game-tools button:last-child {
+  border-inline-end: 0;
 }
 
 .keyboard-row {
@@ -145,55 +285,57 @@ button.key {
   min-width: 0;
   min-height: 2.75rem;
   flex: 1 1 0;
-  border: 0;
-  border-radius: 0.38rem;
-  background: var(--surface-strong);
+  border: var(--rule);
+  border-radius: 0.2rem;
+  background: var(--surface);
   padding: 0.45rem 0.15rem;
   font-family: var(--font-geist-mono), monospace;
   font-size: clamp(0.7rem, 2.8vw, 0.92rem);
 }
 
 button.key.is-wide {
-  flex-basis: 1.55rem;
-  font-family: var(--font-geist-sans), sans-serif;
-  font-size: clamp(0.62rem, 2vw, 0.78rem);
+  flex-basis: 2.6rem;
+  font-size: clamp(0.58rem, 2vw, 0.7rem);
 }
 
 button.key.is-correct {
-  background: var(--correct);
-  color: oklch(0.15 0.03 145);
+  border-bottom: 4px double var(--correct);
+  background: color-mix(in oklch, var(--correct) 34%, var(--background));
 }
 
 button.key.is-present {
-  background: var(--present);
-  color: oklch(0.18 0.03 85);
+  border-bottom: 3px dashed var(--present);
+  background: color-mix(in oklch, var(--present) 31%, var(--background));
 }
 
 button.key.is-absent {
-  background: var(--absent);
-  color: oklch(0.98 0 0);
+  border-bottom: 3px solid var(--absent);
+  background: color-mix(in oklch, var(--absent) 30%, var(--background));
 }
 
 button.key.is-removed {
-  background: var(--removed);
-  text-decoration: line-through;
+  background: color-mix(in oklch, var(--removed) 28%, var(--background));
+  text-decoration: line-through 2px;
 }
 
 .result-panel {
-  width: min(36rem, 100%);
-  margin: 0 auto 2rem;
-  border-top: 1px solid var(--border);
-  padding-top: 1.25rem;
-  text-align: center;
+  width: min(42rem, 100%);
+  margin: 0 auto 1rem;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: 1rem;
+  text-align: left;
 }
 
 .result-panel h2 {
   margin: 0;
   font-family: var(--font-geist-mono), monospace;
+  font-size: 1rem;
 }
 
 .result-panel .action-row {
-  justify-content: center;
+  justify-content: flex-start;
 }
 
 .game-loading {
@@ -201,26 +343,81 @@ button.key.is-removed {
   min-height: 60dvh;
   place-items: center;
   color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
 }
 
 @media (max-width: 47.99rem) {
   .game-layout {
-    min-height: calc(100dvh - 7.5rem);
-    padding-bottom: max(4.2rem, env(safe-area-inset-bottom));
+    min-height: calc(100dvh - 7.55rem);
+    grid-template-rows: auto auto auto auto auto;
+    gap: 0.55rem;
+    padding: 0.6rem 0.45rem max(4.2rem, env(safe-area-inset-bottom));
   }
 
   .game-status {
-    top: 4rem;
+    top: 4.8rem;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .game-mode-lockup {
+    min-width: 0;
+    border-inline-end: 0;
+    border-bottom: var(--rule);
+    padding: 0.5rem 0.65rem;
+  }
+
+  .game-status-facts {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .game-status-facts > span {
+    min-height: 2rem;
+    border-inline-start: 0;
+    border-inline-end: var(--rule);
+    padding: 0.4rem 0.55rem;
+  }
+
+  .game-status-facts .save-state {
+    flex: 0 0 auto;
+    border-inline-end: 0;
+  }
+
+  .game-board {
+    padding: 0.75rem 0.5rem 0.5rem;
   }
 
   .tile {
-    width: clamp(1.55rem, 11vw, 3rem);
+    width: clamp(1.55rem, 9.8vw, 2.4rem);
+  }
+
+  .evidence-legend {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: 0.75rem;
+    overflow-x: auto;
+    padding: 0.5rem 0.65rem;
+    white-space: nowrap;
+  }
+
+  .game-tools button {
+    min-width: 0;
+    flex-basis: 0;
+    padding-inline: 0.2rem;
+    font-size: 0.58rem;
+  }
+
+  .game-tools button:last-child {
+    flex-basis: 0;
+    border-top: 0;
   }
 }
 
 @media (max-width: 23rem) {
   .game-layout {
-    padding-inline: 0.35rem;
+    padding-inline: 0.25rem;
   }
 
   .keyboard-row {
@@ -230,5 +427,25 @@ button.key.is-removed {
   button.key {
     min-height: 2.75rem;
     padding-inline: 0.05rem;
+  }
+}
+
+@media (forced-colors: active) {
+  .tile,
+  button.key,
+  .game-status,
+  .game-board-region,
+  .game-tools,
+  .result-panel {
+    border-color: CanvasText;
+  }
+
+  .tile.is-correct,
+  .tile.is-present,
+  .tile.is-absent,
+  button.key.is-correct,
+  button.key.is-present,
+  button.key.is-absent {
+    border-bottom-color: Highlight;
   }
 }

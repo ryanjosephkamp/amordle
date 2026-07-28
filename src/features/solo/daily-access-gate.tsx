@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { loadProgress } from '@/adapters/supabase/account';
 import { useAuth } from '@/components/providers';
+import { StatusPanel } from '@/components/route-states';
 import type { PropsWithChildren } from 'react';
 
 export function DailyAccessGate({
@@ -36,28 +37,34 @@ export function DailyAccessGate({
   }
   if (localDate > today) {
     return (
-      <section className="status-panel">
-        <h2>Daily not available yet</h2>
+      <StatusPanel
+        title="Daily not available yet"
+        action={
+          <Link className="button" href="/calendar">
+            RETURN TO CALENDAR
+          </Link>
+        }
+      >
         <p>This local date has not begun for you.</p>
-        <Link className="button" href="/calendar">
-          Return to Calendar
-        </Link>
-      </section>
+      </StatusPanel>
     );
   }
   if (localDate === today) return children;
   const entitlement = progress.data?.dailyEntitlements?.[`${localDate}:${mode}`];
   if (entitlement === 'pending' || entitlement === 'unlocked') return children;
   return (
-    <section className="status-panel">
-      <h2>Past Daily locked</h2>
+    <StatusPanel
+      title="Locked Daily"
+      action={
+        <Link className="button primary" href={`/calendar?date=${localDate}&mode=${mode}`}>
+          REVIEW IN CALENDAR
+        </Link>
+      }
+    >
       <p>
-        This {mode.toUpperCase()} Daily costs 60 coins to unlock. Selecting it never charges you;
-        confirm the purchase in Calendar.
+        Unlock this date to play or view results. This {mode.toUpperCase()} Daily costs 60 coins. No
+        coins are spent until you confirm.
       </p>
-      <Link className="button primary" href={`/calendar?date=${localDate}&mode=${mode}`}>
-        Review in Calendar
-      </Link>
-    </section>
+    </StatusPanel>
   );
 }

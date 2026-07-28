@@ -25,6 +25,7 @@ export function CalendarView() {
   const [selectedDate, setSelectedDate] = useState(search.get('date') ?? '');
   const [mode, setMode] = useState<'og' | 'go'>(search.get('mode') === 'go' ? 'go' : 'og');
   const [message, setMessage] = useState('');
+  const [confirmingUnlock, setConfirmingUnlock] = useState(false);
   const todayButton = useRef<HTMLButtonElement | null>(null);
   const userId = auth.user?.id ?? '';
   const progress = useQuery({
@@ -102,6 +103,7 @@ export function CalendarView() {
     onSuccess: ({ nextEconomy, nextProgress }) => {
       queryClient.setQueryData(['economy'], nextEconomy);
       queryClient.setQueryData(['progress', userId], nextProgress);
+      setConfirmingUnlock(false);
       setMessage('Unlocked. It becomes permanent after your first accepted saved guess.');
     },
     onError: (error) =>
@@ -128,7 +130,10 @@ export function CalendarView() {
               className={selectedDate === key ? 'calendar-day is-selected' : 'calendar-day'}
               aria-pressed={selectedDate === key}
               key={key}
-              onClick={() => setSelectedDate(key)}
+              onClick={() => {
+                setSelectedDate(key);
+                setConfirmingUnlock(false);
+              }}
             >
               <span>
                 {new Date(`${key}T12:00:00`).toLocaleDateString(undefined, {
@@ -149,14 +154,31 @@ export function CalendarView() {
             min={floor}
             max={today}
             value={selectedDate}
-            onChange={(event) => setSelectedDate(event.target.value)}
+            onChange={(event) => {
+              setSelectedDate(event.target.value);
+              setConfirmingUnlock(false);
+            }}
           />
         </label>
         <div className="segmented" aria-label="Daily mode">
-          <button type="button" aria-pressed={mode === 'og'} onClick={() => setMode('og')}>
+          <button
+            type="button"
+            aria-pressed={mode === 'og'}
+            onClick={() => {
+              setMode('og');
+              setConfirmingUnlock(false);
+            }}
+          >
             OG
           </button>
-          <button type="button" aria-pressed={mode === 'go'} onClick={() => setMode('go')}>
+          <button
+            type="button"
+            aria-pressed={mode === 'go'}
+            onClick={() => {
+              setMode('go');
+              setConfirmingUnlock(false);
+            }}
+          >
             GO
           </button>
         </div>
@@ -186,9 +208,9 @@ export function CalendarView() {
             <button
               className="primary"
               disabled={!userId || unlock.isPending || !economy.data || economy.data.coins < 60}
-              onClick={() => unlock.mutate()}
+              onClick={() => setConfirmingUnlock(true)}
             >
-              {unlock.isPending ? 'Unlocking…' : 'Unlock for 60 coins'}
+              UNLOCK FOR 60 COINS
             </button>
           ) : null}
           <Link className="button" href="/combat/daily">
@@ -196,9 +218,39 @@ export function CalendarView() {
           </Link>
         </div>
       </section>
+      {confirmingUnlock && !playable && !isFuture && (
+        <section
+          className="confirmation-panel"
+          role="dialog"
+          aria-modal="false"
+          aria-labelledby="unlock-confirmation-title"
+        >
+          <div>
+            <h2 id="unlock-confirmation-title">Unlock {selectedDate}</h2>
+            <p>Solo {mode.toUpperCase()} costs 60 coins. No coins are spent until you confirm.</p>
+          </div>
+          <div className="action-row">
+            <button
+              type="button"
+              className="primary"
+              disabled={unlock.isPending}
+              onClick={() => unlock.mutate()}
+            >
+              {unlock.isPending ? 'UNLOCKING…' : 'CONFIRM UNLOCK'}
+            </button>
+            <button
+              type="button"
+              disabled={unlock.isPending}
+              onClick={() => setConfirmingUnlock(false)}
+            >
+              CANCEL
+            </button>
+          </div>
+        </section>
+      )}
       <p className="prose">
         {userId
-          ? `Authoritative balance: ${economy.data?.coins ?? 'loading'} coins.`
+          ? `Available balance: ${economy.data?.coins ?? 'loading'} coins.`
           : 'Sign in to unlock a past Daily. Selecting a date never charges you.'}
       </p>
       <p aria-live="polite">{message}</p>
