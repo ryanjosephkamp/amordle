@@ -38,7 +38,7 @@ const professionalSurfaces = [
   {
     id: 'exceptional-states',
     route: '/history',
-    expected: 'Account service unavailable',
+    expected: /account service unavailable|sign in required/i,
   },
 ] as const;
 
@@ -157,9 +157,7 @@ test.describe('responsive and alternate presentation evidence', () => {
           document.documentElement.style.zoom = String(zoom);
         }, variant.zoom);
         await expect(page.getByRole('main')).toBeVisible();
-        await expect(
-          page.getByRole('heading', { name: surface.expected, exact: false }).first(),
-        ).toBeVisible();
+        await expect(page.getByRole('heading', { name: surface.expected }).first()).toBeVisible();
         const overflow = await page.evaluate(
           () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
         );

@@ -1,6 +1,6 @@
 # Stage 2 v2 Fidelity Ledger
 
-Status: **local fidelity green; protected hosted-state evidence pending**
+Status: **final protected-Preview fidelity green**
 
 Quiet Workbench is the approved baseline. The machine-readable ledger is
 [`fidelity-ledger.json`](./fidelity-ledger.json).
@@ -21,15 +21,15 @@ The implementation passes all objective professional thresholds:
 - above-the-fold copy and intentional deviations are recorded in the JSON
   ledger.
 
-| Surface | Comparisons | Score | Status |
-| --- | ---: | ---: | --- |
-| Shell and Home | 5 | 46/50 | Pass |
-| Solo | 5 | 48/50 | Pass |
-| Daily and economy | 5 | 44/50 | Pass |
-| COMBAT | 5 | 43/50 | Local pass; hosted match states pending |
-| Account and data | 5 | 44/50 | Local pass; signed-in states pending |
-| Word Explorer and support | 5 | 46/50 | Pass |
-| Exceptional states | 5 | 48/50 | Pass |
+| Surface                   | Comparisons | Score | Status                       |
+| ------------------------- | ----------: | ----: | ---------------------------- |
+| Shell and Home            |           5 | 46/50 | Pass                         |
+| Solo                      |           5 | 48/50 | Pass                         |
+| Daily and economy         |           5 | 44/50 | Pass                         |
+| COMBAT                    |           5 | 43/50 | Pass; hosted states recorded |
+| Account and data          |           5 | 44/50 | Pass; hosted states recorded |
+| Word Explorer and support |           5 | 46/50 | Pass                         |
+| Exceptional states        |           5 | 48/50 | Pass                         |
 
 ## Evidence
 
@@ -48,6 +48,14 @@ Each surface contains:
 `pnpm test:visual` also produces the eight-width Home/Solo matrix at 320, 360,
 390, 412, 768, 960, 1440, and 1920, plus a separate 200% Solo
 forced-colors capture and mobile Web Vitals evidence.
+
+The protected state evidence is in
+`.codex-internal/evidence/e2e_20260728T041602844Z_ef840721_c179a917`.
+It adds five resolved signed-in account/data captures and five exact COMBAT
+state captures for waiting, mobile active play, refresh recovery,
+result/rematch, and sanitized spectation. Its cleanup receipt records three
+disposable Auth users, one exact game, and zero database/Auth residue on the
+first attempt.
 
 ## Native-size comparison findings
 
@@ -92,6 +100,6 @@ true:
 - terminal identity remains structural, calm, and legible rather than
   theatrical.
 
-The final ledger remains open only for protected signed-in account and real
-COMBAT state screenshots, exact service cleanup evidence, and the final
-Preview commit/deployment identifiers.
+The ledger is closed for the protected Preview candidate at commit
+`ef8407216afde5bc4639411b210678b731090dee` and deployment
+`dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV`.

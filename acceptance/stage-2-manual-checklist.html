@@ -1,0 +1,201 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle Stage 2 Manual Review Checklist</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.5;
+      }
+      body {
+        max-width: 56rem;
+        margin: 0 auto;
+        padding: 2rem;
+        color: #111;
+        background: #fff;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        overflow-wrap: anywhere;
+      }
+      fieldset {
+        margin: 1.5rem 0;
+        padding: 1rem;
+        border: 1px solid #777;
+      }
+      legend {
+        font-weight: 700;
+      }
+      label {
+        display: block;
+        margin: 0.75rem 0;
+      }
+      input {
+        width: 1.15rem;
+        height: 1.15rem;
+        margin-right: 0.5rem;
+        vertical-align: text-bottom;
+      }
+      .notice {
+        padding: 0.75rem;
+        border: 2px solid #111;
+      }
+      @media (max-width: 42rem) {
+        body {
+          padding: 1rem;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 Manual Review Checklist</h1>
+      <p>
+        Candidate:
+        <code>https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app</code>
+      </p>
+      <p>Commit: <code>ef8407216afde5bc4639411b210678b731090dee</code></p>
+      <p class="notice">
+        Use Vercel team authentication. Never copy automation credentials into a URL, chat,
+        screenshot, browser extension, or issue.
+      </p>
+
+      <fieldset>
+        <legend>Terminal/TUI design authority</legend>
+        <label
+          ><input type="checkbox" />The app feels like a calm word-game workbench, not a themed SaaS
+          dashboard or fake shell.</label
+        >
+        <label
+          ><input type="checkbox" />Command bar, context rail, work regions, status, and actions are
+          coherent.</label
+        >
+        <label
+          ><input type="checkbox" />Typography is compact without harming explanation
+          readability.</label
+        >
+        <label><input type="checkbox" />Light and dark modes feel equally intentional.</label>
+        <label><input type="checkbox" />Evidence meaning never depends on color alone.</label>
+        <label
+          ><input type="checkbox" />No forbidden spectacle, glass, glow, scanlines, code rain, or
+          decorative card nesting appears.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Home and navigation</legend>
+        <label
+          ><input type="checkbox" />Home makes Solo, Daily, and COMBAT actions immediately
+          clear.</label
+        >
+        <label
+          ><input type="checkbox" />Desktop/mobile navigation clearly marks the current
+          route.</label
+        >
+        <label><input type="checkbox" />MORE works with pointer, keyboard, and Escape.</label>
+        <label><input type="checkbox" />Focus Mode preserves the standard game session.</label>
+        <label><input type="checkbox" />Home requests no word bank.</label>
+      </fieldset>
+
+      <fieldset>
+        <legend>Solo, Daily, and economy</legend>
+        <label
+          ><input type="checkbox" />Solo OG/GO keep board, status, evidence, tools, and keyboard
+          dominant.</label
+        >
+        <label><input type="checkbox" />Physical and on-screen input stay synchronized.</label>
+        <label
+          ><input type="checkbox" />320px and 390px show complete Submit/Delete controls without
+          overflow.</label
+        >
+        <label
+          ><input type="checkbox" />Calendar explains local Solo versus UTC COMBAT dates.</label
+        >
+        <label
+          ><input type="checkbox" />Past-Daily and Marketplace confirmation spend no coins before
+          confirmation.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>COMBAT</legend>
+        <label
+          ><input type="checkbox" />Waiting clearly says both players receive the same
+          puzzle.</label
+        >
+        <label
+          ><input type="checkbox" />Desktop boards are symmetric and mobile preserves
+          opponent-before-viewer priority.</label
+        >
+        <label
+          ><input type="checkbox" />Turn, recovery, result, and rematch states are
+          unmistakable.</label
+        >
+        <label
+          ><input type="checkbox" />All lanes use understandable alternating-turn language.</label
+        >
+        <label
+          ><input type="checkbox" />Spectator mode is read-only and exposes no private identifier or
+          unsolved answer.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Account, data, and support</legend>
+        <label
+          ><input type="checkbox" />Auth clearly separates sign-in/create-account and says guest
+          games stay separate.</label
+        >
+        <label><input type="checkbox" />Profile and Settings feel like workbench surfaces.</label>
+        <label
+          ><input type="checkbox" />History, Stats, and Leaderboards remain readable on desktop and
+          mobile.</label
+        >
+        <label
+          ><input type="checkbox" />Word Explorer loads one selected length and never identifies an
+          active answer.</label
+        >
+        <label
+          ><input type="checkbox" />Support/Admin and exceptional states share the same hierarchy
+          and tone.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Accessibility and responsiveness</legend>
+        <label><input type="checkbox" />Keyboard focus is visible and logical.</label>
+        <label><input type="checkbox" />All eight required widths remain usable.</label>
+        <label><input type="checkbox" />200% zoom creates no horizontal document overflow.</label>
+        <label
+          ><input type="checkbox" />Reduced motion and forced colors preserve meaning and
+          operation.</label
+        >
+        <label><input type="checkbox" />Mobile touch targets remain at least 44px.</label>
+        <label
+          ><input type="checkbox" />Screen-reader labels and status announcements are useful.</label
+        >
+      </fieldset>
+
+      <fieldset>
+        <legend>Review boundary</legend>
+        <label
+          ><input type="checkbox" />The candidate is protected and Production is not under
+          review.</label
+        >
+        <label><input type="checkbox" />Exactly three HTTP interfaces remain.</label>
+        <label
+          ><input type="checkbox" />No merge, release, schema, default-branch, or real-account
+          action is requested.</label
+        >
+      </fieldset>
+
+      <p>
+        Record route, viewport, account state, expected behavior, actual behavior, and a screenshot
+        containing no secret or unrelated player data.
+      </p>
+    </main>
+  </body>
+</html>

@@ -1,0 +1,237 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle Stage 2 Completion Report</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.55;
+      }
+      body {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 2rem;
+        color: #111;
+        background: #fff;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-bottom: 1px solid #999;
+        padding-bottom: 0.35rem;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        overflow-wrap: anywhere;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #aaa;
+        padding: 0.55rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #f1f1f1;
+      }
+      .notice {
+        padding: 0.8rem;
+        border: 2px solid #111;
+      }
+      @media (max-width: 42rem) {
+        body {
+          padding: 1rem;
+        }
+        table,
+        tbody,
+        tr,
+        th,
+        td {
+          display: block;
+        }
+        th {
+          border-bottom: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 Completion Report</h1>
+      <p class="notice">
+        Quiet Workbench v2 is implemented and green. The protected Preview is ready for manual
+        review; no merge or Production release is authorized.
+      </p>
+
+      <table>
+        <tbody>
+          <tr>
+            <th>Branch</th>
+            <td><code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code></td>
+          </tr>
+          <tr>
+            <th>Application candidate</th>
+            <td><code>ef8407216afde5bc4639411b210678b731090dee</code></td>
+          </tr>
+          <tr>
+            <th>Preview deployment</th>
+            <td><code>dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV</code></td>
+          </tr>
+          <tr>
+            <th>Preview URL</th>
+            <td>
+              <code>https://amordle-f88bigwdu-ryanjosephkamps-projects.vercel.app</code>
+            </td>
+          </tr>
+          <tr>
+            <th>Supabase</th>
+            <td><code>squqdstdvbsvhagfuzgj</code>; 45/45 immutable migrations</td>
+          </tr>
+          <tr>
+            <th>Contracts</th>
+            <td>107/107 bootstrap baseline; 237/237 parity rows; exactly 3 HTTP interfaces</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Delivered</h2>
+      <ul>
+        <li>
+          Terminal-derived command bar, context rail, work regions, status language, desktop/mobile
+          navigation, Focus Mode, and equal-quality light/dark themes.
+        </li>
+        <li>
+          Redesigned Home, Solo OG/GO, Daily, Calendar, Marketplace, and progression surfaces.
+        </li>
+        <li>
+          Redesigned COMBAT lobby, waiting, active match, mobile turn hierarchy, recovery,
+          result/rematch, notifications, Active, and privacy-safe spectation.
+        </li>
+        <li>
+          Redesigned Auth, Profile, public player, Settings, History, Stats, Leaderboards, Word
+          Explorer, Help, Feedback, About, Admin, and global exceptional states.
+        </li>
+        <li>
+          Text-first, low-radius, one-rule anatomy; non-color evidence glyphs; 44px mobile controls;
+          structural loading rows; player-facing editorial language.
+        </li>
+      </ul>
+
+      <h2>Professional visual acceptance</h2>
+      <ul>
+        <li>35 major-surface comparisons, five per surface.</li>
+        <li>16 Home/Solo captures across all eight required widths.</li>
+        <li>
+          System light/dark, 320px stress, 390px mobile, 200% zoom, reduced motion, and forced
+          colors.
+        </li>
+        <li>Every surface scores at least 43/50 and terminal authenticity at least 4/5.</li>
+        <li>
+          No cyberpunk, fire/ice, atmospheric texture, glass, excessive glow, scanline, code-rain,
+          or generic SaaS-card treatment.
+        </li>
+      </ul>
+
+      <h2>Verification</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>pnpm check</code></td>
+            <td>Green</td>
+          </tr>
+          <tr>
+            <td>Domain</td>
+            <td>18 tests green</td>
+          </tr>
+          <tr>
+            <td>Browser components</td>
+            <td>3 tests green</td>
+          </tr>
+          <tr>
+            <td>Fixture E2E</td>
+            <td>12 tests green across Chromium, Firefox, and WebKit</td>
+          </tr>
+          <tr>
+            <td>Protected service E2E</td>
+            <td>1 serial real-service journey green</td>
+          </tr>
+          <tr>
+            <td>Visual</td>
+            <td>4 tests green; 52 captures plus vitals</td>
+          </tr>
+          <tr>
+            <td>Local acceptance</td>
+            <td>Green</td>
+          </tr>
+          <tr>
+            <td>Hosted acceptance</td>
+            <td>Green at exact candidate commit</td>
+          </tr>
+          <tr>
+            <td>Accessibility</td>
+            <td>No serious or critical representative-route axe findings</td>
+          </tr>
+          <tr>
+            <td>Home bundle</td>
+            <td>173,198 B JS; 9,220 B CSS compressed</td>
+          </tr>
+          <tr>
+            <td>Gameplay bundle</td>
+            <td>179,129 B JS; 11,135 B CSS compressed</td>
+          </tr>
+          <tr>
+            <td>Hosted mobile vitals</td>
+            <td>LCP 380 ms; INP 32 ms; CLS 0</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Service evidence and cleanup</h2>
+      <p>
+        Final evidence:
+        <code>.codex-internal/evidence/e2e_20260728T041602844Z_ef840721_c179a917</code>
+      </p>
+      <p>
+        Three disposable Auth users and one exact public Practice game proved resolved account
+        surfaces, create/join, alternating turns, refresh recovery, terminal result/rematch, and
+        sanitized read-only spectation. Cleanup succeeded on the first attempt with zero database
+        and Auth residue. No real account was selected.
+      </p>
+
+      <h2>Preserved boundaries</h2>
+      <ul>
+        <li>Production <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code> remains unchanged.</li>
+        <li>Vercel project settings are restored to Other / dist / automatic build.</li>
+        <li>Repository remains private; default branch remains unchanged.</li>
+        <li>Supabase remains 45/45 with no schema change.</li>
+        <li>Locked shell commit remains <code>062624b2fb7c8d039a2eba3aec5b059c26628a11</code>.</li>
+        <li>
+          No merge, Production release, stash inspection, branch deletion, or real-user deletion
+          occurred.
+        </li>
+      </ul>
+
+      <h2>Current gate</h2>
+      <p>
+        Stop for manual review of the protected Preview. A merge or release requires separate
+        authorization.
+      </p>
+    </main>
+  </body>
+</html>

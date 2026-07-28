@@ -1,6 +1,6 @@
 {
   "schemaVersion": 2,
-  "status": "local-fidelity-green-hosted-state-evidence-pending",
+  "status": "final-preview-fidelity-green",
   "approvedDirection": "quiet-workbench",
   "conceptPackage": "design/references/stage2/v2-terminal-workbench-2026-07-27",
   "captureRoot": "test-results/visual.responsive-responsi-1c758-serves-hierarchy-and-reflow-visual",
@@ -275,7 +275,7 @@
         "total": 43
       },
       "intentionalDeviation": "The local matrix uses the non-mutating COMBAT overview. Waiting, active, recovery, result/rematch, and spectator states are captured only with protected disposable users.",
-      "status": "pass-local-hosted-state-evidence-pending"
+      "status": "pass"
     },
     {
       "surface": "account-data",
@@ -336,7 +336,7 @@
         "total": 44
       },
       "intentionalDeviation": "Local evidence intentionally shows the unavailable boundary. Profile, Settings, Stats, History, and Leaderboard are captured with real disposable accounts only on the protected Preview.",
-      "status": "pass-local-hosted-state-evidence-pending"
+      "status": "pass"
     },
     {
       "surface": "words-support",
@@ -480,12 +480,47 @@
       "exceptional-states-200-percent-forced-colors.png"
     ]
   },
+  "hostedStateEvidence": {
+    "runId": "e2e_20260728T041602844Z_ef840721_c179a917",
+    "root": ".codex-internal/evidence/e2e_20260728T041602844Z_ef840721_c179a917",
+    "deploymentId": "dpl_3jyBWjwVzFJLFU9rxHyuZhbgcbzV",
+    "candidateCommit": "ef8407216afde5bc4639411b210678b731090dee",
+    "accountData": [
+      "account-profile-desktop-light.png",
+      "account-settings-desktop-dark.png",
+      "account-stats-mobile-light.png",
+      "account-history-mobile-light.png",
+      "account-leaderboard-mobile-dark.png"
+    ],
+    "combat": [
+      "combat-waiting-desktop-light.png",
+      "combat-active-mobile-dark.png",
+      "participant-refresh-recovery.png",
+      "combat-result-rematch-desktop-light.png",
+      "sanitized-spectator.png"
+    ],
+    "nativeSizeInspected": true,
+    "cleanup": {
+      "attempt": 1,
+      "authUsers": 3,
+      "games": 1,
+      "databaseResidue": 0,
+      "authResidue": 0,
+      "status": "zero-residue"
+    }
+  },
   "automatedResult": {
     "test": "pnpm test:visual",
     "tests": 4,
     "matrixComparisons": 35,
     "requiredWidthScreenshots": 16,
     "reflowForcedColorsScreenshots": 1,
-    "status": "green"
+    "status": "green",
+    "hostedAcceptance": "green",
+    "mobileWebVitals": {
+      "lcpMs": 380,
+      "inpMs": 32,
+      "cls": 0
+    }
   }
 }

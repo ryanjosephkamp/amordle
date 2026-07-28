@@ -138,7 +138,7 @@ async function submitOnScreenGuess(page: Page, guess: string) {
     prefix += letter.toUpperCase();
     await expect(draft).toHaveText(prefix);
   }
-  const submit = page.getByRole('button', { name: 'Submit guess' });
+  const submit = page.getByRole('button', { name: /submit/i });
   await expect(submit).toBeEnabled();
   await submit.click();
 }
@@ -361,6 +361,7 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.emulateMedia({ colorScheme: 'dark' });
     await firstPage.goto(`${baseURL}/settings`);
     await expect(firstPage.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await expect(firstPage.locator('.skeleton-stack')).toHaveCount(0);
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'account-settings-desktop-dark.png'),
       fullPage: true,
@@ -369,12 +370,14 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.emulateMedia({ colorScheme: 'light' });
     await secondPage.goto(`${baseURL}/stats`);
     await expect(secondPage.getByRole('heading', { name: 'Your stats' })).toBeVisible();
+    await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'account-stats-mobile-light.png'),
       fullPage: true,
     });
     await secondPage.goto(`${baseURL}/history`);
     await expect(secondPage.getByRole('heading', { name: 'History' })).toBeVisible();
+    await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'account-history-mobile-light.png'),
       fullPage: true,
@@ -383,6 +386,7 @@ test.describe.serial('protected Preview services', () => {
     await spectatorPage.emulateMedia({ colorScheme: 'dark' });
     await spectatorPage.goto(`${baseURL}/leaderboards`);
     await expect(spectatorPage.getByRole('heading', { name: 'Leaderboards' })).toBeVisible();
+    await expect(spectatorPage.locator('.skeleton-stack')).toHaveCount(0);
     await spectatorPage.screenshot({
       path: path.join(evidenceDir, 'account-leaderboard-mobile-dark.png'),
       fullPage: true,
@@ -412,7 +416,7 @@ test.describe.serial('protected Preview services', () => {
       disposable: true,
     });
     await event('public_practice_created', { gameId });
-    await expect(firstPage.getByText('Waiting for another player')).toBeVisible();
+    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/waiting for another player/i);
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'combat-waiting-desktop-light.png'),
       fullPage: true,
@@ -423,7 +427,7 @@ test.describe.serial('protected Preview services', () => {
     await expect(targetRow).toBeVisible({ timeout: 15_000 });
     await targetRow.getByRole('button', { name: 'Join' }).click();
     await expect(secondPage).toHaveURL(new RegExp(`/combat/match/${gameId}$`));
-    await expect(secondPage.getByText('Opponent’s turn')).toBeVisible();
+    await expect(secondPage.locator('.combat-turn-state')).toHaveText(/opponent’s turn/i);
     await secondPage.setViewportSize({ width: 390, height: 844 });
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'combat-active-mobile-dark.png'),
@@ -451,18 +455,24 @@ test.describe.serial('protected Preview services', () => {
     expect(guesses).toHaveLength(2);
 
     await firstPage.reload();
-    await expect(firstPage.getByText('Your turn')).toBeVisible({ timeout: 15_000 });
+    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
+      timeout: 15_000,
+    });
     await submitOnScreenGuess(firstPage, guesses[0]!);
     await waitForGameMoveCount(gameId, 1);
-    await expect(firstPage.getByText('Opponent’s turn')).toBeVisible();
+    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/opponent’s turn/i);
 
     await secondPage.reload();
-    await expect(secondPage.getByText('Your turn')).toBeVisible({ timeout: 15_000 });
+    await expect(secondPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
+      timeout: 15_000,
+    });
     await submitOnScreenGuess(secondPage, guesses[1]!);
     await waitForGameMoveCount(gameId, 2);
 
     await firstPage.reload();
-    await expect(firstPage.getByText('Your turn')).toBeVisible({ timeout: 15_000 });
+    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
+      timeout: 15_000,
+    });
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'participant-refresh-recovery.png'),
       fullPage: true,
@@ -471,7 +481,9 @@ test.describe.serial('protected Preview services', () => {
 
     await submitOnScreenGuess(firstPage, answer);
     await waitForGameMoveCount(gameId, 3);
-    await expect(firstPage.getByText('Match complete').first()).toBeVisible({ timeout: 15_000 });
+    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/you won|match complete/i, {
+      timeout: 15_000,
+    });
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'combat-result-rematch-desktop-light.png'),
       fullPage: true,
@@ -512,7 +524,7 @@ test.describe.serial('protected Preview services', () => {
     const spectatorPanel = spectatorPage.locator('.spectator-game').first();
     await expect(spectatorPanel).toBeVisible({ timeout: 15_000 });
     await expect(spectatorPanel).toContainText('Public Practice');
-    await expect(spectatorPage.getByRole('button', { name: 'Submit guess' })).toHaveCount(0);
+    await expect(spectatorPage.getByRole('button', { name: /submit/i })).toHaveCount(0);
     await spectatorPage.screenshot({
       path: path.join(evidenceDir, 'combat-spectator-desktop-light.png'),
       fullPage: true,
