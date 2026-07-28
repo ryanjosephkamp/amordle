@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { WorkbenchRegion } from '@/components/workbench';
 
 export function WordResults({
   words,
@@ -41,8 +42,11 @@ export function WordResults({
           ))}
         </div>
       </section>
-      <section className="status-panel" aria-labelledby="definition-heading">
-        <h2 id="definition-heading">{selected || 'Choose a word'}</h2>
+      <WorkbenchRegion
+        title={(selected || 'CHOOSE A WORD').toUpperCase()}
+        status="WORD DETAILS"
+        className="word-detail"
+      >
         {selected ? (
           <>
             <p>
@@ -51,7 +55,7 @@ export function WordResults({
             </p>
             <div className="action-row">
               <button onClick={() => void navigator.clipboard.writeText(selected)}>
-                Copy word
+                COPY WORD
               </button>
               <a
                 className="button primary"
@@ -59,14 +63,14 @@ export function WordResults({
                 target="_blank"
                 rel="noreferrer"
               >
-                Search definition
+                SEARCH DEFINITION
               </a>
             </div>
           </>
         ) : (
           <p>No words match this search.</p>
         )}
-      </section>
+      </WorkbenchRegion>
     </div>
   );
 }

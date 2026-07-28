@@ -6,7 +6,7 @@ import { useState } from 'react';
 import { getMyPublicProfile, saveMyPublicProfile } from '@/adapters/supabase/public';
 import type { z } from 'zod';
 import { myPublicProfileSchema } from '@/adapters/supabase/public';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 
 export function ProfileEditor() {
   return (
@@ -30,7 +30,7 @@ function ProfileEditorInner() {
     },
   });
 
-  if (profile.isPending) return <p aria-live="polite">Loading profile…</p>;
+  if (profile.isPending) return <SkeletonRows label="Loading profile…" />;
   if (profile.isError) {
     return (
       <section className="status-panel">
@@ -70,6 +70,7 @@ function ProfileForm({
         save.mutate({ displayName, bio, visibility, accentColor, flairKey });
       }}
     >
+      <h2>PUBLIC PROFILE</h2>
       <label>
         Player name
         <input
@@ -116,7 +117,7 @@ function ProfileForm({
         </select>
       </label>
       <button className="primary" disabled={save.isPending}>
-        {save.isPending ? 'Saving…' : 'Save profile'}
+        {save.isPending ? 'SAVING…' : 'SAVE PROFILE'}
       </button>
       <p aria-live="polite">
         {save.isSuccess ? 'Profile saved.' : save.isError ? 'Profile could not be saved.' : ''}

@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRef, useState } from 'react';
-import { StatusPanel } from '@/components/route-states';
+import { SkeletonRows, StatusPanel } from '@/components/route-states';
 import { getLocalEconomy, purchaseLocalConsumable } from '@/adapters/local-account';
 import { getEconomy, purchaseConsumable } from '@/adapters/supabase/account';
 import { operationId } from '@/adapters/supabase/shared';
@@ -56,7 +56,7 @@ export function MarketplacePanel() {
     },
   });
 
-  if (economy.isPending) return <p aria-live="polite">Loading your balance…</p>;
+  if (economy.isPending) return <SkeletonRows label="Loading your balance…" />;
   if (!economy.data) {
     return (
       <StatusPanel

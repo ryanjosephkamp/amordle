@@ -38,8 +38,8 @@ export default async function WordExplorerPage({
     <div className="route-frame">
       <RouteHeader title="Word Explorer">
         <p>
-          Browse one sanctioned word length at a time. Eligibility here never identifies the active
-          answer in a game.
+          See which words are accepted for guesses and which may also be answers. This never
+          identifies the active answer in a game.
         </p>
       </RouteHeader>
       <form className="explorer-controls">
@@ -61,8 +61,8 @@ export default async function WordExplorerPage({
         <button className="primary">Apply</button>
       </form>
       <p className="prose mono">
-        Length {length} · catalog {bank.revision} · {bank.answers.length} answer-eligible ·{' '}
-        {bank.validGuesses.length} sanctioned guesses
+        Length {length} · list {bank.revision.slice(0, 8)} · {bank.answers.length} may be answers ·{' '}
+        {bank.validGuesses.length} accepted guesses
       </p>
       <WordResults
         words={words}

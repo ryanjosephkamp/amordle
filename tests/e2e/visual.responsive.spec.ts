@@ -39,7 +39,7 @@ test.describe('responsive and alternate presentation evidence', () => {
     await page.evaluate(() => {
       document.documentElement.style.zoom = '2';
     });
-    await expect(page.getByRole('button', { name: 'Submit guess' })).toBeVisible();
+    await expect(page.getByRole('button', { name: /submit/i })).toBeVisible();
     const overflow = await page.evaluate(
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
@@ -80,7 +80,7 @@ test.describe('responsive and alternate presentation evidence', () => {
       state.webVitals.onINP(record('INP'), { reportAllChanges: true });
       state.webVitals.onLCP(record('LCP'), { reportAllChanges: true });
     });
-    await page.getByRole('button', { name: 'More' }).click();
+    await page.getByRole('button', { name: /more/i }).click();
     await page.waitForTimeout(750);
     const metrics = await page.evaluate(
       () =>

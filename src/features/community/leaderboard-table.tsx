@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { getLeaderboard, getSiteStats } from '@/adapters/supabase/public';
+import { SkeletonRows } from '@/components/route-states';
 
 const buckets = [
   { id: 'async:og', label: 'OG' },
@@ -37,7 +38,7 @@ export function LeaderboardTable() {
         ))}
       </div>
       {leaderboard.isPending ? (
-        <p aria-live="polite">Loading leaderboard…</p>
+        <SkeletonRows label="Loading leaderboard…" rows={6} />
       ) : leaderboard.isError ? (
         <section className="status-panel">
           <h2>Leaderboard unavailable</h2>
@@ -45,7 +46,7 @@ export function LeaderboardTable() {
         </section>
       ) : leaderboard.data.length ? (
         <div className="table-scroll">
-          <table>
+          <table className="responsive-table">
             <thead>
               <tr>
                 <th>Rank</th>
@@ -58,20 +59,20 @@ export function LeaderboardTable() {
             <tbody>
               {leaderboard.data.map((entry) => (
                 <tr key={entry.leaderboard_key}>
-                  <td>{entry.rank}</td>
-                  <td>
+                  <td data-label="Rank">{entry.rank}</td>
+                  <td data-label="Player">
                     <Link href={`/players/${entry.public_profile_id}`}>
                       {entry.display_name || 'Player'}
                     </Link>
                   </td>
-                  <td>
+                  <td data-label="Rating">
                     {Math.round(entry.rating)}
                     {entry.provisional ? ' provisional' : ''}
                   </td>
-                  <td>
+                  <td data-label="Record">
                     {entry.wins}–{entry.losses}–{entry.draws}
                   </td>
-                  <td>{Math.round(entry.peak_rating)}</td>
+                  <td data-label="Peak">{Math.round(entry.peak_rating)}</td>
                 </tr>
               ))}
             </tbody>

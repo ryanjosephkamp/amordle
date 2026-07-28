@@ -20,7 +20,7 @@ export default function AboutPage() {
           <p>
             Ranked Practice uses separate OG and GO rating buckets. Ratings begin provisional,
             update only after one terminal settlement, and expose public rank and movement only
-            through approved aggregate projections.
+            through public summaries.
           </p>
         </section>
         <section>

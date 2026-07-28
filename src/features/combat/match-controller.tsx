@@ -29,7 +29,7 @@ import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
 import { useAuth } from '@/components/providers';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { scoreGuess } from '@/domain/game';
 
 interface MatchState {
@@ -224,7 +224,7 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
     onError: () => setMessage('Rating settlement needs attention. It is safe to retry.'),
   });
 
-  if (match.isPending) return <p aria-live="polite">Loading match…</p>;
+  if (match.isPending) return <SkeletonRows label="Loading match…" rows={5} />;
   if (match.isError || !match.data) {
     return (
       <section className="status-panel">

@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { listPublicLive } from '@/adapters/supabase/combat';
 import type { SpectatorGame } from '@/adapters/supabase/combat';
+import { SkeletonRows } from '@/components/route-states';
 
 export function LiveGames() {
   const games = useQuery({
@@ -10,7 +11,7 @@ export function LiveGames() {
     queryFn: () => listPublicLive(),
     refetchInterval: 5_000,
   });
-  if (games.isPending) return <p aria-live="polite">Loading live games…</p>;
+  if (games.isPending) return <SkeletonRows label="Loading live games…" rows={4} />;
   if (games.isError) {
     return (
       <section className="status-panel">

@@ -2,13 +2,14 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { getPublicProfile } from '@/adapters/supabase/public';
+import { SkeletonRows } from '@/components/route-states';
 
 export function PublicProfile({ publicProfileId }: { publicProfileId: string }) {
   const profile = useQuery({
     queryKey: ['public-profile', publicProfileId],
     queryFn: () => getPublicProfile(publicProfileId),
   });
-  if (profile.isPending) return <p aria-live="polite">Loading player…</p>;
+  if (profile.isPending) return <SkeletonRows label="Loading player…" />;
   if (profile.isError) {
     return (
       <section className="status-panel">

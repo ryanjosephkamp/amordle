@@ -19,11 +19,11 @@ const sections = [
   ],
   [
     'COMBAT',
-    'Players alternate accepted turns. Ranked Practice and current Daily authority live in the database. Refreshing never spends a turn, and rejected guesses change nothing. Public Live views are read-only and sanitized.',
+    'Players alternate accepted turns. Refreshing never spends a turn, and rejected guesses change nothing. Public Live views are read-only and keep private player details hidden.',
   ],
   [
     'Coins and tools',
-    'Reveal One Letter costs 25 coins and Remove Incorrect Letters costs 40. A locked past Daily costs 60. Continuations add exactly one Practice attempt and become more expensive as used; all accepted economy operations are idempotent.',
+    'Reveal One Letter costs 25 coins and Remove Incorrect Letters costs 40. A locked past Daily costs 60. Continuations add exactly one Practice attempt and become more expensive as they are used. Retrying a confirmed purchase never charges twice.',
   ],
   [
     'Access and navigation',
@@ -31,7 +31,7 @@ const sections = [
   ],
   [
     'Privacy',
-    'Public links use a public profile identifier, not an Auth ID. Spectators never receive private requests, raw identities, hidden answers, or mutation controls. Guest progress stays separate when you sign in.',
+    'Public player links never reveal private account details. Spectators cannot see private requests, hidden answers, or controls that change a match. Guest progress stays separate when you sign in.',
   ],
 ] as const;
 
@@ -39,7 +39,7 @@ export default function HelpPage() {
   return (
     <div className="route-frame is-narrow">
       <RouteHeader title="Help">
-        <p>The rules and controls players need, without implementation language.</p>
+        <p>Rules, evidence, controls, access, and privacy in one place.</p>
       </RouteHeader>
       <div className="prose-sections">
         {sections.map(([title, content]) => (

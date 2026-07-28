@@ -5,7 +5,7 @@ export default function AuthPage() {
   return (
     <div className="route-frame is-narrow">
       <RouteHeader title="Account">
-        <p>Keep cloud-backed progress, public identity, economy, and COMBAT under one account.</p>
+        <p>Save progress across devices and use profiles, coins, and COMBAT.</p>
       </RouteHeader>
       <AuthPanel />
     </div>

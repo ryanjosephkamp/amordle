@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { loadHistory, loadProgress } from '@/adapters/supabase/account';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 
 export function PrivateStats() {
@@ -26,7 +26,7 @@ function PrivateStatsInner() {
     queryFn: () => loadHistory(userId),
     enabled: Boolean(userId),
   });
-  if (!progress.data || !history.data) return <p aria-live="polite">Loading statistics…</p>;
+  if (!progress.data || !history.data) return <SkeletonRows label="Loading statistics…" rows={3} />;
   const wins = history.data.filter((row) => row.entry.result === 'won').length;
   const guesses = history.data.reduce((sum, row) => sum + row.entry.acceptedGuesses, 0);
   return (

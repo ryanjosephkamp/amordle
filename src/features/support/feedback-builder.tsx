@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { WorkbenchRegion } from '@/components/workbench';
 
 function sanitize(value: string): string {
   return value
@@ -43,6 +44,7 @@ export function FeedbackBuilder() {
   return (
     <div className="split-layout">
       <form className="form-panel field-stack" onSubmit={(event) => event.preventDefault()}>
+        <h2>FEEDBACK DETAILS</h2>
         <label>
           Category
           <select value={category} onChange={(event) => setCategory(event.target.value)}>
@@ -70,17 +72,16 @@ export function FeedbackBuilder() {
           />
         </label>
       </form>
-      <section aria-labelledby="feedback-preview-heading">
-        <h2 id="feedback-preview-heading">Issue preview</h2>
+      <WorkbenchRegion title="ISSUE PREVIEW" status="NOT SUBMITTED">
         <pre className="feedback-preview">{template}</pre>
         <div className="action-row">
-          <button onClick={() => void navigator.clipboard.writeText(template)}>Copy preview</button>
+          <button onClick={() => void navigator.clipboard.writeText(template)}>COPY PREVIEW</button>
           <a className="button primary" href={issueUrl} target="_blank" rel="noreferrer">
-            Open GitHub issue
+            OPEN GITHUB ISSUE
           </a>
         </div>
         <p className="prose">Nothing is submitted automatically.</p>
-      </section>
+      </WorkbenchRegion>
     </div>
   );
 }

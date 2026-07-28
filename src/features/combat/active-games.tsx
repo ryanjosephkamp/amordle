@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
 import { useAuth } from '@/components/providers';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 
 export function ActiveGames() {
   return (
@@ -29,7 +29,7 @@ function ActiveGamesInner() {
     enabled: Boolean(userId),
     refetchInterval: 30_000,
   });
-  if (active.isPending) return <p aria-live="polite">Loading active games…</p>;
+  if (active.isPending) return <SkeletonRows label="Loading active games…" rows={4} />;
   if (active.isError || !active.data) {
     return (
       <section className="status-panel">

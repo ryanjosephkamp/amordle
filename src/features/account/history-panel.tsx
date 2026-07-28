@@ -2,7 +2,7 @@
 
 import { useQuery } from '@tanstack/react-query';
 import { loadHistory } from '@/adapters/supabase/account';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 
 export function HistoryPanel() {
@@ -21,7 +21,7 @@ function HistoryInner() {
     queryFn: () => loadHistory(userId),
     enabled: Boolean(userId),
   });
-  if (history.isPending) return <p aria-live="polite">Loading History…</p>;
+  if (history.isPending) return <SkeletonRows label="Loading History…" rows={5} />;
   if (history.isError) {
     return (
       <section className="status-panel">
@@ -35,7 +35,7 @@ function HistoryInner() {
   }
   return (
     <div className="table-scroll">
-      <table>
+      <table className="responsive-table">
         <thead>
           <tr>
             <th>Date</th>
@@ -48,15 +48,15 @@ function HistoryInner() {
         <tbody>
           {history.data.map((row) => (
             <tr key={row.id}>
-              <td>{new Date(row.completed_at).toLocaleDateString()}</td>
-              <td>
+              <td data-label="Date">{new Date(row.completed_at).toLocaleDateString()}</td>
+              <td data-label="Game">
                 {row.entry.kind.replaceAll('-', ' ')} · {row.entry.mode.toUpperCase()}
               </td>
-              <td>{row.entry.result}</td>
-              <td>
+              <td data-label="Result">{row.entry.result}</td>
+              <td data-label="Progress">
                 {row.entry.puzzlesSolved} solved · {row.entry.acceptedGuesses} guesses
               </td>
-              <td>
+              <td data-label="Reward">
                 {row.entry.rewardCoins} coins · {row.entry.rewardXp} XP
               </td>
             </tr>

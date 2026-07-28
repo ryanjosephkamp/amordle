@@ -1,4 +1,4 @@
-import { RouteHeader } from '@/components/route-states';
+import { RouteHeader, WorkbenchRegion } from '@/components/route-states';
 import { LeaderboardTable } from '@/features/community/leaderboard-table';
 
 export default function LeaderboardsPage() {
@@ -7,7 +7,9 @@ export default function LeaderboardsPage() {
       <RouteHeader title="Leaderboards">
         <p>Public ranked Practice results. Provisional ratings are labeled.</p>
       </RouteHeader>
-      <LeaderboardTable />
+      <WorkbenchRegion title="RANKED PRACTICE" status="PUBLIC">
+        <LeaderboardTable />
+      </WorkbenchRegion>
     </div>
   );
 }

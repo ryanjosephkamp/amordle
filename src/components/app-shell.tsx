@@ -6,6 +6,7 @@ import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
 import { AccountSummary } from './account-summary';
+import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from './providers';
 
@@ -184,6 +185,7 @@ export function AppShell({ children }: PropsWithChildren) {
           </button>
         </nav>
       )}
+      <ConnectivityStatus />
     </div>
   );
 }

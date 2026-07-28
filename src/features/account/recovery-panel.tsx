@@ -21,6 +21,7 @@ export function RecoveryPanel() {
         });
       }}
     >
+      <h2>NEW PASSWORD</h2>
       <label>
         New password
         <input
@@ -32,7 +33,7 @@ export function RecoveryPanel() {
           onChange={(event) => setPassword(event.target.value)}
         />
       </label>
-      <button className="primary">Update password</button>
+      <button className="primary">UPDATE PASSWORD</button>
       <p aria-live="polite">{message}</p>
     </form>
   );

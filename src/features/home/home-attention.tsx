@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getEconomy, loadHistory, loadProgress } from '@/adapters/supabase/account';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
 import { useAuth } from '@/components/providers';
+import { SkeletonRows } from '@/components/route-states';
 
 export function HomeAttention() {
   const auth = useAuth();
@@ -25,7 +26,7 @@ export function HomeAttention() {
     refetchInterval: 30_000,
   });
   if (auth.status === 'loading') {
-    return <p aria-live="polite">Checking your current games…</p>;
+    return <SkeletonRows label="Checking your current games…" rows={2} />;
   }
   if (auth.status !== 'signed-in') {
     return (
@@ -41,7 +42,7 @@ export function HomeAttention() {
       </div>
     );
   }
-  if (account.isPending) return <p aria-live="polite">Restoring account attention…</p>;
+  if (account.isPending) return <SkeletonRows label="Restoring account activity…" rows={3} />;
   if (account.isError || !account.data) {
     return (
       <section className="status-panel">

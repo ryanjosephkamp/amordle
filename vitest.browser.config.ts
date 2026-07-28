@@ -5,6 +5,7 @@ import path from 'node:path';
 export default defineConfig({
   resolve: {
     alias: {
+      '@/adapters/supabase': path.resolve(process.cwd(), 'src/adapters/cloud'),
       '@': path.resolve(process.cwd(), 'src'),
     },
   },

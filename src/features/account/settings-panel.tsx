@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { loadSettings, saveSettings } from '@/adapters/supabase/account';
-import { AccountGate } from '@/components/route-states';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 
 export function SettingsPanel() {
@@ -27,7 +27,7 @@ function SettingsPanelInner() {
     onSuccess: (data) => queryClient.setQueryData(['settings', userId], data),
   });
 
-  if (!settings.data) return <p aria-live="polite">Loading settings…</p>;
+  if (!settings.data) return <SkeletonRows label="Loading settings…" rows={4} />;
   const value = settings.data;
   const toggle = (key: 'sound' | 'reducedEffects' | 'notifications' | 'defaultHardMode') => {
     update.mutate({ ...value, [key]: !value[key] });
@@ -60,7 +60,13 @@ function SettingsPanelInner() {
         onChange={() => toggle('defaultHardMode')}
       />
       <p aria-live="polite">
-        {update.isPending ? 'Saving…' : update.isError ? 'Settings could not be saved.' : ''}
+        {update.isPending
+          ? 'Saving…'
+          : update.isError
+            ? 'Settings could not be saved.'
+            : update.isSuccess
+              ? 'Settings saved.'
+              : ''}
       </p>
     </div>
   );

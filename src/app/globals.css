@@ -14,6 +14,7 @@
   --correct: oklch(0.63 0.15 145);
   --correct-text: oklch(0.39 0.13 145);
   --present: oklch(0.72 0.14 85);
+  --present-text: oklch(0.4 0.11 85);
   --absent: oklch(0.58 0.018 220);
   --removed: oklch(0.52 0.06 25);
   --danger: oklch(0.58 0.2 28);
@@ -47,6 +48,7 @@
     --correct: oklch(0.7 0.15 145);
     --correct-text: oklch(0.79 0.13 145);
     --present: oklch(0.78 0.14 85);
+    --present-text: oklch(0.82 0.11 85);
     --absent: oklch(0.46 0.018 220);
     --removed: oklch(0.66 0.07 25);
     --danger: oklch(0.7 0.18 28);
@@ -135,6 +137,11 @@ button:disabled,
 .button[aria-disabled='true'] {
   cursor: not-allowed;
   opacity: 0.52;
+}
+
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
 }
 
 :focus-visible {
@@ -403,6 +410,7 @@ button.primary {
   border-color: var(--accent);
   background: var(--accent);
   color: var(--accent-ink);
+  text-transform: uppercase;
 }
 
 .button.primary:hover,
@@ -590,6 +598,29 @@ button.primary:hover {
   margin: 1rem;
 }
 
+.form-panel > .segmented,
+.form-panel > .action-row,
+.form-panel > details {
+  margin: 0.75rem 1rem;
+}
+
+.form-intro,
+.form-note {
+  color: var(--muted);
+}
+
+form.form-panel.field-stack {
+  padding-bottom: 1rem;
+}
+
+form.form-panel.field-stack > :not(h2) {
+  margin-inline: 1rem;
+}
+
+form.form-panel.field-stack > h2 + * {
+  margin-top: 1rem;
+}
+
 .status-panel .action-row {
   margin-top: 1rem;
 }
@@ -609,6 +640,45 @@ button.primary:hover {
   margin-top: 0;
   font-family: var(--font-geist-mono), monospace;
   font-size: 1rem;
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--rule);
+}
+
+.skeleton-row {
+  display: grid;
+  min-height: 3.25rem;
+  grid-template-columns: minmax(7rem, 0.35fr) minmax(10rem, 0.65fr);
+  gap: 1rem;
+  align-items: center;
+  border-bottom: var(--rule);
+  padding: 0.75rem;
+}
+
+.skeleton-row i {
+  display: block;
+  height: 0.7rem;
+  background: var(--surface-strong);
+  opacity: 0.72;
+  animation: skeleton-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.skeleton-row i:last-child {
+  justify-self: end;
+  width: min(100%, 18rem);
+}
+
+@keyframes skeleton-pulse {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 0.9;
+  }
 }
 
 .confirmation-panel {
@@ -1309,6 +1379,31 @@ button.calendar-day.is-selected {
   padding: 0.75rem;
 }
 
+.connectivity-status {
+  position: fixed;
+  z-index: var(--z-toast);
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  max-width: min(30rem, calc(100vw - 2rem));
+  gap: 0.75rem;
+  align-items: center;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+  padding: 0.65rem 0.75rem;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.72rem;
+}
+
+.connectivity-status strong {
+  color: var(--present-text);
+}
+
+.connectivity-status span {
+  color: var(--muted);
+}
+
 .focus-exit {
   position: fixed;
   z-index: var(--z-sticky);
@@ -1352,6 +1447,13 @@ button.calendar-day.is-selected {
 
   .mobile-nav {
     display: grid;
+  }
+
+  .connectivity-status {
+    right: 0.5rem;
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    left: 0.5rem;
+    max-width: none;
   }
 
   .route-frame {
@@ -1443,6 +1545,46 @@ button.calendar-day.is-selected {
 
   .workbench-region-body {
     padding: 0.75rem;
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .responsive-table tr {
+    border-bottom: var(--rule);
+    padding-block: 0.4rem;
+  }
+
+  .responsive-table td {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    gap: 0.75rem;
+    border-bottom: 0;
+    padding: 0.45rem 0.65rem;
+    overflow-wrap: anywhere;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
   }
 }
 

@@ -83,7 +83,7 @@
 }
 
 .game-status-facts .save-state.is-error {
-  color: var(--present);
+  color: var(--present-text);
 }
 
 .game-board-region {
