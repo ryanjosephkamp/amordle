@@ -4,14 +4,15 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v2-visual-direction-approval-gate",
-  "status": "awaiting-user-visual-approval",
+  "currentCheckpoint": "stage-2-v2-design-authority-approved",
+  "status": "in-progress",
   "lastGreenCommit": "cdde62caf7f3a0daf135efbe611cbb92393f54df",
   "visualReference": {
     "package": "design/references/stage2/v2-terminal-workbench-2026-07-27",
     "packageCommit": "dfc610ac9a5fbe645da92418d550037be10096cf",
     "recommendedDirection": "quiet-workbench",
-    "approvalStatus": "awaiting-explicit-user-approval"
+    "approvalStatus": "approved",
+    "approvedAt": "2026-07-28T03:30:40Z"
   },
   "preview": {
     "deploymentId": "dpl_tfnrGgi2sAtugLJR69DDCjyyc9ks",
@@ -22,6 +23,6 @@
     "lastRunId": "e2e_20260727T225614646Z_cdde62ca_39e41df9",
     "zeroResidue": true
   },
-  "blocker": "The versioned Stage 2 v2 terminal-workbench reference manifest requires explicit user approval before application presentation changes begin.",
-  "updatedAt": "2026-07-28T03:25:48Z"
+  "blocker": null,
+  "updatedAt": "2026-07-28T03:30:40Z"
 }

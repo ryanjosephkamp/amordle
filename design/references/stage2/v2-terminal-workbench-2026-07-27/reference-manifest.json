@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "packageId": "amordle-stage2-v2-terminal-workbench-2026-07-27",
-  "status": "awaiting-explicit-user-approval",
+  "status": "approved",
   "createdAt": "2026-07-27T23:59:00Z",
   "repository": "ryanjosephkamp/amordle",
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
@@ -333,9 +333,9 @@
   ],
   "approval": {
     "required": true,
-    "decision": null,
-    "approvedAt": null,
-    "approvedBy": null,
+    "decision": "approved",
+    "approvedAt": "2026-07-28T03:30:40Z",
+    "approvedBy": "user-explicit-approval",
     "corrections": []
   }
 }

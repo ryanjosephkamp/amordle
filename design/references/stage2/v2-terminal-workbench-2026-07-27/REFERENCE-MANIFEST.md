@@ -1,6 +1,6 @@
 # Amordle Stage 2 v2 Terminal Workbench Reference Manifest
 
-Status: **awaiting explicit user approval**
+Status: **approved as the binding Stage 2 visual authority on 2026-07-28**
 
 The machine-readable source is
 [`reference-manifest.json`](./reference-manifest.json).

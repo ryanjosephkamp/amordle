@@ -1,9 +1,20 @@
-# Amordle Stage 1 Design Foundation
+# Amordle Stage 2 Design Authority
 
-Status: Stage 1 functional terminal foundation is green. Three coordinated
-Stage 2 boards and their provenance manifest are ready under
-`design/references/stage2/`; final visual direction remains gated for explicit
-approval.
+Status: Quiet Workbench v2 was explicitly approved on 2026-07-28 as the
+binding Stage 2 visual authority. Stage 1 behavior, routes, service contracts,
+and persistence remain unchanged while the presentation layer is implemented.
+
+## Approved authority
+
+The governing package is
+`design/references/stage2/v2-terminal-workbench-2026-07-27/`. Its
+`reference-manifest.json`, `component-anatomy.md`, `copy-register.md`, and four
+coordinated approval boards bind the Stage 2 implementation.
+
+The original Stage 2 v1 package remains unapproved provenance. Generated
+values, words, dates, names, icons, and raster placement are not implementation
+authority. Higher product, functional, backend, testing, and accessibility
+contracts always win.
 
 ## Scene and strategy
 
@@ -58,8 +69,8 @@ Use OKLCH values throughout.
   cards.
 - All controls have default, hover, focus, active, disabled, loading, and error
   states where applicable.
-- Standard radius: 8px controls, 12px bounded panels, full-pill only for true
-  tags or compact status.
+- Standard radius: 4px controls and 0–4px work regions. Full-pill is limited
+  to true compact status tokens.
 - Semantic z-index layers: navigation, dropdown, sticky game status, backdrop,
   modal, toast, tooltip.
 
@@ -69,11 +80,12 @@ Use 150–250ms state transitions with an ease-out curve. Motion may confirm
 state, reveal accepted tiles, or support GO transitions. It may not delay
 operation or decorate page load. Respect `prefers-reduced-motion`.
 
-## Stage 2 gate
+## Stage 2 implementation
 
-The proposed Stage 2 concepts record exact copy, palette, typography, component
-and container rules, icon treatment, responsive behavior, SHA-256, dimensions,
-provenance, binding role, and required corrections in
-`design/references/stage2/reference-manifest.json`. They are not approved yet.
-Stage 1 functionality and service contracts remain immutable through that
-review.
+Quiet Workbench makes the terminal identity structural: compact command and
+context rails, titled ruled work regions, aligned data, low-radius controls,
+persistent human-readable status, and game-first composition. It does not
+simulate a shell, require typed commands, or use terminal theatrics.
+
+Implementation proceeds slice by slice against the approved fidelity ledger.
+Stage 1 functionality and service contracts remain immutable throughout.
