@@ -5,7 +5,7 @@
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
   "currentCheckpoint": "stage-2-v4-alt-screen-shell-local-green",
-  "status": "blocked-pending-secret-rotation",
+  "status": "blocked-owner-credential-rotation-required",
   "lastGreenCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
   "visualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
@@ -57,9 +57,10 @@
     "scope": "ignored local Preview environment custody",
     "requiredResolution": "Account owner rotates or revokes the exposed Vercel Blob read/write credential and confirms completion before Preview deployment or hosted acceptance.",
     "externalMutationsHalted": true,
-    "lastReadOnlyRotationCheck": "2026-07-28T16:46:53Z",
-    "rotationCheckResult": "unchanged"
+    "lastReadOnlyRotationCheck": "2026-07-28T16:51:14Z",
+    "rotationCheckResult": "unchanged",
+    "consecutiveBlockedGoalTurns": 3
   },
   "reportStatus": "v4-local-delivery-paired-reports-current-hosted-evidence-pending",
-  "updatedAt": "2026-07-28T16:46:53Z"
+  "updatedAt": "2026-07-28T16:51:14Z"
 }
