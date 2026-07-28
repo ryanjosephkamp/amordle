@@ -134,7 +134,11 @@ async function submitOnScreenGuess(page: Page, guess: string) {
   const draft = page.locator('.board-row.is-draft');
   let prefix = '';
   for (const letter of guess) {
-    await page.getByRole('button', { name: letter.toUpperCase(), exact: true }).click();
+    await page
+      .getByRole('button', {
+        name: new RegExp(`^${letter.toUpperCase()},`, 'i'),
+      })
+      .click();
     prefix += letter.toUpperCase();
     await expect(draft).toHaveText(prefix);
   }
