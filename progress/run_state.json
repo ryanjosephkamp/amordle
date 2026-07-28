@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v5-local-acceptance-green-hosted-blocked",
-  "status": "blocked-pending-preview-credential-rotation",
+  "currentCheckpoint": "stage-2-v5-final-protected-preview-candidate",
+  "status": "review-ready",
   "lastGreenCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
   "visualReference": {
     "package": "design/references/stage2/v5-quiet-system-shell-responsive-play-2026-07-28",
@@ -45,27 +45,29 @@
     }
   },
   "hostedAcceptance": {
-    "candidateCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
+    "candidateCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
     "fixtureE2E": 12,
     "serviceE2E": 1,
-    "visualE2E": 5,
+    "visualE2E": 6,
     "mobileVitals": {
-      "lcpMs": 368,
-      "inpMs": 32,
-      "cls": 0.0003232403939022726
+      "lcpMs": 464,
+      "inpMs": 48,
+      "cls": 0
     },
-    "mobileGameStatusGeometry": "pass"
+    "mobileGameStatusGeometry": "pass",
+    "responsivePlayMatrix": "9/9 green",
+    "protection": "anonymous redirect and authenticated 200"
   },
   "preview": {
-    "deploymentId": "dpl_5oQcXaBsCf8uUDLGeSnV3BnfMaYN",
-    "url": "https://amordle-pu5o7yxl5-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_9VdcV6VAY11cCpxrvd2G1zJLLmBQ",
+    "url": "https://amordle-8gcyb60r3-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "59517db8a47da2740f286ae8e93b6a73fc2715f1",
-    "supersededByLocalCandidate": true,
+    "applicationCommit": "8b092bf002584bef402ab37efbdd8ef2b4c58852",
+    "supersededByLocalCandidate": false,
     "projectSettingsRestored": true
   },
   "cleanup": {
-    "lastRunId": "e2e_20260728T200719276Z_59517db8_4a8bd4f6",
+    "lastRunId": "e2e_20260728T233740175Z_8b092bf0_c47505e4",
     "attempt": 1,
     "zeroResidue": true
   },
@@ -79,8 +81,9 @@
     "consecutiveBlockedGoalTurns": 0,
     "ownerAuthorizedContinuationAt": "2026-07-28T19:59:04Z",
     "oidcReplacementAttempt": "rejected-environment-not-allowed",
-    "v5HostedAcceptanceStatus": "blocked-before-mutation-missing-protected-preview-context"
+    "v5HostedAcceptanceStatus": "green",
+    "lastAuthorizedHostedRun": "2026-07-28T23:37:58Z"
   },
-  "reportStatus": "v5-local-checkpoint-ready-hosted-evidence-blocked",
-  "updatedAt": "2026-07-28T22:16:07Z"
+  "reportStatus": "v5-final-paired-reports-and-manual-checklist-review-ready",
+  "updatedAt": "2026-07-28T23:39:49Z"
 }

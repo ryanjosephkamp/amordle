@@ -1,0 +1,99 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle Stage 2 v5 protected Preview candidate</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: system-ui, sans-serif;
+      }
+      body {
+        max-width: 54rem;
+        margin: 0 auto;
+        padding: 2rem 1.25rem 4rem;
+        color: #111;
+        background: #fff;
+        line-height: 1.55;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      code {
+        font-family: ui-monospace, monospace;
+        overflow-wrap: anywhere;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.5rem;
+        border: 1px solid #111;
+        text-align: left;
+        vertical-align: top;
+      }
+      .notice {
+        padding: 1rem;
+        border: 2px solid #111;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Amordle Stage 2 v5 protected Preview candidate</h1>
+    <p class="notice">
+      Manual review:
+      <a href="https://amordle-8gcyb60r3-ryanjosephkamps-projects.vercel.app"
+        >open the protected Preview</a
+      >.
+    </p>
+    <p>
+      Deployment <code>dpl_9VdcV6VAY11cCpxrvd2G1zJLLmBQ</code> contains exact
+      application commit
+      <code>8b092bf002584bef402ab37efbdd8ef2b4c58852</code>.
+    </p>
+    <h2>Candidate behavior</h2>
+    <p>
+      The candidate removes the faux desktop-window frame, quiets global chrome
+      and Calendar, and contains active Solo and COMBAT gameplay within the
+      browser viewport. The initial six-row board and complete keyboard fit
+      without document scrolling throughout the tested phone matrix. Extended
+      history scrolls internally with an explicit Latest row recovery control.
+    </p>
+    <h2>Acceptance</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Gate</th>
+          <th>Result</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>Check</td><td>Green</td></tr>
+        <tr><td>Domain/browser tests</td><td>18 / 6 passed</td></tr>
+        <tr><td>Hosted fixture/service/visual</td><td>12 / 1 / 6 passed</td></tr>
+        <tr><td>Responsive play matrix</td><td>9/9 green</td></tr>
+        <tr><td>Hosted mobile vitals</td><td>LCP 464 ms; INP 48 ms; CLS 0</td></tr>
+        <tr><td>Contract integrity</td><td>237/237; 107/107; 45/45; 3 APIs</td></tr>
+      </tbody>
+    </table>
+    <h2>Cleanup and boundaries</h2>
+    <p>
+      The final real-service run removed three disposable users, one game, and
+      all dependent rows on its first cleanup attempt. Database and Auth residue
+      are zero.
+    </p>
+    <p>
+      Production, the default branch, migrations, real accounts, and the locked
+      shell remain unchanged. The previously exposed Preview-scoped Blob
+      credential still requires owner rotation or revocation.
+    </p>
+    <p>
+      This is a manual-review candidate. No merge or Production release is
+      authorized.
+    </p>
+  </body>
+</html>
