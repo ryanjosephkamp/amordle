@@ -1,0 +1,207 @@
+{
+  "schemaVersion": 3,
+  "packageId": "amordle-stage2-v3-macos-liquid-terminal-2026-07-28",
+  "status": "pending-user-approval",
+  "createdAt": "2026-07-28T15:54:48Z",
+  "repository": "ryanjosephkamp/amordle",
+  "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
+  "sourceCommit": "d4abf243f23737d7f7e47ca82ddde6a134bd827e",
+  "supersedesOnApproval": "amordle-stage2-v2-terminal-workbench-2026-07-27",
+  "recommendation": {
+    "direction": "mac-shell-grok-core",
+    "decision": "approve-as-stage2-v3-visual-authority",
+    "rationale": [
+      "The Mac window and functional glass layer create the requested native macOS character.",
+      "The matte terminal core gives gameplay Grok Build-like density and precision without fake shell theater.",
+      "The board and next valid action remain visually dominant.",
+      "The system translates to desktop, mobile, light, dark, reduced motion, and forced colors.",
+      "The presentation can be implemented without changing game or service authority."
+    ]
+  },
+  "provenance": {
+    "generator": "OpenAI built-in Image Gen",
+    "useCase": "ui-mockup and stylized-concept",
+    "inspection": "native-size view_image review",
+    "designMethods": [
+      "Impeccable product-interface guidance 3.8.0",
+      "OpenAI frontend-app-builder",
+      "OpenAI game-ui-frontend"
+    ],
+    "exactPrompts": "generation-prompts.md",
+    "generatedUiBitmapsShipped": false,
+    "backgroundSourcesRequireOptimization": true
+  },
+  "visualThesis": "A premium macOS application shell around a dense, matte terminal word-game workspace. Liquid Glass communicates navigation and transient control; the TUI core communicates game state, evidence, and action.",
+  "typography": {
+    "interfaceStack": "-apple-system, BlinkMacSystemFont, \"SF Pro Text\", \"Helvetica Neue\", system-ui, sans-serif",
+    "terminalStack": "ui-monospace, SFMono-Regular, \"SF Mono\", Menlo, Monaco, Consolas, \"Liberation Mono\", monospace",
+    "fontFilesDistributed": false,
+    "fixedPxScale": [12, 13, 14, 16, 20, 24],
+    "defaultUiPx": 14,
+    "minimumMetadataPx": 12,
+    "proseMaxCharacters": 72,
+    "tabularNumerals": true,
+    "terminalLigatures": false
+  },
+  "layout": {
+    "desktopWindow": {
+      "maximumWidthPx": 1480,
+      "viewportWidthPercent": 94,
+      "radiusPx": 16,
+      "titlebarHeightPx": 52,
+      "contextLineHeightPx": 32,
+      "statusFooterHeightPx": 34
+    },
+    "mobile": {
+      "edgeToEdge": true,
+      "trafficLights": false,
+      "topbarHeightPx": 48,
+      "dockMinimumHeightPx": 64,
+      "minimumTargetPx": 44
+    },
+    "spacingPx": [4, 8, 12, 16, 24, 32],
+    "contentPaneRadiusPx": 6,
+    "controlRadiusPx": 7,
+    "glassRadiusPx": 12,
+    "tileRadiusPx": 4
+  },
+  "materialPolicy": {
+    "glassAllowed": [
+      "desktop titlebar",
+      "desktop navigation selector",
+      "utility cluster",
+      "mobile topbar",
+      "mobile bottom dock",
+      "popover",
+      "menu",
+      "confirmation sheet",
+      "transient command palette",
+      "compact action toolbar"
+    ],
+    "glassForbidden": [
+      "game board canvas",
+      "tiles",
+      "keyboard",
+      "tables",
+      "transcripts",
+      "forms",
+      "inspectors",
+      "nested content panels",
+      "loading and error content"
+    ],
+    "regularBlurPx": 28,
+    "saturationPercent": 125,
+    "forcedColorsFallback": "opaque",
+    "unsupportedBackdropFallback": "opaque"
+  },
+  "approvalBoards": [
+    {
+      "id": "shell-home",
+      "path": "approval-board-shell-home.png",
+      "sha256": "2d9d29be1708ba0862c2676987795536a546db8638d83c9bb199fb69ee563215",
+      "width": 1487,
+      "height": 1058,
+      "bindingRole": [
+        "application window",
+        "titlebar and utilities",
+        "desktop and mobile navigation",
+        "Home command launcher",
+        "active session transcript",
+        "shell component anatomy"
+      ]
+    },
+    {
+      "id": "solo-daily",
+      "path": "approval-board-solo-daily.png",
+      "sha256": "3c432d1c2599e975037d0193a0095234a0f48d970f9a2b1a21c67f1cb83f9021",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "Solo OG and GO composition",
+        "game HUD",
+        "board and keyboard",
+        "evidence and seeded rows",
+        "Daily Calendar",
+        "purchase confirmation",
+        "mobile gameplay"
+      ]
+    },
+    {
+      "id": "combat",
+      "path": "approval-board-combat.png",
+      "sha256": "2c9c85a6be8e562af6788ec80e941ac3953ecf898a599adbff86b19f1fcc1d8f",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "waiting state",
+        "participant symmetry",
+        "mobile participant priority",
+        "result and rematch",
+        "recovery",
+        "privacy-safe spectation"
+      ]
+    },
+    {
+      "id": "account-data-support",
+      "path": "approval-board-account-data-support.png",
+      "sha256": "45d68cdfb5c00ef4933a45d62cf9190a50a64887c7e2c73ea1e184fd83357c44",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "Profile and Settings",
+        "History Stats and Leaderboards",
+        "Word Explorer",
+        "mobile account and data",
+        "support and exceptional states"
+      ]
+    },
+    {
+      "id": "mobile-materials",
+      "path": "approval-board-mobile-materials.png",
+      "sha256": "ba0e18ea1a9aabede2301b1a8bf0fc9e4385523335b1a87f7d788ad23e0b70f3",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "mobile translation",
+        "glass and matte material boundaries",
+        "controls and interaction states",
+        "palette and type scale",
+        "forced-colors fallback"
+      ]
+    }
+  ],
+  "backgroundAssets": [
+    {
+      "id": "dark-backplate-source",
+      "path": "assets/background-dark.png",
+      "sha256": "37d7657bf1af5a0a09c5580cd39ecaa83fdc18c53c3bbc69c49b3b0e5732b837",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": "dark appearance mood and glass refraction source",
+      "productionUse": "derive compressed responsive AVIF and WebP"
+    },
+    {
+      "id": "light-backplate-source",
+      "path": "assets/background-light.png",
+      "sha256": "6b8b91d687c519498e73f21963b63e7a878f59d8fa8365697e4c238ce5f275aa",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": "light appearance mood and glass refraction source",
+      "productionUse": "derive compressed responsive AVIF and WebP"
+    }
+  ],
+  "explorations": [
+    {
+      "id": "planning-concept",
+      "path": "explorations/planning-concept.png",
+      "sha256": "7f5c67587e6a2d03e4049b33e120abd1ddf3c9a68f09ab1453d73cdea97bcc45",
+      "width": 1536,
+      "height": 1024,
+      "binding": false
+    }
+  ],
+  "componentAuthority": "component-anatomy.md",
+  "copyAuthority": "copy-register.md",
+  "referenceAuthority": "research-notes.md",
+  "approvalAuthority": "approval-checklist.md"
+}
