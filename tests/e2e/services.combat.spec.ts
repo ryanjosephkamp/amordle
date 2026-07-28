@@ -429,6 +429,13 @@ test.describe.serial('protected Preview services', () => {
     await expect(secondPage).toHaveURL(new RegExp(`/combat/match/${gameId}$`));
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/opponent’s turn/i);
     await secondPage.setViewportSize({ width: 390, height: 844 });
+    const mobileKeyboardBox = await secondPage.locator('.keyboard').boundingBox();
+    const mobileStatusBox = await secondPage.locator('.terminal-statusbar').boundingBox();
+    expect(mobileKeyboardBox).not.toBeNull();
+    expect(mobileStatusBox).not.toBeNull();
+    expect(mobileStatusBox!.y).toBeGreaterThanOrEqual(
+      mobileKeyboardBox!.y + mobileKeyboardBox!.height,
+    );
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'combat-active-mobile-dark.png'),
       fullPage: true,

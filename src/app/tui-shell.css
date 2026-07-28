@@ -980,7 +980,7 @@ button.calendar-day.is-selected {
   }
 
   .app-shell.is-game-surface {
-    padding-bottom: calc(1.75rem + env(safe-area-inset-bottom));
+    padding-bottom: 0;
   }
 
   .terminal-titlebar {
@@ -1167,6 +1167,10 @@ button.calendar-day.is-selected {
 
   .terminal-statusbar span:last-child {
     margin-inline-start: auto;
+  }
+
+  .app-shell.is-game-surface .terminal-statusbar {
+    position: static;
   }
 }
 
