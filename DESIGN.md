@@ -1,87 +1,73 @@
-# Amordle Alt-Screen TUI Shell
+# Amordle Quiet System Shell
 
-Status: the user authorized the literal Alt-Screen TUI shell on 2026-07-28 as
-the active presentation authority. It supersedes Quiet Workbench v2 and the
-unapproved macOS Liquid Terminal v3 proposal. Those packages remain immutable
-provenance under `design/references/stage2/`; neither remains binding.
+Status: the user authorized the responsive shell correction on 2026-07-28.
+This v5 authority supersedes the Alt-Screen v4 presentation while preserving it
+as immutable provenance under `design/references/stage2/`.
 
-This authority is intentionally a fully functional shell, not a final promise
-about Amordle's eventual visual identity. Future design exploration may replace
-it without changing the working game or service architecture.
+This is a presentation-only authority. Game rules, routes, controllers,
+persistence, services, the three HTTP interfaces, all 237 clauses, the 107-file
+bootstrap baseline, and all 45 migrations remain unchanged.
 
-## Scene and thesis
+## Thesis
 
-A player opens Amordle in a browser and immediately reads it as a polished,
-fullscreen terminal application. The interface uses the spatial grammar of a
-modern alternate-screen TUI—path lines, inverse-video selection, aligned rows,
-rules, prompts, and pinned status—while every action remains clickable,
-touchable, screen-reader legible, and understandable without terminal
-experience.
+Amordle should feel like a disciplined terminal-native application without
+pretending to be a macOS window. The interface keeps SF Mono, prompt markers,
+inverse selection, aligned rows, compact status facts, and dense readable data.
+It removes decorative traffic lights, titlebar imitation, wallpaper, enclosing
+window borders, box-drawing frames around ordinary content, and fixed mobile
+navigation that competes with play.
 
-The browser contains one Mac Terminal-like window. The window may use subtle
-translucency and blur; its content does not use nested glass. Hierarchy comes
-from alignment and selection, not cards, capsules, or decorative panels.
+The browser surface is the application surface. On desktop, one 48-pixel
+toolbar carries identity, route context, primary navigation, account state, and
+utilities. On mobile, non-game routes add one compact route rail. Active games
+use only the 44-pixel play toolbar and dedicate the remaining dynamic viewport
+to the board, status, tools, and keyboard.
 
 ## Typography and palette
 
 - Use `ui-monospace`, `SFMono-Regular`, `"SF Mono"`, Menlo, Monaco, Consolas,
-  and the bundled Geist Mono as the fallback sequence. Do not redistribute
-  Apple font files.
-- Use the monospace stack throughout visible product UI, including controls,
-  prose, forms, boards, tables, prompts, and status.
-- Follow the system light/dark preference. Dark mode is a restrained graphite
-  terminal; light mode is an opaque, high-contrast Terminal Basic translation.
-- Cyan marks focus and the current prompt. Green, amber, slate, and red retain
-  their semantic game and error roles. Color never carries meaning alone.
+  and Geist Mono fallbacks throughout visible product UI.
+- Preserve the restrained graphite/light-neutral palette and cyan focus role.
+  Green, amber, slate, and red retain semantic game meanings.
+- Hierarchy comes from alignment, weight, whitespace, rules, and inverse
+  selection—not ornamental panels, oversized headings, or extra color.
 
-## Shell grammar
+## Responsive play contract
 
-- Desktop: one Terminal-like window with a thin titlebar, decorative traffic
-  lights, route path, textual navigation row, terminal buffer, and status line.
-- Mobile: an edge-to-edge terminal viewport. Non-game routes use a compact
-  textual route rail; active games keep only the menu and status line so the
-  board and keyboard remain unobstructed.
-- Current selection uses inverse video. Hover and keyboard focus use the same
-  component vocabulary.
-- Work regions use box-drawing corners and rules. Forms, lists, tables, game
-  panes, empty states, errors, and dialogs remain part of the same buffer
-  instead of becoming detached cards.
-- Prompts and shortcut notation are visual and informational. Typed commands
-  are never required.
+- Active Solo and COMBAT routes are contained within `100dvh`; the document
+  does not scroll at standard supported viewports.
+- The keyboard is fully visible on entry from 320×568 portrait and 568×320
+  landscape upward, accounting for safe areas and the play toolbar.
+- Default six-row boards are visible on entry. Longer histories, purchased
+  continuations, GO evidence, and long words scroll only inside named history
+  regions.
+- New accepted rows follow the latest row only while the player is already
+  following. Manual history scrolling is never overridden. A visible
+  `Latest row` control restores following.
+- COMBAT presents one chronological, actor-labelled transcript. Desktop aligns
+  the two actors into symmetric lanes; mobile uses a single readable stream.
+- Mobile short-height layouts collapse evidence and optional Solo tools behind
+  one disclosure. Core play never depends on opening it.
+- Portrait and landscape are distinct compositions rather than scaled copies.
 
-## Gameplay grammar
+## Shell and component rules
 
-- Solo and COMBAT use numbered rows, contiguous fixed-width cells, a visible
-  active cursor, a compact evidence line, rectangular terminal keys, and terse
-  status facts.
-- Board state remains readable by symbol and text as well as color.
-- The game controller, physical keyboard input, on-screen keyboard, Focus Mode,
-  persistence, sound, sharing, definitions, timers, polling, Realtime
-  invalidation, and recovery behavior remain unchanged.
-
-## Component rules
-
-- Controls have default, hover, focus, active, disabled, loading, error, and
-  selected states where applicable.
-- Use square or two-pixel corners. Full pills and segmented capsules are not
-  part of this shell.
-- Use 44-pixel minimum touch targets even when controls visually resemble TUI
-  rows or keys.
-- Use standard semantic HTML underneath the visual grammar. Box-drawing glyphs
-  are decorative and hidden from assistive technology where appropriate.
-- Forced colors removes translucency, background effects, and decorative
-  traffic lights. Reduced motion disables the cursor blink.
+- `AppShell` owns one adaptive toolbar and an optional mobile route rail.
+- `WorkbenchRegion` defaults to an open ruled section. The `pane` variant is
+  reserved for content that genuinely needs containment.
+- Boards and data stay matte. Menus and transient controls may use restrained
+  material separation, but decorative glass nesting is prohibited.
+- Touch targets remain at least 44 pixels. Keyboard, mouse, touch, screen
+  reader, reduced-motion, forced-colors, and 200% reflow operation remain
+  mandatory.
+- Calendar uses one horizontal 35-day rail, one compact selected-day
+  inspector, and progressive disclosure for arbitrary-date and date-basis
+  details.
 
 ## Prohibited presentation
 
-Do not add generic SaaS cards, glossy glass widgets, app-style segmented
-navigation, floating inspectors, giant marketing headings, cyberpunk effects,
-Matrix imagery, scanlines, CRT distortion, code rain, excessive glow, fake
-command output, or terminal-only interaction.
-
-## Behavioral boundary
-
-This authority is presentation-only. The 237 requirements, route URLs, three
-HTTP interfaces, domain rules, persistence envelopes, Supabase adapters and
-RPCs, word-list loading boundaries, 45 migrations, and immutable bootstrap
-baseline remain unchanged.
+Do not restore faux traffic lights, titlebars, window borders, decorative
+wallpaper, fixed bottom navigation during play, box-drawing frames around every
+region, nested glass cards, generic SaaS dashboards, scanlines, CRT distortion,
+Matrix effects, fake command output, excessive glow, or terminal-only
+interaction.

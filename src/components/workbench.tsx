@@ -5,27 +5,22 @@ export function WorkbenchRegion({
   status,
   children,
   className = '',
-}: PropsWithChildren<{ title: string; status?: ReactNode; className?: string }>) {
+  variant = 'open',
+}: PropsWithChildren<{
+  title: string;
+  status?: ReactNode;
+  className?: string;
+  variant?: 'open' | 'pane';
+}>) {
   const id = `region-${title.toLowerCase().replaceAll(/[^a-z0-9]+/g, '-')}`;
   return (
-    <section className={`workbench-region ${className}`.trim()} aria-labelledby={id}>
+    <section className={`workbench-region is-${variant} ${className}`.trim()} aria-labelledby={id}>
       <header className="workbench-region-header">
-        <span className="region-corner" aria-hidden="true">
-          ┌─
-        </span>
         <h2 id={id}>{title}</h2>
         <span className="region-rule" aria-hidden="true" />
         {status && <div className="workbench-region-status">{status}</div>}
-        <span className="region-corner is-end" aria-hidden="true">
-          ┐
-        </span>
       </header>
       <div className="workbench-region-body">{children}</div>
-      <div className="workbench-region-footer" aria-hidden="true">
-        <span>└</span>
-        <span />
-        <span>┘</span>
-      </div>
     </section>
   );
 }

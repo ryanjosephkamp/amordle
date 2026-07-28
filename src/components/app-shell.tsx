@@ -92,28 +92,15 @@ export function AppShell({ children }: PropsWithChildren) {
         .join(' ')}
     >
       {!focus && (
-        <div className="global-chrome">
-          <header className="terminal-titlebar">
-            <span className="traffic-lights" aria-hidden="true">
-              <i />
-              <i />
-              <i />
-            </span>
-            <Link className="window-title" href="/" aria-label="Amordle home">
-              amordle — play
-            </Link>
-            <span className="window-session">
-              {auth.status === 'signed-in' ? 'account' : 'guest'} · local
-            </span>
-          </header>
-          <div className="context-rail" aria-label="Current location">
-            <span>{routeContext(pathname)}</span>
-            <span className="context-ready">ready</span>
-          </div>
-          <div className="topbar">
+        <header className="global-chrome">
+          <div className="app-toolbar">
             <Link className="wordmark" href="/" aria-label="Amordle home">
               <span aria-hidden="true">❯</span> amordle
             </Link>
+            <div className="toolbar-context" aria-label="Current location">
+              <span>{routeContext(pathname)}</span>
+              <span className="context-ready">ready</span>
+            </div>
             <nav className="desktop-nav" aria-label="Primary">
               {primary.map((item) => (
                 <Link
@@ -181,43 +168,37 @@ export function AppShell({ children }: PropsWithChildren) {
               </div>
             </div>
           </div>
-        </div>
+          {!gameSurface && (
+            <nav className="mobile-route-rail" aria-label="Primary">
+              {primary.slice(0, 4).map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
+                >
+                  <span aria-hidden="true">[{item.shortcut}]</span> {item.label}
+                </Link>
+              ))}
+              <button
+                ref={mobileMoreButton}
+                type="button"
+                aria-label="More navigation"
+                aria-haspopup="menu"
+                aria-expanded={moreOpen}
+                aria-controls="more-navigation"
+                onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
+              >
+                [m] menu
+              </button>
+            </nav>
+          )}
+        </header>
       )}
       <main id="main-content">{children}</main>
       {focus && (
         <Link className="focus-exit" href={pathname as Route}>
           EXIT FOCUS
         </Link>
-      )}
-      {!focus && !gameSurface && (
-        <nav className="mobile-nav" aria-label="Primary">
-          {primary.slice(0, 4).map((item) => (
-            <Link
-              key={item.href}
-              href={item.href}
-              aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
-            >
-              <span aria-hidden="true">[{item.shortcut}]</span> {item.label}
-            </Link>
-          ))}
-          <button
-            ref={mobileMoreButton}
-            type="button"
-            aria-label="More navigation"
-            aria-haspopup="menu"
-            aria-expanded={moreOpen}
-            aria-controls="more-navigation"
-            onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
-          >
-            [m] menu
-          </button>
-        </nav>
-      )}
-      {!focus && (
-        <footer className="terminal-statusbar" aria-label="Application status">
-          <span>tab select · enter open · esc close</span>
-          <span>{auth.status === 'signed-in' ? 'account synced' : 'guest · device save'}</span>
-        </footer>
       )}
       <ConnectivityStatus />
     </div>

@@ -26,6 +26,8 @@ import {
   setDailyEntitlement,
 } from '@/adapters/supabase/solo';
 import { operationId } from '@/adapters/supabase/shared';
+import { GameHistoryViewport } from '@/components/game-history-viewport';
+import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
 import {
   continuationCost,
@@ -52,8 +54,6 @@ interface SoloGameProps {
   validGuesses: string[];
   dailyDate?: string;
 }
-
-const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
 
 function now(): string {
   return new Date().toISOString();
@@ -189,6 +189,7 @@ export function SoloGame({
   const [saveState, setSaveState] = useState<'saved' | 'saving' | 'syncing' | 'error'>('saved');
   const [actionState, setActionState] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [auxiliaryOpen, setAuxiliaryOpen] = useState(true);
   const revision = useRef(0);
   const sessionRef = useRef(session);
   const finalized = useRef(false);
@@ -213,6 +214,14 @@ export function SoloGame({
       queueMicrotask(() => setSoundEnabled(preferences.data.sound));
     }
   }, [preferences.data]);
+
+  useEffect(() => {
+    const compact = window.matchMedia('(max-width: 47.99rem), (max-height: 43.75rem)');
+    const adapt = () => setAuxiliaryOpen(!compact.matches);
+    adapt();
+    compact.addEventListener('change', adapt);
+    return () => compact.removeEventListener('change', adapt);
+  }, []);
 
   useEffect(() => {
     sessionRef.current = session;
@@ -596,48 +605,52 @@ export function SoloGame({
           <span>GUESS BOARD</span>
           <span>{session.status.toUpperCase()}</span>
         </div>
-        <div className="game-board" role="table" aria-label="Guess board">
-          {currentRows.map((row, index) => (
-            <BoardRow
-              key={row.id}
-              row={row}
-              length={settings.length}
-              number={index + 1}
-              label={
-                row.kind === 'seeded'
-                  ? `Seeded evidence: ${row.guess}`
-                  : `Accepted guess: ${row.guess}`
-              }
-            />
-          ))}
-          {!isTerminal && session.status === 'active' && (
-            <DraftRow
-              draft={session.draft}
-              length={settings.length}
-              revealed={session.revealedPositions}
-              number={currentRows.length + 1}
-            />
-          )}
-          {Array.from({
-            length: Math.max(
-              0,
-              budget - acceptedRows.length - (!isTerminal && session.status === 'active' ? 1 : 0),
-            ),
-          }).map((_, index) => (
-            <BoardRow
-              key={`empty:${index}`}
-              length={settings.length}
-              number={
-                currentRows.length +
-                (!isTerminal && session.status === 'active' ? 1 : 0) +
-                index +
-                1
-              }
-              label={`Empty attempt ${acceptedRows.length + index + 2}`}
-            />
-          ))}
-        </div>
-        <EvidenceLegend />
+        <GameHistoryViewport
+          followKey={`${session.puzzleIndex}:${currentRows.length}:${budget}`}
+          label="Guess board history"
+        >
+          <div className="game-board" role="table" aria-label="Guess board">
+            {currentRows.map((row, index) => (
+              <BoardRow
+                key={row.id}
+                row={row}
+                length={settings.length}
+                number={index + 1}
+                label={
+                  row.kind === 'seeded'
+                    ? `Seeded evidence: ${row.guess}`
+                    : `Accepted guess: ${row.guess}`
+                }
+              />
+            ))}
+            {!isTerminal && session.status === 'active' && (
+              <DraftRow
+                draft={session.draft}
+                length={settings.length}
+                revealed={session.revealedPositions}
+                number={currentRows.length + 1}
+              />
+            )}
+            {Array.from({
+              length: Math.max(
+                0,
+                budget - acceptedRows.length - (!isTerminal && session.status === 'active' ? 1 : 0),
+              ),
+            }).map((_, index) => (
+              <BoardRow
+                key={`empty:${index}`}
+                length={settings.length}
+                number={
+                  currentRows.length +
+                  (!isTerminal && session.status === 'active' ? 1 : 0) +
+                  index +
+                  1
+                }
+                label={`Empty attempt ${acceptedRows.length + index + 2}`}
+              />
+            ))}
+          </div>
+        </GameHistoryViewport>
       </div>
 
       <div className="game-message" aria-live="assertive">
@@ -652,86 +665,63 @@ export function SoloGame({
                 : 'Ready for your guess.')}
       </div>
 
-      {isPractice && session.status === 'active' && (
-        <div className="game-tools" aria-label="Solo Practice tools">
-          <button
-            type="button"
-            disabled={(economy.data?.reveal_one_letter ?? 0) < 1}
-            onClick={() => void applyReveal()}
-          >
-            REVEAL LETTER · {economy.data?.reveal_one_letter ?? 0}
-          </button>
-          <button
-            type="button"
-            disabled={(economy.data?.remove_incorrect_letters ?? 0) < 1}
-            onClick={() => void applyRemoval()}
-          >
-            REMOVE LETTERS · {economy.data?.remove_incorrect_letters ?? 0}
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              const next = !soundEnabled;
-              setSoundEnabled(next);
-              void (signedInUserId
-                ? loadSettings(signedInUserId).then((current) =>
-                    saveSettings(signedInUserId, { ...current, sound: next }),
-                  )
-                : saveLocalSound(ownerNamespace, next));
-            }}
-          >
-            SOUND {soundEnabled ? 'ON' : 'OFF'}
-          </button>
+      <details
+        className="game-auxiliary"
+        open={auxiliaryOpen}
+        onToggle={(event) => setAuxiliaryOpen(event.currentTarget.open)}
+      >
+        <summary>Evidence and game tools</summary>
+        <div className="game-auxiliary-content">
+          <EvidenceLegend />
+          {isPractice && session.status === 'active' && (
+            <div className="game-tools" aria-label="Solo Practice tools">
+              <button
+                type="button"
+                disabled={(economy.data?.reveal_one_letter ?? 0) < 1}
+                onClick={() => void applyReveal()}
+              >
+                REVEAL LETTER · {economy.data?.reveal_one_letter ?? 0}
+              </button>
+              <button
+                type="button"
+                disabled={(economy.data?.remove_incorrect_letters ?? 0) < 1}
+                onClick={() => void applyRemoval()}
+              >
+                REMOVE LETTERS · {economy.data?.remove_incorrect_letters ?? 0}
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const next = !soundEnabled;
+                  setSoundEnabled(next);
+                  void (signedInUserId
+                    ? loadSettings(signedInUserId).then((current) =>
+                        saveSettings(signedInUserId, { ...current, sound: next }),
+                      )
+                    : saveLocalSound(ownerNamespace, next));
+                }}
+              >
+                SOUND {soundEnabled ? 'ON' : 'OFF'}
+              </button>
+            </div>
+          )}
         </div>
-      )}
+      </details>
 
       {!isTerminal && (
-        <div className="keyboard" aria-label="On-screen keyboard">
-          {keyboardRows.map((row, rowIndex) => (
-            <div className="keyboard-row" key={row}>
-              {rowIndex === 2 && (
-                <button
-                  type="button"
-                  className="key is-wide"
-                  onClick={() =>
-                    void issue({
-                      type: 'submit',
-                      sanctionedWords,
-                      now: now(),
-                    })
-                  }
-                  aria-label="Submit guess"
-                  disabled={session.status !== 'active'}
-                >
-                  SUBMIT
-                </button>
-              )}
-              {[...row].map((letter) => (
-                <button
-                  type="button"
-                  className={`key is-${keyboard[letter] ?? 'unknown'}`}
-                  key={letter}
-                  onClick={() => void issue({ type: 'insert', letter, now: now() })}
-                  aria-label={`${letter.toUpperCase()}, ${keyboard[letter] ?? 'unknown'}`}
-                  disabled={session.status !== 'active' || keyboard[letter] === 'removed'}
-                >
-                  {letter.toUpperCase()}
-                </button>
-              ))}
-              {rowIndex === 2 && (
-                <button
-                  type="button"
-                  className="key is-wide"
-                  onClick={() => void issue({ type: 'delete', now: now() })}
-                  aria-label="Delete letter"
-                  disabled={session.status !== 'active'}
-                >
-                  DELETE
-                </button>
-              )}
-            </div>
-          ))}
-        </div>
+        <GameKeyboard
+          evidence={keyboard}
+          disabled={session.status !== 'active'}
+          onLetter={(letter) => void issue({ type: 'insert', letter, now: now() })}
+          onSubmit={() =>
+            void issue({
+              type: 'submit',
+              sanctionedWords,
+              now: now(),
+            })
+          }
+          onDelete={() => void issue({ type: 'delete', now: now() })}
+        />
       )}
 
       {session.status === 'lost' && isPractice && !session.answerRevealed && (

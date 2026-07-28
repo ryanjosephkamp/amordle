@@ -113,7 +113,35 @@ export function CalendarView() {
   if (!today) return <p aria-live="polite">Preparing your local calendar…</p>;
 
   return (
-    <>
+    <div className="calendar-view">
+      <div className="calendar-toolbar">
+        <div>
+          <strong>Solo Daily</strong>
+          <span>Local date · five letters</span>
+        </div>
+        <div className="segmented" aria-label="Daily mode">
+          <button
+            type="button"
+            aria-pressed={mode === 'og'}
+            onClick={() => {
+              setMode('og');
+              setConfirmingUnlock(false);
+            }}
+          >
+            OG
+          </button>
+          <button
+            type="button"
+            aria-pressed={mode === 'go'}
+            onClick={() => {
+              setMode('go');
+              setConfirmingUnlock(false);
+            }}
+          >
+            GO
+          </button>
+        </div>
+      </div>
       <div className="calendar-strip" role="group" aria-label="Recent Solo Daily dates">
         {recentDates.map((key) => {
           const state = completed.has(`${key}:${mode}`)
@@ -141,47 +169,10 @@ export function CalendarView() {
                   day: 'numeric',
                 })}
               </span>
-              <strong>{state}</strong>
+              <strong>{state === 'Complete' ? '✓ Done' : state}</strong>
             </button>
           );
         })}
-      </div>
-      <div className="calendar-controls">
-        <label>
-          Any date from January 1, 2025
-          <input
-            type="date"
-            min={floor}
-            max={today}
-            value={selectedDate}
-            onChange={(event) => {
-              setSelectedDate(event.target.value);
-              setConfirmingUnlock(false);
-            }}
-          />
-        </label>
-        <div className="segmented" aria-label="Daily mode">
-          <button
-            type="button"
-            aria-pressed={mode === 'og'}
-            onClick={() => {
-              setMode('og');
-              setConfirmingUnlock(false);
-            }}
-          >
-            OG
-          </button>
-          <button
-            type="button"
-            aria-pressed={mode === 'go'}
-            onClick={() => {
-              setMode('go');
-              setConfirmingUnlock(false);
-            }}
-          >
-            GO
-          </button>
-        </div>
       </div>
       <section className="calendar-selection" aria-labelledby="selected-daily-heading">
         <div>
@@ -218,6 +209,28 @@ export function CalendarView() {
           </Link>
         </div>
       </section>
+      <details className="calendar-details">
+        <summary>Choose another date and review date rules</summary>
+        <div className="calendar-controls">
+          <label>
+            Any date from January 1, 2025
+            <input
+              type="date"
+              min={floor}
+              max={today}
+              value={selectedDate}
+              onChange={(event) => {
+                setSelectedDate(event.target.value);
+                setConfirmingUnlock(false);
+              }}
+            />
+          </label>
+          <p>
+            Solo uses your local calendar day. COMBAT Daily uses UTC. Selecting a date never charges
+            you.
+          </p>
+        </div>
+      </details>
       {confirmingUnlock && !playable && !isFuture && (
         <section
           className="confirmation-panel"
@@ -251,9 +264,9 @@ export function CalendarView() {
       <p className="prose">
         {userId
           ? `Available balance: ${economy.data?.coins ?? 'loading'} coins.`
-          : 'Sign in to unlock a past Daily. Selecting a date never charges you.'}
+          : 'Sign in to unlock a past Daily.'}
       </p>
       <p aria-live="polite">{message}</p>
-    </>
+    </div>
   );
 }

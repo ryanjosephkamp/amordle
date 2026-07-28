@@ -47,10 +47,10 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await page.getByRole('button', { name: /^A, unknown$/i }).click();
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
     await page.goto(`${page.url()}&focus=1`);
-    await expect(page.locator('.topbar')).toHaveCount(0);
+    await expect(page.locator('.global-chrome')).toHaveCount(0);
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
     await page.getByRole('link', { name: /Exit focus/i }).click();
-    await expect(page.locator('.topbar')).toBeVisible();
+    await expect(page.locator('.global-chrome')).toBeVisible();
   });
 
   test('service worker restores a visited Solo route offline without private caches', async ({

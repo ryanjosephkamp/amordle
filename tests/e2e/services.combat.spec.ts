@@ -430,12 +430,17 @@ test.describe.serial('protected Preview services', () => {
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/opponent’s turn/i);
     await secondPage.setViewportSize({ width: 390, height: 844 });
     const mobileKeyboardBox = await secondPage.locator('.keyboard').boundingBox();
-    const mobileStatusBox = await secondPage.locator('.terminal-statusbar').boundingBox();
     expect(mobileKeyboardBox).not.toBeNull();
-    expect(mobileStatusBox).not.toBeNull();
-    expect(mobileStatusBox!.y).toBeGreaterThanOrEqual(
-      mobileKeyboardBox!.y + mobileKeyboardBox!.height,
-    );
+    expect(mobileKeyboardBox!.y + mobileKeyboardBox!.height).toBeLessThanOrEqual(844);
+    const mobileFit = await secondPage.evaluate(() => ({
+      documentHeight: document.documentElement.scrollHeight,
+      viewportHeight: window.innerHeight,
+      routeRailCount: document.querySelectorAll('.mobile-route-rail').length,
+    }));
+    expect(mobileFit.documentHeight).toBeLessThanOrEqual(mobileFit.viewportHeight + 1);
+    expect(mobileFit.routeRailCount).toBe(0);
+    await expect(secondPage.locator('.combat-transcript-frame')).toBeVisible();
+    await expect(secondPage.locator('.combat-transcript-entry')).toHaveCount(6);
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'combat-active-mobile-dark.png'),
       fullPage: true,

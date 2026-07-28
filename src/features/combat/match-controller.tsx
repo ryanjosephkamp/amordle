@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   acceptPracticeRematch,
   advanceLegacyGo,
@@ -28,9 +28,11 @@ import type {
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
+import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { scoreGuess } from '@/domain/game';
+import { MoveBoards } from './combat-transcript';
 
 interface MatchState {
   authority: 0 | 1 | 2;
@@ -38,8 +40,6 @@ interface MatchState {
   rankedDaily?: RankedDailyProjection;
   game?: CombatProjection;
 }
-
-const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
 
 async function loadMatch(gameId: string): Promise<MatchState> {
   try {
@@ -361,7 +361,12 @@ function RankedDailyMatch({
         {message}
       </p>
       {!terminal && (
-        <button type="button" onClick={forfeit} disabled={pending}>
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={forfeit}
+          disabled={pending}
+        >
           {game.moves.length ? 'FORFEIT MATCH' : 'CANCEL BEFORE PLAY'}
         </button>
       )}
@@ -666,7 +671,12 @@ function AuthoritativeMatch({
         {message}
       </p>
       {!terminal && game.capabilities.canForfeit && (
-        <button type="button" onClick={forfeit} disabled={pending}>
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={forfeit}
+          disabled={pending}
+        >
           FORFEIT MATCH
         </button>
       )}
@@ -740,50 +750,6 @@ function CombatHeader({
   );
 }
 
-function MoveBoards({
-  moves,
-  length,
-  viewerSeat,
-}: {
-  moves: Array<{
-    id: string;
-    seat: 'player-one' | 'player-two';
-    guess: string;
-    tiles: Array<{ letter: string; state: 'correct' | 'present' | 'absent' }>;
-    acceptedAt: string;
-  }>;
-  length: number;
-  viewerSeat: 'player-one' | 'player-two';
-}) {
-  const bySeat = useMemo(
-    () => ({
-      'player-one': moves.filter((move) => move.seat === 'player-one'),
-      'player-two': moves.filter((move) => move.seat === 'player-two'),
-    }),
-    [moves],
-  );
-  const opponentSeat = viewerSeat === 'player-one' ? 'player-two' : 'player-one';
-  return (
-    <div className="dual-board">
-      {([viewerSeat, opponentSeat] as const).map((seat) => (
-        <section
-          className={seat === viewerSeat ? 'is-viewer' : 'is-opponent'}
-          key={seat}
-          aria-label={`${seat === viewerSeat ? 'your' : 'opponent'} board`}
-        >
-          <h2>{seat === viewerSeat ? 'YOU' : 'OPPONENT'}</h2>
-          <div className="compact-board">
-            {bySeat[seat].map((move) => (
-              <TileRow key={move.id} guess={move.guess} tiles={move.tiles} />
-            ))}
-            {!bySeat[seat].length && <EmptyTileRow length={length} />}
-          </div>
-        </section>
-      ))}
-    </div>
-  );
-}
-
 function TileRow({
   guess,
   tiles,
@@ -809,16 +775,6 @@ function TileRow({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function EmptyTileRow({ length }: { length: number }) {
-  return (
-    <div className="board-row" aria-label="No accepted guesses">
-      {Array.from({ length }, (_, index) => (
-        <div className="tile" key={index} />
-      ))}
     </div>
   );
 }
@@ -862,33 +818,16 @@ function CombatInput({
           </div>
         ))}
       </div>
-      <div className="keyboard" aria-label="On-screen keyboard">
-        {keyboardRows.map((row) => (
-          <div className="keyboard-row" key={row}>
-            {[...row].map((letter) => (
-              <button
-                type="button"
-                className="key"
-                key={letter}
-                disabled={disabled}
-                onClick={() => {
-                  if (draft.length < length) setDraft(`${draft}${letter}`);
-                }}
-              >
-                {letter.toUpperCase()}
-              </button>
-            ))}
-          </div>
-        ))}
-      </div>
-      <div className="action-row">
-        <button className="primary" disabled={disabled || draft.length !== length} onClick={submit}>
-          SUBMIT
-        </button>
-        <button disabled={disabled || !draft} onClick={() => setDraft(draft.slice(0, -1))}>
-          DELETE
-        </button>
-      </div>
+      <GameKeyboard
+        disabled={disabled}
+        submitDisabled={disabled || draft.length !== length}
+        deleteDisabled={disabled || !draft}
+        onLetter={(letter) => {
+          if (draft.length < length) setDraft(`${draft}${letter}`);
+        }}
+        onSubmit={submit}
+        onDelete={() => setDraft(draft.slice(0, -1))}
+      />
     </div>
   );
 }

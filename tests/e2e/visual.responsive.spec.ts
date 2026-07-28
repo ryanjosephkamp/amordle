@@ -4,6 +4,16 @@ import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
 
 const widths = [320, 360, 390, 412, 768, 960, 1440, 1920] as const;
+const gameViewports = [
+  { id: '320x568-portrait', width: 320, height: 568 },
+  { id: '360x640-portrait', width: 360, height: 640 },
+  { id: '390x667-portrait', width: 390, height: 667 },
+  { id: '390x844-portrait', width: 390, height: 844 },
+  { id: '412x915-portrait', width: 412, height: 915 },
+  { id: '568x320-landscape', width: 568, height: 320 },
+  { id: '667x390-landscape', width: 667, height: 390 },
+  { id: '844x390-landscape', width: 844, height: 390 },
+] as const;
 const professionalSurfaces = [
   {
     id: 'shell-home',
@@ -91,18 +101,19 @@ const professionalVariants = [
 ] as const;
 
 test.describe('responsive and alternate presentation evidence', () => {
-  test('Alt-Screen TUI shell remains structural and gameplay-first', async ({ page }, testInfo) => {
+  test('Quiet System Shell remains structural and gameplay-first', async ({ page }, testInfo) => {
     await page.setViewportSize({ width: 1440, height: 1024 });
     await page.emulateMedia({ colorScheme: 'dark' });
     await page.goto('/');
     await expect(page.locator('.app-shell')).toBeVisible();
-    await expect(page.locator('.terminal-titlebar')).toContainText('amordle — play');
-    await expect(page.locator('.context-rail')).toContainText('amordle / home');
+    await expect(page.locator('.app-toolbar')).toContainText('amordle');
+    await expect(page.locator('.toolbar-context')).toContainText('amordle / home');
+    await expect(page.locator('.traffic-lights')).toHaveCount(0);
+    await expect(page.locator('.terminal-titlebar')).toHaveCount(0);
     await expect(page.locator('.command-row.is-primary')).toContainText('solo practice');
-    await expect(page.locator('.workbench-region-footer')).toHaveCount(2);
-    await expect(page.locator('.terminal-statusbar')).toBeVisible();
+    await expect(page.locator('.workbench-region-footer')).toHaveCount(0);
     await page.screenshot({
-      path: testInfo.outputPath('alt-screen-home-1440x1024-dark.png'),
+      path: testInfo.outputPath('quiet-system-home-1440x1024-dark.png'),
       animations: 'disabled',
       fullPage: true,
     });
@@ -111,26 +122,102 @@ test.describe('responsive and alternate presentation evidence', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=45');
     await expect(page.locator('.app-shell.is-game-surface')).toBeVisible();
-    await expect(page.locator('.mobile-nav')).toHaveCount(0);
+    await expect(page.locator('.mobile-route-rail')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /more navigation/i })).toBeVisible();
     await expect(page.locator('.board-row-number').first()).toHaveText('01');
     await expect(page.locator('.board-row.is-draft .tile').first()).toBeVisible();
-    const terminalFit = await page.evaluate(() => {
+    const playFit = await page.evaluate(() => {
       const keyboard = document.querySelector('.keyboard')?.getBoundingClientRect();
-      const status = document.querySelector('.terminal-statusbar')?.getBoundingClientRect();
-      if (!keyboard || !status) return null;
+      const board = document.querySelector('.game-board-region')?.getBoundingClientRect();
+      if (!keyboard || !board) return null;
       return {
         keyboardBottom: keyboard.bottom,
-        statusTop: status.top,
+        boardTop: board.top,
+        documentHeight: document.documentElement.scrollHeight,
+        viewportHeight: window.innerHeight,
       };
     });
-    expect(terminalFit).not.toBeNull();
-    expect(terminalFit!.keyboardBottom).toBeLessThanOrEqual(terminalFit!.statusTop + 1);
+    expect(playFit).not.toBeNull();
+    expect(playFit!.keyboardBottom).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
+    expect(playFit!.boardTop).toBeGreaterThan(0);
+    expect(playFit!.documentHeight).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
     await page.screenshot({
-      path: testInfo.outputPath('alt-screen-solo-390x844-light.png'),
+      path: testInfo.outputPath('quiet-system-solo-390x844-light.png'),
       animations: 'disabled',
-      fullPage: true,
+      fullPage: false,
     });
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=45&focus=1');
+    await expect(page.locator('.global-chrome')).toHaveCount(0);
+    const focusFit = await page.evaluate(() => ({
+      documentHeight: document.documentElement.scrollHeight,
+      viewportHeight: window.innerHeight,
+      keyboardBottom: document.querySelector('.keyboard')?.getBoundingClientRect().bottom ?? 0,
+    }));
+    expect(focusFit.documentHeight).toBeLessThanOrEqual(focusFit.viewportHeight + 1);
+    expect(focusFit.keyboardBottom).toBeLessThanOrEqual(focusFit.viewportHeight + 1);
+  });
+
+  test('Solo entry keeps the complete keyboard visible across the play viewport matrix', async ({
+    page,
+  }, testInfo) => {
+    for (const viewport of gameViewports) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto(
+        `/play/solo/practice/og?length=5&difficulty=standard&generation=${viewport.width + viewport.height}`,
+      );
+      await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
+      const fit = await page.evaluate(() => {
+        const keyboard = document.querySelector('.keyboard')?.getBoundingClientRect();
+        const boardViewport = document
+          .querySelector('.game-history-viewport')
+          ?.getBoundingClientRect();
+        const boardRows = document.querySelectorAll('.board-entry');
+        const firstRow = boardRows.item(0).getBoundingClientRect();
+        const lastRow = boardRows.item(boardRows.length - 1).getBoundingClientRect();
+        const layout = document.querySelector('.game-layout')?.getBoundingClientRect();
+        const keyboardRow = document.querySelector('.keyboard-row')?.getBoundingClientRect();
+        if (!keyboard || !boardViewport || !boardRows.length) return null;
+        return {
+          layoutWidth: layout?.width ?? 0,
+          keyboardTop: keyboard.top,
+          keyboardBottom: keyboard.bottom,
+          keyboardLeft: keyboard.left,
+          keyboardRight: keyboard.right,
+          keyboardWidth: keyboard.width,
+          keyboardRowWidth: keyboardRow?.width ?? 0,
+          keyboardMaxWidth: getComputedStyle(document.querySelector('.keyboard') as Element)
+            .maxWidth,
+          boardTop: boardViewport.top,
+          boardBottom: boardViewport.bottom,
+          boardRight: boardViewport.right,
+          firstRowTop: firstRow.top,
+          lastRowBottom: lastRow.bottom,
+          documentHeight: document.documentElement.scrollHeight,
+          viewportHeight: window.innerHeight,
+          overflowX: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      expect(fit, viewport.id).not.toBeNull();
+      if (viewport.width > viewport.height) {
+        expect(fit!.keyboardLeft, viewport.id).toBeGreaterThanOrEqual(fit!.boardRight - 1);
+      } else {
+        expect(fit!.keyboardTop, viewport.id).toBeGreaterThan(fit!.boardTop);
+      }
+      expect(fit!.keyboardBottom, viewport.id).toBeLessThanOrEqual(fit!.viewportHeight + 1);
+      expect(fit!.keyboardLeft, viewport.id).toBeGreaterThanOrEqual(-1);
+      expect(fit!.keyboardRight, `${viewport.id}: ${JSON.stringify(fit)}`).toBeLessThanOrEqual(
+        viewport.width + 1,
+      );
+      expect(fit!.firstRowTop, viewport.id).toBeGreaterThanOrEqual(fit!.boardTop - 1);
+      expect(fit!.lastRowBottom, viewport.id).toBeLessThanOrEqual(fit!.boardBottom + 1);
+      expect(fit!.documentHeight, viewport.id).toBeLessThanOrEqual(fit!.viewportHeight + 1);
+      expect(fit!.overflowX, viewport.id).toBeLessThanOrEqual(1);
+      await page.screenshot({
+        path: testInfo.outputPath(`solo-entry-${viewport.id}.png`),
+        animations: 'disabled',
+        fullPage: false,
+      });
+    }
   });
 
   test('Home and active gameplay remain contained at every required width', async ({

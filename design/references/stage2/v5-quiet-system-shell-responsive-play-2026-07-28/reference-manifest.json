@@ -1,0 +1,55 @@
+{
+  "id": "v5-quiet-system-shell-responsive-play-2026-07-28",
+  "status": "active-implementation-authority",
+  "approvedAt": "2026-07-28",
+  "provenance": {
+    "kind": "user-directed-code-native-correction",
+    "supersedes": "v4-alt-screen-shell-2026-07-28",
+    "preservesPriorPackages": true,
+    "imageGenerationUsed": false
+  },
+  "binding": {
+    "fontStack": [
+      "ui-monospace",
+      "SFMono-Regular",
+      "SF Mono",
+      "Menlo",
+      "Monaco",
+      "Consolas",
+      "Geist Mono",
+      "monospace"
+    ],
+    "desktopToolbarPx": 48,
+    "mobileToolbarPx": 44,
+    "mobileRouteRailPx": 40,
+    "activeGameBottomNavigation": false,
+    "documentScrollDuringActiveGame": false,
+    "historyScrollRegion": true,
+    "manualScrollPreserved": true,
+    "combatPresentation": "chronological-actor-labelled-transcript",
+    "calendarPresentation": "horizontal-35-day-rail"
+  },
+  "entryFitFloor": {
+    "portrait": {
+      "width": 320,
+      "height": 568
+    },
+    "landscape": {
+      "width": 568,
+      "height": 320
+    }
+  },
+  "forbidden": [
+    "traffic-lights",
+    "faux-window-titlebar",
+    "outer-window-frame",
+    "decorative-wallpaper",
+    "fixed-bottom-navigation-during-play",
+    "nested-glass",
+    "generic-card-grid",
+    "scanlines",
+    "crt-distortion",
+    "code-rain",
+    "fake-command-spam"
+  ]
+}

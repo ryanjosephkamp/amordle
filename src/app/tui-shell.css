@@ -1,10 +1,9 @@
 /*
- * Alt-Screen TUI shell
+ * Quiet System Shell
  *
- * This layer intentionally overrides the Stage 2 Quiet Workbench presentation
- * without changing any route, controller, persistence, or service behavior.
- * One translucent terminal surface contains the product; child regions are
- * separated with rules and alignment instead of cards.
+ * This presentation layer keeps the Alt-Screen TUI typography and interaction
+ * grammar while removing the faux desktop-window frame. The application is a
+ * single adaptive browser surface; active games own a contained viewport.
  */
 
 :root {
@@ -1268,5 +1267,456 @@ button.calendar-day.is-selected {
 @supports not (backdrop-filter: blur(1px)) {
   .app-shell {
     background: var(--background);
+  }
+}
+
+/*
+ * v5: quiet system shell and responsive play surface.
+ * These rules intentionally follow the earlier provenance styles so the v5
+ * authority can supersede them without disturbing functional selectors.
+ */
+
+html,
+body {
+  background: var(--background);
+}
+
+body {
+  min-height: 100dvh;
+}
+
+body::before {
+  display: none;
+}
+
+.app-shell,
+.app-shell.is-focus {
+  display: grid;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: var(--background);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.app-shell.is-game-surface,
+.app-shell.is-focus {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell.is-focus {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.global-chrome {
+  position: sticky;
+  z-index: var(--z-nav);
+  top: 0;
+  border-bottom: var(--terminal-rule);
+  background: color-mix(in oklch, var(--background) 96%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.app-toolbar {
+  display: flex;
+  min-width: 0;
+  min-height: 3rem;
+  align-items: stretch;
+}
+
+.wordmark {
+  min-width: 7.4rem;
+  border-inline-end: var(--terminal-rule);
+  padding-inline: 0.8rem;
+}
+
+.toolbar-context {
+  display: flex;
+  min-width: 12rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-inline-end: var(--terminal-rule);
+  padding: 0.45rem 0.7rem;
+  color: var(--muted);
+  font-size: 0.66rem;
+  white-space: nowrap;
+}
+
+.context-ready {
+  color: var(--correct-text);
+}
+
+.context-ready::before {
+  content: '● ';
+}
+
+.desktop-nav a,
+.more-menu > button,
+.notification-menu > button,
+.account-summary a,
+.topbar-tools,
+.account-summary {
+  min-height: 3rem;
+}
+
+.desktop-nav a,
+.more-menu > button,
+.notification-menu > button {
+  border-inline-end: 0;
+  border-inline-start: var(--terminal-rule);
+}
+
+.topbar-tools {
+  margin-inline-start: auto;
+}
+
+.mobile-route-rail {
+  display: none;
+}
+
+.menu-popover {
+  top: 3.4rem;
+}
+
+#main-content {
+  min-width: 0;
+  min-height: 0;
+}
+
+.is-game-surface #main-content,
+.is-focus #main-content {
+  overflow: hidden;
+}
+
+.route-frame {
+  padding-bottom: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.game-route {
+  width: min(76rem, 100%);
+  height: 100%;
+  min-height: 0;
+  padding: 0.5rem max(0.5rem, env(safe-area-inset-left)) max(0.5rem, env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.workbench-region {
+  border: 0;
+}
+
+.workbench-region-header {
+  min-height: 1.75rem;
+  grid-template-columns: auto minmax(1rem, 1fr) auto;
+  gap: 0.55rem;
+}
+
+.workbench-region-body {
+  border: 0;
+  padding: 0.5rem 0 0;
+}
+
+.workbench-region.is-pane {
+  border-block: var(--terminal-rule);
+}
+
+.workbench-region.is-pane .workbench-region-header,
+.workbench-region.is-pane .workbench-region-body {
+  padding-inline: 0.7rem;
+}
+
+.calendar-route {
+  width: min(72rem, 100%);
+}
+
+.calendar-view {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.calendar-toolbar {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  border-block: var(--terminal-rule);
+}
+
+.calendar-toolbar > div:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 0.75rem;
+}
+
+.calendar-toolbar strong {
+  font-size: 0.76rem;
+}
+
+.calendar-toolbar span {
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.calendar-strip {
+  display: flex;
+  max-width: 100%;
+  gap: 0;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  border: 0;
+  border-block: var(--terminal-rule);
+  scrollbar-gutter: stable;
+}
+
+button.calendar-day {
+  min-width: 5.2rem;
+  min-height: 3.5rem;
+  flex: 0 0 5.2rem;
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  padding: 0.45rem 0.55rem;
+}
+
+button.calendar-day.is-selected {
+  background: var(--terminal-selected);
+  color: var(--terminal-selected-ink);
+  box-shadow: none;
+}
+
+button.calendar-day.is-selected strong {
+  color: inherit;
+}
+
+.calendar-selection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  margin: 0;
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  padding: 0.6rem 0 0.8rem;
+}
+
+.calendar-selection .action-row {
+  justify-content: flex-end;
+}
+
+.calendar-details {
+  border-bottom: var(--terminal-rule);
+}
+
+.calendar-details summary {
+  min-height: 2.75rem;
+  padding: 0.7rem 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.calendar-controls {
+  align-items: end;
+  margin: 0;
+  padding: 0 0 0.8rem 1.25rem;
+}
+
+.calendar-controls p {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.7rem;
+}
+
+@media (max-width: 67rem) {
+  .toolbar-context {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .toolbar-context .context-ready {
+    display: none;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .app-shell,
+  .app-shell.is-focus {
+    min-height: 100dvh;
+    padding-bottom: 0;
+  }
+
+  .app-shell.is-game-surface,
+  .app-shell.is-focus {
+    height: 100dvh;
+  }
+
+  .global-chrome {
+    backdrop-filter: none;
+  }
+
+  .app-toolbar {
+    min-height: 2.75rem;
+  }
+
+  .wordmark {
+    min-width: auto;
+    flex: 0 0 auto;
+    border-inline-end: var(--terminal-rule);
+    padding-inline: 0.6rem;
+  }
+
+  .toolbar-context {
+    min-width: 0;
+    min-height: 2.75rem;
+    flex: 1;
+    overflow: hidden;
+    border-inline-end: 0;
+    padding-inline: 0.55rem;
+  }
+
+  .toolbar-context > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar-tools,
+  .notification-menu > button,
+  .more-menu > button {
+    min-height: 2.75rem;
+  }
+
+  .topbar-tools .more-menu > button {
+    display: none;
+  }
+
+  .is-game-surface .topbar-tools .more-menu > button {
+    display: inline-flex;
+  }
+
+  .mobile-route-rail {
+    display: grid;
+    min-height: 2.5rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-top: var(--terminal-rule);
+    background: var(--background);
+  }
+
+  .mobile-route-rail a,
+  .mobile-route-rail button {
+    display: flex;
+    min-width: 0;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+    overflow: hidden;
+    border: 0;
+    border-inline-end: var(--terminal-rule);
+    border-radius: 0;
+    padding: 0.25rem 0.1rem;
+    color: var(--muted);
+    font-size: 0.58rem;
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-route-rail a[aria-current='page'] {
+    background: var(--terminal-selected);
+    color: var(--terminal-selected-ink);
+  }
+
+  .menu-popover {
+    top: 5.6rem;
+    right: 0.4rem;
+    bottom: auto;
+    width: calc(100vw - 0.8rem);
+  }
+
+  .is-game-surface .menu-popover {
+    top: 2.95rem;
+  }
+
+  .route-frame {
+    padding: 0.7rem 0.55rem max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .game-route {
+    height: 100%;
+    padding: 0.35rem max(0.3rem, env(safe-area-inset-left))
+      max(0.35rem, env(safe-area-inset-bottom));
+  }
+
+  .workbench-region-header {
+    grid-template-columns: auto minmax(0.5rem, 1fr) auto;
+  }
+
+  .calendar-route {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .calendar-toolbar {
+    align-items: stretch;
+  }
+
+  .calendar-toolbar > div:first-child {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  button.calendar-day {
+    min-width: 4.75rem;
+    min-height: 3.35rem;
+    flex-basis: 4.75rem;
+    font-size: 0.66rem;
+  }
+
+  .calendar-selection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0.65rem;
+  }
+
+  .calendar-selection .action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-selection .button,
+  .calendar-selection button {
+    min-width: 0;
+    padding-inline: 0.35rem;
+    font-size: 0.62rem;
+  }
+
+  .calendar-controls {
+    align-items: stretch;
+    flex-direction: column;
+    padding-inline-start: 0;
+  }
+
+  .calendar-controls input {
+    border: var(--terminal-rule);
+  }
+}
+
+@media (forced-colors: active) {
+  .global-chrome,
+  .mobile-route-rail {
+    background: Canvas;
+    color: CanvasText;
+    backdrop-filter: none;
   }
 }

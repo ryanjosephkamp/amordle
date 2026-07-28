@@ -645,3 +645,576 @@ button.key.is-removed {
     background: Highlight;
   }
 }
+
+/*
+ * v5 contained play surface.
+ * The document does not scroll during active play; only history regions do.
+ */
+
+.game-layout {
+  width: min(76rem, 100%);
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: 0.4rem;
+  overflow: hidden;
+  padding: 0.5rem max(0.5rem, env(safe-area-inset-left)) max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.game-status,
+.is-focus .game-status {
+  position: static;
+  min-height: 2.75rem;
+  background: var(--background);
+}
+
+.game-mode-lockup {
+  min-width: 13rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.game-board-region {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.game-region-header {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.game-region-header::before,
+.game-region-header::after {
+  content: none;
+}
+
+.game-region-header > span:last-child {
+  justify-self: end;
+}
+
+.game-history-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.game-history-viewport {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+}
+
+.game-history-viewport:focus-visible {
+  outline-offset: -3px;
+}
+
+.latest-row-button {
+  position: absolute;
+  z-index: 2;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  min-height: 2.75rem;
+  border-color: var(--accent);
+  background: var(--surface-inset);
+  box-shadow: 0 2px 5px oklch(0.05 0.01 220 / 0.22);
+}
+
+.game-board {
+  gap: 0.22rem;
+  padding: 0.55rem 0.75rem;
+}
+
+.tile {
+  width: clamp(1.7rem, 6dvh, 3.1rem);
+  max-width: none;
+}
+
+.game-message {
+  min-height: 2.1rem;
+  padding: 0.38rem 0.6rem;
+}
+
+.game-auxiliary {
+  width: min(44rem, 100%);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.game-auxiliary > summary {
+  display: none;
+  min-height: 2.75rem;
+  align-items: center;
+  border: var(--terminal-rule);
+  padding: 0.55rem 0.65rem;
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.66rem;
+}
+
+.game-auxiliary-content {
+  display: grid;
+  gap: 0.35rem;
+}
+
+.game-auxiliary .evidence-legend {
+  width: 100%;
+  max-width: none;
+  border: var(--terminal-rule);
+}
+
+.keyboard {
+  flex: 0 0 auto;
+}
+
+.combat-game {
+  display: flex;
+  width: min(72rem, 100%);
+  height: 100%;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0.4rem;
+  overflow: hidden;
+}
+
+.combat-game > * {
+  flex: 0 0 auto;
+}
+
+.combat-score {
+  min-height: 0;
+  margin: 0;
+}
+
+.combat-score > div {
+  min-height: 2.75rem;
+  padding-block: 0.4rem;
+}
+
+.combat-wait-state,
+.seeded-evidence {
+  margin: 0;
+}
+
+.combat-transcript-frame {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: var(--terminal-rule);
+}
+
+.combat-transcript-header {
+  display: grid;
+  min-height: 1.75rem;
+  grid-template-columns: 2.25rem repeat(2, minmax(0, 1fr));
+  align-items: center;
+  border-bottom: var(--terminal-rule);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-align: center;
+}
+
+.combat-transcript-header span:first-child {
+  border-inline-end: var(--terminal-rule);
+}
+
+.combat-transcript {
+  display: flex;
+  min-width: min-content;
+  flex-direction: column;
+  gap: 0.22rem;
+  padding: 0.45rem;
+}
+
+.combat-transcript-entry {
+  display: grid;
+  min-width: min-content;
+  grid-template-columns: 2rem repeat(2, minmax(max-content, 1fr));
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.combat-transcript-entry .board-row-number {
+  width: 2rem;
+  flex-basis: 2rem;
+}
+
+.combat-transcript-entry.is-you .combat-actor,
+.combat-transcript-entry.is-you .combat-transcript-move {
+  grid-column: 2;
+}
+
+.combat-transcript-entry.is-opponent .combat-actor,
+.combat-transcript-entry.is-opponent .combat-transcript-move {
+  grid-column: 3;
+}
+
+.combat-transcript-entry .combat-actor {
+  align-self: end;
+  color: var(--muted);
+  font-size: 0.55rem;
+  line-height: 1;
+}
+
+.combat-transcript-entry .combat-transcript-move {
+  grid-row: 1;
+}
+
+.combat-transcript-entry .combat-actor {
+  grid-row: 1;
+  justify-self: start;
+  translate: 0 -0.05rem;
+}
+
+.combat-transcript-entry .combat-transcript-move {
+  justify-self: center;
+}
+
+.combat-transcript-entry.is-empty .combat-transcript-empty {
+  grid-column: 2 / 4;
+  justify-self: center;
+}
+
+.combat-transcript .tile {
+  width: clamp(1.45rem, 4.4dvh, 2.15rem);
+  font-size: clamp(0.62rem, 2dvh, 0.9rem);
+}
+
+.combat-input {
+  display: grid;
+  width: min(44rem, 100%);
+  margin: 0 auto;
+  gap: 0.35rem;
+  padding: 0.35rem;
+}
+
+.combat-input > .board-row {
+  margin-inline: auto;
+}
+
+.combat-secondary-action {
+  align-self: flex-end;
+}
+
+@media (max-width: 47.99rem) {
+  .game-layout {
+    width: calc(100vw - 0.6rem);
+    max-width: 100%;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    gap: 0.32rem;
+    padding: 0.35rem max(0.28rem, env(safe-area-inset-left))
+      max(0.35rem, env(safe-area-inset-bottom));
+  }
+
+  .game-status {
+    display: grid;
+    min-height: 2.4rem;
+    grid-template-columns: minmax(7.2rem, auto) minmax(0, 1fr);
+    flex-direction: initial;
+  }
+
+  .game-mode-lockup {
+    min-width: 0;
+    border-inline-end: var(--terminal-rule);
+    border-bottom: 0;
+    padding: 0.32rem 0.45rem;
+  }
+
+  .game-context {
+    display: none;
+  }
+
+  .game-status-facts {
+    min-width: 0;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+
+  .game-status-facts > span {
+    min-height: 2.35rem;
+    padding: 0.3rem 0.42rem;
+    font-size: 0.56rem;
+  }
+
+  .game-region-header {
+    min-height: 1.5rem;
+    padding: 0.22rem 0.4rem;
+  }
+
+  .game-board {
+    gap: 0.16rem;
+    padding: 0.35rem 0.25rem;
+  }
+
+  .tile {
+    width: clamp(1.6rem, 5dvh, 2.65rem);
+  }
+
+  .board-entry {
+    gap: 0.3rem;
+  }
+
+  .game-message {
+    min-height: 1.95rem;
+    padding: 0.32rem 0.45rem;
+    font-size: 0.62rem;
+  }
+
+  .game-auxiliary > summary {
+    display: flex;
+  }
+
+  .game-auxiliary-content {
+    padding-top: 0.3rem;
+  }
+
+  .evidence-legend {
+    justify-content: flex-start;
+  }
+
+  .keyboard {
+    width: 100%;
+    max-width: calc(100vw - max(0.56rem, env(safe-area-inset-left)));
+    gap: 0.18rem;
+  }
+
+  .keyboard-row {
+    display: grid;
+    width: 100%;
+    gap: 0.14rem;
+  }
+
+  .keyboard-row:nth-child(1) {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+
+  .keyboard-row:nth-child(2) {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+
+  .keyboard-row:nth-child(3) {
+    grid-template-columns: minmax(3.45rem, 1.7fr) repeat(7, minmax(0, 1fr)) minmax(3.45rem, 1.7fr);
+  }
+
+  button.key,
+  button.key.is-wide {
+    min-height: 2.75rem;
+    width: 100%;
+    padding-inline: 0.05rem;
+  }
+
+  .combat-game {
+    gap: 0.3rem;
+  }
+
+  .combat-game .game-status {
+    flex: 0 0 auto;
+  }
+
+  .combat-score {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .combat-score > div {
+    min-height: 2.4rem;
+    padding: 0.28rem 0.4rem;
+    font-size: 0.62rem;
+  }
+
+  .combat-transcript-header {
+    grid-template-columns: 2rem minmax(0, 1fr);
+  }
+
+  .combat-transcript-header span:nth-child(2),
+  .combat-transcript-header span:nth-child(3) {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .combat-transcript-header span:nth-child(3) {
+    justify-self: end;
+    padding-inline-end: 0.45rem;
+  }
+
+  .combat-transcript-header span:nth-child(2) {
+    justify-self: start;
+    padding-inline-start: 0.45rem;
+  }
+
+  .combat-transcript {
+    padding: 0.3rem;
+  }
+
+  .combat-transcript-entry {
+    grid-template-columns: 1.75rem 4rem minmax(max-content, 1fr);
+    gap: 0.25rem;
+  }
+
+  .combat-transcript-entry .board-row-number {
+    width: 1.75rem;
+    flex-basis: 1.75rem;
+  }
+
+  .combat-transcript-entry.is-you .combat-actor,
+  .combat-transcript-entry.is-you .combat-transcript-move,
+  .combat-transcript-entry.is-opponent .combat-actor,
+  .combat-transcript-entry.is-opponent .combat-transcript-move {
+    grid-column: auto;
+  }
+
+  .combat-transcript-entry .combat-actor,
+  .combat-transcript-entry .combat-transcript-move {
+    grid-row: 1;
+    translate: 0;
+  }
+
+  .combat-transcript-entry .combat-transcript-move {
+    grid-column: 3;
+    justify-self: start;
+  }
+
+  .combat-transcript-entry.is-empty .combat-transcript-empty {
+    grid-column: 2 / 4;
+  }
+
+  .combat-transcript .tile {
+    width: clamp(1.35rem, 4.1dvh, 1.85rem);
+  }
+
+  .combat-input {
+    gap: 0.25rem;
+    padding: 0.25rem;
+  }
+
+  .combat-input > .board-row .tile {
+    width: clamp(1.55rem, 5.1dvh, 2.2rem);
+  }
+
+  .combat-secondary-action {
+    min-height: 2.75rem;
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 47.99rem) and (max-height: 43.75rem) {
+  .game-auxiliary-content {
+    max-height: 8.5rem;
+    overflow: auto;
+  }
+
+  .game-auxiliary .evidence-legend {
+    display: none;
+  }
+}
+
+@media (max-height: 43.75rem) {
+  .game-auxiliary > summary {
+    display: flex;
+  }
+}
+
+@media (min-width: 35.5rem) and (max-height: 30rem) {
+  .game-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: 0.55rem;
+  }
+
+  .game-layout > .game-status {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .game-layout > .game-board-region {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .game-layout > .game-message {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .game-layout > .game-auxiliary {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .game-layout > .keyboard {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .game-board .tile {
+    width: clamp(1.15rem, 4.5dvh, 1.55rem);
+  }
+
+  .game-board {
+    gap: 0.08rem;
+    padding-block: 0.15rem;
+  }
+
+  .combat-game {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: 0.55rem;
+  }
+
+  .combat-game > .game-status {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .combat-game > .combat-score,
+  .combat-game > .combat-wait-state,
+  .combat-game > .seeded-evidence {
+    grid-column: 1;
+  }
+
+  .combat-game > .combat-transcript-frame {
+    grid-column: 1;
+    grid-row: 2 / 5;
+  }
+
+  .combat-game > .combat-input {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .combat-game > .game-message {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .combat-game > .combat-secondary-action {
+    grid-column: 2;
+    grid-row: 4;
+    justify-self: end;
+  }
+}
+
+@media (forced-colors: active) {
+  .game-history-shell,
+  .game-history-viewport,
+  .combat-transcript-frame,
+  .combat-transcript-header,
+  .game-auxiliary > summary {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}
