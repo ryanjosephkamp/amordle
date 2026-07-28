@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "status": "pending-implementation",
+  "requiredComparisonsPerSurface": 5,
+  "requiredViewports": [
+    "1440x1024-light",
+    "1440x1024-dark",
+    "390x844-mobile",
+    "320-or-360-stress",
+    "200-percent-or-forced-colors-or-reduced-motion"
+  ],
+  "scoreCategories": [
+    "coherence",
+    "hierarchy",
+    "density",
+    "spacing",
+    "typography",
+    "interactionStateCompleteness",
+    "responsiveTranslation",
+    "copyQuality",
+    "accessibility",
+    "terminalAuthenticity"
+  ],
+  "pass": {
+    "minimumPerCategory": 3,
+    "minimumTotal": 34,
+    "terminalAuthenticity": 4,
+    "forbiddenAntiPatterns": 0
+  },
+  "surfaces": [
+    {
+      "id": "shell-home",
+      "concepts": ["approval-board-home-solo.png"],
+      "status": "pending"
+    },
+    {
+      "id": "solo",
+      "concepts": ["approval-board-home-solo.png"],
+      "status": "pending"
+    },
+    {
+      "id": "daily-economy",
+      "concepts": ["approval-board-data-account.png", "approval-board-mobile-states.png"],
+      "status": "pending"
+    },
+    {
+      "id": "combat",
+      "concepts": ["approval-board-combat.png"],
+      "status": "pending"
+    },
+    {
+      "id": "account-data",
+      "concepts": ["approval-board-data-account.png"],
+      "status": "pending"
+    },
+    {
+      "id": "words-support",
+      "concepts": ["approval-board-mobile-states.png"],
+      "status": "pending"
+    },
+    {
+      "id": "exceptional-states",
+      "concepts": ["approval-board-mobile-states.png"],
+      "status": "pending"
+    }
+  ],
+  "entries": []
+}

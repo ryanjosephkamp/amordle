@@ -1,0 +1,341 @@
+{
+  "schemaVersion": 2,
+  "packageId": "amordle-stage2-v2-terminal-workbench-2026-07-27",
+  "status": "awaiting-explicit-user-approval",
+  "createdAt": "2026-07-27T23:59:00Z",
+  "repository": "ryanjosephkamp/amordle",
+  "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
+  "evidenceGateCommit": "4c8d5d1ae36bb5cf62a8d3ced6bcda9dda6423ff",
+  "stage1Commit": "cdde62caf7f3a0daf135efbe611cbb92393f54df",
+  "preview": {
+    "deploymentId": "dpl_tfnrGgi2sAtugLJR69DDCjyyc9ks",
+    "url": "https://amordle-p1qp5fpnk-ryanjosephkamps-projects.vercel.app",
+    "protected": true
+  },
+  "lockedDecision": {
+    "terminalDepth": "terminal-workbench",
+    "literalCli": false,
+    "generalAudience": true,
+    "systemLightDark": true
+  },
+  "recommendation": {
+    "direction": "quiet-workbench",
+    "decision": "approve-as-stage2-visual-authority",
+    "rationale": [
+      "Terminal identity is structural rather than decorative.",
+      "Active gameplay remains the dominant task.",
+      "The design supports equal-quality light and dark themes.",
+      "The mobile translation preserves hierarchy and touch targets.",
+      "Plain-language browser controls remain familiar to non-terminal users."
+    ]
+  },
+  "provenance": {
+    "generator": "OpenAI built-in Image Gen",
+    "useCase": "ui-mockup",
+    "inspection": "view_image native-size review",
+    "designReview": "Impeccable product-interface guidance 3.8.0",
+    "exactPrompts": "generation-prompts.md",
+    "generatedBitmapsShipped": false
+  },
+  "visualThesis": "A calm, purpose-built word-game workstation: compact, exact, tactical, and immediately understandable. Terminal identity comes from alignment, status, command structure, ruled work regions, and purposeful density rather than fake shell theater.",
+  "typography": {
+    "interface": "Geist Mono",
+    "prose": "Geist Sans",
+    "fixedPxScale": [12, 13, 14, 16, 20, 24, 32],
+    "defaultUiPx": 14,
+    "minimumMetadataPx": 12,
+    "proseMaxCharacters": 72,
+    "rules": [
+      "No fluid display headings.",
+      "Use tabular numerals for clocks, scores, balances, ratings, and tables.",
+      "Use sans-serif only for longer explanations and prose."
+    ]
+  },
+  "palette": {
+    "strategy": "restrained",
+    "accentMaximumPercent": 10,
+    "tokens": {
+      "backgroundLight": "oklch(0.985 0.004 200)",
+      "surfaceLight": "oklch(0.955 0.008 205)",
+      "inkLight": "oklch(0.205 0.018 220)",
+      "mutedLight": "oklch(0.45 0.018 220)",
+      "borderLight": "oklch(0.84 0.012 210)",
+      "backgroundDark": "oklch(0.145 0.012 220)",
+      "surfaceDark": "oklch(0.205 0.014 220)",
+      "inkDark": "oklch(0.94 0.008 205)",
+      "mutedDark": "oklch(0.72 0.014 210)",
+      "borderDark": "oklch(0.34 0.016 220)",
+      "accentLight": "oklch(0.65 0.10 200)",
+      "accentDark": "oklch(0.74 0.105 200)",
+      "correct": "oklch(0.63 0.15 145)",
+      "present": "oklch(0.72 0.14 85)",
+      "absent": "oklch(0.58 0.018 220)",
+      "removed": "oklch(0.52 0.06 25)",
+      "danger": "oklch(0.58 0.20 28)"
+    }
+  },
+  "layoutSystem": {
+    "spacingPx": [4, 8, 12, 16, 24, 32, 48],
+    "cornerRadiusPx": {
+      "workRegion": "0-4",
+      "control": 4,
+      "statusOnlyMayUsePill": true
+    },
+    "desktop": [
+      "compact command bar",
+      "route context rail",
+      "titled ruled work regions",
+      "optional contextual action rail",
+      "human-readable status line"
+    ],
+    "mobile": [
+      "compact top context rail",
+      "full-width stacked work regions",
+      "44px minimum targets",
+      "safe-area padding",
+      "bottom navigation outside Focus Mode",
+      "no horizontal document overflow"
+    ]
+  },
+  "evidenceSystem": {
+    "correct": {
+      "color": "correct",
+      "glyph": "✓",
+      "rule": "double lower rule",
+      "label": "Correct letter, correct spot"
+    },
+    "present": {
+      "color": "present",
+      "glyph": "~",
+      "rule": "dashed lower rule",
+      "label": "Correct letter, wrong spot"
+    },
+    "absent": {
+      "color": "absent",
+      "glyph": "×",
+      "rule": "neutral solid rule",
+      "label": "Letter not in word"
+    },
+    "removed": {
+      "color": "removed",
+      "glyph": "strike",
+      "rule": "textual legend required",
+      "label": "Removed keyboard letter"
+    }
+  },
+  "componentAuthority": "component-anatomy.md",
+  "copyAuthority": "copy-register.md",
+  "fidelityAuthority": ["fidelity-ledger.md", "fidelity-ledger.json"],
+  "approvalBoards": [
+    {
+      "id": "home-solo",
+      "path": "approval-board-home-solo.png",
+      "sha256": "b6c2a54d63caee47f5d629276b53a2e7a32464f8679388c4430d022b010b09b4",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "Home and primary commands",
+        "desktop and mobile navigation",
+        "Solo OG and GO composition",
+        "board, keyboard, evidence, action, and status anatomy",
+        "light and dark theme relationship"
+      ],
+      "states": [
+        "desktop Home light",
+        "desktop Solo OG dark",
+        "mobile Home light",
+        "mobile Solo GO dark"
+      ],
+      "visibleCopyAuthority": "copy-register.md",
+      "requiredCorrections": [
+        "Generated words and progress values are layout samples.",
+        "The mobile GO seed caption binds as SEED EVIDENCE, not SEED (2 OF 2).",
+        "OG remains one puzzle and GO remains 5, 7, or 10."
+      ],
+      "prompt": "generation-prompts.md#approval-board--home-and-solo"
+    },
+    {
+      "id": "combat",
+      "path": "approval-board-combat.png",
+      "sha256": "e6b23672e393c24bd77176faac6fdd5027a668590bc30b8711f9233f433d3eb8",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "COMBAT waiting and recovery hierarchy",
+        "desktop participant symmetry",
+        "mobile participant priority",
+        "result and rematch composition",
+        "Active and notification rows",
+        "privacy-safe read-only spectation"
+      ],
+      "states": [
+        "desktop waiting light",
+        "desktop active dark",
+        "mobile active light",
+        "result and rematch",
+        "recovery",
+        "Active games",
+        "alerts",
+        "read-only spectator"
+      ],
+      "visibleCopyAuthority": "copy-register.md",
+      "requiredCorrections": [
+        "Player names, turns, moves, timers, scores, rewards, and ratings are samples.",
+        "No generated guess is an active or future answer authority.",
+        "Spectator and participant payloads remain governed by the privacy contract."
+      ],
+      "prompt": "generation-prompts.md#approval-board--combat"
+    },
+    {
+      "id": "data-account",
+      "path": "approval-board-data-account.png",
+      "sha256": "852f2fd24eba365ddf68eb19b27e64000c02ee4f3a089ab64dfc124fe78be3df",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "Calendar month and inspector composition",
+        "unlock confirmation anatomy",
+        "Profile and Settings hierarchy",
+        "Stats, History, and Leaderboard density",
+        "mobile Word Explorer structure"
+      ],
+      "states": [
+        "desktop Calendar light",
+        "mobile Calendar confirmation dark",
+        "desktop Profile and Settings",
+        "desktop Stats, History, and Leaderboard",
+        "mobile Word Explorer light"
+      ],
+      "visibleCopyAuthority": "copy-register.md",
+      "requiredCorrections": [
+        "Dates, balances, profiles, ratings, records, and histories are samples.",
+        "Only currently implemented Stats and History-derived measures may render.",
+        "Generated word definitions are non-binding and cannot replace the implemented definition behavior."
+      ],
+      "prompt": "generation-prompts.md#approval-board--daily-economy-account-and-data"
+    },
+    {
+      "id": "mobile-states",
+      "path": "approval-board-mobile-states.png",
+      "sha256": "a3ec12feb108745d8aa7975b556208b07485b0b2126c4e1d6a0c7357ff8641e5",
+      "width": 1536,
+      "height": 1024,
+      "bindingRole": [
+        "Marketplace and purchase confirmation",
+        "Auth and Settings mobile anatomy",
+        "Word Explorer desktop anatomy",
+        "Help and Feedback composition",
+        "exceptional-state vocabulary",
+        "Focus Mode rail",
+        "shared mobile translation"
+      ],
+      "states": [
+        "mobile Marketplace light",
+        "mobile purchase confirmation dark",
+        "mobile Auth light",
+        "mobile Settings dark",
+        "desktop Word Explorer",
+        "desktop Help and Feedback",
+        "loading, empty, offline, reconnecting, unavailable, unauthorized",
+        "Focus Mode game rail"
+      ],
+      "visibleCopyAuthority": "copy-register.md",
+      "requiredCorrections": [
+        "Marketplace icons are illustrative and not asset authority.",
+        "Loading binds to route-shaped skeleton rows rather than the generated spinner.",
+        "Help describes asynchronous alternating-turn COMBAT, not real-time play.",
+        "Generated word definitions are non-binding."
+      ],
+      "prompt": "generation-prompts.md#approval-board--mobile-marketplace-support-and-states"
+    }
+  ],
+  "explorations": [
+    {
+      "id": "quiet-workbench",
+      "path": "explorations/quiet-workbench.png",
+      "sha256": "f3ccf33803a6dba2cf50130e0c39ac93626ddd14a6af3dcd3ffdde47ca91c30e",
+      "width": 1536,
+      "height": 1024,
+      "score": 37,
+      "terminalAuthenticity": 4,
+      "decision": "recommended",
+      "prompt": "generation-prompts.md#exploration--quiet-workbench"
+    },
+    {
+      "id": "dense-match-console",
+      "path": "explorations/dense-match-console.png",
+      "sha256": "f33b93b6ba957a38b62954a4325a9867123f0cb554fa197bf8fe21c45d560ff3",
+      "width": 1606,
+      "height": 979,
+      "score": 31,
+      "terminalAuthenticity": 4,
+      "decision": "rejected-as-complete-direction",
+      "retainedLesson": "Symmetric participant panes and compact ruled tables.",
+      "prompt": "generation-prompts.md#exploration--dense-match-console"
+    },
+    {
+      "id": "inline-command-desk",
+      "path": "explorations/inline-command-desk.png",
+      "sha256": "a17aac037d2f8cc5cec81e2fb607b8fdc0a3cc06f7688d01d682fb1649934f7f",
+      "width": 1536,
+      "height": 1024,
+      "score": 34,
+      "terminalAuthenticity": 3,
+      "decision": "rejected-as-complete-direction",
+      "retainedLesson": "Open Calendar/data regions and stable label columns.",
+      "prompt": "generation-prompts.md#exploration--inline-command-desk"
+    }
+  ],
+  "referenceRoles": [
+    {
+      "name": "Lichess",
+      "role": "information architecture only"
+    },
+    {
+      "name": "Lichess source",
+      "role": "structural research only"
+    },
+    {
+      "name": "Bubble Tea and Textual",
+      "role": "TUI interaction and layout research only"
+    },
+    {
+      "name": "macOS Terminal and Grok Build",
+      "role": "mood only"
+    }
+  ],
+  "antiPatterns": [
+    "literal CLI operation",
+    "fake dollar prompts",
+    "terminal traffic lights",
+    "scanlines",
+    "code rain",
+    "neon glow",
+    "cyberpunk atmosphere",
+    "fire and ice framing",
+    "decorative texture",
+    "glassmorphism",
+    "ornamental gradients",
+    "wide decorative shadows",
+    "generic card grids",
+    "dashboard metric cards",
+    "oversized rounded corners",
+    "pills everywhere",
+    "decorative ASCII",
+    "implementation-facing player copy"
+  ],
+  "bindingRules": [
+    "Higher product, functional, backend, testing, and accessibility authorities override every raster detail.",
+    "Generated values and words are never service, answer, seed, or fixture authority.",
+    "Board, keyboard, controls, tables, icons, and all shipped UI remain code-native.",
+    "The existing v1 references remain unapproved provenance and are not overwritten.",
+    "Application implementation may begin only after explicit approval of this v2 manifest."
+  ],
+  "approval": {
+    "required": true,
+    "decision": null,
+    "approvedAt": null,
+    "approvedBy": null,
+    "corrections": []
+  }
+}
