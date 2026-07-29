@@ -443,7 +443,8 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.goto(`${baseURL}/profile`);
     await expect(firstPage.getByRole('heading', { name: 'PUBLIC PROFILE' })).toBeVisible();
     await firstPage.getByLabel('Player name').fill('E2E Operator');
-    await firstPage.getByRole('radio', { name: 'Violet' }).check();
+    await firstPage.getByText('Violet', { exact: true }).click();
+    await expect(firstPage.getByRole('radio', { name: 'Violet' })).toBeChecked();
     await firstPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
     await expect(firstPage.getByText('Profile saved.')).toBeVisible();
     await firstPage.reload();
