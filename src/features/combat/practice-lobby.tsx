@@ -48,6 +48,11 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   const [goCount, setGoCount] = useState<5 | 7 | 10>(5);
   const [queue, setQueue] = useState<ProvisionalQueue | null>(null);
   const [message, setMessage] = useState('');
+  const invalidateCombat = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['combat'] }),
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    ]);
 
   useEffect(() => {
     const raw = sessionStorage.getItem(provisionalKey);
@@ -85,7 +90,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       });
     },
     onSuccess: (row) => {
-      void queryClient.invalidateQueries({ queryKey: ['combat'] });
+      void invalidateCombat();
       router.push(`/combat/match/${row.id}`);
     },
     onError: () => setMessage('The public match could not be created.'),
@@ -97,7 +102,10 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       if (!userId) throw new Error('Sign in first.');
       return joinUnrankedPractice(gameId, userId);
     },
-    onSuccess: (row) => router.push(`/combat/match/${row.id}`),
+    onSuccess: (row) => {
+      void invalidateCombat();
+      router.push(`/combat/match/${row.id}`);
+    },
     onError: () => {
       setMessage('That match changed before you joined. The list has been refreshed.');
       void lobbies.refetch();
@@ -137,6 +145,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       return null;
     },
     onSuccess: (gameId) => {
+      void invalidateCombat();
       if (gameId) router.push(`/combat/match/${gameId}`);
       else setMessage('Searching for a compatible ranked opponent…');
     },
@@ -161,6 +170,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       sessionStorage.removeItem(provisionalKey);
       setQueue(null);
       setMessage('Ranked search cancelled.');
+      void invalidateCombat();
     },
   });
 
