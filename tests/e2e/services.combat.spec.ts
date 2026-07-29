@@ -468,7 +468,8 @@ test.describe.serial('protected Preview services', () => {
     });
     await secondPage.goto(`${baseURL}/profile`);
     await secondPage.getByLabel('Player name').fill('E2E Player Two');
-    await secondPage.getByRole('radio', { name: 'Cyan' }).check();
+    await secondPage.getByText('Cyan', { exact: true }).click();
+    await expect(secondPage.getByRole('radio', { name: 'Cyan' })).toBeChecked();
     await secondPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
     await expect(secondPage.getByText('Profile saved.')).toBeVisible();
     const { data: secondProfile, error: secondProfileError } = await admin
