@@ -193,6 +193,7 @@ export function SoloGame({
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [auxiliaryOpen, setAuxiliaryOpen] = useState(true);
   const revision = useRef(0);
+  const persistQueue = useRef<Promise<void>>(Promise.resolve());
   const sessionRef = useRef(session);
   const finalized = useRef(false);
   const pendingOperation = useRef<string | null>(null);
@@ -247,30 +248,36 @@ export function SoloGame({
   );
 
   const persist = useCallback(
-    async (next: GameSession) => {
-      const nextRevision = revision.current + 1;
-      const envelope = {
-        schemaVersion: 1 as const,
-        ownerNamespace,
-        domain,
-        revision: nextRevision,
-        updatedAt: next.updatedAt,
-        state: next,
-      };
-      setSaveState('saving');
-      await writeEnvelope(envelope);
-      revision.current = nextRevision;
-      if (!signedInUserId) {
-        setSaveState('saved');
-        return;
-      }
-      setSaveState('syncing');
-      try {
-        await saveCloudSolo(signedInUserId, envelope);
-        setSaveState('saved');
-      } catch {
-        setSaveState('error');
-      }
+    (next: GameSession) => {
+      const operation = persistQueue.current
+        .catch(() => undefined)
+        .then(async () => {
+          const nextRevision = revision.current + 1;
+          const envelope = {
+            schemaVersion: 1 as const,
+            ownerNamespace,
+            domain,
+            revision: nextRevision,
+            updatedAt: next.updatedAt,
+            state: next,
+          };
+          setSaveState('saving');
+          await writeEnvelope(envelope);
+          revision.current = nextRevision;
+          if (!signedInUserId) {
+            setSaveState('saved');
+            return;
+          }
+          setSaveState('syncing');
+          try {
+            await saveCloudSolo(signedInUserId, envelope);
+            setSaveState('saved');
+          } catch {
+            setSaveState('error');
+          }
+        });
+      persistQueue.current = operation;
+      return operation;
     },
     [domain, ownerNamespace, signedInUserId],
   );
