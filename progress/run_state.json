@@ -13,7 +13,7 @@
     "recommendedDirection": "v5.2-data-continuity-and-gameplay-ux-repair",
     "approvalStatus": "user-authorized-implementation",
     "finalImplementationCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
-    "evidenceCommit": "EVIDENCE_COMMIT_PENDING"
+    "evidenceCommit": "16e3d80301d55ae8a416d47bf0c28d0925e78929"
   },
   "candidateVisualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
@@ -67,7 +67,7 @@
     "url": "https://amordle-a9w7pjo4g-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
-    "evidenceCommit": "EVIDENCE_COMMIT_PENDING",
+    "evidenceCommit": "16e3d80301d55ae8a416d47bf0c28d0925e78929",
     "supersededByLocalCandidate": false,
     "projectSettingsRestored": true
   },

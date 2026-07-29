@@ -6,7 +6,7 @@
   `https://amordle-a9w7pjo4g-ryanjosephkamps-projects.vercel.app`
 - Deployment: `dpl_DAFZrppgyVeDE5rABLdtRqBbqSq2`
 - Application commit: `bdc492fc2edbe7ceb367529166cd472f5aaff1d3`
-- Evidence commit: `EVIDENCE_COMMIT_PENDING`
+- Evidence commit: `16e3d80301d55ae8a416d47bf0c28d0925e78929`
 - Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
 - Rollback application commit:
   `098bdb5ef2335fff86d04a89acdbd122414246fb`
