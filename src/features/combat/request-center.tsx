@@ -44,7 +44,11 @@ function RequestCenterInner() {
     queryKey: ['combat', 'private-preference'],
     queryFn: getPrivateRequestPreference,
   });
-  const refresh = () => queryClient.invalidateQueries({ queryKey: ['combat', 'private-requests'] });
+  const refresh = () =>
+    Promise.all([
+      queryClient.invalidateQueries({ queryKey: ['combat', 'private-requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['notifications'] }),
+    ]);
 
   const create = useMutation({
     mutationFn: () =>

@@ -1,5 +1,6 @@
 'use client';
 
+import type { CSSProperties } from 'react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 
 export interface CombatTranscriptMove {
@@ -27,11 +28,19 @@ export function MoveBoards({
   );
   const visibleRows = Math.max(6, orderedMoves.length + 1);
   return (
-    <section className="combat-transcript-frame" aria-label="Shared chronological guess board">
+    <section
+      className="combat-transcript-frame"
+      aria-label="Shared chronological guess board"
+      data-word-length={length}
+      style={{ '--word-length': length } as CSSProperties}
+    >
       <div className="combat-transcript-header" aria-hidden="true">
-        <span>ROW</span>
-        <span>PLAYER</span>
+        <span className="combat-transcript-meta">
+          <span>ROW</span>
+          <span>PLAYER</span>
+        </span>
         <span>GUESS</span>
+        <span />
       </div>
       <GameHistoryViewport
         followKey={orderedMoves.at(-1)?.id ?? 'empty'}
@@ -44,8 +53,10 @@ export function MoveBoards({
             if (!move) {
               return (
                 <div className="combat-transcript-entry is-empty" key={`empty:${index}`}>
-                  <span className="board-row-number" aria-hidden="true">
-                    {String(index + 1).padStart(2, '0')}
+                  <span className="combat-transcript-meta">
+                    <span className="board-row-number" aria-hidden="true">
+                      {String(index + 1).padStart(2, '0')}
+                    </span>
                   </span>
                   <div className="combat-transcript-empty">
                     <EmptyTileRow length={length} />
@@ -64,11 +75,13 @@ export function MoveBoards({
                 key={move.id}
                 data-actor={perspective}
               >
-                <span className="board-row-number" aria-hidden="true">
-                  {String(index + 1).padStart(2, '0')}
-                </span>
-                <span className="combat-actor" title={actorLabel}>
-                  {actorLabel}
+                <span className="combat-transcript-meta">
+                  <span className="board-row-number" aria-hidden="true">
+                    {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="combat-actor" title={actorLabel}>
+                    {actorLabel}
+                  </span>
                 </span>
                 <div className="combat-transcript-move">
                   <TranscriptTileRow

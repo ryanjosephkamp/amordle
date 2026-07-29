@@ -3,7 +3,9 @@
 import Link from 'next/link';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { readEnvelope, writeEnvelope } from '@/adapters/indexeddb';
+import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
 import {
   consumeLocalConsumable,
   creditLocalCoins,
@@ -20,7 +22,7 @@ import {
   spendCoins,
 } from '@/adapters/supabase/account';
 import {
-  finalizeSignedInSolo,
+  buildSoloHistoryRow,
   loadCloudSolo,
   saveCloudSolo,
   setDailyEntitlement,
@@ -399,17 +401,24 @@ export function SoloGame({
       (session.status === 'lost' && (dailyDate !== undefined || session.answerRevealed));
     if (!hydrated || !signedInUserId || finalized.current || !terminalDecision) return;
     finalized.current = true;
-    void finalizeSignedInSolo(
+    const row = buildSoloHistoryRow(
       signedInUserId,
       session,
       dailyDate ? 'solo-daily' : 'solo-practice',
       dailyDate,
-    )
-      .then(() => {
-        setActionState('Result, History, XP, and coins are synced.');
+    );
+    void queueAccountCompletion(row)
+      .then(() => reconcileCompletionOutbox(signedInUserId))
+      .then((result) => {
+        setActionState(
+          result.pending
+            ? 'Result is saved on this device. Account sync will retry automatically.'
+            : 'Result, History, XP, and coins are synced.',
+        );
         void queryClient.invalidateQueries({ queryKey: ['economy'] });
-        void queryClient.invalidateQueries({ queryKey: ['history'] });
-        void queryClient.invalidateQueries({ queryKey: ['progress'] });
+        void queryClient.invalidateQueries({ queryKey: ['history', signedInUserId] });
+        void queryClient.invalidateQueries({ queryKey: ['progress', signedInUserId] });
+        void queryClient.invalidateQueries({ queryKey: ['completion-outbox', signedInUserId] });
       })
       .catch(() => {
         finalized.current = false;
@@ -563,7 +572,12 @@ export function SoloGame({
   }
 
   return (
-    <section className="game-layout" aria-labelledby="game-heading">
+    <section
+      className="game-layout"
+      aria-labelledby="game-heading"
+      data-word-length={settings.length}
+      style={{ '--word-length': settings.length } as CSSProperties}
+    >
       <header className="game-status">
         <div className="game-mode-lockup">
           <span className="game-context">

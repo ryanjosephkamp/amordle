@@ -1,7 +1,8 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { loadHistory } from '@/adapters/supabase/account';
+import { loadHistoryWithDiagnostics } from '@/adapters/supabase/account';
+import { loadPendingCompletions, resetCompletionOutbox } from '@/application/completion-outbox';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 
@@ -18,11 +19,25 @@ function HistoryInner() {
   const userId = auth.user?.id ?? '';
   const history = useQuery({
     queryKey: ['history', userId],
-    queryFn: () => loadHistory(userId),
+    queryFn: () => loadHistoryWithDiagnostics(userId),
     enabled: Boolean(userId),
   });
-  if (history.isPending) return <SkeletonRows label="Loading History…" rows={5} />;
-  if (history.isError) {
+  const pending = useQuery({
+    queryKey: ['completion-outbox', userId],
+    queryFn: () => loadPendingCompletions(userId),
+    enabled: Boolean(userId),
+  });
+  if (history.isPending && pending.isPending) {
+    return <SkeletonRows label="Loading History…" rows={5} />;
+  }
+  const pendingRows = pending.data ?? [];
+  const pendingIds = new Set(pendingRows.map((row) => row.id));
+  const byId = new Map(pendingRows.map((row) => [row.id, row]));
+  for (const row of history.data?.rows ?? []) byId.set(row.id, row);
+  const rows = [...byId.values()].sort((left, right) =>
+    right.completed_at.localeCompare(left.completed_at),
+  );
+  if (history.isError && !rows.length) {
     return (
       <section className="status-panel">
         <h2>History unavailable</h2>
@@ -30,41 +45,68 @@ function HistoryInner() {
       </section>
     );
   }
-  if (!history.data.length) {
+  if (!rows.length) {
     return <p className="prose">Completed signed-in games will appear here.</p>;
   }
   return (
-    <div className="table-scroll">
-      <table className="responsive-table">
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Game</th>
-            <th>Result</th>
-            <th>Progress</th>
-            <th>Reward</th>
-          </tr>
-        </thead>
-        <tbody>
-          {history.data.map((row) => (
-            <tr key={row.id}>
-              <td data-label="Date">{new Date(row.completed_at).toLocaleDateString()}</td>
-              <td data-label="Game">
-                {row.entry.kind.replaceAll('-', ' ')} · {row.entry.mode.toUpperCase()}
-              </td>
-              <td data-label="Result">{row.entry.result}</td>
-              <td data-label="Progress">
-                {row.entry.puzzlesSolved === null
-                  ? `${row.entry.acceptedGuesses} guesses`
-                  : `${row.entry.puzzlesSolved} solved · ${row.entry.acceptedGuesses} guesses`}
-              </td>
-              <td data-label="Reward">
-                {row.entry.rewardCoins} coins · {row.entry.rewardXp} XP
-              </td>
+    <>
+      {(history.isError || pending.isError || (history.data?.failedSources ?? 0) > 0) && (
+        <div className="status-line status-line--warning" role="status">
+          <span>
+            {pending.isError
+              ? 'Saved result synchronization data could not be read safely.'
+              : 'Some History sources could not refresh. Available account results are still shown.'}
+          </span>
+          {pending.isError && (
+            <button
+              className="text-action"
+              onClick={() =>
+                void resetCompletionOutbox(userId).then(() => {
+                  void pending.refetch();
+                })
+              }
+            >
+              Reset pending sync data
+            </button>
+          )}
+        </div>
+      )}
+      <div className="table-scroll">
+        <table className="responsive-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Game</th>
+              <th>Result</th>
+              <th>Progress</th>
+              <th>Reward</th>
+              <th>Status</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+          </thead>
+          <tbody>
+            {rows.map((row) => (
+              <tr key={row.id}>
+                <td data-label="Date">{new Date(row.completed_at).toLocaleDateString()}</td>
+                <td data-label="Game">
+                  {row.entry.kind.replaceAll('-', ' ')} · {row.entry.mode.toUpperCase()}
+                </td>
+                <td data-label="Result">{row.entry.result}</td>
+                <td data-label="Progress">
+                  {row.entry.puzzlesSolved === null
+                    ? `${row.entry.acceptedGuesses} guesses`
+                    : `${row.entry.puzzlesSolved} solved · ${row.entry.acceptedGuesses} guesses`}
+                </td>
+                <td data-label="Reward">
+                  {pendingIds.has(row.id)
+                    ? 'Pending confirmation'
+                    : `${row.entry.rewardCoins} coins · ${row.entry.rewardXp} XP`}
+                </td>
+                <td data-label="Status">{pendingIds.has(row.id) ? 'Sync pending' : 'Synced'}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </>
   );
 }

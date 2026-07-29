@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import type { Json } from '@/types/database';
+import { levelForXp } from '@/domain/economy';
 import {
   ACCOUNT_STATE_KIND,
   accountStateEntrySchema,
@@ -11,6 +12,7 @@ import {
   normalizeLegacyHistory,
   progressSchema,
 } from '@/domain/account-continuity';
+import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
@@ -36,6 +38,20 @@ export const playerSettingsSchema = z
   .strict();
 
 export type PlayerSettings = z.infer<typeof playerSettingsSchema>;
+
+export const ratingProfileSchema = z
+  .object({
+    bucket: z.string(),
+    draws: z.number().int().nonnegative(),
+    games_played: z.number().int().nonnegative(),
+    losses: z.number().int().nonnegative(),
+    provisional: z.boolean(),
+    rating: z.number(),
+    updated_at: z.string(),
+    user_id: z.string().uuid(),
+    wins: z.number().int().nonnegative(),
+  })
+  .strict();
 
 export { historyEntrySchema, historyRowSchema, progressSchema } from '@/domain/account-continuity';
 
@@ -96,6 +112,16 @@ export async function loadProgress(userId: string) {
   return (await readAccountProgress(userId)).progress;
 }
 
+export async function loadRatingProfiles(userId: string) {
+  const { data, error } = await client()
+    .from('multiplayer_rating_profiles')
+    .select('bucket,draws,games_played,losses,provisional,rating,updated_at,user_id,wins')
+    .eq('user_id', userId)
+    .order('bucket', { ascending: true });
+  if (error) throwServiceError(error);
+  return z.array(ratingProfileSchema).parse(data ?? []);
+}
+
 export async function consumeConsumable(
   type: 'reveal_one_letter' | 'remove_incorrect_letters',
   operationId: string,
@@ -128,6 +154,10 @@ export async function creditCoins(amount: number, operationId: string) {
 }
 
 export async function loadHistory(userId: string) {
+  return (await loadHistoryWithDiagnostics(userId)).rows;
+}
+
+export async function loadHistoryWithDiagnostics(userId: string) {
   const [history, snapshot] = await Promise.all([
     client()
       .from('game_history')
@@ -137,17 +167,57 @@ export async function loadHistory(userId: string) {
       .limit(200),
     client().from('progress_snapshots').select('progress').eq('user_id', userId).maybeSingle(),
   ]);
-  if (history.error) throwServiceError(history.error);
-  if (snapshot.error) throwServiceError(snapshot.error);
-  const supported = (history.data ?? []).flatMap((row) => {
+  if (history.error && snapshot.error) throwServiceError(history.error);
+  const supported = (history.error ? [] : (history.data ?? [])).flatMap((row) => {
     const parsed = historyRowSchema.safeParse(row);
     return parsed.success ? [parsed.data] : [];
   });
-  const legacy = normalizeLegacyHistory(snapshot.data?.progress, userId);
+  const legacy = snapshot.error ? [] : normalizeLegacyHistory(snapshot.data?.progress, userId);
   const byId = new Map([...supported, ...legacy].map((row) => [row.id, row]));
-  return [...byId.values()]
-    .sort((left, right) => right.completed_at.localeCompare(left.completed_at))
-    .slice(0, 100);
+  return {
+    rows: [...byId.values()]
+      .sort((left, right) => right.completed_at.localeCompare(left.completed_at))
+      .slice(0, 100),
+    failedSources: Number(Boolean(history.error)) + Number(Boolean(snapshot.error)),
+  };
+}
+
+function rewardOperationId(rowId: string): string {
+  return rowId.startsWith('solo:')
+    ? `solo-reward:${rowId.slice('solo:'.length)}`
+    : `completion-reward:${rowId}`;
+}
+
+export async function finalizeAccountHistoryRow(row: AccountHistoryRow) {
+  const parsed = historyRowSchema.parse(row);
+  const { error } = await client()
+    .from('game_history')
+    .upsert({
+      id: parsed.id,
+      user_id: parsed.user_id,
+      completed_at: parsed.completed_at,
+      entry: parsed.entry as Json,
+    });
+  if (error) throwServiceError(error);
+
+  const operationId = rewardOperationId(parsed.id);
+  if (parsed.entry.rewardCoins > 0) {
+    await creditCoins(parsed.entry.rewardCoins, operationId);
+  }
+  if (parsed.entry.rewardXp > 0) {
+    await writeAccountProgressCas(parsed.user_id, (snapshot) => {
+      if (snapshot.appliedRewards?.[operationId] !== undefined) return snapshot;
+      const xp = snapshot.xp + parsed.entry.rewardXp;
+      return {
+        ...snapshot,
+        xp,
+        level: levelForXp(xp),
+        revision: snapshot.revision + 1,
+        appliedRewards: { ...snapshot.appliedRewards, [operationId]: parsed.entry.rewardXp },
+      };
+    });
+  }
+  return parsed;
 }
 
 function stateRowId(userId: string): string {

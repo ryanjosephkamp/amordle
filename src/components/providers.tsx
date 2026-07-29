@@ -1,7 +1,8 @@
 'use client';
 
 import type { Session, User } from '@supabase/supabase-js';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { usePathname } from 'next/navigation';
 import {
   createContext,
   useCallback,
@@ -13,6 +14,7 @@ import {
 } from 'react';
 import type { PropsWithChildren } from 'react';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
+import { reconcileCompletionOutbox } from '@/application/completion-outbox';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 
 interface AuthContextValue {
@@ -174,7 +176,47 @@ export function AppProviders({ children }: PropsWithChildren) {
   );
   return (
     <QueryClientProvider client={queryClient}>
-      <AuthProvider>{children}</AuthProvider>
+      <AuthProvider>
+        <CompletionReconciler />
+        {children}
+      </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function CompletionReconciler() {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const pathname = usePathname();
+  const userId = auth.user?.id;
+
+  const reconcile = useCallback(async () => {
+    if (!userId) return;
+    const result = await reconcileCompletionOutbox(userId);
+    if (result.synced > 0) {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['completion-outbox', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['history', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['progress', userId] }),
+        queryClient.invalidateQueries({ queryKey: ['economy'] }),
+      ]);
+    }
+  }, [queryClient, userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    void reconcile().catch(() => undefined);
+    const onOnline = () => void reconcile().catch(() => undefined);
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') void reconcile().catch(() => undefined);
+    };
+    window.addEventListener('online', onOnline);
+    document.addEventListener('visibilitychange', onVisibility);
+    return () => {
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisibility);
+    };
+  }, [pathname, reconcile, userId]);
+
+  return null;
 }

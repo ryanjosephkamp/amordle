@@ -162,6 +162,12 @@
   gap: 0.65rem;
 }
 
+.board-entry::after {
+  width: 1.8rem;
+  flex: 0 0 1.8rem;
+  content: '';
+}
+
 .board-entry-label {
   position: absolute;
   right: calc(100% + 2.8rem);
@@ -372,6 +378,7 @@
 }
 
 button.key {
+  position: relative;
   min-width: 0;
   min-height: 2.75rem;
   flex: 1 1 0;
@@ -407,13 +414,23 @@ button.key.is-present {
 }
 
 button.key.is-absent {
-  border-color: var(--absent);
-  background: color-mix(in oklch, var(--absent) 28%, transparent);
+  border-color: color-mix(in oklch, var(--absent) 68%, var(--ink));
+  background: color-mix(in oklch, var(--absent) 52%, var(--background));
+  color: color-mix(in oklch, var(--ink) 72%, var(--absent));
 }
 
 button.key.is-removed {
   background: color-mix(in oklch, var(--removed) 27%, transparent);
   text-decoration: line-through 2px;
+}
+
+.key-evidence {
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.08rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .result-panel {
@@ -797,6 +814,7 @@ button.key.is-removed {
   width: min(72rem, 100%);
   height: 100%;
   min-height: 0;
+  margin-inline: auto;
   flex-direction: column;
   gap: 0.4rem;
   overflow: hidden;
@@ -833,7 +851,7 @@ button.key.is-removed {
 .combat-transcript-header {
   display: grid;
   min-height: 1.75rem;
-  grid-template-columns: 2.25rem repeat(2, minmax(0, 1fr));
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
   align-items: center;
   border-bottom: var(--terminal-rule);
   background: var(--surface);
@@ -842,8 +860,8 @@ button.key.is-removed {
   text-align: center;
 }
 
-.combat-transcript-header span:first-child {
-  border-inline-end: var(--terminal-rule);
+.combat-transcript-header > .combat-transcript-meta {
+  justify-self: end;
 }
 
 .combat-transcript {
@@ -853,15 +871,31 @@ button.key.is-removed {
   flex-direction: column;
   gap: 0.22rem;
   padding: 0.45rem;
+  container-type: inline-size;
 }
 
 .combat-transcript-entry {
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: 2rem minmax(4.5rem, 7rem) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
   align-items: center;
   gap: 0.35rem;
+}
+
+.combat-transcript-meta {
+  display: inline-grid;
+  width: min(9rem, 100%);
+  min-width: 0;
+  grid-template-columns: 2rem minmax(0, 1fr);
+  align-items: center;
+  justify-self: end;
+  gap: 0.35rem;
+  padding-inline-end: 0.35rem;
+}
+
+.combat-transcript-header .combat-transcript-meta {
+  grid-template-columns: 2rem minmax(3.5rem, 1fr);
 }
 
 .combat-transcript-entry .board-row-number {
@@ -870,8 +904,6 @@ button.key.is-removed {
 }
 
 .combat-transcript-entry .combat-actor {
-  grid-column: 2;
-  grid-row: 1;
   align-self: center;
   overflow: hidden;
   color: var(--muted);
@@ -883,16 +915,13 @@ button.key.is-removed {
 }
 
 .combat-transcript-entry .combat-transcript-move {
-  grid-column: 3;
-  grid-row: 1;
   min-width: 0;
-  justify-self: start;
+  justify-self: center;
 }
 
 .combat-transcript-entry.is-empty .combat-transcript-empty {
-  grid-column: 3;
   min-width: 0;
-  justify-self: start;
+  justify-self: center;
 }
 
 .combat-transcript .tile {
@@ -906,6 +935,51 @@ button.key.is-removed {
   margin: 0 auto;
   gap: 0.35rem;
   padding: 0.35rem;
+}
+
+.game-layout .tile,
+.combat-transcript-frame .tile,
+.combat-input .tile {
+  max-width: calc((100vw - 6rem) / var(--word-length, 5));
+}
+
+@media (min-width: 48rem) and (min-height: 43.76rem) {
+  .game-layout:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .game-board
+    .tile {
+    width: clamp(3.625rem, min(5vw, 7dvh), 4.5rem);
+    font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  }
+
+  .combat-transcript-frame:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .combat-transcript
+    .tile,
+  .combat-input:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .tile {
+    width: clamp(3.25rem, min(4.4vw, 6.2dvh), 4rem);
+    font-size: clamp(1.05rem, 2vw, 1.45rem);
+  }
 }
 
 .combat-input > .board-row {
@@ -973,7 +1047,7 @@ button.key.is-removed {
   }
 
   .tile {
-    width: clamp(1.6rem, 5dvh, 2.65rem);
+    width: min(3.35rem, 15.5vw, max(2.85rem, 6.35dvh));
   }
 
   .board-entry {
@@ -1048,7 +1122,7 @@ button.key.is-removed {
   }
 
   .combat-transcript-header {
-    grid-template-columns: 1.75rem 3.35rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
   }
 
   .combat-transcript {
@@ -1056,8 +1130,19 @@ button.key.is-removed {
   }
 
   .combat-transcript-entry {
-    grid-template-columns: 1.5rem 3.15rem minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
     gap: 0.2rem;
+  }
+
+  .combat-transcript-meta {
+    width: min(4.75rem, 100%);
+    grid-template-columns: 1.5rem minmax(0, 1fr);
+    gap: 0.15rem;
+    padding-inline-end: 0.2rem;
+  }
+
+  .combat-transcript-header .combat-transcript-meta {
+    grid-template-columns: 1.5rem minmax(2.5rem, 1fr);
   }
 
   .combat-transcript-entry .board-row-number {
@@ -1066,16 +1151,11 @@ button.key.is-removed {
   }
 
   .combat-transcript-entry .combat-transcript-move {
-    grid-column: 3;
-    justify-self: start;
-  }
-
-  .combat-transcript-entry.is-empty .combat-transcript-empty {
-    grid-column: 3;
+    justify-self: center;
   }
 
   .combat-transcript .tile {
-    width: clamp(1.35rem, 4.1dvh, 1.85rem);
+    width: min(2.8rem, 12.4vw, max(2.1rem, 5.2dvh));
   }
 
   .combat-input {
@@ -1084,7 +1164,7 @@ button.key.is-removed {
   }
 
   .combat-input > .board-row .tile {
-    width: clamp(1.55rem, 5.1dvh, 2.2rem);
+    width: min(2.8rem, 12.4vw, max(2.1rem, 5.2dvh));
   }
 
   .combat-secondary-action {
@@ -1101,6 +1181,17 @@ button.key.is-removed {
 
   .game-auxiliary .evidence-legend {
     display: none;
+  }
+}
+
+@media (max-width: 35.49rem) and (max-height: 40rem) {
+  .game-board {
+    gap: 0.08rem;
+    padding-block: 0.2rem;
+  }
+
+  .game-board .tile {
+    width: clamp(1.75rem, 5.1dvh, 2.2rem);
   }
 }
 
@@ -1199,6 +1290,13 @@ button.key.is-removed {
   .combat-transcript-frame,
   .combat-transcript-header,
   .game-auxiliary > summary {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  button.key.is-absent,
+  button.key.is-removed {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;

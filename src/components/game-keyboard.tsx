@@ -46,8 +46,19 @@ export function GameKeyboard({
                 onClick={() => onLetter(letter)}
                 aria-label={`${letter.toUpperCase()}, ${state}`}
                 disabled={disabled || state === 'removed'}
+                data-evidence={state}
               >
-                {letter.toUpperCase()}
+                <span>{letter.toUpperCase()}</span>
+                {state === 'absent' && (
+                  <span className="key-evidence" aria-hidden="true">
+                    ×
+                  </span>
+                )}
+                {state === 'removed' && (
+                  <span className="key-evidence" aria-hidden="true">
+                    −
+                  </span>
+                )}
               </button>
             );
           })}

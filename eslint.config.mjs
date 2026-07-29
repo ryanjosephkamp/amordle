@@ -21,6 +21,7 @@ export default defineConfig([
     '.vitest-attachments/**',
     'dist/**',
     '.next/**',
+    '.vercel/**',
     'coverage/**',
     'playwright-report/**',
     'test-results/**',

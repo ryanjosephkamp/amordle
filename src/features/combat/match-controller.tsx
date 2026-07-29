@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
+import type { CSSProperties } from 'react';
 import {
   acceptPracticeRematch,
   advanceLegacyGo,
@@ -28,10 +29,13 @@ import type {
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
+import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { scoreGuess } from '@/domain/game';
+import { historyRowSchema } from '@/domain/account-continuity';
+import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { MoveBoards } from './combat-transcript';
 
 interface MatchState {
@@ -171,6 +175,7 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
       setMessage('');
       queryClient.setQueryData(['combat', 'match', gameId], state);
       void queryClient.invalidateQueries({ queryKey: ['combat', 'active'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
     onError: (error) => {
       setMessage(error instanceof Error ? error.message : 'That action was not accepted.');
@@ -223,6 +228,22 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
     },
     onError: () => setMessage('Rating settlement needs attention. It is safe to retry.'),
   });
+
+  useEffect(() => {
+    const userId = auth.user?.id;
+    const row = userId && match.data ? combatHistoryRow(match.data, userId) : null;
+    if (!row || !userId) return;
+    void queueAccountCompletion(row)
+      .then(() => reconcileCompletionOutbox(userId))
+      .then(() =>
+        Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['completion-outbox', userId] }),
+          queryClient.invalidateQueries({ queryKey: ['history', userId] }),
+          queryClient.invalidateQueries({ queryKey: ['progress', userId] }),
+        ]),
+      )
+      .catch(() => undefined);
+  }, [auth.user?.id, match.data, queryClient]);
 
   if (match.isPending) return <SkeletonRows label="Loading match…" rows={5} />;
   if (match.isError || !match.data) {
@@ -539,6 +560,7 @@ function RematchActions({
       void queryClient.invalidateQueries({
         queryKey: ['combat', 'rematches', sourceGameId],
       });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
       if (request.created_game_id) {
         window.location.assign(`/combat/match/${request.created_game_id}`);
       } else {
@@ -828,7 +850,11 @@ function CombatInput({
     return () => window.removeEventListener('keydown', onKey);
   }, [disabled, draft, length, setDraft, submit]);
   return (
-    <div className="combat-input">
+    <div
+      className="combat-input"
+      data-word-length={length}
+      style={{ '--word-length': length } as CSSProperties}
+    >
       <div className="board-row is-draft" aria-label="Current guess">
         {Array.from({ length }, (_, index) => (
           <div className="tile" key={index}>
@@ -853,4 +879,154 @@ function CombatInput({
 function formatClock(milliseconds: number): string {
   const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+}
+
+function combatHistoryRow(state: MatchState, userId: string): AccountHistoryRow | null {
+  if (state.authority === 2 && state.game?.outcome.terminal) {
+    const game = state.game;
+    const viewerSeat = game.viewerSeat;
+    const opponent = game.players.find((player) => player.seat !== viewerSeat);
+    const guesses = game.moves.filter((move) => move.type === 'guess' && move.seat === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: game.endedAt ?? game.updatedAt,
+      entry: {
+        schemaVersion: 2,
+        kind: game.scope === 'daily' ? 'combat-daily' : 'combat-practice',
+        lane: game.scope,
+        mode: game.mode,
+        ranked: game.ranked,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.outcome.winnerSeat === viewerSeat
+              ? 'won'
+              : game.outcome.winnerSeat
+                ? 'lost'
+                : 'draw',
+        terminalReason: game.outcome.reason ?? game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? (game.goPuzzleCount ?? 5) : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: game.playerState[viewerSeat].puzzlesSolved,
+        points: game.playerState[viewerSeat].points,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ...(game.dailyDateKey === undefined ? {} : { dailyDate: game.dailyDateKey }),
+        ratingDelta: null,
+        ...(opponent
+          ? {
+              opponent: {
+                ...(opponent.publicProfileId === undefined
+                  ? {}
+                  : { publicProfileId: opponent.publicProfileId }),
+                displayName: opponent.displayName || 'Rival',
+              },
+            }
+          : {}),
+      },
+    });
+  }
+
+  if (state.authority === 1 && state.rankedDaily) {
+    const game = state.rankedDaily;
+    if (!['won', 'lost', 'cancelled'].includes(game.status)) return null;
+    const viewerSeat = game.playerUserIds['player-one'] === userId ? 'player-one' : 'player-two';
+    const guesses = game.moves.filter((move) => move.playerId === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    const solved = new Set(
+      guesses
+        .filter((move) => move.tiles.every((tile) => tile.state === 'correct'))
+        .map((move) => move.puzzleIndex),
+    ).size;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: game.endedAt ?? game.updatedAt,
+      entry: {
+        schemaVersion: 2,
+        kind: 'combat-daily',
+        lane: 'daily',
+        mode: game.mode,
+        ranked: true,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.winnerId === viewerSeat
+              ? 'won'
+              : game.winnerId
+                ? 'lost'
+                : 'draw',
+        terminalReason: game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? 5 : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: solved,
+        points: solved,
+        rewardCoins: 0,
+        rewardXp: 0,
+        dailyDate: game.dailyDateKey,
+        ratingDelta: null,
+        opponent: { displayName: 'Rival' },
+      },
+    });
+  }
+
+  if (state.authority === 0 && state.legacy) {
+    const row = state.legacy;
+    const game = row.projection;
+    if (!['won', 'lost', 'cancelled'].includes(game.status)) return null;
+    const viewerSeat =
+      row.player_one_user_id === userId
+        ? 'player-one'
+        : row.player_two_user_id === userId
+          ? 'player-two'
+          : null;
+    if (!viewerSeat) return null;
+    const guesses = game.moves.filter((move) => move.seat === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    const solved = new Set(
+      guesses
+        .filter((move) => move.tiles.every((tile) => tile.state === 'correct'))
+        .map((move) => move.puzzleIndex ?? 0),
+    ).size;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: row.updated_at,
+      entry: {
+        schemaVersion: 2,
+        kind: 'combat-practice',
+        lane: 'practice',
+        mode: game.mode,
+        ranked: false,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.winnerSeat === viewerSeat
+              ? 'won'
+              : 'lost',
+        terminalReason: game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? game.goPuzzleCount : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: solved,
+        points: solved,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ratingDelta: null,
+        opponent: { displayName: 'Rival' },
+      },
+    });
+  }
+
+  return null;
 }

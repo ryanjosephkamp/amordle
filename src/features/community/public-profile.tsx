@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { getPublicProfile } from '@/adapters/supabase/public';
 import { SkeletonRows } from '@/components/route-states';
+import { accentCssColor } from '@/domain/profile';
 
 export function PublicProfile({ publicProfileId }: { publicProfileId: string }) {
   const profile = useQuery({
@@ -30,7 +31,7 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
     <section className="public-profile">
       <div
         className="profile-avatar mono"
-        style={{ borderColor: profile.data.accent_color ?? '#2996a8' }}
+        style={{ borderColor: accentCssColor(profile.data.accent_color) }}
         aria-hidden="true"
       >
         {(profile.data.display_name || 'P').slice(0, 2).toUpperCase()}

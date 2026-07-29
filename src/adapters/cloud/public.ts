@@ -1,12 +1,13 @@
 'use client';
 
 import { z } from 'zod';
+import { accentNameSchema } from '@/domain/profile';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
 export const publicProfileSchema = z
   .object({
-    accent_color: z.string().nullable(),
+    accent_color: accentNameSchema.nullable(),
     avatar_url: z.string().nullable(),
     bio: z.string().nullable(),
     created_at: z.string(),
@@ -26,7 +27,7 @@ export const myPublicProfileSchema = publicProfileSchema
 
 export const leaderboardEntrySchema = z
   .object({
-    accent_color: z.string().nullable(),
+    accent_color: accentNameSchema.nullable(),
     avatar_url: z.string().nullable(),
     bucket: z.string(),
     display_name: z.string().nullable(),
@@ -86,7 +87,7 @@ export async function saveMyPublicProfile(input: {
   displayName: string;
   bio: string;
   visibility: 'public' | 'private';
-  accentColor: string;
+  accentColor: z.infer<typeof accentNameSchema>;
   avatarUrl?: string;
   flairKey: string;
 }) {

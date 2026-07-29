@@ -63,8 +63,9 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   }, []);
 
   const lobbies = useQuery({
-    queryKey: ['combat', 'practice', 'unranked'],
-    queryFn: listUnrankedPractice,
+    queryKey: ['combat', 'practice', 'unranked', auth.user?.id],
+    queryFn: () => listUnrankedPractice(auth.user?.id ?? ''),
+    enabled: Boolean(auth.user?.id),
     refetchInterval: 5_000,
   });
 
@@ -164,8 +165,8 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   });
 
   const available = useMemo(
-    () => lobbies.data?.filter((row) => row.player_one_user_id !== auth.user?.id) ?? [],
-    [auth.user?.id, lobbies.data],
+    () => lobbies.data?.filter((row) => !row.canCancel) ?? [],
+    [lobbies.data],
   );
 
   return (
@@ -258,11 +259,11 @@ function PracticeLobbyInner({ length, candidates }: Props) {
               <div className="data-row" data-game-id={row.id} key={row.id}>
                 <div>
                   <strong>
-                    {row.projection.mode.toUpperCase()} · {row.projection.wordLength} letters
+                    {row.mode.toUpperCase()} · {row.word_length} letters
                   </strong>
                   <p>
-                    {row.projection.difficulty}
-                    {row.projection.hardMode ? ' · Hard Mode' : ''}
+                    {row.difficulty}
+                    {row.hard_mode ? ' · Hard Mode' : ''}
                   </p>
                 </div>
                 <button disabled={join.isPending} onClick={() => join.mutate(row.id)}>

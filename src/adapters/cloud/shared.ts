@@ -28,6 +28,25 @@ export function parseServiceResult<T>(schema: z.ZodType<T>, value: unknown): T {
   return parsed.data;
 }
 
+export interface ParsedServiceList<T> {
+  items: T[];
+  skipped: number;
+}
+
+export function parseServiceList<T>(schema: z.ZodType<T>, value: unknown): ParsedServiceList<T> {
+  if (!Array.isArray(value)) {
+    throw new ServiceError('The service returned an unsupported response.', 'INVALID_RESPONSE');
+  }
+  const items: T[] = [];
+  let skipped = 0;
+  for (const candidate of value) {
+    const parsed = schema.safeParse(candidate);
+    if (parsed.success) items.push(parsed.data);
+    else skipped += 1;
+  }
+  return { items, skipped };
+}
+
 export function operationId(prefix: string): string {
   return `${prefix}:${crypto.randomUUID()}`;
 }

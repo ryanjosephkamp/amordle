@@ -3,10 +3,13 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { UseMutationResult } from '@tanstack/react-query';
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import { getMyPublicProfile, saveMyPublicProfile } from '@/adapters/supabase/public';
 import type { z } from 'zod';
 import { myPublicProfileSchema } from '@/adapters/supabase/public';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
+import { accentCssColors, accentLabels, accentNameSchema, accentNames } from '@/domain/profile';
+import type { AccentName } from '@/domain/profile';
 
 export function ProfileEditor() {
   return (
@@ -40,7 +43,13 @@ function ProfileEditorInner() {
     );
   }
 
-  return <ProfileForm profile={profile.data} save={save} />;
+  return (
+    <ProfileForm
+      key={profile.data?.updated_at ?? 'new-profile'}
+      profile={profile.data}
+      save={save}
+    />
+  );
 }
 
 function ProfileForm({
@@ -59,7 +68,7 @@ function ProfileForm({
   const [visibility, setVisibility] = useState<'public' | 'private'>(
     profile?.visibility === 'private' ? 'private' : 'public',
   );
-  const [accentColor, setAccentColor] = useState(profile?.accent_color || '#2996a8');
+  const [accentColor, setAccentColor] = useState<AccentName>(profile?.accent_color ?? 'ice');
   const [flairKey, setFlairKey] = useState(profile?.flair_key || 'none');
 
   return (
@@ -100,14 +109,28 @@ function ProfileForm({
           <option value="private">Private</option>
         </select>
       </label>
-      <label>
-        Accent color
-        <input
-          type="color"
-          value={accentColor}
-          onChange={(event) => setAccentColor(event.target.value)}
-        />
-      </label>
+      <fieldset className="accent-fieldset">
+        <legend>Accent color</legend>
+        <div className="accent-options">
+          {accentNames.map((accent) => (
+            <label className="accent-option" key={accent}>
+              <input
+                type="radio"
+                name="accent-color"
+                value={accent}
+                checked={accentColor === accent}
+                onChange={(event) => setAccentColor(accentNameSchema.parse(event.target.value))}
+              />
+              <span
+                className="accent-swatch"
+                style={{ '--profile-accent': accentCssColors[accent] } as CSSProperties}
+                aria-hidden="true"
+              />
+              <span>{accentLabels[accent]}</span>
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <label>
         Flair
         <select value={flairKey} onChange={(event) => setFlairKey(event.target.value)}>
@@ -120,7 +143,11 @@ function ProfileForm({
         {save.isPending ? 'SAVING…' : 'SAVE PROFILE'}
       </button>
       <p aria-live="polite">
-        {save.isSuccess ? 'Profile saved.' : save.isError ? 'Profile could not be saved.' : ''}
+        {save.isSuccess
+          ? 'Profile saved.'
+          : save.isError
+            ? save.error.message || 'Profile could not be saved.'
+            : ''}
       </p>
       {profile?.public_profile_id && <p className="mono">Public ID: {profile.public_profile_id}</p>}
     </form>

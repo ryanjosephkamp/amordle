@@ -114,12 +114,15 @@ export function deriveKeyboardEvidence(
 ): Record<string, EvidenceState> {
   const evidence: Record<string, EvidenceState> = {};
   for (const letter of 'abcdefghijklmnopqrstuvwxyz') {
-    evidence[letter] = removed.has(letter) ? 'removed' : 'unknown';
+    evidence[letter] = 'unknown';
   }
   for (const row of rows) {
     for (const tile of row.tiles) {
       evidence[tile.letter] = mergeEvidence(evidence[tile.letter] ?? 'unknown', tile.state);
     }
+  }
+  for (const letter of removed) {
+    evidence[letter] = 'removed';
   }
   return evidence;
 }

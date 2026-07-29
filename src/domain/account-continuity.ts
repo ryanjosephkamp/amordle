@@ -15,7 +15,7 @@ export const progressSchema = z
 
 export type AccountProgress = z.infer<typeof progressSchema>;
 
-export const historyEntrySchema = z
+export const historyEntryV1Schema = z
   .object({
     schemaVersion: z.literal(1),
     kind: z.enum(['solo-practice', 'solo-daily', 'combat-practice', 'combat-daily']),
@@ -32,6 +32,44 @@ export const historyEntrySchema = z
       .optional(),
   })
   .strict();
+
+export const historyEntryV2Schema = z
+  .object({
+    schemaVersion: z.literal(2),
+    kind: z.enum(['solo-practice', 'solo-daily', 'combat-practice', 'combat-daily']),
+    lane: z.enum(['practice', 'daily']),
+    mode: z.enum(['og', 'go']),
+    ranked: z.boolean(),
+    result: z.enum(['won', 'lost', 'draw', 'cancelled']),
+    terminalReason: z.string(),
+    wordLength: z.number().int().min(2).max(35),
+    difficulty: z.enum(['casual', 'standard', 'expert']),
+    hardMode: z.boolean(),
+    goPuzzleCount: z.number().int().positive().nullable(),
+    acceptedGuesses: z.number().int().nonnegative(),
+    puzzlesSolved: z.number().int().nonnegative().nullable(),
+    points: z.number().int().nullable(),
+    rewardCoins: z.number().int().nonnegative(),
+    rewardXp: z.number().int().nonnegative(),
+    dailyDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
+    ratingDelta: z.number().nullable(),
+    opponent: z
+      .object({
+        publicProfileId: z.string().optional(),
+        displayName: z.string().nullable(),
+      })
+      .strict()
+      .optional(),
+  })
+  .strict();
+
+export const historyEntrySchema = z.discriminatedUnion('schemaVersion', [
+  historyEntryV1Schema,
+  historyEntryV2Schema,
+]);
 
 export const historyRowSchema = z
   .object({

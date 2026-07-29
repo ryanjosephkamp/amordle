@@ -2,12 +2,17 @@
 
 import { z } from 'zod';
 import type { GameSession } from '@/domain/game';
-import { levelForXp } from '@/domain/economy';
 import { gameSessionSchema } from '@/features/solo/session-schema';
 import type { VersionedEnvelope } from '@/adapters/indexeddb';
-import { getBrowserSupabase } from './browser';
-import { creditCoins, loadProgress, progressSchema, writeAccountProgressCas } from './account';
-import { ServiceError, throwServiceError } from './shared';
+import {
+  finalizeAccountHistoryRow,
+  loadProgress,
+  progressSchema,
+  writeAccountProgressCas,
+} from './account';
+import { ServiceError } from './shared';
+import { historyRowSchema } from '@/domain/account-continuity';
+import type { AccountHistoryRow } from '@/domain/account-continuity';
 
 const envelopeSchema = z
   .object({
@@ -19,12 +24,6 @@ const envelopeSchema = z
     state: gameSessionSchema,
   })
   .strict();
-
-function client() {
-  const value = getBrowserSupabase();
-  if (!value) throw new ServiceError('Solo cloud saves are unavailable.', 'UNAVAILABLE');
-  return value;
-}
 
 export async function loadCloudSolo(
   userId: string,
@@ -108,7 +107,15 @@ export async function finalizeSignedInSolo(
   if (session.status !== 'won' && session.status !== 'lost') {
     throw new ServiceError('Only terminal games can be finalized.', 'INVALID_STATE');
   }
-  const operationId = `solo-reward:${session.id}`;
+  return finalizeAccountHistoryRow(buildSoloHistoryRow(userId, session, kind, dailyDate));
+}
+
+export function buildSoloHistoryRow(
+  userId: string,
+  session: GameSession,
+  kind: 'solo-practice' | 'solo-daily',
+  dailyDate?: string,
+): AccountHistoryRow {
   const reward = soloReward(session);
   const acceptedGuesses = session.rows.filter((row) => row.kind === 'accepted').length;
   const puzzlesSolved = new Set(
@@ -118,36 +125,29 @@ export async function finalizeSignedInSolo(
       )
       .map((row) => row.puzzleIndex),
   ).size;
-  const { error } = await client()
-    .from('game_history')
-    .upsert({
-      id: `solo:${session.id}`,
-      user_id: userId,
-      completed_at: session.updatedAt,
-      entry: {
-        schemaVersion: 1,
-        kind,
-        mode: session.settings.mode,
-        result: session.status,
-        wordLength: session.settings.length,
-        acceptedGuesses,
-        puzzlesSolved,
-        rewardCoins: reward.coins,
-        rewardXp: reward.xp,
-        ...(dailyDate === undefined ? {} : { dailyDate }),
-      },
-    });
-  if (error) throwServiceError(error);
-  if (reward.coins > 0) await creditCoins(reward.coins, operationId);
-  await writeSnapshotCas(userId, (snapshot) => {
-    if (snapshot.appliedRewards?.[operationId] !== undefined) return snapshot;
-    const xp = snapshot.xp + reward.xp;
-    return {
-      ...snapshot,
-      xp,
-      level: levelForXp(xp),
-      revision: snapshot.revision + 1,
-      appliedRewards: { ...snapshot.appliedRewards, [operationId]: reward.xp },
-    };
+  return historyRowSchema.parse({
+    id: `solo:${session.id}`,
+    user_id: userId,
+    completed_at: session.updatedAt,
+    entry: {
+      schemaVersion: 2,
+      kind,
+      lane: dailyDate ? 'daily' : 'practice',
+      mode: session.settings.mode,
+      ranked: false,
+      result: session.status,
+      terminalReason: session.status === 'won' ? 'solved' : 'attempts_exhausted',
+      wordLength: session.settings.length,
+      difficulty: session.settings.difficulty,
+      hardMode: session.settings.hardMode,
+      goPuzzleCount: session.settings.mode === 'go' ? session.settings.goCount : null,
+      acceptedGuesses,
+      puzzlesSolved,
+      points: null,
+      rewardCoins: reward.coins,
+      rewardXp: reward.xp,
+      ...(dailyDate === undefined ? {} : { dailyDate }),
+      ratingDelta: null,
+    },
   });
 }

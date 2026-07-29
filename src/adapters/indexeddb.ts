@@ -11,6 +11,11 @@ export interface VersionedEnvelope<T> {
   state: T;
 }
 
+export type EnvelopeReadResult<T> =
+  | { status: 'missing' }
+  | { status: 'corrupt' }
+  | { status: 'valid'; envelope: VersionedEnvelope<T> };
+
 const baseEnvelopeSchema = z
   .object({
     schemaVersion: z.number().int().positive(),
@@ -49,6 +54,15 @@ export async function readEnvelope<T>(
   domain: string,
   stateSchema: z.ZodType<T>,
 ): Promise<VersionedEnvelope<T> | null> {
+  const result = await readEnvelopeDiagnostic(ownerNamespace, domain, stateSchema);
+  return result.status === 'valid' ? result.envelope : null;
+}
+
+export async function readEnvelopeDiagnostic<T>(
+  ownerNamespace: string,
+  domain: string,
+  stateSchema: z.ZodType<T>,
+): Promise<EnvelopeReadResult<T>> {
   const database = await openDatabase();
   try {
     const value = await new Promise<unknown>((resolve, reject) => {
@@ -57,15 +71,18 @@ export async function readEnvelope<T>(
       request.onsuccess = () => resolve(request.result);
       request.onerror = () => reject(request.error ?? new Error('Read failed.'));
     });
-    if (value === undefined) return null;
+    if (value === undefined) return { status: 'missing' };
     const envelope = baseEnvelopeSchema.safeParse(value);
-    if (!envelope.success) return null;
+    if (!envelope.success) return { status: 'corrupt' };
     if (envelope.data.ownerNamespace !== ownerNamespace || envelope.data.domain !== domain) {
-      return null;
+      return { status: 'corrupt' };
     }
     const state = stateSchema.safeParse(envelope.data.state);
-    if (!state.success) return null;
-    return { ...envelope.data, state: state.data };
+    if (!state.success) return { status: 'corrupt' };
+    return {
+      status: 'valid',
+      envelope: { ...envelope.data, state: state.data },
+    };
   } finally {
     database.close();
   }

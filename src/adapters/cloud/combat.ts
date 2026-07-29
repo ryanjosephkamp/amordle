@@ -4,7 +4,7 @@ import { z } from 'zod';
 import { hardModeViolationForEvidence, playableAttemptBudget, scoreGuess } from '@/domain/game';
 import type { Database, Json } from '@/types/database';
 import { getBrowserSupabase } from './browser';
-import { parseServiceResult, ServiceError, throwServiceError } from './shared';
+import { parseServiceList, parseServiceResult, ServiceError, throwServiceError } from './shared';
 
 const tileSchema = z
   .object({
@@ -330,6 +330,27 @@ const legacyRowSchema = z
 export type LegacyProjection = z.infer<typeof legacyProjectionSchema>;
 export type LegacyRow = z.infer<typeof legacyRowSchema>;
 
+const publicPracticeLobbySchema = z
+  .object({
+    id: z.string(),
+    scope: z.literal('practice'),
+    mode: z.enum(['og', 'go']),
+    status: z.literal('waiting'),
+    word_length: z.number().int().min(2).max(35),
+    difficulty: z.enum(['casual', 'standard', 'expert']),
+    go_puzzle_count: z.number().int().nullable(),
+    ranked: z.literal(false),
+    created_at: z.string(),
+    updated_at: z.string(),
+    hard_mode: z.preprocess((value) => value === true || value === 'true', z.boolean()),
+    projection_status: z.literal('waiting'),
+  })
+  .strict();
+
+export type PublicPracticeLobby = z.infer<typeof publicPracticeLobbySchema> & {
+  canCancel: boolean;
+};
+
 function client() {
   const value = getBrowserSupabase();
   if (!value) throw new ServiceError('COMBAT services are unavailable.', 'UNAVAILABLE');
@@ -421,8 +442,12 @@ export async function createDailyLobby(mode: 'og' | 'go', hardMode: boolean, cre
 }
 
 export async function listDailyLobbies(mode?: 'og' | 'go') {
-  return parseServiceResult(
-    z.array(dailyLobbySchema),
+  return (await listDailyLobbiesWithDiagnostics(mode)).items;
+}
+
+export async function listDailyLobbiesWithDiagnostics(mode?: 'og' | 'go') {
+  return parseServiceList(
+    dailyLobbySchema,
     await jsonRpc('list_amordle_unranked_daily_lobbies_v2', {
       p_limit: 50,
       ...(mode === undefined ? {} : { p_mode: mode }),
@@ -449,10 +474,10 @@ export async function getCombatGame(gameId: string) {
 }
 
 export async function listActiveCombat() {
-  return parseServiceResult(
-    z.array(combatProjectionSchema),
+  return parseServiceList(
+    combatProjectionSchema,
     await jsonRpc('list_amordle_combat_active_v2', { p_limit: 100 }),
-  );
+  ).items;
 }
 
 export async function saveCombatCommand(input: {
@@ -710,18 +735,43 @@ export async function createUnrankedPractice(input: {
   return parseServiceResult(legacyRowSchema, data);
 }
 
-export async function listUnrankedPractice() {
-  const { data, error } = await client()
-    .from('async_multiplayer_games')
-    .select(legacySelect)
-    .eq('authority_version', 0)
-    .eq('scope', 'practice')
-    .eq('ranked', false)
-    .eq('status', 'waiting')
-    .order('created_at', { ascending: true })
-    .limit(50);
-  if (error) throwServiceError(error);
-  return parseServiceResult(z.array(legacyRowSchema), data);
+export async function listUnrankedPractice(userId: string) {
+  return (await listUnrankedPracticeWithDiagnostics(userId)).items;
+}
+
+export async function listUnrankedPracticeWithDiagnostics(userId: string) {
+  const [publicRows, ownedRows] = await Promise.all([
+    client()
+      .from('async_multiplayer_games')
+      .select(
+        'id,scope,mode,status,word_length,difficulty,go_puzzle_count,ranked,created_at,updated_at,hard_mode:projection->>hardMode,projection_status:projection->>status',
+      )
+      .eq('authority_version', 0)
+      .eq('scope', 'practice')
+      .eq('ranked', false)
+      .eq('status', 'waiting')
+      .is('player_two_user_id', null)
+      .order('created_at', { ascending: true })
+      .limit(50),
+    client()
+      .from('async_multiplayer_games')
+      .select('id')
+      .eq('authority_version', 0)
+      .eq('scope', 'practice')
+      .eq('ranked', false)
+      .eq('status', 'waiting')
+      .eq('host_user_id', userId)
+      .is('player_two_user_id', null)
+      .limit(50),
+  ]);
+  if (publicRows.error) throwServiceError(publicRows.error);
+  if (ownedRows.error) throwServiceError(ownedRows.error);
+  const parsed = parseServiceList(publicPracticeLobbySchema, publicRows.data);
+  const owned = new Set((ownedRows.data ?? []).map((row) => row.id));
+  return {
+    items: parsed.items.map((row) => ({ ...row, canCancel: owned.has(row.id) })),
+    skipped: parsed.skipped,
+  };
 }
 
 export async function getLegacyPractice(gameId: string) {
@@ -743,12 +793,62 @@ export async function listLegacyActive(userId: string) {
     .eq('scope', 'practice')
     .eq('ranked', false)
     .in('status', ['waiting', 'playing', 'holding'])
+    .or(`player_one_user_id.eq.${userId},player_two_user_id.eq.${userId}`)
     .order('updated_at', { ascending: false })
     .limit(100);
   if (error) throwServiceError(error);
-  return parseServiceResult(z.array(legacyRowSchema), data).filter(
-    (row) => row.player_one_user_id === userId || row.player_two_user_id === userId,
-  );
+  return parseServiceList(legacyRowSchema, data).items;
+}
+
+export async function listLegacyRecent(userId: string) {
+  const { data, error } = await client()
+    .from('async_multiplayer_games')
+    .select(legacySelect)
+    .eq('authority_version', 0)
+    .eq('scope', 'practice')
+    .eq('ranked', false)
+    .in('status', ['waiting', 'playing', 'holding', 'won', 'lost', 'cancelled'])
+    .or(`player_one_user_id.eq.${userId},player_two_user_id.eq.${userId}`)
+    .order('updated_at', { ascending: false })
+    .limit(100);
+  if (error) throwServiceError(error);
+  return parseServiceList(legacyRowSchema, data).items;
+}
+
+export async function cancelUnrankedPractice(gameId: string, userId: string) {
+  const current = await getLegacyPractice(gameId);
+  if (!current) throw new ServiceError('That match no longer exists.', 'NOT_FOUND');
+  if (current.player_one_user_id !== userId) {
+    throw new ServiceError('Only the player who opened this match can cancel it.', 'FORBIDDEN');
+  }
+  if (current.status !== 'waiting' || current.player_two_user_id !== null) {
+    throw new ServiceError('That match is no longer waiting for a player.', 'TERMINAL');
+  }
+  const nextVersion = current.state_version + 1;
+  const projection = legacyProjectionSchema.parse({
+    ...current.projection,
+    status: 'cancelled',
+    version: nextVersion,
+  });
+  const timestamp = new Date().toISOString();
+  const { data, error } = await client()
+    .from('async_multiplayer_games')
+    .update({
+      status: 'cancelled',
+      projection,
+      state_version: nextVersion,
+      ended_at: timestamp,
+      updated_at: timestamp,
+    })
+    .eq('id', gameId)
+    .eq('player_one_user_id', userId)
+    .eq('state_version', current.state_version)
+    .eq('status', 'waiting')
+    .is('player_two_user_id', null)
+    .select(legacySelect)
+    .single();
+  if (error) throwServiceError(error);
+  return parseServiceResult(legacyRowSchema, data);
 }
 
 export async function joinUnrankedPractice(gameId: string, userId: string) {
@@ -1073,7 +1173,7 @@ export async function listPrivateRequests() {
     p_limit: 100,
   });
   if (error) throwServiceError(error);
-  return parseServiceResult(z.array(privateRequestSchema), data);
+  return parseServiceList(privateRequestSchema, data).items;
 }
 
 export async function createPrivateRequest(input: {
