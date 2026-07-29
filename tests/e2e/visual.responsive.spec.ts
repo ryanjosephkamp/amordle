@@ -146,7 +146,7 @@ test.describe('responsive and alternate presentation evidence', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=45');
-    await expect(page.locator('.app-shell.is-game-surface')).toBeVisible();
+    await expect(page.locator('.app-shell.is-game-surface').first()).toBeVisible();
     await expect(page.locator('.mobile-route-rail')).toHaveCount(0);
     await expect(page.getByRole('button', { name: /more navigation/i })).toBeVisible();
     await expect(page.locator('.board-row-number').first()).toHaveText('01');
@@ -242,6 +242,63 @@ test.describe('responsive and alternate presentation evidence', () => {
         animations: 'disabled',
         fullPage: false,
       });
+    }
+  });
+
+  test('standard five-letter gameplay uses the approved generous scale and centered axis', async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { id: 'desktop', width: 1440, height: 1024, minimum: 58, maximum: 72 },
+      { id: 'mobile', width: 390, height: 844, minimum: 46, maximum: 54 },
+    ] as const) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto(
+        `/play/solo/practice/og?length=5&difficulty=standard&generation=${viewport.width}`,
+      );
+      await expect(page.locator('.board-row.is-draft .tile').first()).toBeVisible();
+      const geometry = await page.evaluate(() => {
+        const region = document.querySelector('.game-board-region')?.getBoundingClientRect();
+        const row = document.querySelector('.board-row.is-draft')?.getBoundingClientRect();
+        const tile = document.querySelector('.board-row.is-draft .tile')?.getBoundingClientRect();
+        if (!region || !row || !tile) return null;
+        return {
+          tileWidth: tile.width,
+          axisDelta: Math.abs(region.left + region.width / 2 - (row.left + row.width / 2)),
+        };
+      });
+      expect(geometry, viewport.id).not.toBeNull();
+      expect(geometry!.tileWidth, viewport.id).toBeGreaterThanOrEqual(viewport.minimum);
+      expect(geometry!.tileWidth, viewport.id).toBeLessThanOrEqual(viewport.maximum + 0.5);
+      // The mobile history viewport reserves a narrow scrollbar gutter; keep
+      // the board visually centered within that usable area.
+      expect(geometry!.axisDelta, viewport.id).toBeLessThanOrEqual(3);
+    }
+  });
+
+  test('shared form fields remain visibly identifiable without relying on placeholders', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/auth');
+    await expect(page.getByLabel('Email')).toBeVisible();
+    const fields = await page
+      .locator('input[type="email"], input[type="password"]')
+      .evaluateAll((elements) =>
+        elements.map((element) => {
+          const style = getComputedStyle(element);
+          return {
+            background: style.backgroundColor,
+            border: style.borderColor,
+          };
+        }),
+      );
+    expect(fields).toHaveLength(2);
+    for (const field of fields) {
+      expect(field.background).not.toBe('rgba(0, 0, 0, 0)');
+      expect(field.background).not.toBe('transparent');
+      expect(field.border).not.toBe('rgba(0, 0, 0, 0)');
     }
   });
 

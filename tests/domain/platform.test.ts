@@ -150,4 +150,24 @@ describe('platform domains', () => {
 
     expect(mergeNotifications([read], [remoteReplay])).toEqual([read]);
   });
+
+  it('prunes obsolete notifications and makes a revised event unread again', () => {
+    const previous = {
+      id: 'turn:game',
+      accountNamespace: 'account:a',
+      kind: 'turn' as const,
+      durableRevision: 'game:7',
+      route: '/combat/match/game',
+      createdAt: '2026-07-27T12:00:00.000Z',
+      read: true,
+    };
+    const revised = {
+      ...previous,
+      durableRevision: 'game:8',
+      createdAt: '2026-07-27T12:01:00.000Z',
+      read: false,
+    };
+    expect(mergeNotifications([previous], [revised])).toEqual([revised]);
+    expect(mergeNotifications([previous], [])).toEqual([]);
+  });
 });

@@ -1,9 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
   defaultAccountProgress,
+  historyRowSchema,
   normalizeAccountProgress,
   normalizeLegacyHistory,
 } from '@/domain/account-continuity';
+import { buildPlayerStats, nextLevelProgress } from '@/domain/account-stats';
+import { accentCssColor, accentNameSchema } from '@/domain/profile';
 
 const userId = 'f75cc9a7-8983-4ee6-b7fa-790830202b61';
 
@@ -83,5 +86,99 @@ describe('account continuity', () => {
     const invalid = legacyProgress();
     invalid.history[0]!.completedAt = 'invalid';
     expect(normalizeLegacyHistory(invalid, userId)).toEqual([]);
+  });
+
+  it('accepts backward-compatible v2 history without answer-bearing state', () => {
+    const row = historyRowSchema.parse({
+      id: 'combat:game-1:player-one',
+      user_id: userId,
+      completed_at: '2026-07-29T16:00:00.000Z',
+      entry: {
+        schemaVersion: 2,
+        kind: 'combat-practice',
+        lane: 'practice',
+        mode: 'og',
+        ranked: false,
+        result: 'won',
+        terminalReason: 'solved',
+        wordLength: 5,
+        difficulty: 'standard',
+        hardMode: false,
+        goPuzzleCount: null,
+        acceptedGuesses: 4,
+        puzzlesSolved: 1,
+        points: 2,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ratingDelta: null,
+        opponent: {
+          publicProfileId: 'public-rival',
+          displayName: 'Rival',
+        },
+      },
+    });
+    expect(row.entry.schemaVersion).toBe(2);
+    expect(JSON.stringify(row)).not.toContain('answer');
+  });
+
+  it('projects honest zero and mixed history statistics', () => {
+    expect(buildPlayerStats([])).toMatchObject({
+      completedGames: 0,
+      wins: 0,
+      losses: 0,
+      draws: 0,
+      winRate: 0,
+      pendingCount: 0,
+    });
+    const legacy = normalizeLegacyHistory(legacyProgress(), userId);
+    const combat = historyRowSchema.parse({
+      id: 'combat:game-2:player-two',
+      user_id: userId,
+      completed_at: '2026-07-29T17:00:00.000Z',
+      entry: {
+        schemaVersion: 2,
+        kind: 'combat-daily',
+        lane: 'daily',
+        mode: 'go',
+        ranked: true,
+        result: 'draw',
+        terminalReason: 'time',
+        wordLength: 5,
+        difficulty: 'expert',
+        hardMode: true,
+        goPuzzleCount: 5,
+        acceptedGuesses: 7,
+        puzzlesSolved: 2,
+        points: 3,
+        rewardCoins: 0,
+        rewardXp: 0,
+        dailyDate: '2026-07-29',
+        ratingDelta: 0,
+      },
+    });
+    expect(buildPlayerStats([...legacy, combat], new Set([legacy[0]!.id]))).toMatchObject({
+      completedGames: 2,
+      wins: 1,
+      draws: 1,
+      acceptedGuesses: 11,
+      puzzlesSolved: 2,
+      byLane: { practice: 0, daily: 2 },
+      byMode: { og: 1, go: 1 },
+      byRanking: { ranked: 1, unranked: 1 },
+      rewardCoins: 0,
+      rewardXp: 0,
+      pendingCount: 1,
+    });
+    expect(nextLevelProgress({ ...defaultAccountProgress(), xp: 50 })).toEqual({
+      current: 0,
+      next: 100,
+      percentage: 50,
+    });
+  });
+
+  it('accepts only named profile accents and maps them to CSS colors', () => {
+    expect(accentNameSchema.parse('violet')).toBe('violet');
+    expect(accentNameSchema.safeParse('#00ffff').success).toBe(false);
+    expect(accentCssColor('amber')).toMatch(/^oklch/);
   });
 });

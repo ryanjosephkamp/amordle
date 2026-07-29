@@ -27,6 +27,10 @@ describe('browser components', () => {
     expect(onLetter).toHaveBeenCalledWith('a');
     expect(onSubmit).toHaveBeenCalledOnce();
     expect(onDelete).toHaveBeenCalledOnce();
+    await expect
+      .element(page.getByRole('button', { name: 'Q, absent' }))
+      .toHaveAttribute('data-evidence', 'absent');
+    await expect.element(page.getByText('×')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Z, removed' })).toBeDisabled();
   });
 

@@ -3,6 +3,7 @@ import fc from 'fast-check';
 import {
   completionPercentage,
   createGameSession,
+  deriveKeyboardEvidence,
   hardModeViolationForEvidence,
   playableAttemptBudget,
   reduceGame,
@@ -51,6 +52,34 @@ describe('canonical game rules', () => {
         },
       ),
     );
+  });
+
+  it('keeps the strongest scored keyboard evidence and overlays removed keys last', () => {
+    const evidence = deriveKeyboardEvidence(
+      [
+        {
+          id: 'one',
+          kind: 'accepted',
+          guess: 'allee',
+          puzzleIndex: 0,
+          tiles: [
+            { letter: 'a', state: 'absent' },
+            { letter: 'l', state: 'absent' },
+            { letter: 'l', state: 'present' },
+            { letter: 'e', state: 'present' },
+            { letter: 'e', state: 'correct' },
+          ],
+          acceptedAt: time,
+        },
+      ],
+      new Set(['e', 'z']),
+    );
+
+    expect(evidence.a).toBe('absent');
+    expect(evidence.l).toBe('present');
+    expect(evidence.e).toBe('removed');
+    expect(evidence.z).toBe('removed');
+    expect(evidence.q).toBe('unknown');
   });
 
   it('enforces settings and decreasing GO attempt budgets at boundary lengths', () => {

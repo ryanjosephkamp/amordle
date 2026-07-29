@@ -1,9 +1,10 @@
 import { expect, test } from '@playwright/test';
 import type { BrowserContext, Page } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
-import { randomBytes } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { selectPracticeAnswers } from '../../src/domain/selectors';
 import type { Database, Json } from '../../src/types/database';
 
 const projectRef = 'squqdstdvbsvhagfuzgj';
@@ -33,6 +34,8 @@ const admin = createClient<Database>(supabaseUrl, serviceKey, {
 });
 const users: Account[] = [];
 const gameIds: string[] = [];
+const privateRequestIds: string[] = [];
+const rematchRequestIds: string[] = [];
 const contexts: BrowserContext[] = [];
 let cleanupComplete = false;
 
@@ -192,6 +195,20 @@ async function cleanup() {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
+      if (rematchRequestIds.length) {
+        const { error } = await admin
+          .from('multiplayer_practice_rematch_requests')
+          .delete()
+          .in('id', rematchRequestIds);
+        if (error) throw error;
+      }
+      if (privateRequestIds.length) {
+        const { error } = await admin
+          .from('multiplayer_private_match_requests')
+          .delete()
+          .in('id', privateRequestIds);
+        if (error) throw error;
+      }
       if (gameIds.length) {
         const { error } = await admin
           .from('async_multiplayer_games')
@@ -243,6 +260,21 @@ async function cleanup() {
       } else {
         residue.games = 0;
       }
+      for (const [name, table, ids] of [
+        ['privateRequests', 'multiplayer_private_match_requests', privateRequestIds],
+        ['rematchRequests', 'multiplayer_practice_rematch_requests', rematchRequestIds],
+      ] as const) {
+        if (!ids.length) {
+          residue[name] = 0;
+          continue;
+        }
+        const { count, error } = await admin
+          .from(table)
+          .select('id', { count: 'exact', head: true })
+          .in('id', [...ids]);
+        if (error) throw error;
+        residue[name] = count ?? -1;
+      }
       for (const [table, column, ids] of exactDeletes) {
         const { count, error } = await admin
           .from(table)
@@ -271,7 +303,8 @@ async function cleanup() {
         resourceCounts: {
           authUsers: users.length,
           games: gameIds.length,
-          requestIds: 0,
+          privateRequests: privateRequestIds.length,
+          rematchRequests: rematchRequestIds.length,
         },
         residue,
         authResidue: 0,
@@ -409,10 +442,83 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.emulateMedia({ colorScheme: 'light' });
     await firstPage.goto(`${baseURL}/profile`);
     await expect(firstPage.getByRole('heading', { name: 'PUBLIC PROFILE' })).toBeVisible();
+    await firstPage.getByLabel('Player name').fill('E2E Operator');
+    await firstPage.getByRole('radio', { name: 'Violet' }).check();
+    await firstPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
+    await expect(firstPage.getByText('Profile saved.')).toBeVisible();
+    await firstPage.reload();
+    await expect(firstPage.getByRole('radio', { name: 'Violet' })).toBeChecked();
+    const { data: savedProfile, error: savedProfileError } = await admin
+      .from('public_player_profiles')
+      .select('accent_color,public_profile_id')
+      .eq('user_id', playerOne!.id)
+      .single();
+    if (savedProfileError) throw savedProfileError;
+    expect(savedProfile.accent_color).toBe('violet');
+    await spectatorPage.goto(`${baseURL}/players/${savedProfile.public_profile_id}`);
+    await expect(spectatorPage.locator('.public-profile')).toContainText('E2E Operator');
+    await expect(spectatorPage.locator('.profile-avatar')).toHaveAttribute(
+      'style',
+      /border-color:/i,
+    );
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'account-profile-desktop-light.png'),
       fullPage: true,
     });
+    await secondPage.goto(`${baseURL}/profile`);
+    await secondPage.getByLabel('Player name').fill('E2E Player Two');
+    await secondPage.getByRole('radio', { name: 'Cyan' }).check();
+    await secondPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
+    await expect(secondPage.getByText('Profile saved.')).toBeVisible();
+    const { data: secondProfile, error: secondProfileError } = await admin
+      .from('public_player_profiles')
+      .select('public_profile_id')
+      .eq('user_id', playerTwo!.id)
+      .single();
+    if (secondProfileError) throw secondProfileError;
+
+    await firstPage.goto(`${baseURL}/combat/lobby`);
+    await firstPage.getByLabel('Public profile ID').fill(secondProfile.public_profile_id);
+    await firstPage.getByRole('button', { name: 'Send private request' }).click();
+    await expect(firstPage.getByText('Private request sent.')).toBeVisible();
+    const { data: privateRequest, error: privateRequestError } = await admin
+      .from('multiplayer_private_match_requests')
+      .select('id')
+      .eq('requester_user_id', playerOne!.id)
+      .eq('opponent_user_id', playerTwo!.id)
+      .single();
+    if (privateRequestError) throw privateRequestError;
+    privateRequestIds.push(privateRequest.id);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'private_match_request',
+      id: privateRequest.id,
+      owner: runId,
+      participantIds: [playerOne!.id, playerTwo!.id],
+      disposable: true,
+    });
+    await secondPage.goto(`${baseURL}/combat/lobby`);
+    await expect(secondPage.locator('.request-row')).toContainText('E2E Operator', {
+      timeout: 15_000,
+    });
+    await expect(
+      secondPage.getByRole('button', { name: /Notifications, [1-9]\d* unread/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await secondPage.getByRole('button', { name: /Notifications/i }).click();
+    await expect(
+      secondPage.getByRole('dialog', { name: 'Notifications' }).getByText('Private match request'),
+    ).toBeVisible();
+    await secondPage
+      .getByRole('dialog', { name: 'Notifications' })
+      .getByRole('button', { name: 'Mark all read' })
+      .click();
+    await secondPage.getByRole('button', { name: 'Notifications', exact: true }).click();
+    await firstPage.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await event('private_request_notification_verified', {
+      requestId: privateRequest.id,
+      persistentReadState: true,
+    });
+
     await firstPage.emulateMedia({ colorScheme: 'dark' });
     await firstPage.goto(`${baseURL}/settings`);
     await expect(firstPage.getByRole('heading', { name: 'Settings' })).toBeVisible();
@@ -426,10 +532,12 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.goto(`${baseURL}/stats`);
     await expect(secondPage.getByRole('heading', { name: 'Your stats' })).toBeVisible();
     await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
-    await expect(secondPage.locator('.metric').filter({ hasText: 'XP' })).toContainText('375');
-    await expect(secondPage.locator('.metric').filter({ hasText: 'Daily streak' })).toContainText(
-      '5',
-    );
+    await expect(
+      secondPage.locator('.stats-metric').filter({ hasText: /^xp\s*375$/i }),
+    ).toBeVisible();
+    await expect(
+      secondPage.locator('.stats-metric').filter({ hasText: /daily streak\s*5/i }),
+    ).toBeVisible();
     await expect(secondPage.getByRole('button', { name: 'Account' })).toBeVisible();
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'account-stats-mobile-light.png'),
@@ -445,6 +553,17 @@ test.describe.serial('protected Preview services', () => {
     });
     await spectatorPage.setViewportSize({ width: 390, height: 844 });
     await spectatorPage.emulateMedia({ colorScheme: 'dark' });
+    await spectatorPage.goto(`${baseURL}/stats`);
+    await expect(spectatorPage.locator('.skeleton-stack')).toHaveCount(0);
+    await expect(
+      spectatorPage.locator('.stats-metric').filter({ hasText: /completed\s*0/i }),
+    ).toBeVisible();
+    await expect(spectatorPage.getByText(/No completed games yet/i)).toBeVisible();
+    await spectatorPage.goto(`${baseURL}/history`);
+    await expect(spectatorPage.locator('.skeleton-stack')).toHaveCount(0);
+    await expect(
+      spectatorPage.getByText(/Completed signed-in games will appear here/i),
+    ).toBeVisible();
     await spectatorPage.goto(`${baseURL}/leaderboards`);
     await expect(spectatorPage.getByRole('heading', { name: 'Leaderboards' })).toBeVisible();
     await expect(spectatorPage.locator('.skeleton-stack')).toHaveCount(0);
@@ -459,8 +578,21 @@ test.describe.serial('protected Preview services', () => {
     );
     const publicBank = JSON.parse(
       await readFile(path.resolve('data/word-lists/words_length_5.json'), 'utf8'),
-    ) as { validGuesses: string[] };
-    await submitOnScreenGuess(secondPage, publicBank.validGuesses[0]!);
+    ) as { answers: Array<{ word: string }>; validGuesses: string[] };
+    const ownerDigest = createHash('sha256').update(playerTwo!.id).digest('hex').slice(0, 24);
+    const soloAnswer = selectPracticeAnswers({
+      answers: publicBank.answers,
+      difficulty: 'standard',
+      count: 1,
+      ownerNamespace: `account:${ownerDigest}`,
+      mode: 'og',
+      length: 5,
+      generation: 91,
+    })[0]!;
+    const answerWords = new Set(publicBank.answers.map((entry) => entry.word));
+    const safeWrongGuess = publicBank.validGuesses.find((word) => !answerWords.has(word));
+    if (!safeWrongGuess) throw new Error('A guaranteed non-answer Solo guess was unavailable.');
+    await submitOnScreenGuess(secondPage, safeWrongGuess);
     await expect(secondPage.getByText(/account backup needs attention/i)).toHaveCount(0);
     await expect
       .poll(async () => {
@@ -484,6 +616,59 @@ test.describe.serial('protected Preview services', () => {
       userId: playerTwo!.id,
       sourceSnapshotPreserved: true,
       successorStateCreated: true,
+    });
+
+    await submitOnScreenGuess(secondPage, soloAnswer);
+    await expect(secondPage.getByRole('heading', { name: 'You solved it' })).toBeVisible();
+    await expect(secondPage.getByText(/History, XP, and coins are synced/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    const soloHistoryIdPrefix = 'solo:practice:og:5:standard:normal:1:91:';
+    await expect
+      .poll(async () => {
+        const { data, error } = await admin
+          .from('game_history')
+          .select('id')
+          .eq('user_id', playerTwo!.id)
+          .like('id', `${soloHistoryIdPrefix}%`);
+        if (error) throw error;
+        return data.length;
+      })
+      .toBe(1);
+    const completionState = async () => {
+      const [{ data: state, error: stateError }, { data: economy, error: economyError }] =
+        await Promise.all([
+          admin
+            .from('game_history')
+            .select('entry')
+            .eq('id', `amordle-account-state-v1:${playerTwo!.id}`)
+            .eq('user_id', playerTwo!.id)
+            .single(),
+          admin.from('player_economy_state').select('coins').eq('user_id', playerTwo!.id).single(),
+        ]);
+      if (stateError) throw stateError;
+      if (economyError) throw economyError;
+      const entry = state.entry as Record<string, Json>;
+      const progress = entry.progress as Record<string, Json>;
+      return { xp: Number(progress.xp), coins: economy.coins };
+    };
+    await expect.poll(async () => (await completionState()).xp).toBeGreaterThan(375);
+    const firstCompletionState = await completionState();
+    expect(firstCompletionState.coins).toBeGreaterThan(0);
+
+    await secondPage.reload();
+    await secondPage.goto(`${baseURL}/history`);
+    await expect(secondPage.getByText(/solo practice · OG/i)).toHaveCount(1);
+    await secondPage.goto(`${baseURL}/stats`);
+    await expect(
+      secondPage.locator('.stats-metric').filter({ hasText: /completed\s*2/i }),
+    ).toBeVisible();
+    const repeatedCompletionState = await completionState();
+    expect(repeatedCompletionState).toEqual(firstCompletionState);
+    await event('solo_completion_continuity_verified', {
+      userId: playerTwo!.id,
+      historyRows: 1,
+      idempotentReload: true,
     });
 
     await firstPage.setViewportSize({ width: 1440, height: 1024 });
@@ -514,10 +699,29 @@ test.describe.serial('protected Preview services', () => {
       path: path.join(evidenceDir, 'combat-waiting-desktop-light.png'),
       fullPage: true,
     });
+    await expect(
+      firstPage.getByRole('button', { name: /Notifications, [1-9]\d* unread/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await firstPage.getByRole('button', { name: /Notifications/i }).click();
+    const notificationDialog = firstPage.getByRole('dialog', { name: 'Notifications' });
+    await expect(notificationDialog.getByText('Match ready')).toBeVisible();
+    await notificationDialog.getByRole('button', { name: 'Mark all read' }).click();
+    await expect(
+      firstPage.getByRole('button', { name: 'Notifications', exact: true }),
+    ).toBeVisible();
+    await firstPage.getByRole('button', { name: 'Notifications', exact: true }).click();
+    await firstPage.reload();
+    await expect(firstPage.getByRole('button', { name: 'Notifications', exact: true })).toBeVisible(
+      {
+        timeout: 15_000,
+      },
+    );
 
-    await secondPage.goto(`${baseURL}/combat/practice?length=5`);
+    await secondPage.goto(`${baseURL}/combat/lobby`);
     const targetRow = secondPage.locator(`[data-game-id="${gameId}"]`);
     await expect(targetRow).toBeVisible({ timeout: 15_000 });
+    await expect(targetRow).toContainText(/Practice/i);
+    await expect(targetRow).toContainText(/5 letters/i);
     await targetRow.getByRole('button', { name: 'Join' }).click();
     await expect(secondPage).toHaveURL(new RegExp(`/combat/match/${gameId}$`));
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/opponent’s turn/i);
@@ -534,6 +738,16 @@ test.describe.serial('protected Preview services', () => {
     expect(mobileFit.routeRailCount).toBe(0);
     await expect(secondPage.locator('.combat-transcript-frame')).toBeVisible();
     await expect(secondPage.locator('.combat-transcript-entry')).toHaveCount(6);
+    const combatAxis = await secondPage.evaluate(() => {
+      const frame = document.querySelector('.combat-transcript-frame')?.getBoundingClientRect();
+      const row = document
+        .querySelector('.combat-transcript-empty .board-row')
+        ?.getBoundingClientRect();
+      if (!frame || !row) return null;
+      return Math.abs(frame.left + frame.width / 2 - (row.left + row.width / 2));
+    });
+    expect(combatAxis).not.toBeNull();
+    expect(combatAxis!).toBeLessThanOrEqual(1);
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'combat-active-mobile-dark.png'),
       fullPage: true,
@@ -594,6 +808,78 @@ test.describe.serial('protected Preview services', () => {
       fullPage: true,
     });
     await event('combat_result_visual_captured', { gameId, terminalMoveCount: 3 });
+
+    await secondPage.reload();
+    await expect(secondPage.locator('.combat-turn-state')).toHaveText(/you lost|match complete/i, {
+      timeout: 15_000,
+    });
+    await expect
+      .poll(async () => {
+        const { data, error } = await admin
+          .from('game_history')
+          .select('id,user_id')
+          .in('id', [`combat:${gameId}:player-one`, `combat:${gameId}:player-two`]);
+        if (error) throw error;
+        return new Set(data.map((row) => row.user_id)).size;
+      })
+      .toBe(2);
+    await firstPage.goto(`${baseURL}/history`);
+    await expect(firstPage.getByText(/combat practice · OG/i)).toHaveCount(1);
+    await secondPage.goto(`${baseURL}/stats`);
+    await expect(
+      secondPage.locator('.stats-metric').filter({ hasText: /completed\s*3/i }),
+    ).toBeVisible();
+    await event('combat_completion_continuity_verified', {
+      gameId,
+      participantHistoryRows: 2,
+    });
+
+    await firstPage.goto(`${baseURL}/combat/match/${gameId}`);
+    await expect(
+      firstPage.getByRole('button', { name: /Notifications, [1-9]\d* unread/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await firstPage.getByRole('button', { name: /Notifications/i }).click();
+    await expect(
+      firstPage.getByRole('dialog', { name: 'Notifications' }).getByText('Match result'),
+    ).toBeVisible();
+    await firstPage
+      .getByRole('dialog', { name: 'Notifications' })
+      .getByRole('button', { name: 'Mark all read' })
+      .click();
+    await firstPage.getByRole('button', { name: 'REQUEST REMATCH' }).click();
+    await expect(firstPage.getByText(/Rematch pending/i)).toBeVisible();
+    const { data: rematchRow, error: rematchError } = await admin
+      .from('multiplayer_practice_rematch_requests')
+      .select('id')
+      .eq('source_game_id', gameId)
+      .single();
+    if (rematchError) throw rematchError;
+    rematchRequestIds.push(rematchRow.id);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'practice_rematch_request',
+      id: rematchRow.id,
+      owner: runId,
+      sourceGameId: gameId,
+      disposable: true,
+    });
+    await secondPage.goto(`${baseURL}/combat/match/${gameId}`);
+    await expect(secondPage.getByRole('button', { name: 'ACCEPT REMATCH' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(
+      secondPage.getByRole('button', { name: /Notifications, [1-9]\d* unread/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await secondPage.getByRole('button', { name: /Notifications/i }).click();
+    await expect(
+      secondPage.getByRole('dialog', { name: 'Notifications' }).getByText('Rematch update'),
+    ).toBeVisible();
+    await secondPage.getByRole('button', { name: /Notifications/i }).click();
+    await firstPage.getByRole('button', { name: 'CANCEL REMATCH REQUEST' }).click();
+    await event('notification_transitions_verified', {
+      transitions: ['match', 'turn', 'result', 'rematch'],
+      persistentReadState: true,
+    });
 
     const anonymous = createClient<Database>(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
