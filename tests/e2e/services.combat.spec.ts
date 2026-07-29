@@ -183,6 +183,12 @@ async function submitOnScreenGuess(page: Page, guess: string) {
   const submit = page.getByRole('button', { name: /submit/i });
   await expect(submit).toBeEnabled();
   await submit.click();
+  await expect
+    .poll(async () => {
+      if ((await draft.count()) === 0) return '';
+      return (await draft.textContent())?.trim() ?? '';
+    })
+    .toBe('');
 }
 
 async function cleanup() {
