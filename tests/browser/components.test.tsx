@@ -85,9 +85,13 @@ describe('browser components', () => {
     const entries = [...document.querySelectorAll<HTMLElement>('.combat-transcript-entry')];
     expect(entries).toHaveLength(6);
     expect(entries[0]?.dataset.actor).toBe('you');
-    expect(entries[0]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe('crane');
+    expect(entries[0]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe(
+      'you guessed crane',
+    );
     expect(entries[1]?.dataset.actor).toBe('opponent');
-    expect(entries[1]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe('slate');
+    expect(entries[1]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe(
+      'opponent guessed slate',
+    );
   });
 
   it('renders an honest empty Word Explorer state', async () => {

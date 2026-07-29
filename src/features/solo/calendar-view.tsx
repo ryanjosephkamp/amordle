@@ -17,6 +17,15 @@ function dateKey(date: Date): string {
   return `${year}-${month}-${day}`;
 }
 
+function monthKey(date: Date): string {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+function shiftedMonth(key: string, amount: number): string {
+  const [year, month] = key.split('-').map(Number);
+  return monthKey(new Date(year!, month! - 1 + amount, 1, 12));
+}
+
 export function CalendarView() {
   const search = useSearchParams();
   const auth = useAuth();
@@ -26,7 +35,8 @@ export function CalendarView() {
   const [mode, setMode] = useState<'og' | 'go'>(search.get('mode') === 'go' ? 'go' : 'og');
   const [message, setMessage] = useState('');
   const [confirmingUnlock, setConfirmingUnlock] = useState(false);
-  const todayButton = useRef<HTMLButtonElement | null>(null);
+  const [visibleMonth, setVisibleMonth] = useState('');
+  const touchStartX = useRef<number | null>(null);
   const userId = auth.user?.id ?? '';
   const progress = useQuery({
     queryKey: ['progress', userId],
@@ -47,28 +57,36 @@ export function CalendarView() {
   useEffect(() => {
     queueMicrotask(() => {
       const localToday = dateKey(new Date());
+      const requested =
+        selectedDate >= floor && selectedDate <= localToday ? selectedDate : localToday;
       setToday(localToday);
-      setSelectedDate((current) => current || localToday);
+      setSelectedDate(requested);
+      setVisibleMonth(requested.slice(0, 7));
     });
+  }, [selectedDate]);
+
+  const calendarCells = useMemo(() => {
+    if (!visibleMonth) return [];
+    const [year, month] = visibleMonth.split('-').map(Number);
+    const first = new Date(year!, month! - 1, 1, 12);
+    const dayCount = new Date(year!, month!, 0, 12).getDate();
+    const cells: Array<string | null> = Array.from({ length: first.getDay() }, () => null);
+    for (let day = 1; day <= dayCount; day += 1) {
+      cells.push(dateKey(new Date(year!, month! - 1, day, 12)));
+    }
+    while (cells.length % 7 !== 0) cells.push(null);
+    return cells;
+  }, [visibleMonth]);
+
+  const weekdayLabels = useMemo(() => {
+    const fallback = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    try {
+      const formatter = new Intl.DateTimeFormat(undefined, { weekday: 'short' });
+      return fallback.map((_, index) => formatter.format(new Date(2024, 0, 7 + index, 12)));
+    } catch {
+      return fallback;
+    }
   }, []);
-
-  useEffect(() => {
-    if (!today) return;
-    const timer = window.setTimeout(() => {
-      todayButton.current?.scrollIntoView({ block: 'nearest', inline: 'end' });
-    }, 0);
-    return () => window.clearTimeout(timer);
-  }, [today]);
-
-  const recentDates = useMemo(() => {
-    if (!today) return [];
-    const anchor = new Date(`${today}T12:00:00`);
-    return Array.from({ length: 35 }, (_, index) => {
-      const date = new Date(anchor);
-      date.setDate(anchor.getDate() - (34 - index));
-      return dateKey(date);
-    }).filter((key) => key >= floor);
-  }, [today]);
 
   const completed = useMemo(
     () =>
@@ -89,6 +107,14 @@ export function CalendarView() {
       entitlement === 'pending' ||
       entitlement === 'unlocked' ||
       completed.has(entitlementKey));
+  const earliestMonth = floor.slice(0, 7);
+  const currentMonth = today.slice(0, 7);
+  const showMonth = (amount: number) => {
+    const next = shiftedMonth(visibleMonth, amount);
+    if (next < earliestMonth || next > currentMonth) return;
+    setVisibleMonth(next);
+    setConfirmingUnlock(false);
+  };
 
   const unlock = useMutation({
     mutationFn: async () => {
@@ -142,37 +168,80 @@ export function CalendarView() {
           </button>
         </div>
       </div>
-      <div className="calendar-strip" role="group" aria-label="Recent Solo Daily dates">
-        {recentDates.map((key) => {
-          const state = completed.has(`${key}:${mode}`)
-            ? 'Complete'
-            : key === today
-              ? 'Today'
-              : progress.data?.dailyEntitlements?.[`${key}:${mode}`]
-                ? 'Unlocked'
-                : 'Locked';
-          return (
-            <button
-              ref={key === today ? todayButton : undefined}
-              type="button"
-              className={selectedDate === key ? 'calendar-day is-selected' : 'calendar-day'}
-              aria-pressed={selectedDate === key}
-              key={key}
-              onClick={() => {
-                setSelectedDate(key);
-                setConfirmingUnlock(false);
-              }}
-            >
-              <span>
-                {new Date(`${key}T12:00:00`).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                })}
-              </span>
-              <strong>{state === 'Complete' ? '✓ Done' : state}</strong>
-            </button>
-          );
-        })}
+      <div
+        className="calendar-month"
+        onTouchStart={(event) => {
+          touchStartX.current = event.touches[0]?.clientX ?? null;
+        }}
+        onTouchEnd={(event) => {
+          const start = touchStartX.current;
+          const end = event.changedTouches[0]?.clientX;
+          touchStartX.current = null;
+          if (start === null || end === undefined || Math.abs(end - start) < 44) return;
+          showMonth(end < start ? 1 : -1);
+        }}
+      >
+        <div className="calendar-month-header">
+          <button
+            type="button"
+            aria-label="Previous month"
+            disabled={visibleMonth <= earliestMonth}
+            onClick={() => showMonth(-1)}
+          >
+            ←
+          </button>
+          <h2 aria-live="polite">
+            {new Date(`${visibleMonth}-01T12:00:00`).toLocaleDateString(undefined, {
+              month: 'long',
+              year: 'numeric',
+            })}
+          </h2>
+          <button
+            type="button"
+            aria-label="Next month"
+            disabled={visibleMonth >= currentMonth}
+            onClick={() => showMonth(1)}
+          >
+            →
+          </button>
+        </div>
+        <div className="calendar-weekdays" aria-hidden="true">
+          {weekdayLabels.map((label) => (
+            <span key={label}>{label}</span>
+          ))}
+        </div>
+        <div className="calendar-grid" role="group" aria-label={`${visibleMonth} Solo Daily dates`}>
+          {calendarCells.map((key, index) => {
+            if (!key) return <span className="calendar-blank" key={`blank:${index}`} />;
+            const future = key > today;
+            const state = completed.has(`${key}:${mode}`)
+              ? 'Complete'
+              : key === today
+                ? 'Today'
+                : progress.data?.dailyEntitlements?.[`${key}:${mode}`]
+                  ? 'Unlocked'
+                  : future
+                    ? 'Future'
+                    : 'Locked';
+            return (
+              <button
+                type="button"
+                className={selectedDate === key ? 'calendar-day is-selected' : 'calendar-day'}
+                aria-pressed={selectedDate === key}
+                aria-label={`${new Date(`${key}T12:00:00`).toLocaleDateString()}: ${state}`}
+                disabled={future}
+                key={key}
+                onClick={() => {
+                  setSelectedDate(key);
+                  setConfirmingUnlock(false);
+                }}
+              >
+                <span>{Number(key.slice(-2))}</span>
+                <strong>{state === 'Complete' ? '✓ Done' : state}</strong>
+              </button>
+            );
+          })}
+        </div>
       </div>
       <section className="calendar-selection" aria-labelledby="selected-daily-heading">
         <div>

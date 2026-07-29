@@ -54,7 +54,9 @@ function HistoryInner() {
               </td>
               <td data-label="Result">{row.entry.result}</td>
               <td data-label="Progress">
-                {row.entry.puzzlesSolved} solved · {row.entry.acceptedGuesses} guesses
+                {row.entry.puzzlesSolved === null
+                  ? `${row.entry.acceptedGuesses} guesses`
+                  : `${row.entry.puzzlesSolved} solved · ${row.entry.acceptedGuesses} guesses`}
               </td>
               <td data-label="Reward">
                 {row.entry.rewardCoins} coins · {row.entry.rewardXp} XP

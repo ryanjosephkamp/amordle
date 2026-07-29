@@ -99,4 +99,33 @@ test.describe('route and public boundary matrix', () => {
       expect(blocking, `${route}: ${blocking.map((item) => item.id).join(', ')}`).toEqual([]);
     }
   });
+
+  test('Word Explorer opens immediate details and Calendar uses bounded month navigation', async ({
+    page,
+  }) => {
+    await page.goto('/words?length=5&q=cr&sort=az');
+    const search = page.getByLabel('Search');
+    await expect(search).toBeVisible();
+    await expect(search).toHaveCSS('background-color', /.+/);
+    const firstWord = page.getByRole('region', { name: 'Words' }).getByRole('option').first();
+    const label = ((await firstWord.textContent()) ?? '').trim().slice(0, 5);
+    await firstWord.click();
+    await expect(page.getByRole('dialog', { name: new RegExp(label, 'i') })).toBeVisible();
+    await page.keyboard.press('Escape');
+    await expect(firstWord).toBeFocused();
+
+    await page.goto('/calendar');
+    await expect(page.locator('.calendar-grid')).toBeVisible();
+    const now = new Date();
+    await expect(page.locator('.calendar-grid .calendar-day')).toHaveCount(
+      new Date(now.getFullYear(), now.getMonth() + 1, 0).getDate(),
+    );
+    await expect(page.getByRole('button', { name: 'Next month' })).toBeDisabled();
+    await page.getByRole('button', { name: 'Previous month' }).click();
+    await expect(page.getByRole('button', { name: 'Next month' })).toBeEnabled();
+    const overflow = await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    );
+    expect(overflow).toBeLessThanOrEqual(1);
+  });
 });

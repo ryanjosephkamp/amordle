@@ -1,6 +1,16 @@
 'use client';
 
 import { z } from 'zod';
+import type { Json } from '@/types/database';
+import {
+  ACCOUNT_STATE_KIND,
+  accountStateEntrySchema,
+  defaultAccountProgress,
+  historyRowSchema,
+  normalizeAccountProgress,
+  normalizeLegacyHistory,
+  progressSchema,
+} from '@/domain/account-continuity';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
@@ -27,45 +37,7 @@ export const playerSettingsSchema = z
 
 export type PlayerSettings = z.infer<typeof playerSettingsSchema>;
 
-export const progressSchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    xp: z.number().int().nonnegative(),
-    level: z.number().int().positive(),
-    dailyStreak: z.number().int().nonnegative(),
-    revision: z.number().int().nonnegative(),
-    solo: z.record(z.string(), z.unknown()).optional(),
-    appliedRewards: z.record(z.string(), z.number().int().nonnegative()).optional(),
-    dailyEntitlements: z.record(z.string(), z.enum(['pending', 'unlocked'])).optional(),
-  })
-  .strict();
-
-export const historyEntrySchema = z
-  .object({
-    schemaVersion: z.literal(1),
-    kind: z.enum(['solo-practice', 'solo-daily', 'combat-practice', 'combat-daily']),
-    mode: z.enum(['og', 'go']),
-    result: z.enum(['won', 'lost', 'draw', 'cancelled']),
-    wordLength: z.number().int().min(2).max(35),
-    acceptedGuesses: z.number().int().nonnegative(),
-    puzzlesSolved: z.number().int().nonnegative(),
-    rewardCoins: z.number().int().nonnegative(),
-    rewardXp: z.number().int().nonnegative(),
-    dailyDate: z
-      .string()
-      .regex(/^\d{4}-\d{2}-\d{2}$/)
-      .optional(),
-  })
-  .strict();
-
-export const historyRowSchema = z
-  .object({
-    id: z.string(),
-    user_id: z.string().uuid(),
-    completed_at: z.string(),
-    entry: historyEntrySchema,
-  })
-  .strict();
+export { historyEntrySchema, historyRowSchema, progressSchema } from '@/domain/account-continuity';
 
 function client() {
   const value = getBrowserSupabase();
@@ -121,25 +93,7 @@ export async function saveSettings(userId: string, settings: PlayerSettings) {
 }
 
 export async function loadProgress(userId: string) {
-  const { data, error } = await client()
-    .from('progress_snapshots')
-    .select('progress')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error) throwServiceError(error);
-  if (!data) {
-    return progressSchema.parse({
-      schemaVersion: 1,
-      xp: 0,
-      level: 1,
-      dailyStreak: 0,
-      revision: 0,
-      solo: {},
-      appliedRewards: {},
-      dailyEntitlements: {},
-    });
-  }
-  return parseServiceResult(progressSchema, data.progress);
+  return (await readAccountProgress(userId)).progress;
 }
 
 export async function consumeConsumable(
@@ -174,12 +128,107 @@ export async function creditCoins(amount: number, operationId: string) {
 }
 
 export async function loadHistory(userId: string) {
-  const { data, error } = await client()
-    .from('game_history')
-    .select('id,user_id,completed_at,entry')
-    .eq('user_id', userId)
-    .order('completed_at', { ascending: false })
-    .limit(100);
-  if (error) throwServiceError(error);
-  return parseServiceResult(z.array(historyRowSchema), data);
+  const [history, snapshot] = await Promise.all([
+    client()
+      .from('game_history')
+      .select('id,user_id,completed_at,entry')
+      .eq('user_id', userId)
+      .order('completed_at', { ascending: false })
+      .limit(200),
+    client().from('progress_snapshots').select('progress').eq('user_id', userId).maybeSingle(),
+  ]);
+  if (history.error) throwServiceError(history.error);
+  if (snapshot.error) throwServiceError(snapshot.error);
+  const supported = (history.data ?? []).flatMap((row) => {
+    const parsed = historyRowSchema.safeParse(row);
+    return parsed.success ? [parsed.data] : [];
+  });
+  const legacy = normalizeLegacyHistory(snapshot.data?.progress, userId);
+  const byId = new Map([...supported, ...legacy].map((row) => [row.id, row]));
+  return [...byId.values()]
+    .sort((left, right) => right.completed_at.localeCompare(left.completed_at))
+    .slice(0, 100);
+}
+
+function stateRowId(userId: string): string {
+  return `amordle-account-state-v1:${userId}`;
+}
+
+const stateRowSchema = z
+  .object({
+    completed_at: z.string(),
+    entry: accountStateEntrySchema,
+  })
+  .strict();
+
+async function readAccountProgress(userId: string) {
+  const [state, snapshot] = await Promise.all([
+    client()
+      .from('game_history')
+      .select('completed_at,entry')
+      .eq('id', stateRowId(userId))
+      .eq('user_id', userId)
+      .maybeSingle(),
+    client().from('progress_snapshots').select('progress').eq('user_id', userId).maybeSingle(),
+  ]);
+  if (state.error) throwServiceError(state.error);
+  if (snapshot.error) throwServiceError(snapshot.error);
+  if (state.data) {
+    const parsed = stateRowSchema.safeParse(state.data);
+    if (!parsed.success) {
+      throw new ServiceError('Account progress could not be read safely.', 'INVALID_RESPONSE');
+    }
+    return {
+      progress: parsed.data.entry.progress,
+      completedAt: parsed.data.completed_at,
+    };
+  }
+  if (!snapshot.data) return { progress: defaultAccountProgress(), completedAt: null };
+  const normalized = normalizeAccountProgress(snapshot.data.progress);
+  if (normalized.kind === 'unknown') {
+    throw new ServiceError('Account progress format is not recognized.', 'INVALID_RESPONSE');
+  }
+  return { progress: normalized.progress, completedAt: null };
+}
+
+export async function writeAccountProgressCas(
+  userId: string,
+  transform: (snapshot: z.infer<typeof progressSchema>) => z.infer<typeof progressSchema>,
+) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await readAccountProgress(userId);
+    const next = progressSchema.parse(transform(current.progress));
+    const completedAt = new Date().toISOString();
+    const entry = {
+      kind: ACCOUNT_STATE_KIND,
+      schemaVersion: 1 as const,
+      progress: next,
+    };
+    if (current.completedAt === null) {
+      const inserted = await client()
+        .from('game_history')
+        .insert({
+          id: stateRowId(userId),
+          user_id: userId,
+          completed_at: completedAt,
+          entry: entry as Json,
+        });
+      if (!inserted.error) return next;
+      if (inserted.error.code !== '23505') throwServiceError(inserted.error);
+      continue;
+    }
+    const updated = await client()
+      .from('game_history')
+      .update({ entry: entry as Json, completed_at: completedAt })
+      .eq('id', stateRowId(userId))
+      .eq('user_id', userId)
+      .eq('completed_at', current.completedAt)
+      .select('id');
+    if (updated.error) throwServiceError(updated.error);
+    if (updated.data.length === 1) return next;
+  }
+  throw new ServiceError(
+    'A newer account save arrived first. Reload before retrying.',
+    'STALE_REVISION',
+  );
 }

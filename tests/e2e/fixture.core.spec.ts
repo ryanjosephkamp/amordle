@@ -40,7 +40,7 @@ test.describe('core browser coverage', () => {
     await page.keyboard.type(answer as string);
     await page.keyboard.press('Enter');
     await expect(page.getByRole('heading', { name: 'You solved it' })).toBeVisible();
-    await expect(page.getByText('Saved on this device', { exact: true })).toBeVisible();
+    await expect(page.getByText(/local save ok|cloud retry needed/i)).toHaveCount(0);
 
     await page.reload();
     await expect(page.getByRole('heading', { name: 'You solved it' })).toBeVisible();

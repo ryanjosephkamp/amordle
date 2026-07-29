@@ -1,7 +1,6 @@
 'use client';
 
-import { useState } from 'react';
-import { WorkbenchRegion } from '@/components/workbench';
+import { useEffect, useRef, useState } from 'react';
 
 export function WordResults({
   words,
@@ -9,17 +8,36 @@ export function WordResults({
   total,
   page,
   pages,
+  initialWord,
 }: {
   words: string[];
   answerEligible: string[];
   total: number;
   page: number;
   pages: number;
+  initialWord?: string;
 }) {
-  const [selected, setSelected] = useState(words[0] ?? '');
+  const [selected, setSelected] = useState(initialWord ?? words[0] ?? '');
+  const dialog = useRef<HTMLDialogElement>(null);
+  const returnFocus = useRef<HTMLButtonElement | null>(null);
   const answerSet = new Set(answerEligible);
+  const openDetails = (word: string, trigger?: HTMLButtonElement | null) => {
+    setSelected(word);
+    returnFocus.current = trigger ?? null;
+    if (!dialog.current?.open) dialog.current?.showModal();
+  };
+
+  useEffect(() => {
+    if (initialWord) {
+      queueMicrotask(() => {
+        if (!dialog.current?.open) dialog.current?.showModal();
+      });
+    }
+    // Direct word links intentionally open once on mount.
+  }, [initialWord]);
+
   return (
-    <div className="split-layout">
+    <>
       <section aria-labelledby="word-results-heading">
         <div className="section-heading">
           <h2 id="word-results-heading">Words</h2>
@@ -34,25 +52,40 @@ export function WordResults({
               role="option"
               aria-selected={selected === word}
               key={word}
-              onClick={() => setSelected(word)}
+              onClick={(event) => openDetails(word, event.currentTarget)}
             >
               <span className="mono">{word}</span>
               <span>{answerSet.has(word) ? 'Answer + guess' : 'Guess'}</span>
             </button>
           ))}
         </div>
+        {!words.length && <p>No words match this search.</p>}
       </section>
-      <WorkbenchRegion
-        title={(selected || 'CHOOSE A WORD').toUpperCase()}
-        status="WORD DETAILS"
-        className="word-detail"
-      >
-        {selected ? (
-          <>
-            <p>
-              No curated definition is bundled for this word. You can copy it or explicitly search
-              Google.
-            </p>
+      {selected && (
+        <dialog
+          ref={dialog}
+          className="word-detail-dialog"
+          aria-labelledby="word-detail-heading"
+          onClose={() => returnFocus.current?.focus()}
+          onClick={(event) => {
+            if (event.target === event.currentTarget) event.currentTarget.close();
+          }}
+        >
+          <div className="word-detail-dialog-content">
+            <header>
+              <div>
+                <span>WORD DETAILS</span>
+                <h2 id="word-detail-heading">{selected.toUpperCase()}</h2>
+              </div>
+              <button
+                type="button"
+                aria-label="Close word details"
+                onClick={() => dialog.current?.close()}
+              >
+                ×
+              </button>
+            </header>
+            <p>No definition is bundled. Copy this word or search for its definition.</p>
             <div className="action-row">
               <button onClick={() => void navigator.clipboard.writeText(selected)}>
                 COPY WORD
@@ -66,11 +99,9 @@ export function WordResults({
                 SEARCH DEFINITION
               </a>
             </div>
-          </>
-        ) : (
-          <p>No words match this search.</p>
-        )}
-      </WorkbenchRegion>
-    </div>
+          </div>
+        </dialog>
+      )}
+    </>
   );
 }

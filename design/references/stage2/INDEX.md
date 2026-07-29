@@ -39,3 +39,12 @@ provenance.
 - Status: active implementation authority.
 - Role: removes faux window decoration, simplifies Calendar and application
   chrome, and establishes the contained responsive-play contract.
+
+## v5.1 — UX Continuity Refinement
+
+- Location:
+  [`v5.1-ux-continuity-2026-07-29/`](./v5.1-ux-continuity-2026-07-29/)
+- Status: active user-authorized implementation authority.
+- Role: one chronological COMBAT board, zero routine horizontal document
+  scrolling, month Calendar, immediate Word details, account recovery, and
+  targeted contrast/navigation refinement.

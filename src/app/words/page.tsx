@@ -15,7 +15,8 @@ export default async function WordExplorerPage({
   const query = await searchParams;
   const rawLength = Number(first(query.length) ?? '5');
   const length = Number.isInteger(rawLength) && rawLength >= 2 && rawLength <= 35 ? rawLength : 5;
-  const search = (first(query.word) ?? first(query.q) ?? '').trim().toLowerCase();
+  const directWord = (first(query.word) ?? '').trim().toLowerCase();
+  const search = (directWord || first(query.q) || '').trim().toLowerCase();
   const sort = first(query.sort) === 'za' ? 'za' : 'az';
   const rawPage = Number(first(query.page) ?? '1');
   const page = Number.isInteger(rawPage) && rawPage > 0 ? rawPage : 1;
@@ -70,6 +71,9 @@ export default async function WordExplorerPage({
         total={all.length}
         page={safePage}
         pages={pages}
+        {...(directWord && bank.validGuesses.includes(directWord)
+          ? { initialWord: directWord }
+          : {})}
       />
       <nav className="pagination" aria-label="Word pages">
         <Link

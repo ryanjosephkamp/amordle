@@ -1,8 +1,8 @@
 # Amordle Quiet System Shell
 
-Status: the user authorized the responsive shell correction on 2026-07-28.
-This v5 authority supersedes the Alt-Screen v4 presentation while preserving it
-as immutable provenance under `design/references/stage2/`.
+Status: the user authorized the v5.1 UX continuity refinement on 2026-07-29.
+This authority builds on the v5 responsive shell and preserves every prior
+package as immutable provenance under `design/references/stage2/`.
 
 This is a presentation-only authority. Game rules, routes, controllers,
 persistence, services, the three HTTP interfaces, all 237 clauses, the 107-file
@@ -44,8 +44,9 @@ to the board, status, tools, and keyboard.
 - New accepted rows follow the latest row only while the player is already
   following. Manual history scrolling is never overridden. A visible
   `Latest row` control restores following.
-- COMBAT presents one chronological, actor-labelled transcript. Desktop aligns
-  the two actors into symmetric lanes; mobile uses a single readable stream.
+- COMBAT presents one centered chronological, actor-labelled transcript at
+  every viewport. Actor labels sit beside the shared row; players never own
+  separate left and right guess lanes.
 - Mobile short-height layouts collapse evidence and optional Solo tools behind
   one disclosure. Core play never depends on opening it.
 - Portrait and landscape are distinct compositions rather than scaled copies.
@@ -60,9 +61,16 @@ to the board, status, tools, and keyboard.
 - Touch targets remain at least 44 pixels. Keyboard, mouse, touch, screen
   reader, reduced-motion, forced-colors, and 200% reflow operation remain
   mandatory.
-- Calendar uses one horizontal 35-day rail, one compact selected-day
-  inspector, and progressive disclosure for arbitrary-date and date-basis
-  details.
+- Calendar uses a seven-column month grid, concise day states, arrow and swipe
+  month navigation, one compact selected-day inspector, and progressive
+  disclosure for arbitrary-date and date-basis details.
+- Routine successful persistence is silent. A failed account backup is a
+  bounded, retryable notice that accurately says the device save is safe.
+- Word selection opens an accessible detail dialog; the player never has to
+  travel to the bottom of a long list to copy or search the word.
+- Recognized legacy account state is projected into the current UI without
+  overwriting its source payload. New successor state remains private and
+  separately revisioned.
 
 ## Prohibited presentation
 

@@ -586,18 +586,20 @@ export function SoloGame({
             </span>
           )}
           {settings.hardMode && <span>HARD MODE</span>}
-          <span className={`save-state is-${saveState}`} aria-live="polite">
-            {saveState === 'saved'
-              ? signedInUserId
-                ? 'Saved to your account'
-                : 'Saved on this device'
-              : saveState === 'saving'
-                ? 'SAVING…'
-                : saveState === 'syncing'
-                  ? 'SYNCING…'
-                  : 'LOCAL SAVE OK · CLOUD RETRY NEEDED'}
-          </span>
+          {(saveState === 'saving' || saveState === 'syncing') && (
+            <span className={`save-state is-${saveState}`} aria-live="polite">
+              {saveState === 'saving' ? 'SAVING…' : 'SYNCING…'}
+            </span>
+          )}
         </div>
+        {saveState === 'error' && (
+          <div className="game-sync-notice" role="status">
+            <span>Saved on this device. Account backup needs attention.</span>
+            <button type="button" onClick={() => void persist(sessionRef.current)}>
+              RETRY
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="game-board-region">

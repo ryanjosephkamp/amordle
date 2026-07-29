@@ -7,12 +7,12 @@ import { getLeaderboard, getSiteStats } from '@/adapters/supabase/public';
 import { SkeletonRows } from '@/components/route-states';
 
 const buckets = [
-  { id: 'async:og', label: 'OG' },
-  { id: 'async:go', label: 'GO' },
+  { id: 'multiplayer:og', label: 'OG' },
+  { id: 'multiplayer:go', label: 'GO' },
 ] as const;
 
 export function LeaderboardTable() {
-  const [bucket, setBucket] = useState<(typeof buckets)[number]['id']>('async:og');
+  const [bucket, setBucket] = useState<(typeof buckets)[number]['id']>('multiplayer:og');
   const leaderboard = useQuery({
     queryKey: ['leaderboard', bucket],
     queryFn: () => getLeaderboard(bucket),
@@ -83,8 +83,10 @@ export function LeaderboardTable() {
       )}
       {site.data && (
         <p className="prose mono">
-          {site.data.ranked_practice_public_players} public ranked players · updated{' '}
-          {new Date(site.data.leaderboard_updated_at).toLocaleString()}
+          {site.data.ranked_practice_public_players} public ranked players
+          {site.data.leaderboard_updated_at
+            ? ` · updated ${new Date(site.data.leaderboard_updated_at).toLocaleString()}`
+            : ''}
         </p>
       )}
     </>

@@ -52,6 +52,31 @@ const professionalSurfaces = [
   },
 ] as const;
 
+const overflowSurfaces = [
+  '/',
+  '/play',
+  '/play/solo',
+  '/calendar',
+  '/combat',
+  '/combat/practice',
+  '/combat/daily',
+  '/combat/active',
+  '/combat/lobby',
+  '/combat/live',
+  '/marketplace',
+  '/history',
+  '/leaderboards',
+  '/words',
+  '/profile',
+  '/stats',
+  '/settings',
+  '/help',
+  '/feedback',
+  '/about',
+  '/auth',
+  '/admin',
+] as const;
+
 const professionalVariants = [
   {
     id: '1440x1024-light',
@@ -240,6 +265,21 @@ test.describe('responsive and alternate presentation evidence', () => {
           animations: 'disabled',
           fullPage: true,
         });
+      }
+    }
+  });
+
+  test('standard route surfaces never create horizontal document scrolling', async ({ page }) => {
+    test.setTimeout(120_000);
+    for (const width of [320, 390, 768, 960] as const) {
+      await page.setViewportSize({ width, height: width < 768 ? 844 : 1024 });
+      for (const route of overflowSurfaces) {
+        await page.goto(route);
+        await expect(page.getByRole('main')).toBeVisible();
+        const overflow = await page.evaluate(
+          () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        );
+        expect(overflow, `${route} at ${width}px`).toBeLessThanOrEqual(1);
       }
     }
   });

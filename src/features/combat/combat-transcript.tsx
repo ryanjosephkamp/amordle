@@ -14,10 +14,12 @@ export function MoveBoards({
   moves,
   length,
   viewerSeat,
+  actorLabels,
 }: {
   moves: CombatTranscriptMove[];
   length: number;
-  viewerSeat: 'player-one' | 'player-two';
+  viewerSeat?: 'player-one' | 'player-two';
+  actorLabels?: Partial<Record<'player-one' | 'player-two', string>>;
 }) {
   const orderedMoves = [...moves].sort(
     (left, right) =>
@@ -28,8 +30,8 @@ export function MoveBoards({
     <section className="combat-transcript-frame" aria-label="Shared chronological guess board">
       <div className="combat-transcript-header" aria-hidden="true">
         <span>ROW</span>
-        <span>YOU</span>
-        <span>OPPONENT</span>
+        <span>PLAYER</span>
+        <span>GUESS</span>
       </div>
       <GameHistoryViewport
         followKey={orderedMoves.at(-1)?.id ?? 'empty'}
@@ -51,19 +53,29 @@ export function MoveBoards({
                 </div>
               );
             }
-            const actor = move.seat === viewerSeat ? 'you' : 'opponent';
+            const perspective =
+              viewerSeat === undefined ? move.seat : move.seat === viewerSeat ? 'you' : 'opponent';
+            const actorLabel =
+              actorLabels?.[move.seat] ??
+              (viewerSeat === undefined ? (move.seat === 'player-one' ? 'P1' : 'P2') : perspective);
             return (
               <div
-                className={`combat-transcript-entry is-${actor}`}
+                className={`combat-transcript-entry is-${perspective}`}
                 key={move.id}
-                data-actor={actor}
+                data-actor={perspective}
               >
                 <span className="board-row-number" aria-hidden="true">
                   {String(index + 1).padStart(2, '0')}
                 </span>
-                <span className="combat-actor">{actor.toUpperCase()}</span>
+                <span className="combat-actor" title={actorLabel}>
+                  {actorLabel}
+                </span>
                 <div className="combat-transcript-move">
-                  <TranscriptTileRow guess={move.guess} tiles={move.tiles} />
+                  <TranscriptTileRow
+                    guess={move.guess}
+                    tiles={move.tiles}
+                    actorLabel={actorLabel}
+                  />
                 </div>
               </div>
             );
@@ -77,12 +89,14 @@ export function MoveBoards({
 function TranscriptTileRow({
   guess,
   tiles,
+  actorLabel,
 }: {
   guess: string;
   tiles: Array<{ letter: string; state: 'correct' | 'present' | 'absent' }>;
+  actorLabel: string;
 }) {
   return (
-    <div className="board-row" role="row" aria-label={guess}>
+    <div className="board-row" role="row" aria-label={`${actorLabel} guessed ${guess}`}>
       {tiles.map((tile, index) => {
         const glyph = tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×';
         return (

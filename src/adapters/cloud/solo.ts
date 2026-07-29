@@ -2,13 +2,12 @@
 
 import { z } from 'zod';
 import type { GameSession } from '@/domain/game';
-import type { Json } from '@/types/database';
 import { levelForXp } from '@/domain/economy';
 import { gameSessionSchema } from '@/features/solo/session-schema';
 import type { VersionedEnvelope } from '@/adapters/indexeddb';
 import { getBrowserSupabase } from './browser';
-import { creditCoins, progressSchema } from './account';
-import { parseServiceResult, ServiceError, throwServiceError } from './shared';
+import { creditCoins, loadProgress, progressSchema, writeAccountProgressCas } from './account';
+import { ServiceError, throwServiceError } from './shared';
 
 const envelopeSchema = z
   .object({
@@ -18,13 +17,6 @@ const envelopeSchema = z
     revision: z.number().int().nonnegative(),
     updatedAt: z.string(),
     state: gameSessionSchema,
-  })
-  .strict();
-
-const snapshotRowSchema = z
-  .object({
-    progress: progressSchema,
-    updated_at: z.string(),
   })
   .strict();
 
@@ -38,15 +30,8 @@ export async function loadCloudSolo(
   userId: string,
   domain: string,
 ): Promise<VersionedEnvelope<GameSession> | null> {
-  const { data, error } = await client()
-    .from('progress_snapshots')
-    .select('progress,updated_at')
-    .eq('user_id', userId)
-    .maybeSingle();
-  if (error) throwServiceError(error);
-  if (!data) return null;
-  const snapshot = parseServiceResult(snapshotRowSchema, data);
-  const candidate = snapshot.progress.solo?.[domain];
+  const progress = await loadProgress(userId);
+  const candidate = progress.solo?.[domain];
   if (candidate === undefined) return null;
   const envelope = envelopeSchema.safeParse(candidate);
   return envelope.success ? envelope.data : null;
@@ -56,51 +41,7 @@ async function writeSnapshotCas(
   userId: string,
   transform: (snapshot: z.infer<typeof progressSchema>) => z.infer<typeof progressSchema>,
 ): Promise<z.infer<typeof progressSchema>> {
-  for (let attempt = 0; attempt < 3; attempt += 1) {
-    const { data, error } = await client()
-      .from('progress_snapshots')
-      .select('progress,updated_at')
-      .eq('user_id', userId)
-      .maybeSingle();
-    if (error) throwServiceError(error);
-    const current = data
-      ? parseServiceResult(snapshotRowSchema, data)
-      : {
-          progress: progressSchema.parse({
-            schemaVersion: 1,
-            xp: 0,
-            level: 1,
-            dailyStreak: 0,
-            revision: 0,
-            solo: {},
-            appliedRewards: {},
-            dailyEntitlements: {},
-          }),
-          updated_at: null,
-        };
-    const next = progressSchema.parse(transform(current.progress));
-    const updatedAt = new Date().toISOString();
-    if (current.updated_at === null) {
-      const inserted = await client()
-        .from('progress_snapshots')
-        .insert({ user_id: userId, progress: next as Json, updated_at: updatedAt });
-      if (!inserted.error) return next;
-      if (inserted.error.code !== '23505') throwServiceError(inserted.error);
-      continue;
-    }
-    const updated = await client()
-      .from('progress_snapshots')
-      .update({ progress: next as Json, updated_at: updatedAt })
-      .eq('user_id', userId)
-      .eq('updated_at', current.updated_at)
-      .select('user_id');
-    if (updated.error) throwServiceError(updated.error);
-    if (updated.data.length === 1) return next;
-  }
-  throw new ServiceError(
-    'A newer Solo save arrived first. Reload before retrying.',
-    'STALE_REVISION',
-  );
+  return writeAccountProgressCas(userId, transform);
 }
 
 export async function setDailyEntitlement(

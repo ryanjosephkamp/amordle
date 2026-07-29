@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import { getEconomy, loadHistory, loadProgress } from '@/adapters/supabase/account';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
 import { useAuth } from '@/components/providers';
@@ -9,23 +10,40 @@ import { SkeletonRows } from '@/components/route-states';
 
 export function HomeAttention() {
   const auth = useAuth();
+  const [mounted, setMounted] = useState(false);
   const userId = auth.user?.id ?? '';
-  const account = useQuery({
-    queryKey: ['account-summary', userId],
-    queryFn: async () => {
-      const [economy, progress, history, combat, legacy] = await Promise.all([
-        getEconomy(),
-        loadProgress(userId),
-        loadHistory(userId),
-        listActiveCombat(),
-        listLegacyActive(userId),
-      ]);
-      return { economy, progress, history, combat, legacy };
-    },
-    enabled: Boolean(userId),
+  const enabled = Boolean(userId);
+  const economy = useQuery({
+    queryKey: ['economy'],
+    queryFn: getEconomy,
+    enabled,
+  });
+  const progress = useQuery({
+    queryKey: ['progress', userId],
+    queryFn: () => loadProgress(userId),
+    enabled,
+  });
+  const history = useQuery({
+    queryKey: ['history', userId],
+    queryFn: () => loadHistory(userId),
+    enabled,
+  });
+  const combat = useQuery({
+    queryKey: ['combat', 'active'],
+    queryFn: listActiveCombat,
+    enabled,
     refetchInterval: 30_000,
   });
-  if (auth.status === 'loading') {
+  const legacy = useQuery({
+    queryKey: ['combat', 'legacy-active', userId],
+    queryFn: () => listLegacyActive(userId),
+    enabled,
+    refetchInterval: 30_000,
+  });
+  useEffect(() => {
+    queueMicrotask(() => setMounted(true));
+  }, []);
+  if (!mounted || auth.status === 'loading') {
     return <SkeletonRows label="Checking your current games…" rows={2} />;
   }
   if (auth.status !== 'signed-in') {
@@ -42,32 +60,35 @@ export function HomeAttention() {
       </div>
     );
   }
-  if (account.isPending) return <SkeletonRows label="Restoring account activity…" rows={3} />;
-  if (account.isError || !account.data) {
-    return (
-      <section className="status-panel">
-        <h2>Account summary unavailable</h2>
-        <p>Your routes remain available; this summary could not refresh.</p>
-        <button onClick={() => void account.refetch()}>Try again</button>
-      </section>
-    );
+  const queries = [economy, progress, history, combat, legacy];
+  if (queries.every((query) => query.isPending)) {
+    return <SkeletonRows label="Restoring account activity…" rows={3} />;
   }
   const active =
-    account.data.combat.filter((game) => !game.outcome.terminal).length +
-    account.data.legacy.filter((game) => !['won', 'lost'].includes(game.status)).length;
-  const recent = account.data.history[0];
+    (combat.data?.filter((game) => !game.outcome.terminal).length ?? 0) +
+    (legacy.data?.filter((game) => !['won', 'lost'].includes(game.status)).length ?? 0);
+  const recent = history.data?.[0];
+  const progressionUnavailable = economy.isError || progress.isError;
+  const combatUnavailable = combat.isError && legacy.isError;
   return (
     <div className="data-list">
       <div className="data-row">
         <strong>Progression</strong>
-        <span>
-          Level {account.data.progress.level} · {account.data.progress.xp} XP ·{' '}
-          {account.data.economy.coins} coins
-        </span>
+        {progressionUnavailable ? (
+          <span>Refresh unavailable</span>
+        ) : progress.data && economy.data ? (
+          <span>
+            Level {progress.data.level} · {progress.data.xp} XP · {economy.data.coins} coins
+          </span>
+        ) : (
+          <span>Loading…</span>
+        )}
       </div>
       <div className="data-row">
         <strong>COMBAT attention</strong>
-        {active ? (
+        {combatUnavailable ? (
+          <span>Refresh unavailable</span>
+        ) : active ? (
           <Link href="/combat/active">
             {active} active {active === 1 ? 'game' : 'games'}
           </Link>
@@ -77,7 +98,9 @@ export function HomeAttention() {
       </div>
       <div className="data-row">
         <strong>Recent result</strong>
-        {recent ? (
+        {history.isError ? (
+          <span>Refresh unavailable</span>
+        ) : recent ? (
           <Link href="/history">
             {recent.entry.kind.replaceAll('-', ' ')} · {recent.entry.result}
           </Link>
@@ -85,6 +108,21 @@ export function HomeAttention() {
           <span>No completed account games yet</span>
         )}
       </div>
+      {queries.some((query) => query.isError) && (
+        <div className="data-row">
+          <strong>Some account details need attention</strong>
+          <button
+            type="button"
+            onClick={() => {
+              for (const query of queries) {
+                if (query.isError) void query.refetch();
+              }
+            }}
+          >
+            Try again
+          </button>
+        </div>
+      )}
     </div>
   );
 }

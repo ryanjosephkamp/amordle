@@ -26,7 +26,25 @@ function PrivateStatsInner() {
     queryFn: () => loadHistory(userId),
     enabled: Boolean(userId),
   });
-  if (!progress.data || !history.data) return <SkeletonRows label="Loading statistics…" rows={3} />;
+  if (progress.isPending || history.isPending) {
+    return <SkeletonRows label="Loading statistics…" rows={3} />;
+  }
+  if (progress.isError || history.isError || !progress.data || !history.data) {
+    return (
+      <section className="status-panel">
+        <h2>Statistics unavailable</h2>
+        <p>Your account is still available. These totals could not refresh.</p>
+        <button
+          onClick={() => {
+            void progress.refetch();
+            void history.refetch();
+          }}
+        >
+          Try again
+        </button>
+      </section>
+    );
+  }
   const wins = history.data.filter((row) => row.entry.result === 'won').length;
   const guesses = history.data.reduce((sum, row) => sum + row.entry.acceptedGuesses, 0);
   return (

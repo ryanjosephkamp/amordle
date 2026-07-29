@@ -30,7 +30,7 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
     <section className="public-profile">
       <div
         className="profile-avatar mono"
-        style={{ borderColor: profile.data.accent_color }}
+        style={{ borderColor: profile.data.accent_color ?? '#2996a8' }}
         aria-hidden="true"
       >
         {(profile.data.display_name || 'P').slice(0, 2).toUpperCase()}

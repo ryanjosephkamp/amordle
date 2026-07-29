@@ -667,7 +667,26 @@ button.key.is-removed {
 .is-focus .game-status {
   position: static;
   min-height: 2.75rem;
+  flex-wrap: wrap;
   background: var(--background);
+}
+
+.game-sync-notice {
+  display: flex;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  border-top: var(--terminal-rule);
+  padding: 0.35rem 0.6rem;
+  color: var(--present-text);
+  font-size: 0.62rem;
+}
+
+.game-sync-notice button {
+  min-height: 2.25rem;
+  padding: 0.25rem 0.55rem;
 }
 
 .game-mode-lockup {
@@ -829,7 +848,8 @@ button.key.is-removed {
 
 .combat-transcript {
   display: flex;
-  min-width: min-content;
+  width: 100%;
+  min-width: 0;
   flex-direction: column;
   gap: 0.22rem;
   padding: 0.45rem;
@@ -837,8 +857,9 @@ button.key.is-removed {
 
 .combat-transcript-entry {
   display: grid;
-  min-width: min-content;
-  grid-template-columns: 2rem repeat(2, minmax(max-content, 1fr));
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: 2rem minmax(4.5rem, 7rem) minmax(0, 1fr);
   align-items: center;
   gap: 0.35rem;
 }
@@ -848,40 +869,30 @@ button.key.is-removed {
   flex-basis: 2rem;
 }
 
-.combat-transcript-entry.is-you .combat-actor,
-.combat-transcript-entry.is-you .combat-transcript-move {
+.combat-transcript-entry .combat-actor {
   grid-column: 2;
-}
-
-.combat-transcript-entry.is-opponent .combat-actor,
-.combat-transcript-entry.is-opponent .combat-transcript-move {
-  grid-column: 3;
-}
-
-.combat-transcript-entry .combat-actor {
-  align-self: end;
+  grid-row: 1;
+  align-self: center;
+  overflow: hidden;
   color: var(--muted);
-  font-size: 0.55rem;
+  font-size: 0.58rem;
   line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
 }
 
 .combat-transcript-entry .combat-transcript-move {
+  grid-column: 3;
   grid-row: 1;
-}
-
-.combat-transcript-entry .combat-actor {
-  grid-row: 1;
+  min-width: 0;
   justify-self: start;
-  translate: 0 -0.05rem;
-}
-
-.combat-transcript-entry .combat-transcript-move {
-  justify-self: center;
 }
 
 .combat-transcript-entry.is-empty .combat-transcript-empty {
-  grid-column: 2 / 4;
-  justify-self: center;
+  grid-column: 3;
+  min-width: 0;
+  justify-self: start;
 }
 
 .combat-transcript .tile {
@@ -937,14 +948,18 @@ button.key.is-removed {
 
   .game-status-facts {
     min-width: 0;
-    flex-wrap: nowrap;
-    overflow-x: auto;
+    flex-wrap: wrap;
+    overflow: hidden;
   }
 
   .game-status-facts > span {
     min-height: 2.35rem;
     padding: 0.3rem 0.42rem;
     font-size: 0.56rem;
+  }
+
+  .game-sync-notice {
+    grid-column: 1 / -1;
   }
 
   .game-region-header {
@@ -1033,23 +1048,7 @@ button.key.is-removed {
   }
 
   .combat-transcript-header {
-    grid-template-columns: 2rem minmax(0, 1fr);
-  }
-
-  .combat-transcript-header span:nth-child(2),
-  .combat-transcript-header span:nth-child(3) {
-    grid-column: 2;
-    grid-row: 1;
-  }
-
-  .combat-transcript-header span:nth-child(3) {
-    justify-self: end;
-    padding-inline-end: 0.45rem;
-  }
-
-  .combat-transcript-header span:nth-child(2) {
-    justify-self: start;
-    padding-inline-start: 0.45rem;
+    grid-template-columns: 1.75rem 3.35rem minmax(0, 1fr);
   }
 
   .combat-transcript {
@@ -1057,26 +1056,13 @@ button.key.is-removed {
   }
 
   .combat-transcript-entry {
-    grid-template-columns: 1.75rem 4rem minmax(max-content, 1fr);
-    gap: 0.25rem;
+    grid-template-columns: 1.5rem 3.15rem minmax(0, 1fr);
+    gap: 0.2rem;
   }
 
   .combat-transcript-entry .board-row-number {
     width: 1.75rem;
     flex-basis: 1.75rem;
-  }
-
-  .combat-transcript-entry.is-you .combat-actor,
-  .combat-transcript-entry.is-you .combat-transcript-move,
-  .combat-transcript-entry.is-opponent .combat-actor,
-  .combat-transcript-entry.is-opponent .combat-transcript-move {
-    grid-column: auto;
-  }
-
-  .combat-transcript-entry .combat-actor,
-  .combat-transcript-entry .combat-transcript-move {
-    grid-row: 1;
-    translate: 0;
   }
 
   .combat-transcript-entry .combat-transcript-move {
@@ -1085,7 +1071,7 @@ button.key.is-removed {
   }
 
   .combat-transcript-entry.is-empty .combat-transcript-empty {
-    grid-column: 2 / 4;
+    grid-column: 3;
   }
 
   .combat-transcript .tile {

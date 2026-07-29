@@ -27,7 +27,16 @@ function SettingsPanelInner() {
     onSuccess: (data) => queryClient.setQueryData(['settings', userId], data),
   });
 
-  if (!settings.data) return <SkeletonRows label="Loading settings…" rows={4} />;
+  if (settings.isPending) return <SkeletonRows label="Loading settings…" rows={4} />;
+  if (settings.isError || !settings.data) {
+    return (
+      <section className="status-panel">
+        <h2>Settings unavailable</h2>
+        <p>Your current preferences were not changed.</p>
+        <button onClick={() => void settings.refetch()}>Try again</button>
+      </section>
+    );
+  }
   const value = settings.data;
   const toggle = (key: 'sound' | 'reducedEffects' | 'notifications' | 'defaultHardMode') => {
     update.mutate({ ...value, [key]: !value[key] });

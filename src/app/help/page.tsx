@@ -46,9 +46,56 @@ export default function HelpPage() {
           <section key={title}>
             <h2>{title}</h2>
             <p>{content}</p>
+            {title === 'OG and scoring' && <TileEvidenceExample />}
+            {title === 'COMBAT' && <CombatTurnExample />}
           </section>
         ))}
       </div>
     </div>
+  );
+}
+
+function TileEvidenceExample() {
+  const tiles = [
+    { letter: 'C', state: 'correct', label: 'correct spot' },
+    { letter: 'R', state: 'present', label: 'present elsewhere' },
+    { letter: 'A', state: 'absent', label: 'not in the word' },
+  ] as const;
+  return (
+    <figure className="help-example">
+      <figcaption>READ ONE ROW</figcaption>
+      <div className="help-tile-row">
+        {tiles.map((tile) => (
+          <div key={tile.letter}>
+            <span className={`tile is-${tile.state}`} aria-label={`${tile.letter}, ${tile.label}`}>
+              <span className="tile-letter">{tile.letter}</span>
+              <span className="tile-evidence" aria-hidden="true">
+                {tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×'}
+              </span>
+            </span>
+            <small>{tile.label}</small>
+          </div>
+        ))}
+      </div>
+    </figure>
+  );
+}
+
+function CombatTurnExample() {
+  return (
+    <figure className="help-example">
+      <figcaption>FOLLOW THE SHARED BOARD</figcaption>
+      <div className="help-combat-row">
+        <span>01</span>
+        <strong>YOU</strong>
+        <span>CRANE</span>
+      </div>
+      <div className="help-combat-row is-current">
+        <span>02</span>
+        <strong>RIVAL</strong>
+        <span>SLATE · accepted</span>
+      </div>
+      <p>Next turn: you</p>
+    </figure>
   );
 }

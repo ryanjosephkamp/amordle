@@ -347,6 +347,10 @@ function RankedDailyMatch({
         }))}
         length={5}
         viewerSeat={viewerSeat}
+        actorLabels={{
+          [viewerSeat]: 'You',
+          [viewerSeat === 'player-one' ? 'player-two' : 'player-one']: 'Rival',
+        }}
       />
       {!terminal && (
         <CombatInput
@@ -458,7 +462,15 @@ function LegacyMatch({
           })}
         </div>
       )}
-      <MoveBoards moves={game.moves} length={game.wordLength} viewerSeat={seat} />
+      <MoveBoards
+        moves={game.moves}
+        length={game.wordLength}
+        viewerSeat={seat}
+        actorLabels={{
+          [seat]: 'You',
+          [seat === 'player-one' ? 'player-two' : 'player-one']: 'Rival',
+        }}
+      />
       {!terminal && game.status === 'playing' && (
         <CombatInput
           draft={draft}
@@ -657,6 +669,12 @@ function AuthoritativeMatch({
           }))}
         length={game.wordLength}
         viewerSeat={game.viewerSeat}
+        actorLabels={Object.fromEntries(
+          game.players.map((participant) => [
+            participant.seat,
+            participant.seat === game.viewerSeat ? 'You' : participant.displayName || 'Rival',
+          ]),
+        )}
       />
       {!terminal && game.status === 'playing' && (
         <CombatInput

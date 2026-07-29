@@ -5,7 +5,7 @@ import type { Route } from 'next';
 import { usePathname, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
-import { AccountSummary } from './account-summary';
+import { AccountMenu } from './account-menu';
 import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from './providers';
@@ -117,8 +117,8 @@ export function AppShell({ children }: PropsWithChildren) {
               ))}
             </nav>
             <div className="topbar-tools">
-              <AccountSummary />
               <NotificationCenter />
+              <AccountMenu />
               <div className="more-menu">
                 <button
                   ref={moreButton}

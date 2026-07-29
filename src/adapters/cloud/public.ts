@@ -6,12 +6,12 @@ import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
 export const publicProfileSchema = z
   .object({
-    accent_color: z.string(),
-    avatar_url: z.string(),
-    bio: z.string(),
+    accent_color: z.string().nullable(),
+    avatar_url: z.string().nullable(),
+    bio: z.string().nullable(),
     created_at: z.string(),
-    display_name: z.string(),
-    flair_key: z.string(),
+    display_name: z.string().nullable(),
+    flair_key: z.string().nullable(),
     public_profile_id: z.string(),
     updated_at: z.string(),
   })
@@ -26,20 +26,20 @@ export const myPublicProfileSchema = publicProfileSchema
 
 export const leaderboardEntrySchema = z
   .object({
-    accent_color: z.string(),
-    avatar_url: z.string(),
+    accent_color: z.string().nullable(),
+    avatar_url: z.string().nullable(),
     bucket: z.string(),
-    display_name: z.string(),
+    display_name: z.string().nullable(),
     draws: z.number().int(),
     flair_key: z.string(),
     games_played: z.number().int(),
     latest_rating_delta: z.number(),
-    latest_rating_movement_at: z.string(),
+    latest_rating_movement_at: z.string().nullable(),
     leaderboard_key: z.string(),
     leaderboard_updated_at: z.string(),
     losses: z.number().int(),
     peak_rating: z.number(),
-    profile_updated_at: z.string(),
+    profile_updated_at: z.string().nullable(),
     provisional: z.boolean(),
     public_profile_id: z.string(),
     rank: z.number().int().positive(),
@@ -51,9 +51,9 @@ export const leaderboardEntrySchema = z
 export const siteStatsSchema = z
   .object({
     generated_at: z.string(),
-    leaderboard_updated_at: z.string(),
+    leaderboard_updated_at: z.string().nullable(),
     public_profiles_active: z.number().int(),
-    public_profiles_updated_at: z.string(),
+    public_profiles_updated_at: z.string().nullable(),
     ranked_practice_public_go_players: z.number().int(),
     ranked_practice_public_og_players: z.number().int(),
     ranked_practice_public_player_results: z.number().int(),

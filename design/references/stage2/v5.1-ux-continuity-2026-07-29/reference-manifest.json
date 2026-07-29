@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "package": "v5.1-ux-continuity-2026-07-29",
+  "status": "user-authorized-implementation-authority",
+  "supersedes": "v5-quiet-system-shell-responsive-play-2026-07-28",
+  "scope": "presentation-and-account-read-compatibility",
+  "feedbackAssets": [
+    {
+      "path": "user-feedback/photo-1-combat-split-board.jpg",
+      "sha256": "bc2a40f55efb777e9a52e7c7cfbc7cd8f90f9726a58ed5e710cecd47a8ee51dd",
+      "width": 679,
+      "height": 1280,
+      "role": "combat-layout-correction"
+    },
+    {
+      "path": "user-feedback/photo-2-solo-reference.jpg",
+      "sha256": "ba6f42d5bbb40c66658d3d36b3abf4071a9f5063e375c192b07bd182458b87a4",
+      "width": 677,
+      "height": 1280,
+      "role": "shared-board-structural-reference"
+    },
+    {
+      "path": "user-feedback/photo-3-sync-overflow.jpg",
+      "sha256": "0c1770e92c216bcce4ec88409ff385b6fc450b9576d09b47f785faff0d50d88f",
+      "width": 679,
+      "height": 1280,
+      "role": "status-noise-and-overflow-correction"
+    },
+    {
+      "path": "user-feedback/photo-4-word-controls.jpg",
+      "sha256": "dc6d5b8793935aad5a52540afb24e3a58f33cb413d4e672dc8e4ab3f2f845042",
+      "width": 616,
+      "height": 1280,
+      "role": "word-explorer-control-and-detail-correction"
+    },
+    {
+      "path": "user-feedback/photo-5-home-contrast.jpg",
+      "sha256": "bb373f2a2ddb303c895029a0447c046b1c8f6bf231dd8df413b05fd6b55bbaf5",
+      "width": 678,
+      "height": 1280,
+      "role": "home-selected-copy-contrast"
+    }
+  ],
+  "serviceChanges": false,
+  "schemaChanges": false,
+  "httpInterfaceChanges": false
+}

@@ -105,6 +105,41 @@ function bypassHeaders(extra: Record<string, string> = {}) {
   };
 }
 
+function legacyProgressFixture() {
+  return {
+    schemaVersion: 11,
+    completedGameIds: ['og:daily:2026-07-20'],
+    progression: {
+      coins: 0,
+      consumables: { removeIncorrectLetters: 0, revealOneLetter: 0 },
+      level: 4,
+      xp: 375,
+      economyOperationIds: [],
+      economyRevision: 0,
+    },
+    settings: {},
+    stats: {
+      og: { daily: { currentStreak: 3 } },
+      go: { daily: { currentStreak: 5 } },
+    },
+    unlockedDailies: ['og:2026-07-18'],
+    history: [
+      {
+        attemptsUsed: 4,
+        coinAward: 12,
+        completedAt: '2026-07-20T15:00:00.000Z',
+        gameId: 'og:daily:2026-07-20',
+        mode: 'og',
+        scope: 'daily',
+        status: 'won',
+        word: 'private-legacy-answer',
+        wordLength: 5,
+        xpAward: 42,
+      },
+    ],
+  };
+}
+
 async function signIn(page: Page, account: Account) {
   await page.goto(`${baseURL}/auth`);
   await page.getByLabel('Email').fill(account.email);
@@ -338,6 +373,22 @@ test.describe.serial('protected Preview services', () => {
     );
     await event('preview_manifest_published', { objectCount: 34 });
 
+    const legacySnapshot = legacyProgressFixture();
+    const { error: legacyError } = await admin.from('progress_snapshots').upsert({
+      user_id: playerTwo!.id,
+      progress: legacySnapshot as Json,
+      updated_at: new Date().toISOString(),
+    });
+    if (legacyError) throw legacyError;
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'progress_snapshot',
+      id: playerTwo!.id,
+      owner: runId,
+      disposable: true,
+      fixture: 'recognized-schema-v11',
+    });
+
     const contextOptions = {
       baseURL,
       storageState: bypassStorageState,
@@ -375,6 +426,11 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.goto(`${baseURL}/stats`);
     await expect(secondPage.getByRole('heading', { name: 'Your stats' })).toBeVisible();
     await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
+    await expect(secondPage.locator('.metric').filter({ hasText: 'XP' })).toContainText('375');
+    await expect(secondPage.locator('.metric').filter({ hasText: 'Daily streak' })).toContainText(
+      '5',
+    );
+    await expect(secondPage.getByRole('button', { name: 'Account' })).toBeVisible();
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'account-stats-mobile-light.png'),
       fullPage: true,
@@ -382,6 +438,7 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.goto(`${baseURL}/history`);
     await expect(secondPage.getByRole('heading', { name: 'History' })).toBeVisible();
     await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
+    await expect(secondPage.getByText(/solo daily · OG/i)).toBeVisible();
     await secondPage.screenshot({
       path: path.join(evidenceDir, 'account-history-mobile-light.png'),
       fullPage: true,
@@ -396,6 +453,38 @@ test.describe.serial('protected Preview services', () => {
       fullPage: true,
     });
     await event('account_visual_evidence_captured', { screenshots: 5 });
+
+    await secondPage.goto(
+      `${baseURL}/play/solo/practice/og?length=5&difficulty=standard&generation=91`,
+    );
+    const publicBank = JSON.parse(
+      await readFile(path.resolve('data/word-lists/words_length_5.json'), 'utf8'),
+    ) as { validGuesses: string[] };
+    await submitOnScreenGuess(secondPage, publicBank.validGuesses[0]!);
+    await expect(secondPage.getByText(/account backup needs attention/i)).toHaveCount(0);
+    await expect
+      .poll(async () => {
+        const { count, error } = await admin
+          .from('game_history')
+          .select('id', { count: 'exact', head: true })
+          .eq('id', `amordle-account-state-v1:${playerTwo!.id}`)
+          .eq('user_id', playerTwo!.id);
+        if (error) throw error;
+        return count;
+      })
+      .toBe(1);
+    const { data: legacyAfter, error: legacyAfterError } = await admin
+      .from('progress_snapshots')
+      .select('progress')
+      .eq('user_id', playerTwo!.id)
+      .single();
+    if (legacyAfterError) throw legacyAfterError;
+    expect(legacyAfter.progress).toEqual(legacySnapshot);
+    await event('legacy_account_continuity_verified', {
+      userId: playerTwo!.id,
+      sourceSnapshotPreserved: true,
+      successorStateCreated: true,
+    });
 
     await firstPage.setViewportSize({ width: 1440, height: 1024 });
     await firstPage.emulateMedia({ colorScheme: 'light' });
