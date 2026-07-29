@@ -1028,6 +1028,10 @@ export async function advanceLegacyGo(gameId: string, sanctionedWords: ReadonlyS
   return parseServiceResult(legacyRowSchema, data);
 }
 
+const rematchRequestStatusSchema = z
+  .enum(['requested', 'pending', 'accepted', 'declined', 'cancelled', 'expired'])
+  .transform((status) => (status === 'requested' ? 'pending' : status));
+
 export const rematchRequestSchema = z
   .object({
     created: z.boolean(),
@@ -1040,7 +1044,7 @@ export const rematchRequestSchema = z
     mode: z.enum(['og', 'go']),
     opponent_seat: z.enum(['player-one', 'player-two']),
     request_id: z.string(),
-    request_status: z.enum(['pending', 'accepted', 'declined', 'cancelled', 'expired']),
+    request_status: rematchRequestStatusSchema,
     requester_seat: z.enum(['player-one', 'player-two']),
     responded_at: z.string().nullable(),
     source_game_id: z.string(),
