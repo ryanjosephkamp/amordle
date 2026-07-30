@@ -570,18 +570,30 @@ test.describe.serial('protected Preview services', () => {
     });
     expect(refreshResponse.status).toBe(200);
     expect(await refreshResponse.json()).toMatchObject({ objectCount: 34 });
-    const manifestResponse = await fetch(
-      `${baseURL}/api/word-lists/manifest?candidate=${encodeURIComponent(runId)}`,
-      {
-        headers: bypassHeaders(),
-      },
-    );
-    expect(manifestResponse.status).toBe(200);
-    const manifest = (await manifestResponse.json()) as {
-      manifest: { entries: Array<{ length: number; url: string }> };
-    };
-    expect(manifest.manifest.entries).toHaveLength(34);
-    expect(manifest.manifest.entries.map((entry) => entry.length)).toEqual(
+    let manifestEntries: Array<{ length: number; url: string }> = [];
+    await expect
+      .poll(
+        async () => {
+          const manifestResponse = await fetch(
+            `${baseURL}/api/word-lists/manifest?candidate=${encodeURIComponent(runId)}`,
+            {
+              headers: bypassHeaders(),
+            },
+          );
+          expect(manifestResponse.status).toBe(200);
+          const body = (await manifestResponse.json()) as {
+            manifest: { entries: Array<{ length: number; url: string }> } | null;
+          };
+          manifestEntries = body.manifest?.entries ?? [];
+          return manifestEntries.length;
+        },
+        {
+          timeout: 30_000,
+          intervals: [250, 500, 1_000, 2_000],
+        },
+      )
+      .toBe(34);
+    expect(manifestEntries.map((entry) => entry.length)).toEqual(
       Array.from({ length: 34 }, (_, index) => index + 2),
     );
     await event('preview_manifest_published', { objectCount: 34 });
