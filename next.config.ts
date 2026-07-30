@@ -11,6 +11,10 @@ const nextConfig: NextConfig = {
   experimental: {
     typedEnv: true,
   },
+  outputFileTracingIncludes: {
+    '/api/admin-refresh': ['./data/word-lists/**/*'],
+    '/api/cron/refresh-word-lists': ['./data/word-lists/**/*'],
+  },
 };
 
 export default nextConfig;
