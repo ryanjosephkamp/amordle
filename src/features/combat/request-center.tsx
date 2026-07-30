@@ -16,7 +16,6 @@ import {
 } from '@/adapters/supabase/combat';
 import type { PrivateRequest } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
-import { loadPublicWordBank } from '@/adapters/word-lists';
 import { AccountGate } from '@/components/route-states';
 
 export function RequestCenter() {
@@ -77,9 +76,7 @@ function RequestCenterInner() {
       action: 'accept' | 'decline' | 'cancel' | 'block';
     }) => {
       if (action === 'accept') {
-        const bank = await loadPublicWordBank(request.word_length);
-        if (!bank.answers.length) throw new Error('The requested word list is unavailable.');
-        return acceptPrivateRequest(request, bank.answers, operationId('private-accept'));
+        return acceptPrivateRequest(request, operationId('private-accept'));
       }
       if (action === 'decline') return declinePrivateRequest(request.request_id);
       if (action === 'cancel') return cancelPrivateRequest(request.request_id);

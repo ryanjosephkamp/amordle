@@ -9,24 +9,19 @@ import {
   createDailyLobby,
   createRankedDaily,
   finalizeRankedDaily,
+  getRankedDailyStatus,
   joinDailyLobby,
   listDailyLobbies,
 } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
+import {
+  readRankedDailyQueueIntent,
+  removeRankedDailyQueueIntent,
+  writeRankedDailyQueueIntent,
+} from '@/adapters/session-combat';
+import type { RankedDailyQueueIntent } from '@/adapters/session-combat';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
-
-interface RankedDailyIntent {
-  userId: string;
-  dailyDateKey: string;
-  mode: 'og' | 'go';
-  hardMode: boolean;
-  requestId: string;
-  matchedGameId: string;
-  creationKey: string;
-}
-
-const rankedIntentKey = 'amordle:combat:ranked-daily:intent';
 
 export function DailyLobby() {
   return (
@@ -40,30 +35,38 @@ function DailyLobbyInner() {
   const auth = useAuth();
   const [mode, setMode] = useState<'og' | 'go'>('og');
   const [hardMode, setHardMode] = useState(false);
-  const [rankedIntent, setRankedIntent] = useState<RankedDailyIntent | null>(null);
+  const [rankedIntent, setRankedIntent] = useState<RankedDailyQueueIntent | null>(null);
   const [message, setMessage] = useState('');
   const router = useRouter();
   const queryClient = useQueryClient();
   const dailyDateKey = new Date().toISOString().slice(0, 10);
 
   useEffect(() => {
-    const raw = sessionStorage.getItem(rankedIntentKey);
-    if (!raw || !auth.user) return;
-    try {
-      const parsed = JSON.parse(raw) as RankedDailyIntent;
-      if (parsed.userId === auth.user.id && parsed.dailyDateKey === dailyDateKey) {
-        queueMicrotask(() => {
-          setMode(parsed.mode);
-          setHardMode(parsed.hardMode);
-          setRankedIntent(parsed);
-        });
-      } else {
-        sessionStorage.removeItem(rankedIntentKey);
-      }
-    } catch {
-      sessionStorage.removeItem(rankedIntentKey);
+    const userId = auth.user?.id;
+    queueMicrotask(() => setRankedIntent(null));
+    if (!userId) return;
+    const restored = readRankedDailyQueueIntent(userId);
+    if (restored.status === 'corrupt') {
+      queueMicrotask(() =>
+        setMessage('A damaged ranked Daily search record was discarded for this account.'),
+      );
+      return;
     }
-  }, [auth.user, dailyDateKey]);
+    if (restored.status !== 'valid') return;
+    if (restored.intent.dailyDateKey !== dailyDateKey) {
+      removeRankedDailyQueueIntent(userId);
+      queueMicrotask(() =>
+        setMessage('The saved ranked Daily search belonged to a prior UTC day.'),
+      );
+      return;
+    }
+    queueMicrotask(() => {
+      setMode(restored.intent.mode);
+      setHardMode(restored.intent.hardMode);
+      setRankedIntent(restored.intent);
+      setMessage('Restored your ranked Daily search for this account and tab.');
+    });
+  }, [auth.user?.id, dailyDateKey]);
   const lobbies = useQuery({
     queryKey: ['combat', 'daily', mode],
     queryFn: () => listDailyLobbies(mode),
@@ -100,27 +103,38 @@ function DailyLobbyInner() {
           idempotencyKey: creationKey,
         });
         intent = {
-          userId,
+          schemaVersion: 3,
+          ownerUserId: userId,
           dailyDateKey,
           mode,
           hardMode,
           requestId: created.request_id,
           matchedGameId: `ranked-daily-${crypto.randomUUID()}`,
           creationKey,
+          claimActionId: operationId('ranked-daily-claim'),
+          finalizeActionId: operationId('ranked-daily-finalize'),
+          createdAt: new Date().toISOString(),
         };
         setRankedIntent(intent);
-        sessionStorage.setItem(rankedIntentKey, JSON.stringify(intent));
+        writeRankedDailyQueueIntent(intent);
       }
-      const claimed = await claimRankedDaily(intent.requestId, intent.matchedGameId);
-      if (claimed.request_status !== 'matched' || !claimed.matched_game_id) return null;
+      if (intent.ownerUserId !== userId || intent.dailyDateKey !== dailyDateKey) {
+        throw new Error('This ranked Daily search belongs to another account or UTC day.');
+      }
+      const status = await getRankedDailyStatus(intent.requestId);
+      const matchedGameId =
+        status.status === 'matched' && status.matchedGameId
+          ? status.matchedGameId
+          : (await claimRankedDaily(intent.requestId, intent.matchedGameId)).matched_game_id;
+      if (!matchedGameId) return null;
       const finalized = await finalizeRankedDaily(
         intent.requestId,
-        claimed.matched_game_id,
-        `ranked-daily-finalize:${intent.requestId}:${claimed.matched_game_id}`,
+        matchedGameId,
+        intent.finalizeActionId,
       );
-      sessionStorage.removeItem(rankedIntentKey);
+      removeRankedDailyQueueIntent(userId);
       setRankedIntent(null);
-      return finalized.game_id;
+      return finalized.id;
     },
     onSuccess: (gameId) => {
       if (gameId) router.push(`/combat/match/${gameId}`);
@@ -138,7 +152,7 @@ function DailyLobbyInner() {
     const timer = window.setInterval(() => {
       if (new Date().toISOString().slice(0, 10) !== rankedIntent.dailyDateKey) {
         void cancelRankedDaily(rankedIntent.requestId).catch(() => undefined);
-        sessionStorage.removeItem(rankedIntentKey);
+        removeRankedDailyQueueIntent(rankedIntent.ownerUserId);
         setRankedIntent(null);
         setMessage('The UTC Daily changed. Start a new search for today.');
       } else if (!ranked.isPending) {
@@ -152,7 +166,7 @@ function DailyLobbyInner() {
       if (rankedIntent) await cancelRankedDaily(rankedIntent.requestId);
     },
     onSuccess: () => {
-      sessionStorage.removeItem(rankedIntentKey);
+      if (rankedIntent) removeRankedDailyQueueIntent(rankedIntent.ownerUserId);
       setRankedIntent(null);
       setMessage('Ranked Daily search cancelled.');
     },

@@ -34,7 +34,7 @@ function OpenLobbiesInner() {
   const [message, setMessage] = useState('');
   const practice = useQuery({
     queryKey: ['combat', 'lobby', 'practice'],
-    queryFn: () => listUnrankedPracticeWithDiagnostics(userId),
+    queryFn: listUnrankedPracticeWithDiagnostics,
     refetchInterval: 30_000,
     refetchOnWindowFocus: true,
   });
@@ -71,10 +71,7 @@ function OpenLobbiesInner() {
   }, [queryClient, userId]);
 
   const practiceRows = useMemo(
-    () =>
-      (practice.data?.items ?? []).filter(
-        (row) => row.status === 'waiting' && row.projection_status === 'waiting',
-      ),
+    () => (practice.data?.items ?? []).filter((row) => row.status === 'waiting'),
     [practice.data],
   );
   const dailyRows = useMemo(
@@ -93,7 +90,8 @@ function OpenLobbiesInner() {
     ]);
 
   const joinPractice = useMutation({
-    mutationFn: (gameId: string) => joinUnrankedPractice(gameId, userId),
+    mutationFn: (lobby: PublicPracticeLobby) =>
+      joinUnrankedPractice(lobby, operationId('public-practice-join')),
     onSuccess: (game) => {
       void invalidate();
       router.push(`/combat/match/${game.id}`);
@@ -104,7 +102,8 @@ function OpenLobbiesInner() {
     },
   });
   const cancelPractice = useMutation({
-    mutationFn: (gameId: string) => cancelUnrankedPractice(gameId, userId),
+    mutationFn: (lobby: PublicPracticeLobby) =>
+      cancelUnrankedPractice(lobby, operationId('public-practice-cancel')),
     onSuccess: () => {
       setMessage('Practice lobby cancelled.');
       void invalidate();
@@ -177,10 +176,10 @@ function OpenLobbiesInner() {
             <PracticeLobbyRow
               key={row.id}
               row={row}
-              isOwner={row.canCancel}
+              isOwner={row.capabilities.canCancel}
               pending={pending}
-              join={() => joinPractice.mutate(row.id)}
-              cancel={() => cancelPractice.mutate(row.id)}
+              join={() => joinPractice.mutate(row)}
+              cancel={() => cancelPractice.mutate(row)}
             />
           ))}
           {dailyRows.map((lobby) => (
@@ -238,10 +237,11 @@ function PracticeLobbyRow({
       <div>
         <strong>{isOwner ? 'Your Practice lobby' : 'Open Practice player'}</strong>
         <p>
-          Practice · {row.mode.toUpperCase()} · {row.word_length} letters · {row.difficulty}
-          {row.hard_mode ? ' · Hard Mode' : ''}
+          Practice · {row.mode.toUpperCase()} · {row.wordLength} letters · {row.difficulty}
+          {row.hardMode ? ' · Hard Mode' : ''}
+          {row.timeLimitMs === 300_000 ? ' · 5:00 per player' : ' · untimed'}
         </p>
-        <span className="mono">opened {formatAge(row.created_at)}</span>
+        <span className="mono">opened {formatAge(row.createdAt)}</span>
       </div>
       {isOwner ? (
         <button type="button" disabled={pending} onClick={cancel}>

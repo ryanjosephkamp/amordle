@@ -485,6 +485,30 @@ export type Database = {
         };
         Returns: string;
       };
+      amordle_create_combat_v3: {
+        Args: {
+          p_created_at?: string;
+          p_creation_key: string;
+          p_daily_date_key?: string;
+          p_difficulty: string;
+          p_game_id: string;
+          p_go_puzzle_count: number;
+          p_hard_mode: boolean;
+          p_matchmaking_request_id?: string;
+          p_mode: string;
+          p_player_one_user_id: string;
+          p_player_two_user_id: string;
+          p_ranked: boolean;
+          p_rating_bucket: string;
+          p_scope: string;
+          p_source_kind: string;
+          p_status: string;
+          p_time_limit_ms: number;
+          p_visibility_kind: string;
+          p_word_length: number;
+        };
+        Returns: string;
+      };
       amordle_difficulty_answers: {
         Args: {
           p_difficulty: string;
@@ -1767,6 +1791,31 @@ export type Database = {
           word_length: number;
         }[];
       };
+      accept_practice_multiplayer_rematch_v3: {
+        Args: { p_action_id: string; p_request_id: string };
+        Returns: {
+          created: boolean;
+          created_at: string;
+          created_game_id: string;
+          expires_at: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          idempotent: boolean;
+          mode: string;
+          opponent_seat: string;
+          request_id: string;
+          request_status: string;
+          requester_seat: string;
+          responded_at: string;
+          source_game_id: string;
+          time_limit_ms: number;
+          updated_at: string;
+          viewer_can_accept: boolean;
+          viewer_can_cancel: boolean;
+          viewer_role: string;
+          word_length: number;
+        }[];
+      };
       accept_private_multiplayer_match_request: {
         Args: {
           p_game_projection: Json;
@@ -1814,6 +1863,43 @@ export type Database = {
           p_idempotency_key?: string;
           p_request_id: string;
         };
+        Returns: {
+          created: boolean;
+          created_at: string;
+          created_game_id: string;
+          expires_at: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          idempotent: boolean;
+          mode: string;
+          opponent_accent_color: string;
+          opponent_avatar_url: string;
+          opponent_display_name: string;
+          opponent_flair_key: string;
+          opponent_identity_available: boolean;
+          opponent_profile_updated_at: string;
+          opponent_public_profile_id: string;
+          request_id: string;
+          request_status: string;
+          requester_accent_color: string;
+          requester_avatar_url: string;
+          requester_display_name: string;
+          requester_flair_key: string;
+          requester_identity_available: boolean;
+          requester_profile_updated_at: string;
+          requester_public_profile_id: string;
+          responded_at: string;
+          time_limit_ms: number;
+          updated_at: string;
+          viewer_can_accept: boolean;
+          viewer_can_cancel: boolean;
+          viewer_can_decline: boolean;
+          viewer_role: string;
+          word_length: number;
+        }[];
+      };
+      accept_private_multiplayer_match_request_v3: {
+        Args: { p_action_id: string; p_request_id: string };
         Returns: {
           created: boolean;
           created_at: string;
@@ -2079,6 +2165,18 @@ export type Database = {
           revision: number;
         }[];
       };
+      create_amordle_public_practice_v3: {
+        Args: {
+          p_creation_key: string;
+          p_difficulty: string;
+          p_go_puzzle_count: number;
+          p_hard_mode: boolean;
+          p_mode: string;
+          p_time_limit_ms: number;
+          p_word_length: number;
+        };
+        Returns: Json;
+      };
       create_amordle_ranked_practice_request_v2: {
         Args: {
           p_creation_key: string;
@@ -2307,6 +2405,10 @@ export type Database = {
           word_length: number;
         }[];
       };
+      finalize_amordle_ranked_daily_v3: {
+        Args: { p_action_id: string; p_game_id: string; p_request_id: string };
+        Returns: Json;
+      };
       finalize_amordle_ranked_practice_v2: {
         Args: { p_action_id: string; p_game_id: string; p_request_id: string };
         Returns: Json;
@@ -2371,6 +2473,36 @@ export type Database = {
       get_amordle_practice_leaderboard_v2: {
         Args: { p_app_bucket: string; p_limit?: number; p_offset?: number };
         Returns: Json[];
+      };
+      get_amordle_public_practice_spectator_v3: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
+      get_amordle_ranked_daily_status_v3: {
+        Args: { p_request_id: string };
+        Returns: Json;
       };
       get_amordle_ranked_practice_status_v2: {
         Args: { p_request_id: string };
@@ -2738,6 +2870,14 @@ export type Database = {
         Args: { p_game_id: string; p_run_id: string; p_user_ids: string[] };
         Returns: Json;
       };
+      join_amordle_public_practice_v3: {
+        Args: {
+          p_action_id: string;
+          p_expected_version: number;
+          p_game_id: string;
+        };
+        Returns: Json;
+      };
       join_amordle_unranked_daily_lobby_v2: {
         Args: {
           p_action_id: string;
@@ -2747,6 +2887,10 @@ export type Database = {
         Returns: Json;
       };
       list_amordle_combat_active_v2: {
+        Args: { p_limit?: number };
+        Returns: Json[];
+      };
+      list_amordle_public_practice_v3: {
         Args: { p_limit?: number };
         Returns: Json[];
       };
@@ -3083,6 +3227,10 @@ export type Database = {
           public_profile_id: string;
           updated_at: string;
         }[];
+      };
+      settle_amordle_ranked_daily_v3: {
+        Args: { p_action_id: string; p_game_id: string };
+        Returns: Json;
       };
       settle_amordle_ranked_practice_v2: {
         Args: { p_action_id: string; p_game_id: string };

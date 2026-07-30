@@ -253,22 +253,30 @@ const rankedDailyQueueSchema = z
 
 const rankedDailyStatusSchema = z
   .object({
-    request_id: z.string(),
-    request_status: z.enum(['queued', 'matched', 'cancelled', 'expired']),
-    rating_bucket: z.string(),
-    hard_mode: z.boolean(),
-    word_length: z.literal(5),
+    schemaVersion: z.literal(3),
+    requestId: z.string(),
+    status: z.enum(['queued', 'matched', 'cancelled', 'expired']),
+    matchedGameId: z.string().optional(),
+    viewerSeat: z.enum(['player-one', 'player-two']).optional(),
     mode: z.enum(['og', 'go']),
     scope: z.literal('daily'),
-    daily_date_key: z.string(),
-    queued_at: z.string(),
-    matched_at: z.string().nullable(),
-    matched_game_id: z.string().nullable(),
-    opponent_request_id: z.string().nullable(),
-    player_one_user_id: z.string().uuid().nullable(),
-    player_two_user_id: z.string().uuid().nullable(),
-    time_limit_ms: z.null(),
-    viewer_seat: z.enum(['player-one', 'player-two']).nullable(),
+    dailyDateKey: z.string(),
+    ratingBucket: z.enum(['multiplayer:og:daily:v1', 'multiplayer:go:daily:v1']),
+    wordLength: z.literal(5),
+    hardMode: z.boolean(),
+    timeLimitMs: z.null().optional(),
+    queuedAt: z.string(),
+    matchedAt: z.string().optional(),
+    expiresAt: z.string(),
+    opponent: z
+      .object({
+        publicProfileId: z.string().optional(),
+        displayName: z.string(),
+        avatarUrl: z.string().optional(),
+        accentColor: z.string().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict();
 
@@ -346,24 +354,40 @@ export type LegacyRow = z.infer<typeof legacyRowSchema>;
 
 const publicPracticeLobbySchema = z
   .object({
+    schemaVersion: z.literal(2),
+    authorityVersion: z.literal(2),
     id: z.string(),
     scope: z.literal('practice'),
     mode: z.enum(['og', 'go']),
     status: z.literal('waiting'),
-    word_length: z.number().int().min(2).max(35),
+    version: z.number().int().nonnegative(),
+    moveCount: z.number().int().nonnegative(),
+    wordLength: z.number().int().min(2).max(35),
     difficulty: z.enum(['casual', 'standard', 'expert']),
-    go_puzzle_count: z.number().int().nullable(),
+    hardMode: z.boolean(),
+    goPuzzleCount: z.number().int().nullable().optional(),
+    timeLimitMs: z.number().int().nullable().optional(),
     ranked: z.literal(false),
-    created_at: z.string(),
-    updated_at: z.string(),
-    hard_mode: z.preprocess((value) => value === true || value === 'true', z.boolean()),
-    projection_status: z.literal('waiting'),
+    owner: z
+      .object({
+        publicProfileId: z.string().optional(),
+        displayName: z.string(),
+        avatarUrl: z.string().optional(),
+        accentColor: z.string().optional(),
+      })
+      .strict(),
+    createdAt: z.string(),
+    updatedAt: z.string(),
+    capabilities: z
+      .object({
+        canJoin: z.boolean(),
+        canCancel: z.boolean(),
+      })
+      .strict(),
   })
   .strict();
 
-export type PublicPracticeLobby = z.infer<typeof publicPracticeLobbySchema> & {
-  canCancel: boolean;
-};
+export type PublicPracticeLobby = z.infer<typeof publicPracticeLobbySchema>;
 
 function client() {
   const value = getBrowserSupabase();
@@ -491,7 +515,7 @@ export async function listActiveCombat() {
   return parseServiceList(
     combatProjectionSchema,
     await jsonRpc('list_amordle_combat_active_v2', { p_limit: 100 }),
-  ).items;
+  ).items.filter((game) => ['waiting', 'playing', 'holding'].includes(game.status));
 }
 
 export async function saveCombatCommand(input: {
@@ -545,11 +569,12 @@ export async function createRankedDaily(input: {
 }
 
 export async function getRankedDailyStatus(requestId: string) {
-  const { data, error } = await client().rpc('get_ranked_async_matchmaking_status_v2', {
-    p_request_id: requestId,
-  });
-  if (error) throwServiceError(error);
-  return parseServiceResult(rankedDailyStatusSchema, data?.[0]);
+  return parseServiceResult(
+    rankedDailyStatusSchema,
+    await jsonRpc('get_amordle_ranked_daily_status_v3', {
+      p_request_id: requestId,
+    }),
+  );
 }
 
 export async function claimRankedDaily(requestId: string, matchedGameId: string) {
@@ -592,52 +617,13 @@ export async function finalizeRankedDaily(
   matchedGameId: string,
   idempotencyKey: string,
 ) {
-  const status = await getRankedDailyStatus(requestId);
-  if (
-    status.request_status !== 'matched' ||
-    !status.player_one_user_id ||
-    !status.player_two_user_id
-  ) {
-    throw new ServiceError('The ranked Daily pair is not ready.', 'NOT_READY');
-  }
-  const projection = {
-    id: matchedGameId,
-    mode: status.mode,
-    scope: 'daily',
-    dailyDateKey: status.daily_date_key,
-    ranked: true,
-    ratingBucket: `multiplayer:${status.mode}:daily:v1`,
-    wordLength: 5,
-    difficulty: 'expert',
-    hardMode: status.hard_mode,
-    timeLimitMs: null,
-    customGameCode: null,
-    goPuzzleCount: status.mode === 'go' ? 5 : null,
-    playerUserIds: {
-      'player-one': status.player_one_user_id,
-      'player-two': status.player_two_user_id,
-    },
-    moves: [],
-  };
-  const { data, error } = await client().rpc('finalize_ranked_async_matchmaking_game_v2', {
-    p_request_id: requestId,
-    p_matched_game_id: matchedGameId,
-    p_game_projection: projection,
-    p_idempotency_key: idempotencyKey,
-  });
-  if (error) throwServiceError(error);
   return parseServiceResult(
-    z
-      .object({
-        game_id: z.string(),
-        request_id: z.string(),
-        opponent_request_id: z.string(),
-        request_status: z.literal('matched'),
-        created: z.boolean(),
-        idempotent: z.boolean(),
-      })
-      .strict(),
-    data?.[0],
+    combatProjectionSchema,
+    await jsonRpc('finalize_amordle_ranked_daily_v3', {
+      p_request_id: requestId,
+      p_game_id: matchedGameId,
+      p_action_id: idempotencyKey,
+    }),
   );
 }
 
@@ -675,6 +661,16 @@ export async function saveRankedDailyAction(input: {
 }
 
 export async function settleRankedDaily(gameId: string, idempotencyKey: string) {
+  return parseServiceResult(
+    rankedPracticeSettlementSchema,
+    await jsonRpc('settle_amordle_ranked_daily_v3', {
+      p_game_id: gameId,
+      p_action_id: idempotencyKey,
+    }),
+  );
+}
+
+export async function settleLegacyRankedDaily(gameId: string, idempotencyKey: string) {
   const { data, error } = await client().rpc('settle_ranked_async_multiplayer_match_v2', {
     p_game_id: gameId,
     p_idempotency_key: idempotencyKey,
@@ -687,105 +683,37 @@ const legacySelect =
   'id,scope,mode,status,current_turn,word_length,difficulty,go_puzzle_count,host_user_id,player_one_user_id,player_two_user_id,ranked,projection,state_version,move_count,created_at,updated_at';
 
 export async function createUnrankedPractice(input: {
-  userId: string;
   mode: 'og' | 'go';
   wordLength: number;
   difficulty: 'casual' | 'standard' | 'expert';
   hardMode: boolean;
   goPuzzleCount: 5 | 7 | 10 | null;
-  candidates: readonly string[];
+  timeLimitMs: 300_000 | null;
+  creationKey: string;
 }) {
-  const id = `practice-${crypto.randomUUID()}`;
-  const answer = selectLegacyAnswer(id, 0, input.candidates);
-  const projection = legacyProjectionSchema.parse({
-    schemaVersion: 1,
-    authorityVersion: 0,
-    id,
-    scope: 'practice',
-    ranked: false,
-    ratingBucket: null,
-    matchmakingRequestId: null,
-    customGameCode: null,
-    dailyDateKey: null,
-    timeLimitMs: null,
-    mode: input.mode,
-    wordLength: input.wordLength,
-    difficulty: input.difficulty,
-    hardMode: input.hardMode,
-    goPuzzleCount: input.goPuzzleCount,
-    status: 'waiting',
-    currentTurn: 'player-one',
-    answer,
-    currentPuzzleIndex: 0,
-    holdUntil: null,
-    moves: [],
-    version: 0,
-  });
-  const { data, error } = await client()
-    .from('async_multiplayer_games')
-    .insert({
-      id,
-      scope: 'practice',
-      mode: input.mode,
-      status: 'waiting',
-      current_turn: 'player-one',
-      word_length: input.wordLength,
-      difficulty: input.difficulty,
-      go_puzzle_count: input.goPuzzleCount,
-      host_user_id: input.userId,
-      player_one_user_id: input.userId,
-      player_two_user_id: null,
-      ranked: false,
-      authority_version: 0,
-      source_kind: 'public_lobby',
-      visibility_kind: 'public',
-      state_version: 0,
-      move_count: 0,
-      projection,
-    })
-    .select(legacySelect)
-    .single();
-  if (error) throwServiceError(error);
-  return parseServiceResult(legacyRowSchema, data);
+  return parseServiceResult(
+    combatProjectionSchema,
+    await jsonRpc('create_amordle_public_practice_v3', {
+      p_mode: input.mode,
+      p_word_length: input.wordLength,
+      p_difficulty: input.difficulty,
+      p_hard_mode: input.hardMode,
+      p_go_puzzle_count: input.goPuzzleCount as unknown as number,
+      p_time_limit_ms: input.timeLimitMs as unknown as number,
+      p_creation_key: input.creationKey,
+    }),
+  );
 }
 
-export async function listUnrankedPractice(userId: string) {
-  return (await listUnrankedPracticeWithDiagnostics(userId)).items;
+export async function listUnrankedPractice() {
+  return (await listUnrankedPracticeWithDiagnostics()).items;
 }
 
-export async function listUnrankedPracticeWithDiagnostics(userId: string) {
-  const [publicRows, ownedRows] = await Promise.all([
-    client()
-      .from('async_multiplayer_games')
-      .select(
-        'id,scope,mode,status,word_length,difficulty,go_puzzle_count,ranked,created_at,updated_at,hard_mode:projection->>hardMode,projection_status:projection->>status',
-      )
-      .eq('authority_version', 0)
-      .eq('scope', 'practice')
-      .eq('ranked', false)
-      .eq('status', 'waiting')
-      .is('player_two_user_id', null)
-      .order('created_at', { ascending: true })
-      .limit(50),
-    client()
-      .from('async_multiplayer_games')
-      .select('id')
-      .eq('authority_version', 0)
-      .eq('scope', 'practice')
-      .eq('ranked', false)
-      .eq('status', 'waiting')
-      .eq('host_user_id', userId)
-      .is('player_two_user_id', null)
-      .limit(50),
-  ]);
-  if (publicRows.error) throwServiceError(publicRows.error);
-  if (ownedRows.error) throwServiceError(ownedRows.error);
-  const parsed = parseServiceList(publicPracticeLobbySchema, publicRows.data);
-  const owned = new Set((ownedRows.data ?? []).map((row) => row.id));
-  return {
-    items: parsed.items.map((row) => ({ ...row, canCancel: owned.has(row.id) })),
-    skipped: parsed.skipped,
-  };
+export async function listUnrankedPracticeWithDiagnostics() {
+  return parseServiceList(
+    publicPracticeLobbySchema,
+    await jsonRpc('list_amordle_public_practice_v3', { p_limit: 50 }),
+  );
 }
 
 export async function getLegacyPractice(gameId: string) {
@@ -829,70 +757,25 @@ export async function listLegacyRecent(userId: string) {
   return parseServiceList(legacyRowSchema, data).items;
 }
 
-export async function cancelUnrankedPractice(gameId: string, userId: string) {
-  const current = await getLegacyPractice(gameId);
-  if (!current) throw new ServiceError('That match no longer exists.', 'NOT_FOUND');
-  if (current.player_one_user_id !== userId) {
-    throw new ServiceError('Only the player who opened this match can cancel it.', 'FORBIDDEN');
-  }
-  if (current.status !== 'waiting' || current.player_two_user_id !== null) {
-    throw new ServiceError('That match is no longer waiting for a player.', 'TERMINAL');
-  }
-  const nextVersion = current.state_version + 1;
-  const projection = legacyProjectionSchema.parse({
-    ...current.projection,
-    status: 'cancelled',
-    version: nextVersion,
+export async function cancelUnrankedPractice(lobby: PublicPracticeLobby, actionId: string) {
+  return saveCombatCommand({
+    gameId: lobby.id,
+    actionId,
+    expectedVersion: lobby.version,
+    expectedMoveCount: lobby.moveCount,
+    command: 'cancel',
   });
-  const timestamp = new Date().toISOString();
-  const { data, error } = await client()
-    .from('async_multiplayer_games')
-    .update({
-      status: 'cancelled',
-      projection,
-      state_version: nextVersion,
-      ended_at: timestamp,
-      updated_at: timestamp,
-    })
-    .eq('id', gameId)
-    .eq('player_one_user_id', userId)
-    .eq('state_version', current.state_version)
-    .eq('status', 'waiting')
-    .is('player_two_user_id', null)
-    .select(legacySelect)
-    .single();
-  if (error) throwServiceError(error);
-  return parseServiceResult(legacyRowSchema, data);
 }
 
-export async function joinUnrankedPractice(gameId: string, userId: string) {
-  const current = await getLegacyPractice(gameId);
-  if (!current) throw new ServiceError('That match no longer exists.', 'NOT_FOUND');
-  if (current.player_one_user_id === userId) return current;
-  if (current.player_two_user_id && current.player_two_user_id !== userId) {
-    throw new ServiceError('That match already has two players.', 'TERMINAL');
-  }
-  const nextProjection = legacyProjectionSchema.parse({
-    ...current.projection,
-    status: 'playing',
-    version: current.state_version + 1,
-  });
-  const { data, error } = await client()
-    .from('async_multiplayer_games')
-    .update({
-      player_two_user_id: userId,
-      status: 'playing',
-      projection: nextProjection,
-      state_version: current.state_version + 1,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('id', gameId)
-    .eq('state_version', current.state_version)
-    .is('player_two_user_id', null)
-    .select(legacySelect)
-    .single();
-  if (error) throwServiceError(error);
-  return parseServiceResult(legacyRowSchema, data);
+export async function joinUnrankedPractice(lobby: PublicPracticeLobby, actionId: string) {
+  return parseServiceResult(
+    combatProjectionSchema,
+    await jsonRpc('join_amordle_public_practice_v3', {
+      p_game_id: lobby.id,
+      p_expected_version: lobby.version,
+      p_action_id: actionId,
+    }),
+  );
 }
 
 function selectLegacyAnswer(
@@ -1107,41 +990,10 @@ export async function declinePracticeRematch(requestId: string) {
   return parseServiceResult(rematchRequestSchema, data?.[0]);
 }
 
-export async function acceptPracticeRematch(
-  request: RematchRequest,
-  candidates: readonly string[],
-  idempotencyKey: string,
-) {
-  const id = `practice-rematch-${crypto.randomUUID()}`;
-  const answer = selectLegacyAnswer(id, 0, candidates);
-  const projection = legacyProjectionSchema.parse({
-    schemaVersion: 1,
-    authorityVersion: 0,
-    id,
-    scope: 'practice',
-    ranked: false,
-    ratingBucket: null,
-    matchmakingRequestId: null,
-    customGameCode: null,
-    dailyDateKey: null,
-    timeLimitMs: request.time_limit_ms,
-    mode: request.mode,
-    wordLength: request.word_length,
-    difficulty: 'standard',
-    hardMode: request.hard_mode,
-    goPuzzleCount: request.mode === 'go' ? request.go_puzzle_count : null,
-    status: 'playing',
-    currentTurn: 'player-one',
-    answer,
-    currentPuzzleIndex: 0,
-    holdUntil: null,
-    moves: [],
-    version: 0,
-  });
-  const { data, error } = await client().rpc('accept_practice_multiplayer_rematch', {
+export async function acceptPracticeRematch(request: RematchRequest, idempotencyKey: string) {
+  const { data, error } = await client().rpc('accept_practice_multiplayer_rematch_v3', {
     p_request_id: request.request_id,
-    p_game_projection: projection,
-    p_idempotency_key: idempotencyKey,
+    p_action_id: idempotencyKey,
   });
   if (error) throwServiceError(error);
   return parseServiceResult(rematchRequestSchema, data?.[0]);
@@ -1214,42 +1066,10 @@ export async function createPrivateRequest(input: {
   return parseServiceResult(privateRequestSchema, data?.[0]);
 }
 
-export async function acceptPrivateRequest(
-  request: PrivateRequest,
-  candidates: readonly string[],
-  idempotencyKey: string,
-) {
-  const id = `private-practice-${crypto.randomUUID()}`;
-  const answer = selectLegacyAnswer(id, 0, candidates);
-  const projection = legacyProjectionSchema.parse({
-    schemaVersion: 1,
-    authorityVersion: 0,
-    id,
-    scope: 'practice',
-    ranked: false,
-    ratingBucket: null,
-    matchmakingRequestId: null,
-    customGameCode: null,
-    dailyDateKey: null,
-    timeLimitMs:
-      request.time_limit_ms !== null && request.time_limit_ms > 0 ? request.time_limit_ms : null,
-    mode: request.mode,
-    wordLength: request.word_length,
-    difficulty: 'standard',
-    hardMode: request.hard_mode,
-    goPuzzleCount: request.mode === 'go' ? request.go_puzzle_count : null,
-    status: 'playing',
-    currentTurn: 'player-one',
-    answer,
-    currentPuzzleIndex: 0,
-    holdUntil: null,
-    moves: [],
-    version: 0,
-  });
-  const { data, error } = await client().rpc('accept_private_multiplayer_match_request_v2', {
+export async function acceptPrivateRequest(request: PrivateRequest, idempotencyKey: string) {
+  const { data, error } = await client().rpc('accept_private_multiplayer_match_request_v3', {
     p_request_id: request.request_id,
-    p_game_projection: projection,
-    p_idempotency_key: idempotencyKey,
+    p_action_id: idempotencyKey,
   });
   if (error) throwServiceError(error);
   return parseServiceResult(privateRequestSchema, data?.[0]);
@@ -1388,11 +1208,19 @@ export const spectatorGameSchema = z
 export type SpectatorGame = z.infer<typeof spectatorGameSchema>;
 
 export async function listPublicLive(gameId?: string) {
-  const { data, error } = await client().rpc('get_public_live_v1_spectator_games_v2', {
+  const legacy = await client().rpc('get_public_live_v1_spectator_games_v2', {
     p_limit: 50,
     p_terminal_window_seconds: 15,
     ...(gameId === undefined ? {} : { p_game_id: gameId }),
   });
-  if (error) throwServiceError(error);
-  return parseServiceResult(z.array(spectatorGameSchema), data);
+  if (legacy.error) throwServiceError(legacy.error);
+  const authoritative = await client().rpc('get_amordle_public_practice_spectator_v3', {
+    p_limit: 50,
+    p_terminal_window_seconds: 15,
+    ...(gameId === undefined ? {} : { p_game_id: gameId }),
+  });
+  if (authoritative.error) throwServiceError(authoritative.error);
+  const combined = [...(authoritative.data ?? []), ...(legacy.data ?? [])];
+  const unique = [...new Map(combined.map((row) => [row.id, row])).values()];
+  return parseServiceResult(z.array(spectatorGameSchema), unique);
 }

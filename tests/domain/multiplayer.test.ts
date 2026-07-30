@@ -68,4 +68,34 @@ describe('Ranked Practice queue contract', () => {
     expect(sql).toContain('request_two_id text not null unique');
     expect(sql).toContain('settle_amordle_ranked_practice_v2');
   });
+
+  it('extends private authority without exposing browser-authored answers or raw Daily ids', () => {
+    const sql = readFileSync(
+      'supabase/migrations/20260730193000_amordle_combat_authority_v3.sql',
+      'utf8',
+    );
+    for (const source of [
+      "'public_lobby'",
+      "'ranked_queue'",
+      "'daily_lobby'",
+      "'private_request'",
+      "'rematch'",
+    ]) {
+      expect(sql).toContain(source);
+    }
+    expect(sql).toContain('create_amordle_public_practice_v3');
+    expect(sql).toContain('join_amordle_public_practice_v3');
+    expect(sql).toContain('accept_private_multiplayer_match_request_v3');
+    expect(sql).toContain('accept_practice_multiplayer_rematch_v3');
+    expect(sql).toContain('get_amordle_ranked_daily_status_v3');
+    expect(sql).toContain('finalize_amordle_ranked_daily_v3');
+    expect(sql).toContain('get_amordle_public_practice_spectator_v3');
+    expect(sql).toContain('revoke all on schema brrrdle_private');
+    expect(sql).toContain('to anon, authenticated');
+    const statusBoundary = sql.slice(
+      sql.indexOf('create or replace function public.get_amordle_ranked_daily_status_v3'),
+      sql.indexOf('create or replace function public.finalize_amordle_ranked_daily_v3'),
+    );
+    expect(statusBoundary).not.toContain('playerUserIds');
+  });
 });

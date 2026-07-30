@@ -17,6 +17,7 @@ import {
   saveRankedDailyAction,
   listPracticeRematches,
   requestPracticeRematch,
+  settleLegacyRankedDaily,
   settleRankedDaily,
   settleRankedPractice,
 } from '@/adapters/supabase/combat';
@@ -238,21 +239,19 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
   }, [gameId, match, queryClient, words.data]);
 
   const settle = useMutation({
-    mutationFn: async () =>
-      match.data?.authority === 1
-        ? {
-            authority: 1 as const,
-            receipt: await settleRankedDaily(gameId, `ranked-daily:settle:${gameId}`),
-          }
-        : {
-            authority: 2 as const,
-            receipt: await settleRankedPractice(
-              gameId,
-              `amordle-ranked-practice-v2:settle:${gameId}`,
-            ),
-          },
+    mutationFn: async () => {
+      if (match.data?.authority === 1) {
+        await settleLegacyRankedDaily(gameId, `ranked-daily:settle:${gameId}`);
+        return { authority: 1 as const, receipt: null };
+      }
+      const receipt =
+        match.data?.game?.scope === 'daily'
+          ? await settleRankedDaily(gameId, `amordle-ranked-daily-v3:settle:${gameId}`)
+          : await settleRankedPractice(gameId, `amordle-ranked-practice-v2:settle:${gameId}`);
+      return { authority: 2 as const, receipt };
+    },
     onSuccess: (result) => {
-      if (result.authority === 2) {
+      if (result.authority === 2 && result.receipt) {
         setRankedPracticeSettlement(result.receipt);
         setMessage(
           `Rating ${result.receipt.ratingDelta >= 0 ? '+' : ''}${result.receipt.ratingDelta} · ${result.receipt.newRating}.`,
@@ -309,7 +308,6 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
         pending={command.isPending}
         wordsReady={Boolean(words.data)}
         message={message || (words.isError ? 'The published word list is unavailable.' : '')}
-        {...(words.data === undefined ? {} : { sanctionedWords: words.data })}
       />
     );
   }
@@ -479,7 +477,6 @@ function LegacyMatch({
   pending,
   wordsReady,
   message,
-  sanctionedWords,
 }: {
   row: LegacyRow;
   userId: string;
@@ -489,7 +486,6 @@ function LegacyMatch({
   pending: boolean;
   wordsReady: boolean;
   message: string;
-  sanctionedWords?: ReadonlySet<string>;
 }) {
   const game = row.projection;
   const currentPuzzleIndex = game.currentPuzzleIndex ?? 0;
@@ -581,22 +577,14 @@ function LegacyMatch({
           <Link className="button primary" href={`/combat/results/${game.id}`}>
             VIEW RESULT
           </Link>
-          {sanctionedWords && (
-            <RematchActions sourceGameId={game.id} sanctionedWords={sanctionedWords} />
-          )}
+          <RematchActions sourceGameId={game.id} />
         </div>
       )}
     </section>
   );
 }
 
-function RematchActions({
-  sourceGameId,
-  sanctionedWords,
-}: {
-  sourceGameId: string;
-  sanctionedWords: ReadonlySet<string>;
-}) {
+function RematchActions({ sourceGameId }: { sourceGameId: string }) {
   const queryClient = useQueryClient();
   const [message, setMessage] = useState('');
   const requests = useQuery({
@@ -618,13 +606,7 @@ function RematchActions({
       if (!request) throw new Error('Rematch request is unavailable.');
       if (action === 'cancel') return cancelPracticeRematch(request.request_id);
       if (action === 'decline') return declinePracticeRematch(request.request_id);
-      const answers = [...sanctionedWords];
-      if (!answers.length) throw new Error('The word list is unavailable.');
-      return acceptPracticeRematch(
-        request,
-        answers,
-        operationId(`rematch-accept:${request.request_id}`),
-      );
+      return acceptPracticeRematch(request, operationId(`rematch-accept:${request.request_id}`));
     },
     onSuccess: (request) => {
       void queryClient.invalidateQueries({
@@ -836,6 +818,7 @@ function AuthoritativeMatch({
               {settlement.ratingDelta})
             </p>
           )}
+          {!game.ranked && game.scope === 'practice' && <RematchActions sourceGameId={game.id} />}
         </div>
       )}
     </section>

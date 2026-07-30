@@ -1,6 +1,5 @@
 import { RouteHeader } from '@/components/route-states';
 import { PracticeLobby } from '@/features/combat/practice-lobby';
-import { loadWordBank } from '@/server/word-bank';
 
 export default async function CombatPracticePage({
   searchParams,
@@ -11,7 +10,6 @@ export default async function CombatPracticePage({
   const raw = Array.isArray(search.length) ? search.length[0] : search.length;
   const length = Number(raw ?? '5');
   const validLength = Number.isInteger(length) && length >= 2 && length <= 35 ? length : 5;
-  const bank = await loadWordBank(validLength);
   return (
     <div className="route-frame">
       <RouteHeader title="Practice COMBAT">
@@ -20,12 +18,7 @@ export default async function CombatPracticePage({
           turns are saved before the board advances.
         </p>
       </RouteHeader>
-      <PracticeLobby
-        length={validLength}
-        candidates={bank.answers
-          .slice(0, Math.max(1, Math.ceil(bank.answers.length * 0.7)))
-          .map((entry) => entry.word)}
-      />
+      <PracticeLobby length={validLength} />
     </div>
   );
 }

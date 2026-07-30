@@ -14,6 +14,7 @@ import {
   joinUnrankedPractice,
   listUnrankedPractice,
 } from '@/adapters/supabase/combat';
+import type { PublicPracticeLobby } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import {
   normalizeRankedPracticeConfig,
@@ -30,7 +31,6 @@ import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/mu
 
 interface Props {
   length: number;
-  candidates: string[];
 }
 
 export function PracticeLobby(props: Props) {
@@ -41,7 +41,7 @@ export function PracticeLobby(props: Props) {
   );
 }
 
-function PracticeLobbyInner({ length, candidates }: Props) {
+function PracticeLobbyInner({ length }: Props) {
   const auth = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -111,7 +111,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
 
   const lobbies = useQuery({
     queryKey: ['combat', 'practice', 'unranked', auth.user?.id],
-    queryFn: () => listUnrankedPractice(auth.user?.id ?? ''),
+    queryFn: listUnrankedPractice,
     enabled: Boolean(auth.user?.id),
     refetchInterval: 5_000,
   });
@@ -120,15 +120,14 @@ function PracticeLobbyInner({ length, candidates }: Props) {
     mutationFn: async () => {
       const userId = auth.user?.id;
       if (!userId) throw new Error('Sign in first.');
-      if (!candidates.length) throw new Error('No answer is available for this length.');
       return createUnrankedPractice({
-        userId,
         mode,
         wordLength: length,
         difficulty,
         hardMode,
         goPuzzleCount: mode === 'go' ? goCount : null,
-        candidates,
+        timeLimitMs,
+        creationKey: operationId('public-practice-create'),
       });
     },
     onSuccess: (row) => {
@@ -139,10 +138,10 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   });
 
   const join = useMutation({
-    mutationFn: async (gameId: string) => {
+    mutationFn: async (lobby: PublicPracticeLobby) => {
       const userId = auth.user?.id;
       if (!userId) throw new Error('Sign in first.');
-      return joinUnrankedPractice(gameId, userId);
+      return joinUnrankedPractice(lobby, operationId('public-practice-join'));
     },
     onSuccess: (row) => {
       void invalidateCombat();
@@ -271,7 +270,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   });
 
   const available = useMemo(
-    () => lobbies.data?.filter((row) => !row.canCancel) ?? [],
+    () => lobbies.data?.filter((row) => !row.capabilities.canCancel) ?? [],
     [lobbies.data],
   );
 
@@ -404,14 +403,15 @@ function PracticeLobbyInner({ length, candidates }: Props) {
               <div className="data-row" data-game-id={row.id} key={row.id}>
                 <div>
                   <strong>
-                    {row.mode.toUpperCase()} · {row.word_length} letters
+                    {row.mode.toUpperCase()} · {row.wordLength} letters
                   </strong>
                   <p>
                     {row.difficulty}
-                    {row.hard_mode ? ' · Hard Mode' : ''}
+                    {row.hardMode ? ' · Hard Mode' : ''}
+                    {row.timeLimitMs === 300_000 ? ' · 5:00 per player' : ' · untimed'}
                   </p>
                 </div>
-                <button disabled={join.isPending} onClick={() => join.mutate(row.id)}>
+                <button disabled={join.isPending} onClick={() => join.mutate(row)}>
                   Join
                 </button>
               </div>
