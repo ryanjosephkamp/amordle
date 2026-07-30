@@ -172,8 +172,22 @@ const queueStatusSchema = z
   })
   .strict();
 
+const rankedPracticeSettlementSchema = z
+  .object({
+    schemaVersion: z.literal(2),
+    matchResultId: z.string(),
+    bucket: z.string(),
+    outcome: z.enum(['win', 'loss', 'draw']),
+    oldRating: z.number().int(),
+    newRating: z.number().int(),
+    ratingDelta: z.number().int(),
+    idempotent: z.boolean(),
+  })
+  .strict();
+
 export type CombatProjection = z.infer<typeof combatProjectionSchema>;
 export type DailyLobby = z.infer<typeof dailyLobbySchema>;
+export type RankedPracticeSettlement = z.infer<typeof rankedPracticeSettlementSchema>;
 
 const rankedDailyMoveSchema = z
   .object({
@@ -503,7 +517,7 @@ export async function saveCombatCommand(input: {
 
 export async function settleRankedPractice(gameId: string, actionId: string) {
   return parseServiceResult(
-    z.unknown(),
+    rankedPracticeSettlementSchema,
     await jsonRpc('settle_amordle_ranked_practice_v2', {
       p_game_id: gameId,
       p_action_id: actionId,

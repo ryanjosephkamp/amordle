@@ -3,12 +3,46 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
+import { rankedPracticeQueueIntentSchema } from '@/adapters/session-combat';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
 
 describe('browser components', () => {
+  it('strictly parses account-scoped Ranked Practice queue intent', () => {
+    const intent = rankedPracticeQueueIntentSchema.parse({
+      schemaVersion: 2,
+      ownerUserId: '11111111-1111-4111-8111-111111111111',
+      requestId: 'request-1',
+      creationKey: 'create-1',
+      claimActionId: 'claim-1',
+      finalizeActionId: 'finalize-1',
+      createdAt: '2026-07-30T12:00:00.000Z',
+      config: {
+        mode: 'go',
+        wordLength: 7,
+        difficulty: 'expert',
+        hardMode: true,
+        goPuzzleCount: 10,
+        timeLimitMs: 300000,
+      },
+    });
+    expect(intent.ownerUserId).toBe('11111111-1111-4111-8111-111111111111');
+    expect(
+      rankedPracticeQueueIntentSchema.safeParse({
+        ...intent,
+        ownerUserId: 'not-a-user-id',
+      }).success,
+    ).toBe(false);
+    expect(
+      rankedPracticeQueueIntentSchema.safeParse({
+        ...intent,
+        unexpected: 'value',
+      }).success,
+    ).toBe(false);
+  });
+
   it('recognizes editable shortcut targets without treating ordinary game controls as fields', () => {
     const input = document.createElement('input');
     const editable = document.createElement('div');

@@ -10,25 +10,28 @@ import {
   createRankedPractice,
   createUnrankedPractice,
   finalizeRankedPractice,
+  getRankedPracticeStatus,
   joinUnrankedPractice,
   listUnrankedPractice,
 } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
+import {
+  normalizeRankedPracticeConfig,
+  readRankedPracticeQueueIntent,
+  removeRankedPracticeQueueIntent,
+  writeRankedPracticeQueueIntent,
+} from '@/adapters/session-combat';
+import type { RankedPracticeQueueIntent } from '@/adapters/session-combat';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 import type { Difficulty } from '@/domain/game';
+import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
+import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/multiplayer';
 
 interface Props {
   length: number;
   candidates: string[];
 }
-
-interface ProvisionalQueue {
-  requestId: string;
-  creationKey: string;
-}
-
-const provisionalKey = 'amordle:combat:ranked-practice:provisional';
 
 export function PracticeLobby(props: Props) {
   return (
@@ -46,7 +49,9 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
   const [hardMode, setHardMode] = useState(false);
   const [goCount, setGoCount] = useState<5 | 7 | 10>(5);
-  const [queue, setQueue] = useState<ProvisionalQueue | null>(null);
+  const [timeLimitMs, setTimeLimitMs] = useState<300_000 | null>(null);
+  const [queue, setQueue] = useState<RankedPracticeQueueIntent | null>(null);
+  const [queuePhase, setQueuePhase] = useState<RankedPracticeQueuePhase>('idle');
   const [message, setMessage] = useState('');
   const invalidateCombat = () =>
     Promise.all([
@@ -54,18 +59,55 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
     ]);
 
+  const currentConfig = useMemo<RankedPracticeConfig>(
+    () =>
+      normalizeRankedPracticeConfig({
+        mode,
+        wordLength: length,
+        difficulty,
+        hardMode,
+        goPuzzleCount: mode === 'go' ? goCount : null,
+        timeLimitMs,
+      }),
+    [difficulty, goCount, hardMode, length, mode, timeLimitMs],
+  );
+
   useEffect(() => {
-    const raw = sessionStorage.getItem(provisionalKey);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as ProvisionalQueue;
-      if (parsed.requestId && parsed.creationKey) {
-        queueMicrotask(() => setQueue(parsed));
-      }
-    } catch {
-      sessionStorage.removeItem(provisionalKey);
+    const userId = auth.user?.id;
+    queueMicrotask(() => {
+      setQueue(null);
+      setQueuePhase('idle');
+    });
+    if (!userId) return;
+    const restored = readRankedPracticeQueueIntent(userId);
+    if (restored.status === 'corrupt') {
+      queueMicrotask(() =>
+        setMessage('A damaged ranked search record was discarded. You can start a new search.'),
+      );
+      return;
     }
-  }, []);
+    if (restored.status !== 'valid') return;
+    if (restored.intent.config.wordLength !== length) {
+      queueMicrotask(() => {
+        setQueue(restored.intent);
+        setQueuePhase('queued');
+        setMessage(
+          `A ranked ${restored.intent.config.wordLength}-letter search is still recoverable on its matching Practice route.`,
+        );
+      });
+      return;
+    }
+    queueMicrotask(() => {
+      setMode(restored.intent.config.mode);
+      setDifficulty(restored.intent.config.difficulty);
+      setHardMode(restored.intent.config.hardMode);
+      setGoCount(restored.intent.config.goPuzzleCount ?? 5);
+      setTimeLimitMs(restored.intent.config.timeLimitMs);
+      setQueue(restored.intent);
+      setQueuePhase('queued');
+      setMessage('Restored your ranked search for this account and tab.');
+    });
+  }, [auth.user?.id, length]);
 
   const lobbies = useQuery({
     queryKey: ['combat', 'practice', 'unranked', auth.user?.id],
@@ -113,64 +155,118 @@ function PracticeLobbyInner({ length, candidates }: Props) {
   });
 
   const ranked = useMutation({
-    mutationFn: async () => {
-      const current = queue ?? {
-        requestId: '',
-        creationKey: operationId('ranked-practice-create'),
-      };
-      const created = current.requestId
-        ? current
-        : await createRankedPractice({
-            mode,
-            wordLength: length,
-            difficulty,
-            hardMode,
-            goPuzzleCount: mode === 'go' ? goCount : null,
-            timeLimitMs: null,
-            creationKey: current.creationKey,
-          }).then((result) => ({ requestId: result.requestId, creationKey: current.creationKey }));
-      setQueue(created);
-      sessionStorage.setItem(provisionalKey, JSON.stringify(created));
-      const claimed = await claimRankedPractice(created.requestId, operationId('ranked-claim'));
-      if (claimed.status === 'matched' && claimed.matchedGameId) {
-        const projection = await finalizeRankedPractice(
-          created.requestId,
-          claimed.matchedGameId,
-          operationId('ranked-finalize'),
-        );
-        sessionStorage.removeItem(provisionalKey);
-        setQueue(null);
-        return projection.id;
+    mutationFn: async (existing: RankedPracticeQueueIntent | null) => {
+      const userId = auth.user?.id;
+      if (!userId) throw new Error('Sign in first.');
+      let intent = existing;
+      let status;
+      if (!intent) {
+        const config = currentConfig;
+        const creationKey = operationId('ranked-practice-create');
+        const created = await createRankedPractice({
+          ...config,
+          creationKey,
+        });
+        intent = {
+          schemaVersion: 2,
+          ownerUserId: userId,
+          requestId: created.requestId,
+          creationKey,
+          claimActionId: operationId('ranked-practice-claim'),
+          finalizeActionId: operationId('ranked-practice-finalize'),
+          createdAt: new Date().toISOString(),
+          config,
+        };
+        setQueue(intent);
+        setQueuePhase('queued');
+        writeRankedPracticeQueueIntent(intent);
+        status = created;
+      } else {
+        if (
+          intent.ownerUserId !== userId ||
+          !sameRankedPracticeConfig(intent.config, currentConfig)
+        ) {
+          throw new Error('This ranked search belongs to another account or configuration.');
+        }
+        status = await getRankedPracticeStatus(intent.requestId);
       }
-      return null;
+
+      if (status.status === 'queued') {
+        status = await claimRankedPractice(intent.requestId, intent.claimActionId);
+      }
+      const transition = rankedPracticeQueueTransition(status.status);
+      if (transition.shouldFinalize) {
+        if (!status.matchedGameId) {
+          throw new Error('The match reservation is missing its game identifier.');
+        }
+        const projection = await finalizeRankedPractice(
+          intent.requestId,
+          status.matchedGameId,
+          intent.finalizeActionId,
+        );
+        return { intent, transition, gameId: projection.id };
+      }
+      return { intent, transition, gameId: null };
     },
-    onSuccess: (gameId) => {
+    onSuccess: ({ gameId, intent, transition }) => {
+      if (auth.user?.id !== intent.ownerUserId) return;
       void invalidateCombat();
-      if (gameId) router.push(`/combat/match/${gameId}`);
-      else setMessage('Searching for a compatible ranked opponent…');
+      setQueuePhase(transition.phase);
+      if (gameId) {
+        removeRankedPracticeQueueIntent(intent.ownerUserId);
+        setQueue(null);
+        router.push(`/combat/match/${gameId}`);
+        return;
+      }
+      if (transition.shouldClearIntent) {
+        removeRankedPracticeQueueIntent(intent.ownerUserId);
+        setQueue(null);
+      }
+      setMessage(queuePhaseMessage(transition.phase));
     },
-    onError: () =>
-      setMessage('Ranked matchmaking needs attention. Your request remains recoverable.'),
+    onError: (error) => {
+      const conflict =
+        error instanceof Error &&
+        /conflict|stale|version|configuration|another account/i.test(error.message);
+      setQueuePhase(conflict ? 'conflict' : 'failed');
+      setMessage(
+        conflict
+          ? 'The ranked search changed. Reread its authoritative status or cancel it.'
+          : 'Ranked matchmaking needs attention. Your account-scoped request remains recoverable.',
+      );
+    },
   });
 
+  const advanceRanked = ranked.mutate;
   useEffect(() => {
     if (!queue) return;
-    const timer = window.setInterval(() => {
-      if (!ranked.isPending) ranked.mutate();
+    if (queue.config.wordLength !== length) return;
+    if (!['queued', 'conflict', 'failed'].includes(queuePhase)) return;
+    const timer = window.setTimeout(() => {
+      if (!ranked.isPending && document.visibilityState === 'visible') {
+        advanceRanked(queue);
+      }
     }, 5_000);
-    return () => window.clearInterval(timer);
-  }, [queue, ranked]);
+    return () => window.clearTimeout(timer);
+  }, [advanceRanked, length, queue, queuePhase, ranked.isPending]);
 
   const cancelQueue = useMutation({
     mutationFn: async () => {
       if (!queue) return;
-      await cancelRankedPractice(queue.requestId, operationId('ranked-cancel'));
+      return cancelRankedPractice(queue.requestId, operationId('ranked-practice-cancel'));
     },
-    onSuccess: () => {
-      sessionStorage.removeItem(provisionalKey);
+    onSuccess: (status) => {
+      if (queue) removeRankedPracticeQueueIntent(queue.ownerUserId);
       setQueue(null);
-      setMessage('Ranked search cancelled.');
+      setQueuePhase(status?.status === 'expired' ? 'expired' : 'cancelled');
+      setMessage(
+        status?.status === 'expired' ? 'Ranked search expired.' : 'Ranked search cancelled.',
+      );
       void invalidateCombat();
+    },
+    onError: () => {
+      setQueuePhase('failed');
+      setMessage('The cancel request needs attention. The ranked search remains recoverable.');
     },
   });
 
@@ -192,7 +288,11 @@ function PracticeLobbyInner({ length, candidates }: Props) {
         >
           <label>
             Mode
-            <select value={mode} onChange={(event) => setMode(event.target.value as 'og' | 'go')}>
+            <select
+              value={mode}
+              disabled={Boolean(queue)}
+              onChange={(event) => setMode(event.target.value as 'og' | 'go')}
+            >
               <option value="og">OG</option>
               <option value="go">GO</option>
             </select>
@@ -201,6 +301,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
             Difficulty
             <select
               value={difficulty}
+              disabled={Boolean(queue)}
               onChange={(event) => setDifficulty(event.target.value as Difficulty)}
             >
               <option value="casual">Casual</option>
@@ -213,6 +314,7 @@ function PracticeLobbyInner({ length, candidates }: Props) {
               Puzzles
               <select
                 value={goCount}
+                disabled={Boolean(queue)}
                 onChange={(event) => setGoCount(Number(event.target.value) as 5 | 7 | 10)}
               >
                 <option value="5">5</option>
@@ -225,22 +327,43 @@ function PracticeLobbyInner({ length, candidates }: Props) {
             <input
               type="checkbox"
               checked={hardMode}
+              disabled={Boolean(queue)}
               onChange={(event) => setHardMode(event.target.checked)}
             />
             Hard Mode
           </label>
+          <label>
+            Ranked clock
+            <select
+              value={timeLimitMs ?? 'untimed'}
+              disabled={Boolean(queue)}
+              onChange={(event) => setTimeLimitMs(event.target.value === '300000' ? 300_000 : null)}
+            >
+              <option value="untimed">Untimed</option>
+              <option value="300000">Five minutes per player</option>
+            </select>
+          </label>
           <p className="mono">{length} letters</p>
           <div className="action-row">
-            <button className="primary" disabled={create.isPending}>
+            <button className="primary" disabled={create.isPending || Boolean(queue)}>
               {create.isPending ? 'Creating…' : 'Create public unranked'}
             </button>
             <button
               type="button"
               disabled={ranked.isPending || Boolean(queue)}
-              onClick={() => ranked.mutate()}
+              onClick={() => ranked.mutate(null)}
             >
-              {queue ? 'Searching…' : 'Find ranked match'}
+              {queue ? queueButtonLabel(queuePhase) : 'Find ranked match'}
             </button>
+            {queue && ['conflict', 'failed'].includes(queuePhase) && (
+              <button
+                type="button"
+                disabled={ranked.isPending}
+                onClick={() => ranked.mutate(queue)}
+              >
+                Reread status
+              </button>
+            )}
             {queue && (
               <button
                 type="button"
@@ -251,6 +374,18 @@ function PracticeLobbyInner({ length, candidates }: Props) {
               </button>
             )}
           </div>
+          {queue && (
+            <p className="mono" role="status">
+              {queue.config.mode.toUpperCase()} · {queue.config.wordLength} letters ·{' '}
+              {queue.config.difficulty} ·{' '}
+              {queue.config.timeLimitMs === null ? 'untimed' : '5:00 per player'}
+            </p>
+          )}
+          {queue && queue.config.wordLength !== length && (
+            <Link href={`/combat/practice?length=${queue.config.wordLength}`}>
+              Return to this ranked search
+            </Link>
+          )}
         </form>
         <p aria-live="polite">{message}</p>
       </section>
@@ -291,4 +426,41 @@ function PracticeLobbyInner({ length, candidates }: Props) {
       </section>
     </div>
   );
+}
+
+function queueButtonLabel(phase: RankedPracticeQueuePhase): string {
+  switch (phase) {
+    case 'matched':
+      return 'Opening match…';
+    case 'expired':
+      return 'Search expired';
+    case 'cancelled':
+      return 'Search cancelled';
+    case 'conflict':
+      return 'Status changed';
+    case 'failed':
+      return 'Search needs attention';
+    case 'queued':
+    case 'idle':
+      return 'Searching…';
+  }
+}
+
+function queuePhaseMessage(phase: RankedPracticeQueuePhase): string {
+  switch (phase) {
+    case 'expired':
+      return 'Ranked search expired. Your settings are ready for a new search.';
+    case 'cancelled':
+      return 'Ranked search was cancelled. Your settings are ready for a new search.';
+    case 'matched':
+      return 'A compatible opponent was found. Opening the match…';
+    case 'conflict':
+      return 'The ranked search changed. Its authoritative status was restored.';
+    case 'failed':
+      return 'Ranked matchmaking needs attention. Your request remains recoverable.';
+    case 'queued':
+      return 'Searching for a compatible ranked opponent…';
+    case 'idle':
+      return '';
+  }
 }

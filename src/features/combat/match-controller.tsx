@@ -24,6 +24,7 @@ import type {
   CombatProjection,
   LegacyRow,
   RankedDailyProjection,
+  RankedPracticeSettlement,
   RematchRequest,
 } from '@/adapters/supabase/combat';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
@@ -87,10 +88,12 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
+  const [rankedPracticeSettlement, setRankedPracticeSettlement] =
+    useState<RankedPracticeSettlement | null>(null);
   const match = useQuery({
     queryKey: ['combat', 'match', gameId],
     queryFn: () => loadMatch(gameId),
-    refetchInterval: 5_000,
+    refetchInterval: () => (document.visibilityState === 'visible' ? 5_000 : false),
   });
   const length = match.data?.game?.wordLength ?? match.data?.legacy?.projection.wordLength;
   const words = useQuery({
@@ -99,6 +102,7 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
     enabled: match.data?.authority === 0 && Boolean(length),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  const refetchMatch = match.refetch;
 
   useEffect(() => {
     const supabase = getBrowserSupabase();
@@ -123,6 +127,20 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
       void supabase.removeChannel(channel);
     };
   }, [gameId, queryClient]);
+
+  useEffect(() => {
+    const refetch = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void refetchMatch();
+      }
+    };
+    document.addEventListener('visibilitychange', refetch);
+    window.addEventListener('online', refetch);
+    return () => {
+      document.removeEventListener('visibilitychange', refetch);
+      window.removeEventListener('online', refetch);
+    };
+  }, [refetchMatch]);
 
   const command = useMutation({
     mutationFn: async (kind: 'guess' | 'advance' | 'cancel' | 'forfeit') => {
@@ -220,20 +238,43 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
   }, [gameId, match, queryClient, words.data]);
 
   const settle = useMutation({
-    mutationFn: () =>
+    mutationFn: async () =>
       match.data?.authority === 1
-        ? settleRankedDaily(gameId, `ranked-daily:settle:${gameId}`)
-        : settleRankedPractice(gameId, operationId('combat:settle')),
-    onSuccess: () => {
-      setMessage('Rating settled.');
+        ? {
+            authority: 1 as const,
+            receipt: await settleRankedDaily(gameId, `ranked-daily:settle:${gameId}`),
+          }
+        : {
+            authority: 2 as const,
+            receipt: await settleRankedPractice(
+              gameId,
+              `amordle-ranked-practice-v2:settle:${gameId}`,
+            ),
+          },
+    onSuccess: (result) => {
+      if (result.authority === 2) {
+        setRankedPracticeSettlement(result.receipt);
+        setMessage(
+          `Rating ${result.receipt.ratingDelta >= 0 ? '+' : ''}${result.receipt.ratingDelta} · ${result.receipt.newRating}.`,
+        );
+      } else {
+        setMessage('Rating settled.');
+      }
       void match.refetch();
+      void queryClient.invalidateQueries({ queryKey: ['history', auth.user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['stats', auth.user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['ratings', auth.user?.id] });
+      void queryClient.invalidateQueries({ queryKey: ['leaderboards'] });
     },
     onError: () => setMessage('Rating settlement needs attention. It is safe to retry.'),
   });
 
   useEffect(() => {
     const userId = auth.user?.id;
-    const row = userId && match.data ? combatHistoryRow(match.data, userId) : null;
+    const row =
+      userId && match.data
+        ? combatHistoryRow(match.data, userId, rankedPracticeSettlement?.ratingDelta ?? null)
+        : null;
     if (!row || !userId) return;
     void queueAccountCompletion(row)
       .then(() => reconcileCompletionOutbox(userId))
@@ -245,7 +286,7 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
         ]),
       )
       .catch(() => undefined);
-  }, [auth.user?.id, match.data, queryClient]);
+  }, [auth.user?.id, match.data, queryClient, rankedPracticeSettlement?.ratingDelta]);
 
   if (match.isPending) return <SkeletonRows label="Loading match…" rows={5} />;
   if (match.isError || !match.data) {
@@ -302,7 +343,15 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
         if (window.confirm('Forfeit this match? This cannot be reversed.'))
           command.mutate('forfeit');
       }}
+      cancel={() => {
+        if (
+          window.confirm('Cancel this match before play? No result or rating will be recorded.')
+        ) {
+          command.mutate('cancel');
+        }
+      }}
       settle={() => settle.mutate()}
+      settlement={rankedPracticeSettlement}
       pending={command.isPending || settle.isPending}
       message={message}
     />
@@ -637,7 +686,9 @@ function AuthoritativeMatch({
   setDraft,
   submit,
   forfeit,
+  cancel,
   settle,
+  settlement,
   pending,
   message,
 }: {
@@ -646,7 +697,9 @@ function AuthoritativeMatch({
   setDraft(value: string): void;
   submit(): void;
   forfeit(): void;
+  cancel(): void;
   settle(): void;
+  settlement: RankedPracticeSettlement | null;
   pending: boolean;
   message: string;
 }) {
@@ -738,7 +791,17 @@ function AuthoritativeMatch({
       <p className="game-message" aria-live="assertive">
         {message}
       </p>
-      {!terminal && game.capabilities.canForfeit && (
+      {!terminal && game.capabilities.canCancel && (
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={cancel}
+          disabled={pending}
+        >
+          CANCEL BEFORE PLAY
+        </button>
+      )}
+      {!terminal && !game.capabilities.canCancel && game.capabilities.canForfeit && (
         <button
           type="button"
           className="combat-secondary-action"
@@ -757,7 +820,7 @@ function AuthoritativeMatch({
           </p>
           {game.revealedAnswers && <p className="mono">{game.revealedAnswers.join(' · ')}</p>}
           <div className="action-row">
-            {game.capabilities.canSettleRating && (
+            {game.capabilities.canSettleRating && !settlement && (
               <button className="primary" onClick={settle} disabled={pending}>
                 UPDATE RATING
               </button>
@@ -766,6 +829,13 @@ function AuthoritativeMatch({
               VIEW RESULT
             </Link>
           </div>
+          {settlement && (
+            <p className="mono" role="status">
+              RATING {settlement.oldRating} → {settlement.newRating} (
+              {settlement.ratingDelta >= 0 ? '+' : ''}
+              {settlement.ratingDelta})
+            </p>
+          )}
         </div>
       )}
     </section>
@@ -920,7 +990,11 @@ function formatClock(milliseconds: number): string {
   return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
-function combatHistoryRow(state: MatchState, userId: string): AccountHistoryRow | null {
+function combatHistoryRow(
+  state: MatchState,
+  userId: string,
+  rankedPracticeRatingDelta: number | null,
+): AccountHistoryRow | null {
   if (state.authority === 2 && state.game?.outcome.terminal) {
     const game = state.game;
     const viewerSeat = game.viewerSeat;
@@ -956,7 +1030,7 @@ function combatHistoryRow(state: MatchState, userId: string): AccountHistoryRow 
         rewardCoins: 0,
         rewardXp: 0,
         ...(game.dailyDateKey === undefined ? {} : { dailyDate: game.dailyDateKey }),
-        ratingDelta: null,
+        ratingDelta: game.ranked ? rankedPracticeRatingDelta : null,
         ...(opponent
           ? {
               opponent: {
