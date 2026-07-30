@@ -26,6 +26,7 @@ const commands = [
   ['pnpm', ['test:e2e:fixture']],
   ['pnpm', ['test:e2e:services']],
   ['pnpm', ['test:visual']],
+  ['pnpm', ['verify:parity:acceptance']],
 ];
 for (const [command, args] of commands) {
   const result = spawnSync(command, args, {

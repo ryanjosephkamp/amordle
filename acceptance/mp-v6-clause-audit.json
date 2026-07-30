@@ -1,0 +1,1487 @@
+{
+  "schemaVersion": 1,
+  "source": "bootstrap/FUNCTIONAL-CONTRACT.md",
+  "generatedFromCommit": "working-tree-pre-migration",
+  "requirementCount": 73,
+  "requirements": [
+    {
+      "requirementId": "MP-01.a",
+      "requirementText": "Public unranked Practice OG/GO supports create, waiting, join,",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "multiplayer/game domains"],
+      "adapterRpcTableAuthority": [
+        "legacy async_multiplayer_games",
+        "authoritative COMBAT v2 RPC family"
+      ],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "H1 covers only public unranked OG; legacy answer authority is browser-visible.",
+      "proposedImplementationOrTestWork": "Move public unranked Practice to private answer/action authority; retain the v2 transcript and configuration model.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-01.b",
+      "requirementText": "Configuration supports lengths 2–35, difficulty, Hard Mode, GO",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "multiplayer/game domains"],
+      "adapterRpcTableAuthority": [
+        "legacy async_multiplayer_games",
+        "authoritative COMBAT v2 RPC family"
+      ],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Ranked clocks now configure untimed/5:00, but authoritative unranked Practice clocks remain unavailable.",
+      "proposedImplementationOrTestWork": "Move public unranked Practice to private answer/action authority; retain the v2 transcript and configuration model.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-01.c",
+      "requirementText": "Shared board rows are chronological and actor-attributed. Player",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "multiplayer/game domains"],
+      "adapterRpcTableAuthority": [
+        "legacy async_multiplayer_games",
+        "authoritative COMBAT v2 RPC family"
+      ],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Chronology is proven; owner-draft privacy lacks a complete cross-context assertion.",
+      "proposedImplementationOrTestWork": "Move public unranked Practice to private answer/action authority; retain the v2 transcript and configuration model.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-01.d",
+      "requirementText": "The initial shared board has six total playable rows and grows only",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "multiplayer/game domains"],
+      "adapterRpcTableAuthority": [
+        "legacy async_multiplayer_games",
+        "authoritative COMBAT v2 RPC family"
+      ],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Six initial rows render; growth beyond six is not acceptance-proven.",
+      "proposedImplementationOrTestWork": "Move public unranked Practice to private answer/action authority; retain the v2 transcript and configuration model.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-02.a",
+      "requirementText": "Unranked and ranked Daily OG/GO are four independent participation",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["unranked Daily v2 RPCs", "phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Four lanes render, but Ranked Daily participant projection is not privacy-safe.",
+      "proposedImplementationOrTestWork": "Replace raw-identity Ranked Daily projections and exercise all four UTC lanes independently.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-02.b",
+      "requirementText": "They are five-letter, UTC-keyed, clock-free, and contain no",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["unranked Daily v2 RPCs", "phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "UTC/clock-free intent exists but all four lanes lack authoritative hosted proof.",
+      "proposedImplementationOrTestWork": "Replace raw-identity Ranked Daily projections and exercise all four UTC lanes independently.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-02.c",
+      "requirementText": "Claims, answer namespaces, queues, results, and rating buckets remain",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["unranked Daily v2 RPCs", "phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Namespaces exist; raw participant identity crosses the Ranked Daily browser boundary.",
+      "proposedImplementationOrTestWork": "Replace raw-identity Ranked Daily projections and exercise all four UTC lanes independently.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-02.d",
+      "requirementText": "Queue controls run only on the Daily route and stop at UTC rollover.",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["unranked Daily v2 RPCs", "phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Route and rollover controls exist but rely on the blocked Ranked Daily status path.",
+      "proposedImplementationOrTestWork": "Replace raw-identity Ranked Daily projections and exercise all four UTC lanes independently.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-03.a",
+      "requirementText": "Each participant owns one canonical session/draft; rival actions are",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": [
+        "save_amordle_combat_command_v2",
+        "phase-55 action RPC",
+        "legacy direct table"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "v2 owns drafts; legacy public/private/rematch authority does not meet the same boundary.",
+      "proposedImplementationOrTestWork": "Use private owner drafts and expected-version authority everywhere; test conflict reread without draft loss.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-03.b",
+      "requirementText": "Writes use expected version/move evidence and reject stale mutation.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": [
+        "save_amordle_combat_command_v2",
+        "phase-55 action RPC",
+        "legacy direct table"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Expected version/move exists in authoritative paths without concurrent hosted proof.",
+      "proposedImplementationOrTestWork": "Use private owner drafts and expected-version authority everywhere; test conflict reread without draft loss.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-03.c",
+      "requirementText": "A conflict rereads durable state without fabricating success or",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": [
+        "save_amordle_combat_command_v2",
+        "phase-55 action RPC",
+        "legacy direct table"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Rejected mutations retain the draft and refetch, but the race is unproven.",
+      "proposedImplementationOrTestWork": "Use private owner drafts and expected-version authority everywhere; test conflict reread without draft loss.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-04.a",
+      "requirementText": "Both participants converge on the same accepted chronological rows,",
+      "status": "proven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "MoveBoards", "game evidence domain"],
+      "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Exact automated and hosted evidence satisfies this complete clause.",
+      "knownDefectOrMissingProof": "H1 and the browser transcript test prove shared rows, actor labels and keyboard evidence.",
+      "proposedImplementationOrTestWork": "Prove duplicate invalidation, shared keyboard convergence and reload without replay.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-04.b",
+      "requirementText": "Realtime invalidates durable reads; duplicate events are harmless.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "MoveBoards", "game evidence domain"],
+      "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Realtime invalidates durable reads; duplicate event behavior is unproven.",
+      "proposedImplementationOrTestWork": "Prove duplicate invalidation, shared keyboard convergence and reload without replay.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-04.c",
+      "requirementText": "Restoring a board does not replay every old animation or sound.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "MoveBoards", "game evidence domain"],
+      "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Hydration does not deliberately replay effects, but no exact restoration test exists.",
+      "proposedImplementationOrTestWork": "Prove duplicate invalidation, shared keyboard convergence and reload without replay.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-05.a",
+      "requirementText": "Both clients share the current puzzle index, two-second solved hold,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "game/GO domains"],
+      "adapterRpcTableAuthority": ["authoritative COMBAT v2 command and projection RPCs"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "v2 implements puzzle index, hold, seed and advancement without hosted GO proof.",
+      "proposedImplementationOrTestWork": "Add deterministic and hosted GO hold, seed, advancement, skip, point and definition scenarios.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-05.b",
+      "requirementText": "Prior answers are rescored against the current answer and are not",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "game/GO domains"],
+      "adapterRpcTableAuthority": ["authoritative COMBAT v2 command and projection RPCs"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "v2 creates non-move seeded rows; rescoring/points proof is absent.",
+      "proposedImplementationOrTestWork": "Add deterministic and hosted GO hold, seed, advancement, skip, point and definition scenarios.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-05.c",
+      "requirementText": "Turn ownership after advancement, exhausted-player skipping, final",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "game/GO domains"],
+      "adapterRpcTableAuthority": ["authoritative COMBAT v2 command and projection RPCs"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Turn, skip and outcome SQL exists without two-client GO acceptance.",
+      "proposedImplementationOrTestWork": "Add deterministic and hosted GO hold, seed, advancement, skip, point and definition scenarios.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-06.a",
+      "requirementText": "Server or retained multiplayer authority validates Hard Mode and",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "clock/game domains"],
+      "adapterRpcTableAuthority": [
+        "authoritative COMBAT v2 command RPCs",
+        "legacy Practice projection"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "v2 validates server-side; legacy Practice still validates in the browser path.",
+      "proposedImplementationOrTestWork": "Prove server Hard Mode and clocks; add authoritative unranked clocks only through the migration packet.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-06.b",
+      "requirementText": "Ranked Practice permits only untimed or five-minute lanes. Unranked",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "clock/game domains"],
+      "adapterRpcTableAuthority": [
+        "authoritative COMBAT v2 command RPCs",
+        "legacy Practice projection"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Ranked untimed/5:00 is now selectable; unranked documented clocks remain blocked.",
+      "proposedImplementationOrTestWork": "Prove server Hard Mode and clocks; add authoritative unranked clocks only through the migration packet.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-06.c",
+      "requirementText": "Only the active player's durable match clock runs; GO does not reset",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "clock/game domains"],
+      "adapterRpcTableAuthority": [
+        "authoritative COMBAT v2 command RPCs",
+        "legacy Practice projection"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Durable active-player clock SQL exists without complete GO/reconnect proof.",
+      "proposedImplementationOrTestWork": "Prove server Hard Mode and clocks; add authoritative unranked clocks only through the migration packet.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-06.d",
+      "requirementText": "Display time derives from server timestamps and reconciles after",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["PracticeLobby", "MatchController", "clock/game domains"],
+      "adapterRpcTableAuthority": [
+        "authoritative COMBAT v2 command RPCs",
+        "legacy Practice projection"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Display derives from server time; sleep/reconnect acceptance is absent.",
+      "proposedImplementationOrTestWork": "Prove server Hard Mode and clocks; add authoritative unranked clocks only through the migration packet.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-07.a",
+      "requirementText": "Before-play cancellation creates no winner, answer reveal, rating,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]", "/combat/results/[resultId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": ["save_amordle_combat_command_v2", "settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Authoritative before-play cancel is now exposed; no hosted cancellation proof.",
+      "proposedImplementationOrTestWork": "Exercise cancellation, forfeit, timeout, solve, points, draw and replay precedence.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-07.b",
+      "requirementText": "After-play forfeit awards the opponent; timeout is materialized",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]", "/combat/results/[resultId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": ["save_amordle_combat_command_v2", "settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Forfeit/timeout precedence exists without a late-command race scenario.",
+      "proposedImplementationOrTestWork": "Exercise cancellation, forfeit, timeout, solve, points, draw and replay precedence.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-07.c",
+      "requirementText": "Normal OG solve, exhaustion/points, and draw rules follow the",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]", "/combat/results/[resultId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": ["save_amordle_combat_command_v2", "settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Canonical solve/points/draw SQL exists without exhaustive acceptance.",
+      "proposedImplementationOrTestWork": "Exercise cancellation, forfeit, timeout, solve, points, draw and replay precedence.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-07.d",
+      "requirementText": "Terminal writes, results, and settlement are idempotent. A repeated",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/match/[matchId]", "/combat/results/[resultId]"],
+      "controllerDomainOwner": ["MatchController", "multiplayer domain"],
+      "adapterRpcTableAuthority": ["save_amordle_combat_command_v2", "settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Idempotency exists without replay and compatible-conflict hosted evidence.",
+      "proposedImplementationOrTestWork": "Exercise cancellation, forfeit, timeout, solve, points, draw and replay precedence.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-08.a",
+      "requirementText": "Queue compatibility includes mode, length, difficulty, Hard Mode, GO",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice"],
+      "controllerDomainOwner": ["PracticeLobby", "multiplayer domain", "session-combat adapter"],
+      "adapterRpcTableAuthority": [
+        "create/claim/status/cancel/finalize_amordle_ranked_practice_v2",
+        "tab-scoped queue intent"
+      ],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [
+        "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
+        "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
+        "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
+        "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "The UI and queue intent now retain the full compatibility tuple.",
+      "proposedImplementationOrTestWork": "Complete exact configuration, account/tab recovery and every queue terminal or retry state.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-08.b",
+      "requirementText": "Matching is FIFO within the supported search policy and permits",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice"],
+      "controllerDomainOwner": ["PracticeLobby", "multiplayer domain", "session-combat adapter"],
+      "adapterRpcTableAuthority": [
+        "create/claim/status/cancel/finalize_amordle_ranked_practice_v2",
+        "tab-scoped queue intent"
+      ],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [
+        "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
+        "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Exact-bucket FIFO and repeat opponents are present; concurrency is only statically traced.",
+      "proposedImplementationOrTestWork": "Complete exact configuration, account/tab recovery and every queue terminal or retry state.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-08.c",
+      "requirementText": "Create, claim, finalization, cancellation, expiry, reload, and search",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice"],
+      "controllerDomainOwner": ["PracticeLobby", "multiplayer domain", "session-combat adapter"],
+      "adapterRpcTableAuthority": [
+        "create/claim/status/cancel/finalize_amordle_ranked_practice_v2",
+        "tab-scoped queue intent"
+      ],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [
+        "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
+        "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
+        "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
+        "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Queue intent is account/tab/config scoped with explicit terminal states; hosted proof is pending.",
+      "proposedImplementationOrTestWork": "Complete exact configuration, account/tab recovery and every queue terminal or retry state.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-08.d",
+      "requirementText": "Two callers cannot create two games for one match.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/practice"],
+      "controllerDomainOwner": ["PracticeLobby", "multiplayer domain", "session-combat adapter"],
+      "adapterRpcTableAuthority": [
+        "create/claim/status/cancel/finalize_amordle_ranked_practice_v2",
+        "tab-scoped queue intent"
+      ],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [
+        "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
+        "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Reservation locks and uniqueness exist without a two-claim invariant probe.",
+      "proposedImplementationOrTestWork": "Complete exact configuration, account/tab recovery and every queue terminal or retry state.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-09.a",
+      "requirementText": "Ranked Practice and ranked Daily OG/GO use their defined separate",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/history", "/stats", "/leaderboards"],
+      "controllerDomainOwner": ["MatchController", "rating/account-continuity domains"],
+      "adapterRpcTableAuthority": ["settle_amordle_ranked_practice_v2", "phase-55 settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Separate stored/application buckets exist without full Practice/Daily scenario coverage.",
+      "proposedImplementationOrTestWork": "Strictly parse settlement and prove exact result/transaction/profile reconciliation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-09.b",
+      "requirementText": "Elo initial value, provisional K factor, standard K factor, expected",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/history", "/stats", "/leaderboards"],
+      "controllerDomainOwner": ["MatchController", "rating/account-continuity domains"],
+      "adapterRpcTableAuthority": ["settle_amordle_ranked_practice_v2", "phase-55 settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Current unit vectors cover provisional and established factors only.",
+      "proposedImplementationOrTestWork": "Strictly parse settlement and prove exact result/transaction/profile reconciliation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-09.c",
+      "requirementText": "Settlement creates exactly one match result, two player results,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/history", "/stats", "/leaderboards"],
+      "controllerDomainOwner": ["MatchController", "rating/account-continuity domains"],
+      "adapterRpcTableAuthority": ["settle_amordle_ranked_practice_v2", "phase-55 settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Settlement SQL creates exact records; concurrent/retry proof is absent.",
+      "proposedImplementationOrTestWork": "Strictly parse settlement and prove exact result/transaction/profile reconciliation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-09.d",
+      "requirementText": "Leaderboard and result deltas reconcile after settlement; unranked",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/history", "/stats", "/leaderboards"],
+      "controllerDomainOwner": ["MatchController", "rating/account-continuity domains"],
+      "adapterRpcTableAuthority": ["settle_amordle_ranked_practice_v2", "phase-55 settlement RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Ranked Practice receipt is now strict and reaches History; hosted reconciliation is pending.",
+      "proposedImplementationOrTestWork": "Strictly parse settlement and prove exact result/transaction/profile reconciliation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-10.a",
+      "requirementText": "Eligible public profiles can create OG/GO requests with supported",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["RequestCenter", "MatchController"],
+      "adapterRpcTableAuthority": [
+        "private-request RPCs",
+        "legacy browser-created game projection"
+      ],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Request creation exists with incomplete supported settings.",
+      "proposedImplementationOrTestWork": "Move accepted private-game creation to server answer authority and test the full lifecycle.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-10.b",
+      "requirementText": "Incoming/outgoing views are newest-first and distinguish pending,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["RequestCenter", "MatchController"],
+      "adapterRpcTableAuthority": [
+        "private-request RPCs",
+        "legacy browser-created game projection"
+      ],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Statuses and ordering exist without hosted lifecycle coverage.",
+      "proposedImplementationOrTestWork": "Move accepted private-game creation to server answer authority and test the full lifecycle.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-10.c",
+      "requirementText": "Accept creates one durable restricted game and routes both players;",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["RequestCenter", "MatchController"],
+      "adapterRpcTableAuthority": [
+        "private-request RPCs",
+        "legacy browser-created game projection"
+      ],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Accept creates an answer-bearing browser projection.",
+      "proposedImplementationOrTestWork": "Move accepted private-game creation to server answer authority and test the full lifecycle.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-10.d",
+      "requirementText": "The first accepted turn persists and reloads normally.",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["RequestCenter", "MatchController"],
+      "adapterRpcTableAuthority": [
+        "private-request RPCs",
+        "legacy browser-created game projection"
+      ],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "First-turn persistence cannot be accepted on the current answer-bearing authority.",
+      "proposedImplementationOrTestWork": "Move accepted private-game creation to server answer authority and test the full lifecycle.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-11.a",
+      "requirementText": "List participant-owned waiting, playing, or holding games only.",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/active"],
+      "controllerDomainOwner": ["ActiveGames"],
+      "adapterRpcTableAuthority": ["list_amordle_combat_active_v2", "legacy participant list"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Active currently includes terminal rows.",
+      "proposedImplementationOrTestWork": "List only participant waiting/playing/holding rows and remove terminal rows immediately.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-11.b",
+      "requirementText": "Display lane, opponent public summary, turn/status cue, and resume",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/active"],
+      "controllerDomainOwner": ["ActiveGames"],
+      "adapterRpcTableAuthority": ["list_amordle_combat_active_v2", "legacy participant list"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Lane/status/resume exists; sanitized opponent summary is not fully proven.",
+      "proposedImplementationOrTestWork": "List only participant waiting/playing/holding rows and remove terminal rows immediately.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-11.c",
+      "requirementText": "Completed/cancelled games leave Active immediately after durable",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/active"],
+      "controllerDomainOwner": ["ActiveGames"],
+      "adapterRpcTableAuthority": ["list_amordle_combat_active_v2", "legacy participant list"],
+      "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Completed/cancelled games do not leave Active immediately.",
+      "proposedImplementationOrTestWork": "List only participant waiting/playing/holding rows and remove terminal rows immediately.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-12.a",
+      "requirementText": "List only compatible joinable public games with real creator public",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["OpenLobbies"],
+      "adapterRpcTableAuthority": ["public Practice legacy rows", "unranked Daily lobby RPCs"],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Practice lobby lacks an authoritative sanctioned creator summary and block compatibility.",
+      "proposedImplementationOrTestWork": "Return sanctioned creator summaries and compatibility from an authoritative lobby projection.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-12.b",
+      "requirementText": "Owners can cancel eligible waiting lobbies; others can join once.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["OpenLobbies"],
+      "adapterRpcTableAuthority": ["public Practice legacy rows", "unranked Daily lobby RPCs"],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Join/cancel exists without Practice and Daily race coverage.",
+      "proposedImplementationOrTestWork": "Return sanctioned creator summaries and compatibility from an authoritative lobby projection.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-12.c",
+      "requirementText": "Loading, empty, incompatible legacy, service error, and integrity",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["OpenLobbies"],
+      "adapterRpcTableAuthority": ["public Practice legacy rows", "unranked Daily lobby RPCs"],
+      "relevantMigrations": [
+        "20260605043000_phase23_stage4_lobby_cancel_spectators.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Tolerant row parsing exists; all distinct states lack exact assertions.",
+      "proposedImplementationOrTestWork": "Return sanctioned creator summaries and compatibility from an authoritative lobby projection.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-13.a",
+      "requirementText": "Live lists only spectator-eligible public Practice games and bounded",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live"],
+      "controllerDomainOwner": ["LiveGames"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Spectator v3 eligibility exists without bounded terminal breadth proof.",
+      "proposedImplementationOrTestWork": "Add sanctioned profile links and prove list/exact-ID allow and deny behavior.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-13.b",
+      "requirementText": "Daily, private, rematch, custom, waiting, or otherwise restricted",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live"],
+      "controllerDomainOwner": ["LiveGames"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Restricted sources are filtered; exact-ID denial matrix is unproven.",
+      "proposedImplementationOrTestWork": "Add sanctioned profile links and prove list/exact-ID allow and deny behavior.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-13.c",
+      "requirementText": "Participant links use sanctioned public profiles only.",
+      "status": "missing",
+      "frontendEntryPoint": ["/combat/live"],
+      "controllerDomainOwner": ["LiveGames"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Participant labels are not consistently sanctioned public-profile links.",
+      "proposedImplementationOrTestWork": "Add sanctioned profile links and prove list/exact-ID allow and deny behavior.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-14.a",
+      "requirementText": "Spectators receive scored accepted moves, public player summaries,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["LiveGames", "spectator transcript"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "H1 covers one authenticated spectator only.",
+      "proposedImplementationOrTestWork": "Prove participant/anonymous/authenticated convergence and every private-field denial.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-14.b",
+      "requirementText": "They receive no keyboard, draft, mutation capability, unsolved",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["LiveGames", "spectator transcript"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Projection is sanitized but the complete denial probe is absent.",
+      "proposedImplementationOrTestWork": "Prove participant/anonymous/authenticated convergence and every private-field denial.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-14.c",
+      "requirementText": "Participant and anonymous/authenticated spectator projections",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["LiveGames", "spectator transcript"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Participant/anonymous/authenticated convergence is unproven.",
+      "proposedImplementationOrTestWork": "Prove participant/anonymous/authenticated convergence and every private-field denial.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-14.d",
+      "requirementText": "Mobile presentation is gameplay-first; privacy explanation is a",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/live", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["LiveGames", "spectator transcript"],
+      "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
+      "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Responsive presentation exists without dedicated spectator mobile acceptance.",
+      "proposedImplementationOrTestWork": "Prove participant/anonymous/authenticated convergence and every private-field denial.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-15.a",
+      "requirementText": "Active games poll durably at five seconds when visible; idle/list",
+      "status": "partial-defective",
+      "frontendEntryPoint": [
+        "/combat/active",
+        "/combat/lobby",
+        "/combat/live",
+        "/combat/match/[matchId]"
+      ],
+      "controllerDomainOwner": ["COMBAT Query controllers", "Realtime invalidation coordinator"],
+      "adapterRpcTableAuthority": ["durable query RPCs", "Realtime invalidation"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260724223000_amordle_live_spectator_privacy_v3.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Match uses five seconds; Active and Live do not follow the exact game/list cadence.",
+      "proposedImplementationOrTestWork": "Centralize five-second visible-game and thirty-second list recovery triggers.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-15.b",
+      "requirementText": "Route entry, visibility gain, reconnect, mutation success, conflict,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": [
+        "/combat/active",
+        "/combat/lobby",
+        "/combat/live",
+        "/combat/match/[matchId]"
+      ],
+      "controllerDomainOwner": ["COMBAT Query controllers", "Realtime invalidation coordinator"],
+      "adapterRpcTableAuthority": ["durable query RPCs", "Realtime invalidation"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260724223000_amordle_live_spectator_privacy_v3.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Match now rereads on visibility/reconnect; all COMBAT surfaces are not centralized.",
+      "proposedImplementationOrTestWork": "Centralize five-second visible-game and thirty-second list recovery triggers.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-15.c",
+      "requirementText": "Background reconciliation never flashes unrelated controls, resets",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": [
+        "/combat/active",
+        "/combat/lobby",
+        "/combat/live",
+        "/combat/match/[matchId]"
+      ],
+      "controllerDomainOwner": ["COMBAT Query controllers", "Realtime invalidation coordinator"],
+      "adapterRpcTableAuthority": ["durable query RPCs", "Realtime invalidation"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260724223000_amordle_live_spectator_privacy_v3.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Draft preservation exists without background-race proof.",
+      "proposedImplementationOrTestWork": "Centralize five-second visible-game and thirty-second list recovery triggers.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-15.d",
+      "requirementText": "Same-tab participant recovery meets the shared five-second contract.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": [
+        "/combat/active",
+        "/combat/lobby",
+        "/combat/live",
+        "/combat/match/[matchId]"
+      ],
+      "controllerDomainOwner": ["COMBAT Query controllers", "Realtime invalidation coordinator"],
+      "adapterRpcTableAuthority": ["durable query RPCs", "Realtime invalidation"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260724223000_amordle_live_spectator_privacy_v3.sql"
+      ],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "H1 proves refresh recovery, not the bounded five-second contract.",
+      "proposedImplementationOrTestWork": "Centralize five-second visible-game and thirty-second list recovery triggers.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-16.a",
+      "requirementText": "Project private-request, match, turn, result, and rematch events once",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["global alerts", "/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["NotificationCenter", "notifications domain"],
+      "adapterRpcTableAuthority": ["request, match and rematch durable projections"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
+      ],
+      "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "H1 covers match/turn/result/rematch; private-request transitions are absent.",
+      "proposedImplementationOrTestWork": "Exercise request/match/turn/result/rematch exactly once with opt-out and block isolation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-16.b",
+      "requirementText": "Respect opt-out, notification preferences, and blocks.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["global alerts", "/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["NotificationCenter", "notifications domain"],
+      "adapterRpcTableAuthority": ["request, match and rematch durable projections"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Preferences exist; opt-out/block matrix is unproven.",
+      "proposedImplementationOrTestWork": "Exercise request/match/turn/result/rematch exactly once with opt-out and block isolation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-16.c",
+      "requirementText": "Actions route to the exact request center, game, or result and close",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["global alerts", "/combat/lobby", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["NotificationCenter", "notifications domain"],
+      "adapterRpcTableAuthority": ["request, match and rematch durable projections"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql",
+        "20260724222000_amordle_authoritative_combat_v2.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Action routes exist without every transition assertion.",
+      "proposedImplementationOrTestWork": "Exercise request/match/turn/result/rematch exactly once with opt-out and block isolation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-17.a",
+      "requirementText": "Results preserve winner/draw, points, settings, answer reveal at the",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "RematchActions"],
+      "adapterRpcTableAuthority": ["settlement RPCs", "legacy rematch RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Results omit complete definitions, rating, settings and sanctioned player links.",
+      "proposedImplementationOrTestWork": "Build one complete result projection and server-owned rematch game creation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-17.b",
+      "requirementText": "Eligible Practice games can request/accept/decline/cancel one rematch",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "RematchActions"],
+      "adapterRpcTableAuthority": ["settlement RPCs", "legacy rematch RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Rematch acceptance creates an answer-bearing browser projection.",
+      "proposedImplementationOrTestWork": "Build one complete result projection and server-owned rematch game creation.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-17.c",
+      "requirementText": "Search again, play Daily, view rival, History, and Active actions",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/results/[resultId]", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["MatchController", "RematchActions"],
+      "adapterRpcTableAuthority": ["settlement RPCs", "legacy rematch RPCs"],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Contextual postgame actions are incomplete.",
+      "proposedImplementationOrTestWork": "Build one complete result projection and server-owned rematch game creation.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-18.a",
+      "requirementText": "Ranked Daily OG and GO use independent authenticated FIFO queues,",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "FIFO lanes exist but status returns raw participant Auth UUIDs.",
+      "proposedImplementationOrTestWork": "Add sanitized queue/participant/finalization RPCs and remove browser projection authority.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-18.b",
+      "requirementText": "Two compatible accounts pair exactly once and both reach the same",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Pair locking exists; browser finalization constructs the public projection.",
+      "proposedImplementationOrTestWork": "Add sanitized queue/participant/finalization RPCs and remove browser projection authority.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-18.c",
+      "requirementText": "Server-authorized actions, finalization, settlement, cleanup,",
+      "status": "migration-blocked",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Reload/action/settlement paths expose raw identity through the projection.",
+      "proposedImplementationOrTestWork": "Add sanitized queue/participant/finalization RPCs and remove browser projection authority.",
+      "schemaChangeRequired": true
+    },
+    {
+      "requirementId": "MP-18.d",
+      "requirementText": "Account-scoped queue intent cannot be adopted or cleared by another",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/daily", "/combat/match/[matchId]"],
+      "controllerDomainOwner": ["DailyLobby", "MatchController"],
+      "adapterRpcTableAuthority": ["phase-55 ranked Daily RPC family"],
+      "relevantMigrations": [
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [
+        "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
+        "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent"
+      ],
+      "hostedEvidence": [],
+      "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
+      "knownDefectOrMissingProof": "Queue intent is account/date scoped without account-switch acceptance.",
+      "proposedImplementationOrTestWork": "Add sanitized queue/participant/finalization RPCs and remove browser projection authority.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-19.a",
+      "requirementText": "Opt-out, directional blocking, uniqueness, pair locking,",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["RequestCenter"],
+      "adapterRpcTableAuthority": ["private-request preference/block/anti-spam RPCs"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Server policies exist without full hosted protection coverage.",
+      "proposedImplementationOrTestWork": "Add block-list/unblock UI and concurrent reverse-request tests.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-19.b",
+      "requirementText": "Reverse-direction and concurrent requests cannot bypass limits.",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["RequestCenter"],
+      "adapterRpcTableAuthority": ["private-request preference/block/anti-spam RPCs"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Pair locking exists without reverse/concurrent probes.",
+      "proposedImplementationOrTestWork": "Add block-list/unblock UI and concurrent reverse-request tests.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-19.c",
+      "requirementText": "Block/unblock and preference changes reconcile before new requests",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/combat/lobby"],
+      "controllerDomainOwner": ["RequestCenter"],
+      "adapterRpcTableAuthority": ["private-request preference/block/anti-spam RPCs"],
+      "relevantMigrations": [
+        "20260701221500_phase40_private_match_requests.sql",
+        "20260711001811_phase56_private_request_center_and_anti_spam.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "No complete block-list/unblock UI and reconciliation path exists.",
+      "proposedImplementationOrTestWork": "Add block-list/unblock UI and concurrent reverse-request tests.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-20.a",
+      "requirementText": "After authenticated refresh-to-Home, a same-account synced",
+      "status": "missing",
+      "frontendEntryPoint": ["/", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT recovery coordinator"],
+      "adapterRpcTableAuthority": [
+        "account-namespaced local read projection",
+        "participant repository reads"
+      ],
+      "relevantMigrations": [],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "No same-tab participant provisional projection exists.",
+      "proposedImplementationOrTestWork": "Add display-only same-tab same-account provisional recovery with explicit durable supersession.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-20.b",
+      "requirementText": "Explicit same-account repository authority supersedes it and cannot",
+      "status": "missing",
+      "frontendEntryPoint": ["/", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT recovery coordinator"],
+      "adapterRpcTableAuthority": [
+        "account-namespaced local read projection",
+        "participant repository reads"
+      ],
+      "relevantMigrations": [],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "No durable-authority supersession coordinator exists.",
+      "proposedImplementationOrTestWork": "Add display-only same-tab same-account provisional recovery with explicit durable supersession.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-20.c",
+      "requirementText": "Guest, cross-account, queue, claim, settlement, and write authority",
+      "status": "missing",
+      "frontendEntryPoint": ["/", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT recovery coordinator"],
+      "adapterRpcTableAuthority": [
+        "account-namespaced local read projection",
+        "participant repository reads"
+      ],
+      "relevantMigrations": [],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "The required exclusion boundary has no implementation or test.",
+      "proposedImplementationOrTestWork": "Add display-only same-tab same-account provisional recovery with explicit durable supersession.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-21.a",
+      "requirementText": "Startup reads participant-owned rows through explicit participant",
+      "status": "partial-defective",
+      "frontendEntryPoint": ["/", "/combat/daily", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT startup coordinator"],
+      "adapterRpcTableAuthority": [
+        "participant list RPCs",
+        "separate waiting lane",
+        "word-list adapter"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Participant reads exist without an explicit participant-first/waiting merge.",
+      "proposedImplementationOrTestWork": "Add generation guards, coalescing and participant-first startup proof.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-21.b",
+      "requirementText": "Concurrent/Realtime refreshes coalesce and stale generations cannot",
+      "status": "missing",
+      "frontendEntryPoint": ["/", "/combat/daily", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT startup coordinator"],
+      "adapterRpcTableAuthority": [
+        "participant list RPCs",
+        "separate waiting lane",
+        "word-list adapter"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "COMBAT startup has no epoch/coalescing guard for stale generations.",
+      "proposedImplementationOrTestWork": "Add generation guards, coalescing and participant-first startup proof.",
+      "schemaChangeRequired": false
+    },
+    {
+      "requirementId": "MP-21.c",
+      "requirementText": "Cold answerless ranked Daily hydration prepares only the required",
+      "status": "implemented-unproven",
+      "frontendEntryPoint": ["/", "/combat/daily", "/combat/active"],
+      "controllerDomainOwner": ["HomeAttention", "COMBAT startup coordinator"],
+      "adapterRpcTableAuthority": [
+        "participant list RPCs",
+        "separate waiting lane",
+        "word-list adapter"
+      ],
+      "relevantMigrations": [
+        "20260724222000_amordle_authoritative_combat_v2.sql",
+        "20260710061039_phase55_ranked_daily_multiplayer.sql",
+        "20260710180608_phase55_ranked_daily_contract_repair.sql",
+        "20260710184116_phase55_ranked_daily_cleanup_orphan_repair.sql",
+        "20260710184922_phase55_ranked_daily_finalization_authority_repair.sql"
+      ],
+      "automatedEvidence": [],
+      "hostedEvidence": [],
+      "actualEvidence": "No clause-specific automated or hosted acceptance evidence exists.",
+      "knownDefectOrMissingProof": "Home word-bank denial is proven elsewhere; cold Ranked Daily preparation is not.",
+      "proposedImplementationOrTestWork": "Add generation guards, coalescing and participant-first startup proof.",
+      "schemaChangeRequired": false
+    }
+  ]
+}
