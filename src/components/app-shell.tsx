@@ -2,21 +2,22 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import type { PropsWithChildren } from 'react';
+import {
+  directNavigationShortcuts,
+  hasActiveModal,
+  isEditableShortcutTarget,
+  matchDirectNavigationShortcut,
+} from '@/application/keyboard-shortcuts';
 import { AccountMenu } from './account-menu';
 import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from './providers';
 
-const primary = [
-  { href: '/', label: 'home', shortcut: '1' },
-  { href: '/play/solo', label: 'solo', shortcut: '2' },
-  { href: '/calendar', label: 'daily', shortcut: '3' },
-  { href: '/combat', label: 'combat', shortcut: '4' },
-  { href: '/history', label: 'data', shortcut: '5' },
-] as const;
+const primary = directNavigationShortcuts.filter((shortcut) => shortcut.href !== null);
+const menuShortcut = directNavigationShortcuts.find((shortcut) => shortcut.id === 'menu');
 
 const secondary = [
   { href: '/play', label: 'All game modes' },
@@ -42,17 +43,51 @@ function routeContext(pathname: string): string {
 
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
+  const router = useRouter();
   const search = useSearchParams();
   const auth = useAuth();
   const [moreOpenedOn, setMoreOpenedOn] = useState<string | null>(null);
   const moreButton = useRef<HTMLButtonElement>(null);
   const mobileMoreButton = useRef<HTMLButtonElement>(null);
   const morePanel = useRef<HTMLDivElement>(null);
+  const previousPathname = useRef(pathname);
+  const [routeAnnouncement, setRouteAnnouncement] = useState('');
   const focus =
     search.get('focus') === '1' &&
     (pathname.includes('/play/solo/') || pathname.includes('/combat/match/'));
   const gameSurface = pathname.includes('/play/solo/') || pathname.includes('/combat/match/');
   const moreOpen = moreOpenedOn === pathname;
+
+  useEffect(() => {
+    const onShortcut = (event: KeyboardEvent) => {
+      const shortcut = matchDirectNavigationShortcut(event);
+      if (!shortcut || isEditableShortcutTarget(event.target) || hasActiveModal()) {
+        return;
+      }
+      event.preventDefault();
+      event.stopImmediatePropagation();
+      if (shortcut.id === 'menu') {
+        setMoreOpenedOn((current) => (current === pathname ? null : pathname));
+        return;
+      }
+      if (shortcut.href) {
+        setMoreOpenedOn(null);
+        router.push(shortcut.href as Route);
+      }
+    };
+    window.addEventListener('keydown', onShortcut, { capture: true });
+    return () => window.removeEventListener('keydown', onShortcut, { capture: true });
+  }, [pathname, router]);
+
+  useEffect(() => {
+    if (previousPathname.current === pathname) return;
+    previousPathname.current = pathname;
+    setRouteAnnouncement(routeContext(pathname));
+    const frame = window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>('#main-content')?.focus({ preventScroll: true });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [pathname]);
 
   useEffect(() => {
     if (!moreOpen) return;
@@ -105,14 +140,15 @@ export function AppShell({ children }: PropsWithChildren) {
               {primary.map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href as Route}
                   aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
+                  aria-keyshortcuts={item.ariaKeyShortcuts}
                 >
                   <span aria-hidden="true" className="nav-marker">
                     {isCurrent(pathname, item.href) ? '❯' : ' '}
                   </span>
-                  {item.label}
-                  <kbd>[{item.shortcut}]</kbd>
+                  {item.label.toLowerCase()}
+                  <kbd>[{item.code.replace('Digit', '')}]</kbd>
                 </Link>
               ))}
             </nav>
@@ -127,6 +163,7 @@ export function AppShell({ children }: PropsWithChildren) {
                   aria-haspopup="menu"
                   aria-expanded={moreOpen}
                   aria-controls="more-navigation"
+                  aria-keyshortcuts={menuShortcut?.ariaKeyShortcuts}
                   onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
                 >
                   <span aria-hidden="true">[m]</span> menu
@@ -173,10 +210,12 @@ export function AppShell({ children }: PropsWithChildren) {
               {primary.slice(0, 4).map((item) => (
                 <Link
                   key={item.href}
-                  href={item.href}
+                  href={item.href as Route}
                   aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
+                  aria-keyshortcuts={item.ariaKeyShortcuts}
                 >
-                  <span aria-hidden="true">[{item.shortcut}]</span> {item.label}
+                  <span aria-hidden="true">[{item.code.replace('Digit', '')}]</span>{' '}
+                  {item.label.toLowerCase()}
                 </Link>
               ))}
               <button
@@ -186,6 +225,7 @@ export function AppShell({ children }: PropsWithChildren) {
                 aria-haspopup="menu"
                 aria-expanded={moreOpen}
                 aria-controls="more-navigation"
+                aria-keyshortcuts={menuShortcut?.ariaKeyShortcuts}
                 onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
               >
                 [m] menu
@@ -194,7 +234,12 @@ export function AppShell({ children }: PropsWithChildren) {
           )}
         </header>
       )}
-      <main id="main-content">{children}</main>
+      <main id="main-content" tabIndex={-1}>
+        {children}
+      </main>
+      <span className="sr-only" aria-live="polite" aria-atomic="true">
+        {routeAnnouncement}
+      </span>
       {focus && (
         <Link className="focus-exit" href={pathname as Route}>
           EXIT FOCUS

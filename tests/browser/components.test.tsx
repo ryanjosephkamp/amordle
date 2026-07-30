@@ -3,11 +3,26 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
+import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
 
 describe('browser components', () => {
+  it('recognizes editable shortcut targets without treating ordinary game controls as fields', () => {
+    const input = document.createElement('input');
+    const editable = document.createElement('div');
+    editable.contentEditable = 'true';
+    const button = document.createElement('button');
+    document.body.append(input, editable, button);
+    expect(isEditableShortcutTarget(input)).toBe(true);
+    expect(isEditableShortcutTarget(editable)).toBe(true);
+    expect(isEditableShortcutTarget(button)).toBe(false);
+    input.remove();
+    editable.remove();
+    button.remove();
+  });
+
   it('keeps submit and delete in the shared third keyboard row', async () => {
     const onLetter = vi.fn();
     const onSubmit = vi.fn();
@@ -30,6 +45,12 @@ describe('browser components', () => {
     await expect
       .element(page.getByRole('button', { name: 'Q, absent' }))
       .toHaveAttribute('data-evidence', 'absent');
+    await expect
+      .element(page.getByRole('button', { name: 'Submit guess' }))
+      .toHaveAttribute('data-evidence', 'unknown');
+    await expect
+      .element(page.getByRole('button', { name: 'Delete letter' }))
+      .toHaveAttribute('data-evidence', 'unknown');
     await expect.element(page.getByText('×')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Z, removed' })).toBeDisabled();
   });
@@ -95,6 +116,10 @@ describe('browser components', () => {
     expect(entries[1]?.dataset.actor).toBe('opponent');
     expect(entries[1]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe(
       'opponent guessed slate',
+    );
+    expect(entries[0]?.querySelector('.combat-transcript-meta')?.textContent).toContain('01·you');
+    expect(entries[1]?.querySelector('.combat-transcript-meta')?.textContent).toContain(
+      '02·opponent',
     );
   });
 

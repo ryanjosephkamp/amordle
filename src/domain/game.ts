@@ -108,8 +108,13 @@ export function mergeEvidence(current: EvidenceState, incoming: EvidenceState): 
   return evidenceRank[incoming] > evidenceRank[current] ? incoming : current;
 }
 
-export function deriveKeyboardEvidence(
-  rows: readonly GuessRow[],
+export interface KeyboardEvidenceRow {
+  puzzleIndex?: number | undefined;
+  tiles: ReadonlyArray<Pick<Tile, 'letter' | 'state'>>;
+}
+
+export function deriveKeyboardEvidence<Row extends KeyboardEvidenceRow>(
+  rows: readonly Row[],
   removed: ReadonlySet<string> = new Set(),
 ): Record<string, EvidenceState> {
   const evidence: Record<string, EvidenceState> = {};
@@ -125,6 +130,24 @@ export function deriveKeyboardEvidence(
     evidence[letter] = 'removed';
   }
   return evidence;
+}
+
+export function derivePuzzleKeyboardEvidence<
+  Move extends KeyboardEvidenceRow,
+  Seed extends KeyboardEvidenceRow = KeyboardEvidenceRow,
+>({
+  currentPuzzleIndex,
+  moves,
+  seededRows = [],
+  removed = new Set(),
+}: {
+  currentPuzzleIndex: number;
+  moves: readonly Move[];
+  seededRows?: readonly Seed[];
+  removed?: ReadonlySet<string>;
+}): Record<string, EvidenceState> {
+  const currentMoves = moves.filter((row) => (row.puzzleIndex ?? 0) === currentPuzzleIndex);
+  return deriveKeyboardEvidence([...seededRows, ...currentMoves], removed);
 }
 
 export function playableAttemptBudget(zeroBasedPuzzleIndex: number): number {

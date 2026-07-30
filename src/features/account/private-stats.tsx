@@ -9,6 +9,7 @@ import {
   loadRatingProfiles,
 } from '@/adapters/supabase/account';
 import { loadPendingCompletions } from '@/application/completion-outbox';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 import { defaultAccountProgress } from '@/domain/account-continuity';
@@ -41,7 +42,7 @@ function PrivateStatsInner() {
     enabled: Boolean(userId),
   });
   const economy = useQuery({
-    queryKey: ['economy', userId],
+    queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled: Boolean(userId),
   });

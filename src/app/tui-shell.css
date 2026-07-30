@@ -27,6 +27,12 @@
   --present-text: oklch(0.4 0.11 85);
   --absent: oklch(0.55 0.018 220);
   --removed: oklch(0.5 0.06 25);
+  --key-unknown-background: oklch(0.78 0.035 220);
+  --key-unknown-border: oklch(0.56 0.045 215);
+  --key-unknown-ink: oklch(0.22 0.025 225);
+  --key-absent-background: oklch(0.18 0.01 220);
+  --key-absent-border: oklch(0.34 0.018 220);
+  --key-absent-ink: oklch(0.96 0.006 210);
   --danger: oklch(0.56 0.19 28);
   --focus: oklch(0.62 0.13 215);
   --terminal-glass: oklch(0.975 0.006 220 / 0.92);
@@ -62,6 +68,12 @@
     --present-text: oklch(0.82 0.11 85);
     --absent: oklch(0.47 0.018 220);
     --removed: oklch(0.65 0.07 25);
+    --key-unknown-background: oklch(0.25 0.035 220);
+    --key-unknown-border: oklch(0.47 0.045 215);
+    --key-unknown-ink: oklch(0.94 0.01 210);
+    --key-absent-background: oklch(0.11 0.01 220);
+    --key-absent-border: oklch(0.34 0.018 220);
+    --key-absent-ink: oklch(0.94 0.008 205);
     --danger: oklch(0.7 0.18 28);
     --focus: oklch(0.76 0.12 210);
     --terminal-glass: oklch(0.105 0.01 225 / 0.92);
@@ -1434,6 +1446,67 @@ body::before {
 
 .account-popover {
   right: 0.4rem;
+  width: min(18rem, calc(100vw - 1rem));
+  padding-block: 0.25rem;
+}
+
+.account-popover-summary {
+  min-height: 6.8rem;
+  border-bottom: var(--terminal-rule);
+  padding: 0.7rem 0.9rem 0.65rem;
+}
+
+.account-popover-summary > strong {
+  display: block;
+  overflow: hidden;
+  margin-bottom: 0.55rem;
+  color: var(--ink);
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-popover-summary dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-popover-summary dl > div {
+  min-width: 0;
+  border-inline-end: var(--terminal-rule);
+  padding-inline: 0.45rem;
+}
+
+.account-popover-summary dl > div:first-child {
+  padding-inline-start: 0;
+}
+
+.account-popover-summary dl > div:last-child {
+  border-inline-end: 0;
+  padding-inline-end: 0;
+}
+
+.account-popover-summary dt {
+  color: var(--muted);
+  font-size: 0.58rem;
+  text-transform: lowercase;
+}
+
+.account-popover-summary dd {
+  overflow: hidden;
+  margin: 0.1rem 0 0;
+  color: var(--ink);
+  font-size: 0.72rem;
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+.account-popover-summary small {
+  display: block;
+  margin-top: 0.45rem;
+  color: var(--present-text);
+  font-size: 0.58rem;
 }
 
 .account-popover > button[role='menuitem'] {

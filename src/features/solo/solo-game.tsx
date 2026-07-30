@@ -6,6 +6,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { readEnvelope, writeEnvelope } from '@/adapters/indexeddb';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import {
   consumeLocalConsumable,
   creditLocalCoins,
@@ -201,8 +203,11 @@ export function SoloGame({
   const domain = `solo:${sessionId}`;
   const signedInUserId = auth.status === 'signed-in' ? auth.user?.id : undefined;
   const isPractice = dailyDate === undefined;
+  const economyNamespace = signedInUserId
+    ? accountEconomyNamespace(signedInUserId)
+    : ownerNamespace;
   const economy = useQuery({
-    queryKey: ['economy', ownerNamespace],
+    queryKey: economyQueryKey(economyNamespace),
     queryFn: () => (signedInUserId ? getEconomy() : getLocalEconomy(ownerNamespace)),
     enabled: isPractice,
   });
@@ -379,6 +384,7 @@ export function SoloGame({
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (
+        matchDirectNavigationShortcut(event) ||
         event.metaKey ||
         event.ctrlKey ||
         event.altKey ||
@@ -422,7 +428,9 @@ export function SoloGame({
             ? 'Result is saved on this device. Account sync will retry automatically.'
             : 'Result, History, XP, and coins are synced.',
         );
-        void queryClient.invalidateQueries({ queryKey: ['economy'] });
+        void queryClient.invalidateQueries({
+          queryKey: economyQueryKey(accountEconomyNamespace(signedInUserId)),
+        });
         void queryClient.invalidateQueries({ queryKey: ['history', signedInUserId] });
         void queryClient.invalidateQueries({ queryKey: ['progress', signedInUserId] });
         void queryClient.invalidateQueries({ queryKey: ['completion-outbox', signedInUserId] });
@@ -442,14 +450,14 @@ export function SoloGame({
     const reward = soloReward(session);
     void creditLocalCoins(ownerNamespace, reward.coins, `solo-reward:${session.id}`)
       .then((nextEconomy) => {
-        queryClient.setQueryData(['economy', ownerNamespace], nextEconomy);
+        queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
         setActionState('Result and guest coins are saved on this device.');
       })
       .catch(() => {
         finalized.current = false;
         setActionState('Result is saved; guest reward will safely retry after reload.');
       });
-  }, [dailyDate, hydrated, ownerNamespace, queryClient, session, signedInUserId]);
+  }, [dailyDate, economyNamespace, hydrated, ownerNamespace, queryClient, session, signedInUserId]);
 
   const currentRows = session.rows.filter((row) => row.puzzleIndex === session.puzzleIndex);
   const acceptedRows = currentRows.filter((row) => row.kind === 'accepted');
@@ -510,7 +518,7 @@ export function SoloGame({
         letter: answers[session.puzzleIndex]?.[position] ?? '',
         now: now(),
       });
-      queryClient.setQueryData(['economy', ownerNamespace], nextEconomy);
+      queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
       pendingOperation.current = null;
       setActionState(`Position ${position + 1} is now locked.`);
     } catch {
@@ -540,7 +548,7 @@ export function SoloGame({
         ? await consumeConsumable('remove_incorrect_letters', id)
         : await consumeLocalConsumable(ownerNamespace, 'remove_incorrect_letters', id);
       await issue({ type: 'remove-letters', operationId: id, letters, now: now() });
-      queryClient.setQueryData(['economy', ownerNamespace], nextEconomy);
+      queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
       pendingOperation.current = null;
       setActionState(`${letters.length} impossible letters were removed.`);
     } catch {
@@ -561,7 +569,7 @@ export function SoloGame({
         ? await spendCoins(cost, id)
         : await spendLocalCoins(ownerNamespace, cost, id);
       await issue({ type: 'continue', operationId: id, now: now() });
-      queryClient.setQueryData(['economy', ownerNamespace], nextEconomy);
+      queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
       pendingOperation.current = null;
       finalized.current = false;
       setActionState(`One attempt added for ${cost} coins.`);
@@ -607,11 +615,6 @@ export function SoloGame({
             </span>
           )}
           {settings.hardMode && <span>HARD MODE</span>}
-          {(saveState === 'saving' || saveState === 'syncing') && (
-            <span className={`save-state is-${saveState}`} aria-live="polite">
-              {saveState === 'saving' ? 'SAVING…' : 'SYNCING…'}
-            </span>
-          )}
         </div>
         {saveState === 'error' && (
           <div className="game-sync-notice" role="status">

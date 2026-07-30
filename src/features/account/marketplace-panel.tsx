@@ -6,6 +6,7 @@ import { SkeletonRows, StatusPanel } from '@/components/route-states';
 import { getLocalEconomy, purchaseLocalConsumable } from '@/adapters/local-account';
 import { getEconomy, purchaseConsumable } from '@/adapters/supabase/account';
 import { operationId } from '@/adapters/supabase/shared';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 
 type Product = 'reveal_one_letter' | 'remove_incorrect_letters';
@@ -29,10 +30,13 @@ export function MarketplacePanel() {
   const auth = useAuth();
   const authenticated = auth.status === 'signed-in';
   const ownerNamespace = authenticated ? `account:${auth.user?.id ?? ''}` : 'guest';
+  const economyNamespace = authenticated
+    ? accountEconomyNamespace(auth.user?.id ?? '')
+    : ownerNamespace;
   const client = useQueryClient();
   const [confirming, setConfirming] = useState<Product | null>(null);
   const economy = useQuery({
-    queryKey: ['economy', ownerNamespace],
+    queryKey: economyQueryKey(economyNamespace),
     queryFn: () => (authenticated ? getEconomy() : getLocalEconomy(ownerNamespace)),
     enabled: auth.status !== 'loading',
   });
@@ -51,7 +55,7 @@ export function MarketplacePanel() {
     onSuccess: ({ product, result }) => {
       delete pending.current[product];
       setConfirming(null);
-      client.setQueryData(['economy', ownerNamespace], result);
+      client.setQueryData(economyQueryKey(economyNamespace), result);
       void client.invalidateQueries({ queryKey: ['account-summary'] });
     },
   });

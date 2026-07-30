@@ -37,6 +37,7 @@ export function MoveBoards({
       <div className="combat-transcript-header" aria-hidden="true">
         <span className="combat-transcript-meta">
           <span>ROW</span>
+          <span className="combat-meta-divider">·</span>
           <span>PLAYER</span>
         </span>
         <span>GUESS</span>
@@ -57,6 +58,10 @@ export function MoveBoards({
                     <span className="board-row-number" aria-hidden="true">
                       {String(index + 1).padStart(2, '0')}
                     </span>
+                    <span className="combat-meta-divider" aria-hidden="true">
+                      ·
+                    </span>
+                    <span className="combat-actor" aria-hidden="true" />
                   </span>
                   <div className="combat-transcript-empty">
                     <EmptyTileRow length={length} />
@@ -78,6 +83,9 @@ export function MoveBoards({
                 <span className="combat-transcript-meta">
                   <span className="board-row-number" aria-hidden="true">
                     {String(index + 1).padStart(2, '0')}
+                  </span>
+                  <span className="combat-meta-divider" aria-hidden="true">
+                    ·
                   </span>
                   <span className="combat-actor" title={actorLabel}>
                     {actorLabel}

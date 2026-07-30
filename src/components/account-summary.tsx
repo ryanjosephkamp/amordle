@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { getEconomy, loadProgress } from '@/adapters/supabase/account';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from './providers';
 
 export function AccountSummary() {
   const auth = useAuth();
   const userId = auth.user?.id ?? '';
   const economy = useQuery({
-    queryKey: ['economy'],
+    queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled: auth.status === 'signed-in',
   });

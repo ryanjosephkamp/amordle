@@ -28,9 +28,10 @@ export function GameKeyboard({
           {rowIndex === 2 && (
             <button
               type="button"
-              className="key is-wide"
+              className="key is-wide is-unknown"
               onClick={onSubmit}
               aria-label="Submit guess"
+              data-evidence="unknown"
               disabled={submitDisabled}
             >
               SUBMIT
@@ -65,9 +66,10 @@ export function GameKeyboard({
           {rowIndex === 2 && (
             <button
               type="button"
-              className="key is-wide"
+              className="key is-wide is-unknown"
               onClick={onDelete}
               aria-label="Delete letter"
+              data-evidence="unknown"
               disabled={deleteDisabled}
             >
               DELETE

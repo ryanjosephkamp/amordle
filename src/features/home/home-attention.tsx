@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { getEconomy, loadHistory, loadProgress } from '@/adapters/supabase/account';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 import { SkeletonRows } from '@/components/route-states';
 
@@ -14,7 +15,7 @@ export function HomeAttention() {
   const userId = auth.user?.id ?? '';
   const enabled = Boolean(userId);
   const economy = useQuery({
-    queryKey: ['economy'],
+    queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled,
   });

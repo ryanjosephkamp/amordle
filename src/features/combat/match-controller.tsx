@@ -30,10 +30,12 @@ import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
-import { scoreGuess } from '@/domain/game';
+import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
+import type { EvidenceState } from '@/domain/game';
 import { historyRowSchema } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { MoveBoards } from './combat-transcript';
@@ -339,6 +341,11 @@ function RankedDailyMatch({
     lastMove.puzzleIndex < 4
       ? lastMove.puzzleIndex + 1
       : (lastMove?.puzzleIndex ?? 0);
+  const visibleMoves = game.moves.filter((move) => move.puzzleIndex === puzzleIndex);
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex: puzzleIndex,
+    moves: game.moves,
+  });
   return (
     <section className="combat-game" aria-labelledby="combat-heading">
       <CombatHeader
@@ -359,7 +366,7 @@ function RankedDailyMatch({
         }
       />
       <MoveBoards
-        moves={game.moves.map((move) => ({
+        moves={visibleMoves.map((move) => ({
           id: move.id,
           seat: move.playerId,
           guess: move.guess,
@@ -377,6 +384,7 @@ function RankedDailyMatch({
         <CombatInput
           draft={draft}
           length={5}
+          evidence={keyboardEvidence}
           setDraft={setDraft}
           submit={submit}
           disabled={!turn || pending}
@@ -439,6 +447,29 @@ function LegacyMatch({
   const seat = row.player_one_user_id === userId ? 'player-one' : 'player-two';
   const turn = game.status === 'playing' && game.currentTurn === seat;
   const terminal = game.status === 'won' || game.status === 'lost' || game.status === 'cancelled';
+  const seededRows =
+    game.mode === 'go' && currentPuzzleIndex > 0
+      ? Array.from({ length: currentPuzzleIndex }, (_, puzzleIndex) => {
+          const solvedMove = game.moves.find(
+            (move) =>
+              (move.puzzleIndex ?? 0) === puzzleIndex &&
+              move.tiles.every((tile) => tile.state === 'correct'),
+          );
+          return solvedMove
+            ? {
+                id: solvedMove.id,
+                guess: solvedMove.guess,
+                tiles: scoreGuess(game.answer, solvedMove.guess),
+              }
+            : null;
+        }).filter((candidate) => candidate !== null)
+      : [];
+  const visibleMoves = game.moves.filter((move) => (move.puzzleIndex ?? 0) === currentPuzzleIndex);
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex,
+    moves: game.moves,
+    seededRows,
+  });
   return (
     <section className="combat-game" aria-labelledby="combat-heading">
       <CombatHeader
@@ -467,24 +498,13 @@ function LegacyMatch({
       {game.mode === 'go' && currentPuzzleIndex > 0 && (
         <div className="seeded-evidence">
           <h2>SEED EVIDENCE</h2>
-          {Array.from({ length: currentPuzzleIndex }, (_, puzzleIndex) => {
-            const solvedMove = game.moves.find(
-              (move) =>
-                (move.puzzleIndex ?? 0) === puzzleIndex &&
-                move.tiles.every((tile) => tile.state === 'correct'),
-            );
-            return solvedMove ? (
-              <TileRow
-                key={solvedMove.id}
-                guess={solvedMove.guess}
-                tiles={scoreGuess(game.answer, solvedMove.guess)}
-              />
-            ) : null;
-          })}
+          {seededRows.map((seededRow) => (
+            <TileRow key={seededRow.id} guess={seededRow.guess} tiles={seededRow.tiles} />
+          ))}
         </div>
       )}
       <MoveBoards
-        moves={game.moves}
+        moves={visibleMoves}
         length={game.wordLength}
         viewerSeat={seat}
         actorLabels={{
@@ -496,6 +516,7 @@ function LegacyMatch({
         <CombatInput
           draft={draft}
           length={game.wordLength}
+          evidence={keyboardEvidence}
           setDraft={setDraft}
           submit={submit}
           disabled={!turn || pending || !wordsReady}
@@ -632,6 +653,14 @@ function AuthoritativeMatch({
   const terminal = game.outcome.terminal;
   const player = game.playerState[game.viewerSeat];
   const turn = game.currentTurn === game.viewerSeat && game.capabilities.canSubmitGuess;
+  const visibleMoves = game.moves.filter(
+    (move) => move.type === 'guess' && move.puzzleIndex === game.currentPuzzleIndex,
+  );
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex: game.currentPuzzleIndex,
+    moves: game.moves.filter((move) => move.type === 'guess'),
+    seededRows: game.seededRows,
+  });
   return (
     <section className="combat-game" aria-labelledby="combat-heading">
       <CombatHeader
@@ -680,15 +709,13 @@ function AuthoritativeMatch({
         </div>
       )}
       <MoveBoards
-        moves={game.moves
-          .filter((move) => move.type === 'guess')
-          .map((move) => ({
-            id: move.actionId,
-            seat: move.seat,
-            guess: move.guess ?? '',
-            tiles: move.tiles,
-            acceptedAt: move.createdAt,
-          }))}
+        moves={visibleMoves.map((move) => ({
+          id: move.actionId,
+          seat: move.seat,
+          guess: move.guess ?? '',
+          tiles: move.tiles,
+          acceptedAt: move.createdAt,
+        }))}
         length={game.wordLength}
         viewerSeat={game.viewerSeat}
         actorLabels={Object.fromEntries(
@@ -702,6 +729,7 @@ function AuthoritativeMatch({
         <CombatInput
           draft={draft}
           length={game.wordLength}
+          evidence={keyboardEvidence}
           setDraft={setDraft}
           submit={submit}
           disabled={!turn || pending}
@@ -775,13 +803,13 @@ function CombatHeader({
   status: string;
 }) {
   return (
-    <header className="game-status">
+    <header className="game-status combat-game-status">
       <div className="game-mode-lockup">
         <span className="game-context">COMBAT / MATCH</span>
         <h1 id="combat-heading">{title}</h1>
       </div>
-      <div className="game-status-facts">
-        <span>{detail.toUpperCase()}</span>
+      <div className="game-status-facts combat-status-facts">
+        <span className="combat-match-detail">{detail.toUpperCase()}</span>
         <strong className="combat-turn-state" aria-live="polite">
           {status.toUpperCase()}
         </strong>
@@ -822,19 +850,29 @@ function TileRow({
 function CombatInput({
   draft,
   length,
+  evidence,
   setDraft,
   submit,
   disabled,
 }: {
   draft: string;
   length: number;
+  evidence: Readonly<Record<string, EvidenceState>>;
   setDraft(value: string): void;
   submit(): void;
   disabled: boolean;
 }) {
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
-      if (disabled || event.metaKey || event.ctrlKey || event.altKey) return;
+      if (
+        disabled ||
+        matchDirectNavigationShortcut(event) ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey
+      ) {
+        return;
+      }
       if (/^[a-zA-Z]$/.test(event.key) && draft.length < length) {
         event.preventDefault();
         setDraft(`${draft}${event.key.toLowerCase()}`);
@@ -863,6 +901,7 @@ function CombatInput({
         ))}
       </div>
       <GameKeyboard
+        evidence={evidence}
         disabled={disabled}
         submitDisabled={disabled || draft.length !== length}
         deleteDisabled={disabled || !draft}

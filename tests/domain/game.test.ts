@@ -4,6 +4,7 @@ import {
   completionPercentage,
   createGameSession,
   deriveKeyboardEvidence,
+  derivePuzzleKeyboardEvidence,
   hardModeViolationForEvidence,
   playableAttemptBudget,
   reduceGame,
@@ -80,6 +81,42 @@ describe('canonical game rules', () => {
     expect(evidence.e).toBe('removed');
     expect(evidence.z).toBe('removed');
     expect(evidence.q).toBe('unknown');
+  });
+
+  it('derives keyboard evidence only from the visible GO puzzle and its rescored seeds', () => {
+    const evidence = derivePuzzleKeyboardEvidence({
+      currentPuzzleIndex: 1,
+      moves: [
+        {
+          puzzleIndex: 0,
+          tiles: [
+            { letter: 'a', state: 'correct' },
+            { letter: 'x', state: 'absent' },
+          ],
+        },
+        {
+          puzzleIndex: 1,
+          tiles: [
+            { letter: 'b', state: 'present' },
+            { letter: 'x', state: 'present' },
+          ],
+        },
+      ],
+      seededRows: [
+        {
+          tiles: [
+            { letter: 'a', state: 'absent' },
+            { letter: 'c', state: 'correct' },
+          ],
+        },
+      ],
+      removed: new Set(['c']),
+    });
+
+    expect(evidence.a).toBe('absent');
+    expect(evidence.b).toBe('present');
+    expect(evidence.x).toBe('present');
+    expect(evidence.c).toBe('removed');
   });
 
   it('enforces settings and decreasing GO attempt budgets at boundary lengths', () => {

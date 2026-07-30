@@ -80,4 +80,49 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     });
     expect(forbidden).toEqual([]);
   });
+
+  test('global Shift shortcuts navigate without disrupting game input or editable fields', async ({
+    page,
+  }) => {
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=29');
+    await expect(page.getByText('Ready for your guess.')).toBeVisible();
+    const before = await page.evaluate(() => ({
+      boardTop: document.querySelector('.game-board-region')?.getBoundingClientRect().top ?? 0,
+      keyboardTop: document.querySelector('.keyboard')?.getBoundingClientRect().top ?? 0,
+    }));
+
+    await page.keyboard.press('a');
+    await expect(page.locator('.board-row.is-draft')).toContainText('A');
+    await expect(page.getByText(/saving…|syncing…/i)).toHaveCount(0);
+    const after = await page.evaluate(() => ({
+      boardTop: document.querySelector('.game-board-region')?.getBoundingClientRect().top ?? 0,
+      keyboardTop: document.querySelector('.keyboard')?.getBoundingClientRect().top ?? 0,
+    }));
+    expect(Math.abs(after.boardTop - before.boardTop)).toBeLessThanOrEqual(1);
+    expect(Math.abs(after.keyboardTop - before.keyboardTop)).toBeLessThanOrEqual(1);
+    await page.keyboard.press('Backspace');
+
+    await page.keyboard.press('Shift+M');
+    await expect(page.getByRole('menu', { name: 'More navigation' })).toBeVisible();
+    await expect(page.locator('.board-row.is-draft')).not.toContainText('M');
+    await page.keyboard.press('Escape');
+
+    await page.keyboard.press('Shift+1');
+    await expect(page).toHaveURL(/\/$/);
+    await expect(page.locator('#main-content')).toBeFocused();
+    await page.keyboard.press('Shift+2');
+    await expect(page).toHaveURL(/\/play\/solo$/);
+    await page.keyboard.press('Shift+3');
+    await expect(page).toHaveURL(/\/calendar$/);
+    await page.keyboard.press('Shift+4');
+    await expect(page).toHaveURL(/\/combat$/);
+    await page.keyboard.press('Shift+5');
+    await expect(page).toHaveURL(/\/history$/);
+
+    await page.goto('/auth');
+    const email = page.getByLabel('Email');
+    await email.focus();
+    await page.keyboard.press('Shift+1');
+    await expect(page).toHaveURL(/\/auth$/);
+  });
 });

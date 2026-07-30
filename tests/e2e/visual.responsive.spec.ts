@@ -166,6 +166,59 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(playFit!.keyboardBottom).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
     expect(playFit!.boardTop).toBeGreaterThan(0);
     expect(playFit!.documentHeight).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
+    const keyboardContrast = await page.evaluate(() => {
+      const key = document.querySelector<HTMLButtonElement>('button.key.is-unknown');
+      if (!key) return null;
+      const sample = (css: string) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const context = canvas.getContext('2d');
+        if (!context) return [0, 0, 0] as const;
+        context.fillStyle = css;
+        context.fillRect(0, 0, 1, 1);
+        const [red = 0, green = 0, blue = 0] = context.getImageData(0, 0, 1, 1).data;
+        return [red, green, blue] as const;
+      };
+      const luminance = ([red, green, blue]: readonly [number, number, number]) => {
+        const channels = [red, green, blue].map((value) => {
+          const normalized = value / 255;
+          return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+        });
+        return (
+          0.2126 * (channels[0] ?? 0) + 0.7152 * (channels[1] ?? 0) + 0.0722 * (channels[2] ?? 0)
+        );
+      };
+      const contrast = (
+        foreground: readonly [number, number, number],
+        background: readonly [number, number, number],
+      ) => {
+        const lighter = Math.max(luminance(foreground), luminance(background));
+        const darker = Math.min(luminance(foreground), luminance(background));
+        return (lighter + 0.05) / (darker + 0.05);
+      };
+      const unknownStyle = getComputedStyle(key);
+      const unknownBackgroundCss = unknownStyle.backgroundColor;
+      const unknownBackground = sample(unknownBackgroundCss);
+      const unknownContrast = contrast(sample(unknownStyle.color), unknownBackground);
+      key.classList.remove('is-unknown');
+      key.classList.add('is-absent');
+      const absentStyle = getComputedStyle(key);
+      const absentBackgroundCss = absentStyle.backgroundColor;
+      const absentBackground = sample(absentBackgroundCss);
+      const absentContrast = contrast(sample(absentStyle.color), absentBackground);
+      key.classList.remove('is-absent');
+      key.classList.add('is-unknown');
+      return {
+        unknownContrast,
+        absentContrast,
+        backgroundsDiffer: unknownBackgroundCss !== absentBackgroundCss,
+      };
+    });
+    expect(keyboardContrast).not.toBeNull();
+    expect(keyboardContrast!.unknownContrast).toBeGreaterThanOrEqual(4.5);
+    expect(keyboardContrast!.absentContrast).toBeGreaterThanOrEqual(4.5);
+    expect(keyboardContrast!.backgroundsDiffer).toBe(true);
     await page.screenshot({
       path: testInfo.outputPath('quiet-system-solo-390x844-light.png'),
       animations: 'disabled',

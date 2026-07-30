@@ -6,6 +6,7 @@ import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { getEconomy, loadHistory, loadProgress, spendCoins } from '@/adapters/supabase/account';
 import { setDailyEntitlement } from '@/adapters/supabase/solo';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 
 const floor = '2025-01-01';
@@ -44,7 +45,7 @@ export function CalendarView() {
     enabled: Boolean(userId),
   });
   const economy = useQuery({
-    queryKey: ['economy'],
+    queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled: Boolean(userId),
   });
@@ -127,7 +128,7 @@ export function CalendarView() {
       return { nextEconomy, nextProgress };
     },
     onSuccess: ({ nextEconomy, nextProgress }) => {
-      queryClient.setQueryData(['economy'], nextEconomy);
+      queryClient.setQueryData(economyQueryKey(accountEconomyNamespace(userId)), nextEconomy);
       queryClient.setQueryData(['progress', userId], nextProgress);
       setConfirmingUnlock(false);
       setMessage('Unlocked. It becomes permanent after your first accepted saved guess.');

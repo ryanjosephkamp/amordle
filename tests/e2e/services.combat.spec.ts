@@ -686,6 +686,19 @@ test.describe.serial('protected Preview services', () => {
     await spectatorPage.setViewportSize({ width: 1440, height: 1024 });
     await spectatorPage.emulateMedia({ colorScheme: 'light' });
 
+    await firstPage.goto(`${baseURL}/`);
+    await firstPage.getByRole('button', { name: 'Account' }).click();
+    const accountMenu = firstPage.getByRole('menu', { name: 'Account' });
+    await expect(accountMenu.getByText('Level')).toBeVisible();
+    await expect(accountMenu.getByText('XP')).toBeVisible();
+    await expect(accountMenu.getByText('Coins')).toBeVisible();
+    await expect(accountMenu.getByRole('menuitem', { name: /View profile/i })).toBeVisible();
+    await expect(accountMenu.getByRole('menuitem', { name: /Sign out/i })).toBeVisible();
+    await expect(
+      accountMenu.getByRole('menuitem', { name: /Stats|History|Marketplace|Settings/i }),
+    ).toHaveCount(0);
+    await firstPage.keyboard.press('Escape');
+
     await firstPage.goto(`${baseURL}/combat/practice?length=5`);
     await expect(firstPage.getByRole('heading', { name: 'Create or find a match' })).toBeVisible();
     await firstPage.getByRole('button', { name: 'Create public unranked' }).click();
@@ -746,6 +759,19 @@ test.describe.serial('protected Preview services', () => {
     expect(mobileFit.routeRailCount).toBe(0);
     await expect(secondPage.locator('.combat-transcript-frame')).toBeVisible();
     await expect(secondPage.locator('.combat-transcript-entry')).toHaveCount(6);
+    const turnStatusGeometry = await secondPage.evaluate(() => {
+      const header = document.querySelector('.combat-game-status')?.getBoundingClientRect();
+      const status = document.querySelector('.combat-turn-state')?.getBoundingClientRect();
+      if (!header || !status) return null;
+      return {
+        visible:
+          status.top >= header.top - 1 &&
+          status.right <= header.right + 1 &&
+          status.bottom <= header.bottom + 1 &&
+          status.left >= header.left - 1,
+      };
+    });
+    expect(turnStatusGeometry?.visible).toBe(true);
     const combatAxis = await secondPage.evaluate(() => {
       const frame = document.querySelector('.combat-transcript-frame')?.getBoundingClientRect();
       const row = document
@@ -793,6 +819,16 @@ test.describe.serial('protected Preview services', () => {
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
       timeout: 15_000,
     });
+    for (const letter of new Set(guesses[0])) {
+      await expect(
+        secondPage.getByRole('button', {
+          name: new RegExp(`^${letter}, (correct|present|absent)$`, 'i'),
+        }),
+      ).toBeVisible();
+    }
+    await expect(
+      secondPage.locator('.combat-transcript-entry').first().locator('.combat-transcript-meta'),
+    ).toContainText(/01\s*·\s*rival/i);
     await submitOnScreenGuess(secondPage, guesses[1]!);
     await waitForGameMoveCount(gameId, 2);
 
@@ -800,6 +836,13 @@ test.describe.serial('protected Preview services', () => {
     await expect(firstPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
       timeout: 15_000,
     });
+    for (const letter of new Set([...guesses[0]!, ...guesses[1]!])) {
+      await expect(
+        firstPage.getByRole('button', {
+          name: new RegExp(`^${letter}, (correct|present|absent)$`, 'i'),
+        }),
+      ).toBeVisible();
+    }
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'participant-refresh-recovery.png'),
       fullPage: true,

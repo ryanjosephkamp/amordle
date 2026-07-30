@@ -72,6 +72,31 @@ to the board, status, tools, and keyboard.
   overwriting its source payload. New successor state remains private and
   separately revisioned.
 
+## Keyboard evidence semantics
+
+- An unguessed key uses the raised blue-gray field surface. It remains visually
+  distinct from every scored state.
+- A ruled-out key uses the same near-black surface and light lettering as an
+  absent board tile, plus a visible `×` cue and an announced absent state.
+- Correct, present, absent, and removed evidence follows the precedence defined
+  by the game domain. Consumable removal overlays scored evidence and remains
+  visibly distinct.
+- In multiplayer, both participants derive their keyboard from the shared
+  chronological board. In GO, the keyboard resets at each puzzle boundary and
+  is rebuilt from the current puzzle and its rescored seed evidence.
+- Submit and Delete are neutral action keys and use the unguessed field
+  surface; they never imply letter evidence.
+
+## Physical keyboard contract
+
+- Global navigation uses the single registry at
+  `src/config/keyboard-shortcuts.json`.
+- Direct route shortcuts require Shift so ordinary gameplay letters and numbers
+  retain their normal meaning.
+- Global shortcuts pause while an editable field or modal dialog owns focus.
+- The Help surface and the Markdown/HTML keyboard manuals are generated or
+  rendered from the same registry; `pnpm check` rejects manual drift.
+
 ## Prohibited presentation
 
 Do not restore faux traffic lights, titlebars, window borders, decorative

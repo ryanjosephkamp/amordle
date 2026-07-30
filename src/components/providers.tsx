@@ -15,6 +15,7 @@ import {
 import type { PropsWithChildren } from 'react';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
 import { reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 
 interface AuthContextValue {
@@ -198,7 +199,9 @@ function CompletionReconciler() {
         queryClient.invalidateQueries({ queryKey: ['completion-outbox', userId] }),
         queryClient.invalidateQueries({ queryKey: ['history', userId] }),
         queryClient.invalidateQueries({ queryKey: ['progress', userId] }),
-        queryClient.invalidateQueries({ queryKey: ['economy'] }),
+        queryClient.invalidateQueries({
+          queryKey: economyQueryKey(accountEconomyNamespace(userId)),
+        }),
       ]);
     }
   }, [queryClient, userId]);

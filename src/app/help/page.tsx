@@ -1,9 +1,14 @@
 import { RouteHeader } from '@/components/route-states';
+import {
+  directNavigationShortcuts,
+  keyboardInteractionPatterns,
+  keyboardShortcutRules,
+} from '@/application/keyboard-shortcuts';
 
 const sections = [
   [
     'OG and scoring',
-    'OG has one answer. Each accepted guess receives a tile for every letter. Green means correct position, yellow means the letter occurs elsewhere, and gray means no unmatched copy remains. Repeated letters are scored exact positions first, then by remaining multiplicity.',
+    'OG has one answer. Each accepted guess receives a tile for every letter. Green means correct position, yellow means the letter occurs elsewhere, and a dark tile marked × means no unmatched copy remains. Repeated letters are scored exact positions first, then by remaining multiplicity.',
   ],
   [
     'GO chains',
@@ -50,6 +55,40 @@ export default function HelpPage() {
             {title === 'COMBAT' && <CombatTurnExample />}
           </section>
         ))}
+        <section id="keyboard-navigation">
+          <h2>Mouse-free mode — for keyboard diehards</h2>
+          <p>
+            The entire interface remains clickable and touch-friendly. On desktop, these shortcuts
+            provide a faster optional route through the shell.
+          </p>
+          <div className="table-scroll">
+            <table className="responsive-table keyboard-shortcut-table">
+              <thead>
+                <tr>
+                  <th>Keys</th>
+                  <th>Action</th>
+                  <th>Behavior</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...directNavigationShortcuts, ...keyboardInteractionPatterns].map((shortcut) => (
+                  <tr key={shortcut.id}>
+                    <td data-label="Keys">
+                      <kbd>{shortcut.keys}</kbd>
+                    </td>
+                    <td data-label="Action">{shortcut.label}</td>
+                    <td data-label="Behavior">{shortcut.description}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <ul>
+            {keyboardShortcutRules.map((rule) => (
+              <li key={rule}>{rule}</li>
+            ))}
+          </ul>
+        </section>
       </div>
     </div>
   );

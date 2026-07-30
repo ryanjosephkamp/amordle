@@ -91,18 +91,6 @@
   font-variant-numeric: tabular-nums;
 }
 
-.game-status-facts .save-state {
-  color: var(--correct-text);
-}
-
-.game-status-facts .save-state::before {
-  content: '● ';
-}
-
-.game-status-facts .save-state.is-error {
-  color: var(--present-text);
-}
-
 .game-board-region {
   min-height: 0;
   overflow: auto;
@@ -240,8 +228,9 @@
 }
 
 .tile.is-absent {
-  border-color: var(--absent);
-  background: color-mix(in oklch, var(--absent) 27%, transparent);
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
 }
 
 .board-row.is-draft .tile {
@@ -382,11 +371,11 @@ button.key {
   min-width: 0;
   min-height: 2.75rem;
   flex: 1 1 0;
-  border: var(--terminal-rule);
+  border: 1px solid var(--key-unknown-border);
   border-radius: 0;
-  background: transparent;
+  background: var(--key-unknown-background);
   padding: 0.4rem 0.12rem;
-  color: var(--ink);
+  color: var(--key-unknown-ink);
   font-family: var(--tui-font);
   font-size: clamp(0.68rem, 2.7vw, 0.86rem);
   text-transform: uppercase;
@@ -394,8 +383,9 @@ button.key {
 
 button.key:hover,
 button.key:focus-visible {
-  background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  border-color: var(--accent);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 button.key.is-wide {
@@ -414,9 +404,9 @@ button.key.is-present {
 }
 
 button.key.is-absent {
-  border-color: color-mix(in oklch, var(--absent) 68%, var(--ink));
-  background: color-mix(in oklch, var(--absent) 52%, var(--background));
-  color: color-mix(in oklch, var(--ink) 72%, var(--absent));
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
 }
 
 button.key.is-removed {
@@ -887,7 +877,7 @@ button.key.is-removed {
   display: inline-grid;
   width: min(9rem, 100%);
   min-width: 0;
-  grid-template-columns: 2rem minmax(0, 1fr);
+  grid-template-columns: 2rem 0.5rem minmax(0, 1fr);
   align-items: center;
   justify-self: end;
   gap: 0.35rem;
@@ -895,7 +885,7 @@ button.key.is-removed {
 }
 
 .combat-transcript-header .combat-transcript-meta {
-  grid-template-columns: 2rem minmax(3.5rem, 1fr);
+  grid-template-columns: 2rem 0.5rem minmax(3.5rem, 1fr);
 }
 
 .combat-transcript-entry .board-row-number {
@@ -912,6 +902,11 @@ button.key.is-removed {
   text-overflow: ellipsis;
   text-transform: uppercase;
   white-space: nowrap;
+}
+
+.combat-meta-divider {
+  color: var(--border);
+  text-align: center;
 }
 
 .combat-transcript-entry .combat-transcript-move {
@@ -1111,6 +1106,29 @@ button.key.is-removed {
     flex: 0 0 auto;
   }
 
+  .combat-game-status {
+    grid-template-columns: minmax(7.2rem, auto) minmax(0, 1fr);
+  }
+
+  .combat-status-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    overflow: visible;
+  }
+
+  .combat-status-facts > .combat-match-detail {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .combat-status-facts > .combat-turn-state {
+    min-height: 2.35rem;
+    border-inline-start: var(--terminal-rule);
+    padding: 0.3rem 0.42rem;
+    font-size: 0.56rem;
+  }
+
   .combat-score {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1135,14 +1153,14 @@ button.key.is-removed {
   }
 
   .combat-transcript-meta {
-    width: min(4.75rem, 100%);
-    grid-template-columns: 1.5rem minmax(0, 1fr);
-    gap: 0.15rem;
+    width: min(5.5rem, 100%);
+    grid-template-columns: 1.45rem 0.4rem minmax(0, 1fr);
+    gap: 0.2rem;
     padding-inline-end: 0.2rem;
   }
 
   .combat-transcript-header .combat-transcript-meta {
-    grid-template-columns: 1.5rem minmax(2.5rem, 1fr);
+    grid-template-columns: 1.45rem 0.4rem minmax(2.75rem, 1fr);
   }
 
   .combat-transcript-entry .board-row-number {
@@ -1170,6 +1188,17 @@ button.key.is-removed {
   .combat-secondary-action {
     min-height: 2.75rem;
     font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 22rem) {
+  .combat-game-status {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .combat-game-status .game-mode-lockup {
+    border-inline-end: 0;
+    border-bottom: var(--terminal-rule);
   }
 }
 
@@ -1295,6 +1324,7 @@ button.key.is-removed {
     color: CanvasText;
   }
 
+  button.key.is-unknown,
   button.key.is-absent,
   button.key.is-removed {
     border-color: CanvasText;
