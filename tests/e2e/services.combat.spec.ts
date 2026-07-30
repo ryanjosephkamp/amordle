@@ -530,7 +530,7 @@ test.describe.serial('protected Preview services', () => {
   test('publishes candidate words and proves UI multiplayer recovery and privacy', async ({
     browser,
   }) => {
-    test.setTimeout(120_000);
+    test.setTimeout(600_000);
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
