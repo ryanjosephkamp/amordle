@@ -719,6 +719,8 @@ test.describe.serial('protected Preview services', () => {
       status: 'created',
       created_game_id: privateGameId,
     });
+    await secondPage.goto(`${baseURL}/combat/match/${privateGameId}`);
+    await expect(secondPage.locator('#combat-heading')).toBeVisible({ timeout: 15_000 });
     secondPage.once('dialog', (dialog) => void dialog.accept());
     await secondPage.getByRole('button', { name: 'CANCEL BEFORE PLAY' }).click();
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/match complete/i, {
