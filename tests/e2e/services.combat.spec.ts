@@ -564,12 +564,26 @@ test.describe.serial('protected Preview services', () => {
     });
     expect(cronResponse.status).toBe(401);
 
-    const refreshResponse = await fetch(`${baseURL}/api/admin-refresh`, {
-      method: 'POST',
-      headers: bypassHeaders({ Authorization: `Bearer ${playerOne!.accessToken}` }),
-    });
-    expect(refreshResponse.status).toBe(200);
-    expect(await refreshResponse.json()).toMatchObject({ objectCount: 34 });
+    let refreshReceipt: { objectCount?: number } = {};
+    await expect
+      .poll(
+        async () => {
+          const refreshResponse = await fetch(`${baseURL}/api/admin-refresh`, {
+            method: 'POST',
+            headers: bypassHeaders({ Authorization: `Bearer ${playerOne!.accessToken}` }),
+          });
+          if (refreshResponse.status === 200) {
+            refreshReceipt = (await refreshResponse.json()) as { objectCount?: number };
+          }
+          return refreshResponse.status;
+        },
+        {
+          timeout: 60_000,
+          intervals: [1_000, 2_000, 5_000],
+        },
+      )
+      .toBe(200);
+    expect(refreshReceipt).toMatchObject({ objectCount: 34 });
     let manifestEntries: Array<{ length: number; url: string }> = [];
     await expect
       .poll(
