@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Amordle Stage 2 v5.3 protected Preview candidate</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f9f9;
+        --surface: #e7eeee;
+        --ink: #142126;
+        --muted: #475b62;
+        --rule: #71868d;
+        --accent: #087f93;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1216;
+          --surface: #172328;
+          --ink: #edf5f5;
+          --muted: #a8b9bd;
+          --rule: #53676e;
+          --accent: #6ddbea;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 1.25rem max(1rem, env(safe-area-inset-left)) 4rem;
+        color: var(--ink);
+        background: var(--bg);
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+      h1 {
+        font-size: clamp(1.65rem, 6vw, 2.5rem);
+      }
+      h2 {
+        margin-top: 2rem;
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        overflow-wrap: anywhere;
+      }
+      .notice,
+      details {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        padding: 1rem;
+      }
+      .facts {
+        display: grid;
+        gap: 1px;
+        border: 1px solid var(--rule);
+        background: var(--rule);
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .facts div {
+        min-width: 0;
+        background: var(--bg);
+        padding: 0.75rem;
+      }
+      .facts strong,
+      .facts span {
+        display: block;
+      }
+      .facts span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        min-width: 38rem;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        padding: 0.55rem;
+        border: 1px solid var(--rule);
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: var(--surface);
+      }
+      li {
+        margin-block: 0.35rem;
+      }
+      @media (max-width: 40rem) {
+        .facts {
+          grid-template-columns: 1fr;
+        }
+      }
+      @media print {
+        :root {
+          color-scheme: light;
+        }
+        body {
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Amordle Stage 2 v5.3 protected Preview candidate</h1>
+    <p class="notice">
+      <a href="https://amordle-1bj4496rq-ryanjosephkamps-projects.vercel.app"
+        >Open the protected Preview</a
+      ><br />
+      Deployment: <code>dpl_27v13DcnvNf4TyETMjeahHuNDpVY</code><br />
+      Application: <code>31be382e50fa451a9a8a961780f317f9555ed408</code><br />
+      Evidence: <code>EVIDENCE_COMMIT_PENDING</code>
+    </p>
+    <div class="facts" aria-label="Candidate summary">
+      <div><strong>29 / 7</strong><span>domain / browser tests</span></div>
+      <div><strong>14 / 1 / 9</strong><span>hosted fixture / service / visual</span></div>
+      <div><strong>zero residue</strong><span>cleanup attempt one</span></div>
+    </div>
+
+    <h2>Implemented outcome</h2>
+    <p>
+      Untouched letter keys now use a raised blue-gray surface. Ruled-out letters use a near-black
+      surface, light text, and a visible ×. Correct, present, absent, and removed evidence retains
+      domain precedence and does not rely on color alone.
+    </p>
+    <p>
+      Both COMBAT participants now see keyboard evidence derived from the same current-puzzle
+      chronological board. GO resets at a puzzle transition and rebuilds from current moves and
+      rescored seeds. The mobile turn status has an independent cell, and transcript rows align row,
+      divider, actor, and guess without overlap.
+    </p>
+    <p>
+      Routine saving and syncing UI is silent, so gameplay no longer moves while typing. The Account
+      menu is limited to identity, Level, XP, Coins, View profile, and Sign out.
+    </p>
+
+    <h2>Physical keyboard</h2>
+    <ul>
+      <li>Shift+1 Home; Shift+2 Solo; Shift+3 Daily; Shift+4 COMBAT.</li>
+      <li>Shift+5 opens Data/History; Shift+M opens or closes Menu.</li>
+      <li>Shortcuts pause for editable fields and modal dialogs.</li>
+      <li>Plain letter input remains available during gameplay.</li>
+    </ul>
+    <p>
+      Help and the maintained Markdown/HTML manuals consume the same canonical registry. The HTML
+      manual is responsive, searchable, printable, and light/dark aware.
+    </p>
+
+    <h2>Acceptance</h2>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Gate</th>
+            <th>Result</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Check and local acceptance</td>
+            <td>Green</td>
+          </tr>
+          <tr>
+            <td>Local domain / browser / fixture / visual</td>
+            <td>29 / 7 / 14 / 9 passed</td>
+          </tr>
+          <tr>
+            <td>Hosted fixture / service / visual</td>
+            <td>14 / 1 / 9 passed</td>
+          </tr>
+          <tr>
+            <td>Hosted mobile vitals</td>
+            <td>LCP 380 ms; INP 32 ms; CLS 0</td>
+          </tr>
+          <tr>
+            <td>Contract integrity</td>
+            <td>237/237 clauses; 107/107 bootstrap; 45/45 migrations; 3 APIs</td>
+          </tr>
+          <tr>
+            <td>Compressed budgets</td>
+            <td>Home 179973 B JS / 16706 B CSS; game 185678 B JS / 20848 B CSS</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2>Hosted evidence and cleanup</h2>
+    <p>
+      The final serial run used three disposable accounts and verified real UI sign-in, profile and
+      account totals, Solo continuity, public Practice creation/join, alternating turns, shared
+      keyboard evidence, refresh recovery, notifications, results/rematch, and privacy-safe
+      spectation.
+    </p>
+    <p>
+      Cleanup removed three Auth users, one game, one private request, one rematch request, and
+      every dependent account/game row on attempt one. Database and Auth residue are zero.
+    </p>
+    <details>
+      <summary>Packaging retry</summary>
+      <p>
+        An earlier prebuilt candidate omitted public Supabase configuration and failed closed at the
+        first service boundary. Its disposable resources were also removed on attempt one. The same
+        application commit was rebuilt with verified local custody and exact Git metadata; hosted
+        project settings were not changed.
+      </p>
+    </details>
+
+    <h2>Boundaries</h2>
+    <p>
+      Production, the default branch, 45 migrations, 107 bootstrap files, real accounts,
+      Leaderboards, and the locked shell remain unchanged. No merge or Production release is
+      authorized. The previously exposed Preview Blob credential still requires owner rotation or
+      revocation.
+    </p>
+  </body>
+</html>

@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Amordle Stage 2 v5.3 manual review checklist</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f9f9;
+        --surface: #e7eeee;
+        --ink: #142126;
+        --muted: #475b62;
+        --rule: #71868d;
+        --accent: #087f93;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #0b1216;
+          --surface: #172328;
+          --ink: #edf5f5;
+          --muted: #a8b9bd;
+          --rule: #53676e;
+          --accent: #6ddbea;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        max-width: 56rem;
+        margin: 0 auto;
+        padding: 1.25rem max(1rem, env(safe-area-inset-left)) 4rem;
+        color: var(--ink);
+        background: var(--bg);
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+      }
+      h1 {
+        font-size: clamp(1.6rem, 6vw, 2.35rem);
+        line-height: 1.2;
+        text-wrap: balance;
+      }
+      h2 {
+        margin-top: 2rem;
+        line-height: 1.2;
+      }
+      a {
+        color: var(--accent);
+      }
+      code {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+        overflow-wrap: anywhere;
+      }
+      .notice {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        padding: 1rem;
+      }
+      .checklist {
+        display: grid;
+        gap: 0.55rem;
+        padding: 0;
+        list-style: none;
+      }
+      .checklist li {
+        min-height: 44px;
+        border-bottom: 1px solid var(--rule);
+        padding: 0.55rem 0;
+      }
+      a:focus-visible {
+        outline: 3px solid var(--accent);
+        outline-offset: 2px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        * {
+          scroll-behavior: auto !important;
+        }
+      }
+      @media print {
+        :root {
+          color-scheme: light;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Amordle Stage 2 v5.3 manual review checklist</h1>
+    <p class="notice">
+      <a href="https://amordle-1bj4496rq-ryanjosephkamps-projects.vercel.app"
+        >Open the protected Preview</a
+      ><br />
+      Deployment: <code>dpl_27v13DcnvNf4TyETMjeahHuNDpVY</code><br />
+      Application: <code>31be382e50fa451a9a8a961780f317f9555ed408</code>
+    </p>
+    <main>
+      <h2>Keyboard evidence</h2>
+      <ul class="checklist">
+        <li>□ Untouched keys use a blue-gray raised surface, not near-black.</li>
+        <li>□ An absent letter becomes near-black with light text and a visible ×.</li>
+        <li>□ Correct, present, unknown, absent, and removed remain distinct.</li>
+        <li>□ Submit and Delete stay neutral.</li>
+        <li>□ Duplicate evidence never downgrades a stronger state.</li>
+      </ul>
+
+      <h2>COMBAT evidence and alignment</h2>
+      <ul class="checklist">
+        <li>□ A guess from either player updates both current-puzzle keyboards.</li>
+        <li>□ The chronological transcript shows row · actor beside every accepted guess.</li>
+        <li>□ Row, separator, actor, and guess do not overlap at 320–412px.</li>
+        <li>□ Turn, waiting, and result status remains fully visible.</li>
+        <li>□ GO resets and rebuilds evidence at each puzzle transition.</li>
+      </ul>
+
+      <h2>Stable persistence presentation</h2>
+      <ul class="checklist">
+        <li>□ Typing never shifts the board or keyboard.</li>
+        <li>□ Routine SAVING… or SYNCING… text never appears.</li>
+        <li>□ A simulated backup failure produces a bounded actionable notice.</li>
+      </ul>
+
+      <h2>Account quick tools</h2>
+      <ul class="checklist">
+        <li>□ Account shows identity, Level, XP, Coins, View profile, and Sign out.</li>
+        <li>□ General destinations are not duplicated inside Account.</li>
+        <li>□ Escape closes Account and restores focus.</li>
+      </ul>
+
+      <h2>Physical keyboard navigation</h2>
+      <ul class="checklist">
+        <li>□ Shift+1–5 open Home, Solo, Daily, COMBAT, and Data/History.</li>
+        <li>□ Shift+M opens or closes Menu.</li>
+        <li>□ Shift+M does not type M, while plain m still enters M in a game.</li>
+        <li>□ Global shortcuts pause in editable fields and modal dialogs.</li>
+        <li>□ Tab, Enter/Space, arrows, and Escape operate visible controls.</li>
+        <li>□ A route change focuses and announces the new main content.</li>
+      </ul>
+
+      <h2>Help and manuals</h2>
+      <ul class="checklist">
+        <li>□ Help includes “Mouse-free mode — for keyboard diehards.”</li>
+        <li>□ Help and both manuals list the same direct shortcuts.</li>
+        <li>□ The HTML manual works on mobile, filters, copies, prints, and follows theme.</li>
+      </ul>
+
+      <h2>Responsive and boundary review</h2>
+      <ul class="checklist">
+        <li>□ No horizontal document scroll exists at required widths or 200% zoom.</li>
+        <li>□ The initial six-row game and keyboard fit supported mobile viewports.</li>
+        <li>□ Extended history scrolls internally while the keyboard stays available.</li>
+        <li>□ Alternate themes, input methods, and accessibility modes remain usable.</li>
+        <li>□ Rotate or revoke the previously exposed Preview Blob credential.</li>
+        <li>□ Do not merge, release Production, change schemas/defaults, or delete accounts.</li>
+      </ul>
+    </main>
+  </body>
+</html>

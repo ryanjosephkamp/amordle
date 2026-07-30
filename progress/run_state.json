@@ -4,16 +4,16 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v5.2-final-protected-preview-candidate",
+  "currentCheckpoint": "stage-2-v5.3-final-protected-preview-candidate",
   "status": "review-ready",
-  "lastGreenCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
+  "lastGreenCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
   "visualReference": {
-    "package": "design/references/stage2/v5.1-ux-continuity-2026-07-29",
-    "packageCommit": "098bdb5ef2335fff86d04a89acdbd122414246fb",
-    "recommendedDirection": "v5.2-data-continuity-and-gameplay-ux-repair",
+    "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
+    "packageCommit": "EVIDENCE_COMMIT_PENDING",
+    "recommendedDirection": "v5.3-input-semantics-and-keyboard-navigation",
     "approvalStatus": "user-authorized-implementation",
-    "finalImplementationCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
-    "evidenceCommit": "16e3d80301d55ae8a416d47bf0c28d0925e78929"
+    "finalImplementationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+    "evidenceCommit": "EVIDENCE_COMMIT_PENDING"
   },
   "candidateVisualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
@@ -23,56 +23,58 @@
     "createdAt": "2026-07-28T16:37:33Z"
   },
   "localAcceptance": {
-    "candidateCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
+    "candidateCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
     "check": "green",
-    "domainTests": 26,
-    "browserComponentTests": 6,
-    "fixtureE2E": 13,
+    "domainTests": 29,
+    "browserComponentTests": 7,
+    "fixtureE2E": 14,
     "visualE2E": 9,
     "responsivePlayMatrix": "required widths, initial-play containment, internal extended-board scrolling, and horizontal-overflow probes green",
     "mobileVitals": {
-      "lcpMs": 212,
-      "inpMs": 40,
+      "lcpMs": 380,
+      "inpMs": 32,
       "cls": 0
     },
     "homeCompressedBytes": {
-      "js": 178293,
-      "css": 16155
+      "js": 179973,
+      "css": 16706
     },
     "gameCompressedBytes": {
-      "js": 183999,
-      "css": 20218
+      "js": 185678,
+      "css": 20848
     }
   },
   "hostedAcceptance": {
-    "candidateCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
-    "fixtureE2E": 13,
+    "candidateCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+    "fixtureE2E": 14,
     "serviceE2E": 1,
     "visualE2E": 9,
     "mobileVitals": {
-      "lcpMs": 212,
-      "inpMs": 40,
+      "lcpMs": 380,
+      "inpMs": 32,
       "cls": 0
     },
-    "mobileGameStatusGeometry": "pass",
+    "mobileGameStatusGeometry": "turn state contained and actor metadata aligned",
     "responsivePlayMatrix": "required widths, initial-play containment, internal extended-board scrolling, and horizontal-overflow probes green",
     "legacyAccountContinuity": "schema 11 source preserved and successor state created",
     "soloCompletionContinuity": "one History row after repeated reconciliation and reload",
     "combatCompletionContinuity": "one terminal History row for each participant",
     "notificationContinuity": "request, match, turn, result, and rematch transitions with persistent read state",
+    "keyboardEvidence": "both participants matched the shared current-puzzle correct/present/absent projection",
+    "keyboardNavigation": "Shift+1-5 and Shift+M direct navigation, form suppression, and gameplay reservation passed",
     "protection": "anonymous redirect and authenticated 200"
   },
   "preview": {
-    "deploymentId": "dpl_DAFZrppgyVeDE5rABLdtRqBbqSq2",
-    "url": "https://amordle-a9w7pjo4g-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_27v13DcnvNf4TyETMjeahHuNDpVY",
+    "url": "https://amordle-1bj4496rq-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "bdc492fc2edbe7ceb367529166cd472f5aaff1d3",
-    "evidenceCommit": "16e3d80301d55ae8a416d47bf0c28d0925e78929",
+    "applicationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+    "evidenceCommit": "EVIDENCE_COMMIT_PENDING",
     "supersededByLocalCandidate": false,
     "projectSettingsRestored": true
   },
   "cleanup": {
-    "lastRunId": "e2e_20260729T202419108Z_bdc492fc_b45c3146",
+    "lastRunId": "e2e_20260730T015100863Z_31be382e_79abdb4c",
     "attempt": 1,
     "zeroResidue": true
   },
@@ -87,10 +89,11 @@
     "v5HostedAcceptanceStatus": "green",
     "v5_1HostedAcceptanceStatus": "green",
     "v5_2HostedAcceptanceStatus": "green",
+    "v5_3HostedAcceptanceStatus": "green",
     "lastReadOnlyRotationCheck": "2026-07-29T04:56:00Z",
     "rotationCheckResult": "unchanged",
-    "lastAuthorizedHostedRun": "2026-07-29T20:24:50Z"
+    "lastAuthorizedHostedRun": "2026-07-30T01:51:32Z"
   },
-  "reportStatus": "v5.2-final-paired-reports-visual-ledger-and-manual-checklist-review-ready",
-  "updatedAt": "2026-07-29T20:31:49Z"
+  "reportStatus": "v5.3-final-paired-reports-fidelity-ledger-keyboard-manual-and-manual-checklist-review-ready",
+  "updatedAt": "2026-07-30T01:54:00Z"
 }

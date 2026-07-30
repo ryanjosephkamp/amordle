@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "package": "v5.3-input-semantics-keyboard-navigation-2026-07-29",
+  "applicationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+  "previewDeployment": "dpl_27v13DcnvNf4TyETMjeahHuNDpVY",
+  "previewUrl": "https://amordle-1bj4496rq-ryanjosephkamps-projects.vercel.app",
+  "hostedRunId": "e2e_20260730T015100863Z_31be382e_79abdb4c",
+  "status": "review-candidate-evidence",
+  "assets": [
+    {
+      "path": "evidence/account-profile-desktop-light.png",
+      "width": 1440,
+      "height": 1024,
+      "sha256": "284cdc7dedcf9ab6136546110d2ea6e4fd0054b08c749e066f0f77f9a9caf83e",
+      "role": "account-profile-regression"
+    },
+    {
+      "path": "evidence/combat-mobile-turn-status-dark.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "d09cd4e8a189e2a944f71fb28818067b6e3aa2c8e6ba6167aaf60307b91de0ab",
+      "role": "mobile-turn-status-and-centered-transcript"
+    },
+    {
+      "path": "evidence/combat-result-rematch-desktop-light.png",
+      "width": 1440,
+      "height": 1024,
+      "sha256": "c9df5212f3f06cba4de1af867d061a89685ac90e644b51fb1392f0aa8d5ec1ed",
+      "role": "terminal-result-and-rematch-regression"
+    },
+    {
+      "path": "evidence/combat-shared-evidence-desktop-light.png",
+      "width": 1440,
+      "height": 1024,
+      "sha256": "97f02d10e69e82747dea845a5fab29cbf52e16311b7b14170b89115d480bd1ac",
+      "role": "shared-current-puzzle-keyboard-evidence"
+    },
+    {
+      "path": "evidence/solo-200-percent-forced-colors.png",
+      "width": 720,
+      "height": 1800,
+      "sha256": "e9a809b6d7aea8658649aab45bf3c1633c43c5bed14273ebfdfae96a054c180c",
+      "role": "forced-colors-and-200-percent-reflow"
+    },
+    {
+      "path": "evidence/solo-320x568-portrait.png",
+      "width": 320,
+      "height": 568,
+      "sha256": "7c71343f3a3f85dffeef6925d8bda1c42141ce070922730731e82ce4afdc80bf",
+      "role": "minimum-supported-mobile-containment"
+    },
+    {
+      "path": "evidence/solo-390x844-light.png",
+      "width": 390,
+      "height": 844,
+      "sha256": "ccaf498166109787ab82b1b514b9933eef1945ec49298e8e784efcb6b574c6e2",
+      "role": "unknown-key-surface-and-initial-game-layout"
+    }
+  ]
+}
