@@ -55,7 +55,7 @@ const participantStateSchema = z
     points: z.number().int(),
     attemptsThisPuzzle: z.number().int().nonnegative(),
     puzzlesSolved: z.number().int().nonnegative(),
-    timeRemainingMs: z.number().int().nullable(),
+    timeRemainingMs: z.number().int().nullable().optional(),
   })
   .strict();
 

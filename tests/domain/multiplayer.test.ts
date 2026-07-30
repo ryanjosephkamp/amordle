@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { combatProjectionSchema } from '@/adapters/cloud/combat';
 import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
 import type { RankedPracticeConfig } from '@/domain/multiplayer';
 
@@ -97,5 +98,60 @@ describe('Ranked Practice queue contract', () => {
       sql.indexOf('create or replace function public.finalize_amordle_ranked_daily_v3'),
     );
     expect(statusBoundary).not.toContain('playerUserIds');
+  });
+
+  it('accepts the authoritative untimed participant projection after null stripping', () => {
+    const participantState = {
+      points: 0,
+      attemptsThisPuzzle: 0,
+      puzzlesSolved: 0,
+    };
+    const parsed = combatProjectionSchema.parse({
+      schemaVersion: 2,
+      authorityVersion: 2,
+      id: 'amordle-private-v3-test',
+      scope: 'practice',
+      mode: 'og',
+      sourceKind: 'private-request',
+      visibilityKind: 'restricted',
+      wordLength: 5,
+      difficulty: 'standard',
+      hardMode: false,
+      timeLimitMs: null,
+      ranked: false,
+      status: 'playing',
+      version: 0,
+      moveCount: 0,
+      serverNow: '2026-07-30T20:29:51.000Z',
+      createdAt: '2026-07-30T20:29:51.000Z',
+      startedAt: '2026-07-30T20:29:51.000Z',
+      updatedAt: '2026-07-30T20:29:51.000Z',
+      currentTurn: 'player-one',
+      currentPuzzleIndex: 0,
+      attemptBudget: 6,
+      viewerSeat: 'player-two',
+      players: [
+        { seat: 'player-one', displayName: 'Player One' },
+        { seat: 'player-two', displayName: 'Player Two' },
+      ],
+      moves: [],
+      seededRows: [],
+      playerState: {
+        'player-one': participantState,
+        'player-two': participantState,
+      },
+      capabilities: {
+        canJoin: false,
+        canSubmitGuess: false,
+        canAdvance: false,
+        canCancel: true,
+        canForfeit: false,
+        canSettleRating: false,
+      },
+      outcome: { terminal: false },
+    });
+
+    expect(parsed.playerState['player-one'].timeRemainingMs).toBeUndefined();
+    expect(parsed.playerState['player-two'].timeRemainingMs).toBeUndefined();
   });
 });
