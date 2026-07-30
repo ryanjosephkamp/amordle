@@ -4,9 +4,24 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v5.3-final-protected-preview-candidate",
-  "status": "review-ready",
-  "lastGreenCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+  "currentCheckpoint": "stage-2-v6-forward-only-migration-authorization-gate",
+  "status": "awaiting-forward-only-migration-authorization",
+  "lastGreenCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
+  "v6PreMigration": {
+    "truthfulMpAuditCommit": "d285084ab8252cd296379bb99b42e8b30bfb7244",
+    "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
+    "decisionPacket": "reports/stage-2-v6-forward-only-migration-decision.md",
+    "migrationApplied": false,
+    "hostedMutationsPerformed": false,
+    "mpAudit": {
+      "proven": 1,
+      "implementedUnproven": 43,
+      "partialDefective": 10,
+      "missing": 5,
+      "migrationBlocked": 14,
+      "total": 73
+    }
+  },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
     "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
@@ -23,10 +38,10 @@
     "createdAt": "2026-07-28T16:37:33Z"
   },
   "localAcceptance": {
-    "candidateCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
+    "candidateCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
     "check": "green",
-    "domainTests": 29,
-    "browserComponentTests": 7,
+    "domainTests": 32,
+    "browserComponentTests": 8,
     "fixtureE2E": 14,
     "visualE2E": 9,
     "responsivePlayMatrix": "required widths, initial-play containment, internal extended-board scrolling, and horizontal-overflow probes green",
@@ -36,11 +51,11 @@
       "cls": 0
     },
     "homeCompressedBytes": {
-      "js": 179973,
+      "js": 180044,
       "css": 16706
     },
     "gameCompressedBytes": {
-      "js": 185678,
+      "js": 185749,
       "css": 20848
     }
   },
@@ -94,6 +109,6 @@
     "rotationCheckResult": "unchanged",
     "lastAuthorizedHostedRun": "2026-07-30T01:51:32Z"
   },
-  "reportStatus": "v5.3-final-paired-reports-fidelity-ledger-keyboard-manual-and-manual-checklist-review-ready",
-  "updatedAt": "2026-07-30T01:54:00Z"
+  "reportStatus": "v6-forward-only-combat-authority-decision-packet-review-ready",
+  "updatedAt": "2026-07-30T19:00:37Z"
 }

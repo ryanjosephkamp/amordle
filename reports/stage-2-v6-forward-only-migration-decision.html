@@ -1,0 +1,245 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6 COMBAT authority decision</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        --bg: #f7f7f5;
+        --surface: #ffffff;
+        --text: #171817;
+        --muted: #5d625f;
+        --rule: #c8ceca;
+        --accent: #087f8c;
+        --warn: #8b5a00;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --bg: #101312;
+          --surface: #171b19;
+          --text: #edf1ee;
+          --muted: #aab3ae;
+          --rule: #3c4540;
+          --accent: #52d3df;
+          --warn: #f1bd59;
+        }
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--text);
+        font: 16px/1.58 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      }
+      main {
+        width: min(920px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 48px 0 80px;
+      }
+      h1,
+      h2 {
+        line-height: 1.15;
+      }
+      h1 {
+        font-size: clamp(2rem, 7vw, 3.6rem);
+        margin: 0 0 24px;
+      }
+      h2 {
+        margin-top: 44px;
+        border-bottom: 1px solid var(--rule);
+        padding-bottom: 8px;
+      }
+      code,
+      pre,
+      th {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .decision,
+      .notice {
+        border: 1px solid var(--rule);
+        background: var(--surface);
+        padding: 20px;
+        margin: 24px 0;
+      }
+      .decision {
+        border-left: 5px solid var(--accent);
+      }
+      .notice {
+        border-left: 5px solid var(--warn);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        display: block;
+        overflow-x: auto;
+      }
+      th,
+      td {
+        border: 1px solid var(--rule);
+        padding: 10px;
+        text-align: left;
+        vertical-align: top;
+      }
+      a {
+        color: var(--accent);
+      }
+      li + li {
+        margin-top: 6px;
+      }
+      .muted {
+        color: var(--muted);
+      }
+      @media print {
+        body {
+          background: white;
+          color: black;
+        }
+        main {
+          width: 100%;
+          padding: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <p class="muted">Amordle Stage 2 · v6 pre-migration gate</p>
+      <h1>COMBAT authority decision</h1>
+
+      <section class="decision">
+        <h2>Recommended decision</h2>
+        <p>
+          Authorize one additive, forward-only migration extending the existing
+          authoritative COMBAT v2 model to public unranked Practice, accepted
+          private requests, accepted Practice rematches, and privacy-safe
+          Ranked Daily finalization.
+        </p>
+        <p>
+          No migration or hosted mutation has been performed. This authorization
+          does not include a down migration, Production promotion, merge,
+          default-branch change, or deletion of real accounts.
+        </p>
+      </section>
+
+      <h2>Verified checkpoint</h2>
+      <ul>
+        <li>Evidence audit: <code>d285084ab8252cd296379bb99b42e8b30bfb7244</code></li>
+        <li>Ranked Practice hardening: <code>7b71bdcba897c4717afcf7560fbe9a1022e7d6fe</code></li>
+        <li>Rollback: <code>31be382e50fa451a9a8a961780f317f9555ed408</code></li>
+        <li>Supabase: <code>squqdstdvbsvhagfuzgj</code></li>
+        <li>Bootstrap: 107/107; migrations: 45/45; APIs: exactly three</li>
+      </ul>
+
+      <h2>Truthful audit</h2>
+      <table>
+        <thead><tr><th>Status</th><th>Clauses</th></tr></thead>
+        <tbody>
+          <tr><td>Proven</td><td>1</td></tr>
+          <tr><td>Implemented, not acceptance-proven</td><td>43</td></tr>
+          <tr><td>Partial or defective</td><td>10</td></tr>
+          <tr><td>Missing</td><td>5</td></tr>
+          <tr><td>Migration-blocked</td><td>14</td></tr>
+          <tr><th>Total</th><th>73</th></tr>
+        </tbody>
+      </table>
+      <p>
+        The final strict verifier now refuses to treat generic multiplayer test
+        labels as proof. The application registry remains 237/237 structurally
+        mapped, but only clauses with real clause-specific evidence may be
+        marked verified.
+      </p>
+
+      <h2>Work completed without schema changes</h2>
+      <ul>
+        <li>Full MP-01 through MP-21 source, authority, test, and evidence audit.</li>
+        <li>Untimed and five-minute Ranked Practice lanes.</li>
+        <li>Account- and tab-scoped recoverable queue intent.</li>
+        <li>Stable creation, claim, and finalization identifiers.</li>
+        <li>Explicit queued, matched, expired, cancelled, conflict, and failed states.</li>
+        <li>Visibility/reconnect recovery and configuration-safe route restoration.</li>
+        <li>Strict settlement parsing and rating-delta continuity.</li>
+        <li>Authoritative cancel-before-play versus forfeit-after-play behavior.</li>
+      </ul>
+
+      <h2>Why a migration is mandatory</h2>
+      <p>
+        The public game table recognizes all relevant source kinds, but the
+        private authority table permits only <code>ranked_queue</code> and
+        <code>daily_lobby</code>. Public Practice, private accepts, and rematches
+        therefore still create legacy answer-bearing browser projections.
+        Ranked Daily status/finalization exposes raw participant identity.
+        React-only masking would not repair the server authority or privacy
+        boundary.
+      </p>
+
+      <h2>Minimum additive change</h2>
+      <ol>
+        <li>Extend private source authority to public lobby, private request, and rematch.</li>
+        <li>Create/finalize those games through idempotent security-definer RPCs.</li>
+        <li>Return only existing sanitized participant projections.</li>
+        <li>Replace Ranked Daily status with player-relative data and opaque identifiers.</li>
+        <li>Permit spectation only for active/completed public unranked Practice.</li>
+        <li>Retain existing commands, clocks, terminal settlement, ratings, and request tables.</li>
+      </ol>
+
+      <h2>Proposed RPCs</h2>
+      <table>
+        <thead><tr><th>RPC</th><th>Role</th></tr></thead>
+        <tbody>
+          <tr><td><code>create_amordle_public_practice_v3</code></td><td>Create an answer-safe waiting lobby.</td></tr>
+          <tr><td><code>list_amordle_public_practice_v3</code></td><td>List safe, joinable, block-compatible lobbies.</td></tr>
+          <tr><td><code>join_amordle_public_practice_v3</code></td><td>Atomically join and return a participant projection.</td></tr>
+          <tr><td><code>accept_private_multiplayer_match_request_v3</code></td><td>Create exactly one private authority game.</td></tr>
+          <tr><td><code>accept_practice_multiplayer_rematch_v3</code></td><td>Create exactly one rematch authority game.</td></tr>
+          <tr><td><code>get_amordle_ranked_daily_status_v3</code></td><td>Return sanitized account-relative queue state.</td></tr>
+          <tr><td><code>finalize_amordle_ranked_daily_v3</code></td><td>Finalize a reservation without client projection construction.</td></tr>
+          <tr><td><code>get_amordle_public_practice_spectator_v3</code></td><td>Return an eligible read-only public projection.</td></tr>
+        </tbody>
+      </table>
+
+      <h2>Security conditions</h2>
+      <ul>
+        <li>No answer, seed, catalog, raw Auth ID, private draft, clock internals, or rating snapshot crosses the browser boundary.</li>
+        <li>Private schema stays inaccessible to public browser roles.</li>
+        <li>Participant writes are authenticated, versioned, and idempotent.</li>
+        <li>Anonymous exact-ID lookup cannot bypass spectator eligibility.</li>
+        <li>Daily, private, rematch, custom, restricted, and waiting games remain unspectatable.</li>
+      </ul>
+
+      <h2>Validation at this gate</h2>
+      <table>
+        <tbody>
+          <tr><th>Repository gate</th><td>Green</td></tr>
+          <tr><th>Domain</th><td>32 passed</td></tr>
+          <tr><th>Browser components</th><td>8 passed</td></tr>
+          <tr><th>Fixture E2E</th><td>14 passed</td></tr>
+          <tr><th>Visual E2E</th><td>9 passed</td></tr>
+          <tr><th>MP audit</th><td>73/73 truthful records</td></tr>
+        </tbody>
+      </table>
+
+      <section class="notice">
+        <h2>Intentional stop</h2>
+        <p>
+          Hosted service acceptance, deployment, and remaining COMBAT
+          implementation are not claimed. They begin only after explicit
+          forward-only migration authorization. Rollback is a forward code
+          revert or exact v5.3 Preview redeployment; database repair is another
+          reviewed forward migration, never a down migration.
+        </p>
+      </section>
+
+      <p class="muted">
+        The previously exposed Preview-scoped Blob credential still requires
+        owner rotation or revocation. Its value is not present here.
+      </p>
+    </main>
+  </body>
+</html>
