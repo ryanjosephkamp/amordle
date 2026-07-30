@@ -9,11 +9,11 @@
   "lastGreenCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
-    "packageCommit": "EVIDENCE_COMMIT_PENDING",
+    "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
     "recommendedDirection": "v5.3-input-semantics-and-keyboard-navigation",
     "approvalStatus": "user-authorized-implementation",
     "finalImplementationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
-    "evidenceCommit": "EVIDENCE_COMMIT_PENDING"
+    "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "candidateVisualReference": {
     "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
@@ -69,7 +69,7 @@
     "url": "https://amordle-1bj4496rq-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
-    "evidenceCommit": "EVIDENCE_COMMIT_PENDING",
+    "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
     "supersededByLocalCandidate": false,
     "projectSettingsRestored": true
   },
