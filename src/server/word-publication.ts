@@ -46,9 +46,9 @@ function digest(content: string): string {
   return createHash('sha256').update(content).digest('hex');
 }
 
-async function existingUrl(pathname: string, token: string): Promise<string | null> {
-  const found = await list({ prefix: pathname, limit: 2, token });
-  return found.blobs.find((blob) => blob.pathname === pathname)?.url ?? null;
+async function existingUrls(prefix: string, token: string): Promise<Map<string, string>> {
+  const found = await list({ prefix, limit: 100, token });
+  return new Map(found.blobs.map((blob) => [blob.pathname, blob.url]));
 }
 
 export async function publishWordLists(): Promise<PublishedManifest> {
@@ -58,13 +58,15 @@ export async function publishWordLists(): Promise<PublishedManifest> {
   const sourceManifest = sourceManifestSchema.parse(
     JSON.parse(await readFile(path.join(root, 'manifest.json'), 'utf8')),
   );
+  const objectPrefix = `word-lists/objects/${sourceManifest.revision}/`;
+  const existing = await existingUrls(objectPrefix, token);
 
   const entries: PublishedManifest['entries'] = [];
   for (let length = 2; length <= 35; length += 1) {
     const content = await readFile(path.join(root, `words_length_${length}.json`), 'utf8');
     const sha256 = digest(content);
-    const pathname = `word-lists/objects/${sourceManifest.revision}/${length}-${sha256}.json`;
-    const current = await existingUrl(pathname, token);
+    const pathname = `${objectPrefix}${length}-${sha256}.json`;
+    const current = existing.get(pathname) ?? null;
     const blob =
       current ??
       (
