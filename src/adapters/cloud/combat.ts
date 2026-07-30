@@ -19,10 +19,10 @@ const moveSchema = z
     actionId: z.string(),
     type: z.enum(['guess', 'advance', 'cancel', 'forfeit']),
     seat: z.enum(['player-one', 'player-two']),
-    puzzleIndex: z.number().int().nonnegative(),
+    puzzleIndex: z.number().int().nonnegative().optional().default(0),
     guess: z.string().optional(),
-    tiles: z.array(tileSchema),
-    pointsAwarded: z.number().int(),
+    tiles: z.array(tileSchema).optional().default([]),
+    pointsAwarded: z.number().int().optional().default(0),
     createdAt: z.string(),
   })
   .strict();

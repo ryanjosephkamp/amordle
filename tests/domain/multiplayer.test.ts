@@ -100,7 +100,7 @@ describe('Ranked Practice queue contract', () => {
     expect(statusBoundary).not.toContain('playerUserIds');
   });
 
-  it('accepts the authoritative untimed participant projection after null stripping', () => {
+  it('accepts untimed and non-guess participant fields after null stripping', () => {
     const participantState = {
       points: 0,
       attemptsThisPuzzle: 0,
@@ -119,14 +119,13 @@ describe('Ranked Practice queue contract', () => {
       hardMode: false,
       timeLimitMs: null,
       ranked: false,
-      status: 'playing',
-      version: 0,
+      status: 'cancelled',
+      version: 1,
       moveCount: 0,
       serverNow: '2026-07-30T20:29:51.000Z',
       createdAt: '2026-07-30T20:29:51.000Z',
       startedAt: '2026-07-30T20:29:51.000Z',
       updatedAt: '2026-07-30T20:29:51.000Z',
-      currentTurn: 'player-one',
       currentPuzzleIndex: 0,
       attemptBudget: 6,
       viewerSeat: 'player-two',
@@ -134,7 +133,15 @@ describe('Ranked Practice queue contract', () => {
         { seat: 'player-one', displayName: 'Player One' },
         { seat: 'player-two', displayName: 'Player Two' },
       ],
-      moves: [],
+      moves: [
+        {
+          sequenceNo: 1,
+          actionId: 'cancel-action',
+          type: 'cancel',
+          seat: 'player-two',
+          createdAt: '2026-07-30T20:29:52.000Z',
+        },
+      ],
       seededRows: [],
       playerState: {
         'player-one': participantState,
@@ -144,14 +151,20 @@ describe('Ranked Practice queue contract', () => {
         canJoin: false,
         canSubmitGuess: false,
         canAdvance: false,
-        canCancel: true,
+        canCancel: false,
         canForfeit: false,
         canSettleRating: false,
       },
-      outcome: { terminal: false },
+      outcome: { terminal: true, reason: 'cancelled' },
     });
 
     expect(parsed.playerState['player-one'].timeRemainingMs).toBeUndefined();
     expect(parsed.playerState['player-two'].timeRemainingMs).toBeUndefined();
+    expect(parsed.moves[0]).toMatchObject({
+      type: 'cancel',
+      puzzleIndex: 0,
+      tiles: [],
+      pointsAwarded: 0,
+    });
   });
 });
