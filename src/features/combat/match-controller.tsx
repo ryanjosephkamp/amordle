@@ -708,11 +708,13 @@ function AuthoritativeMatch({
               : game.outcome.winnerSeat
                 ? 'Opponent won'
                 : 'Match complete'
-            : game.status === 'holding'
-              ? 'Puzzle solved · preparing next board'
-              : turn
-                ? 'Your turn'
-                : 'Opponent’s turn'
+            : game.status === 'waiting'
+              ? 'Waiting for another player'
+              : game.status === 'holding'
+                ? 'Puzzle solved · preparing next board'
+                : turn
+                  ? 'Your turn'
+                  : 'Opponent’s turn'
         }
       />
       {game.status === 'waiting' && (
