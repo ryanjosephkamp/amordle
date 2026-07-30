@@ -3,7 +3,15 @@ import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
-import { rankedPracticeQueueIntentSchema } from '@/adapters/session-combat';
+import {
+  rankedDailyQueueIntentSchema,
+  rankedPracticeQueueIntentSchema,
+  readRankedDailyQueueIntent,
+  readRankedPracticeQueueIntent,
+  writeRankedDailyQueueIntent,
+  writeRankedPracticeQueueIntent,
+} from '@/adapters/session-combat';
+import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
@@ -41,6 +49,92 @@ describe('browser components', () => {
         unexpected: 'value',
       }).success,
     ).toBe(false);
+  });
+
+  it('keeps Ranked Practice and Daily recovery isolated to the owning account', () => {
+    const ownerUserId = '11111111-1111-4111-8111-111111111111';
+    const otherUserId = '22222222-2222-4222-8222-222222222222';
+    const createdAt = '2026-07-30T12:00:00.000Z';
+    writeRankedPracticeQueueIntent({
+      schemaVersion: 2,
+      ownerUserId,
+      requestId: 'practice-request',
+      creationKey: 'practice-create',
+      claimActionId: 'practice-claim',
+      finalizeActionId: 'practice-finalize',
+      createdAt,
+      config: {
+        mode: 'og',
+        wordLength: 5,
+        difficulty: 'standard',
+        hardMode: false,
+        goPuzzleCount: null,
+        timeLimitMs: null,
+      },
+    });
+    writeRankedDailyQueueIntent({
+      schemaVersion: 3,
+      ownerUserId,
+      dailyDateKey: '2026-07-30',
+      mode: 'go',
+      hardMode: true,
+      requestId: 'daily-request',
+      matchedGameId: 'daily-game',
+      creationKey: 'daily-create',
+      claimActionId: 'daily-claim',
+      finalizeActionId: 'daily-finalize',
+      createdAt,
+    });
+
+    expect(readRankedPracticeQueueIntent(ownerUserId).status).toBe('valid');
+    expect(readRankedDailyQueueIntent(ownerUserId).status).toBe('valid');
+    expect(readRankedPracticeQueueIntent(otherUserId)).toEqual({ status: 'missing' });
+    expect(readRankedDailyQueueIntent(otherUserId)).toEqual({ status: 'missing' });
+    sessionStorage.clear();
+  });
+
+  it('strictly parses Ranked Daily recovery and safely correlates hosted UI mutations', () => {
+    expect(
+      rankedDailyQueueIntentSchema.safeParse({
+        schemaVersion: 3,
+        ownerUserId: '11111111-1111-4111-8111-111111111111',
+        dailyDateKey: '2026-07-30',
+        mode: 'og',
+        hardMode: false,
+        requestId: 'daily-request',
+        matchedGameId: 'daily-game',
+        creationKey: 'daily-create',
+        claimActionId: 'daily-claim',
+        finalizeActionId: 'daily-finalize',
+        createdAt: '2026-07-30T12:00:00.000Z',
+      }).success,
+    ).toBe(true);
+    expect(
+      rankedDailyQueueIntentSchema.safeParse({
+        schemaVersion: 3,
+        ownerUserId: '11111111-1111-4111-8111-111111111111',
+        dailyDateKey: '2026-07-30',
+        mode: 'og',
+        hardMode: false,
+        requestId: 'daily-request',
+        matchedGameId: 'daily-game',
+        creationKey: 'daily-create',
+        claimActionId: 'daily-claim',
+        finalizeActionId: 'daily-finalize',
+        createdAt: '2026-07-30T12:00:00.000Z',
+        rawParticipantIds: [],
+      }).success,
+    ).toBe(false);
+
+    const windowWithCorrelation = window as typeof window & {
+      __AMORDLE_E2E_RUN_ID__?: string;
+    };
+    windowWithCorrelation.__AMORDLE_E2E_RUN_ID__ = 'e2e_20260730T120000000Z_12345678_abcdef12';
+    expect(operationId('ranked-daily-create')).toMatch(
+      /^e2e_20260730T120000000Z_12345678_abcdef12:ranked-daily-create:/,
+    );
+    delete windowWithCorrelation.__AMORDLE_E2E_RUN_ID__;
+    expect(operationId('ordinary')).toMatch(/^ordinary:/);
   });
 
   it('recognizes editable shortcut targets without treating ordinary game controls as fields', () => {

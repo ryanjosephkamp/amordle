@@ -48,5 +48,17 @@ export function parseServiceList<T>(schema: z.ZodType<T>, value: unknown): Parse
 }
 
 export function operationId(prefix: string): string {
-  return `${prefix}:${crypto.randomUUID()}`;
+  const testRunId =
+    typeof window === 'undefined'
+      ? null
+      : (
+          window as typeof window & {
+            __AMORDLE_E2E_RUN_ID__?: unknown;
+          }
+        ).__AMORDLE_E2E_RUN_ID__;
+  const correlationPrefix =
+    typeof testRunId === 'string' && /^e2e_[A-Za-z0-9_]{16,120}$/.test(testRunId)
+      ? `${testRunId}:`
+      : '';
+  return `${correlationPrefix}${prefix}:${crypto.randomUUID()}`;
 }
