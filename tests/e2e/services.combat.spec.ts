@@ -935,7 +935,7 @@ test.describe.serial('protected Preview services', () => {
     ).toBeVisible({ timeout: 15_000 });
     await firstPage.getByRole('button', { name: /Notifications/i }).click();
     const notificationDialog = firstPage.getByRole('dialog', { name: 'Notifications' });
-    await expect(notificationDialog.getByText('Match ready')).toBeVisible();
+    await expect(notificationDialog.getByText('Match ready').first()).toBeVisible();
     await notificationDialog.getByRole('button', { name: 'Mark all read' }).click();
     await expect(
       firstPage.getByRole('button', { name: 'Notifications', exact: true }),
