@@ -7,4 +7,3 @@ test-results
 supabase/migrations
 .codex-internal
 bootstrap/source-data/word-lists/words_length_*.json
-public/word-lists

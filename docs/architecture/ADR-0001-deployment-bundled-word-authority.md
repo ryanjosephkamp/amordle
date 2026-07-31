@@ -73,7 +73,15 @@ Production automatically.
 
 ## Rejected alternatives
 
-Continued Blob publication, Supabase Storage, Postgres rows, direct runtime
-Hugging Face reads, GitHub raw/release assets, another object-storage vendor,
-and JavaScript embedding add quota, privacy, availability, or bundle costs
-without improving the deployment-atomic model.
+| Alternative | Decision |
+| --- | --- |
+| Continue Vercel Blob | Rejected. The Hobby store is suspended on advanced operations, runtime publication consumes a mutable credential, and publication can diverge from an application deployment. |
+| Existing-project Supabase Storage | Rejected. It introduces a second publication lifecycle and spends finite Supabase egress without improving deployment atomicity. |
+| Postgres rows | Rejected. Multi-megabyte public catalogs do not belong in transactional game state and would consume database/API egress. |
+| Direct Hugging Face gameplay reads | Rejected. Upstream availability, revision drift, and resolver limits would become gameplay dependencies. |
+| GitHub raw or release assets | Rejected. It introduces cross-origin runtime authority and a publication lifecycle separate from the deployed application. |
+| Another free object-storage vendor | Rejected. It adds a vendor, credential, quota, and cleanup boundary for data already small enough to deploy. |
+| Embed all lists in JavaScript | Rejected. It would violate selected-length loading and inflate parsing and bundle costs. |
+
+The optional GitHub workflow is refresh orchestration, not runtime storage. It
+is not required for the last known-good deployed authority to continue working.
