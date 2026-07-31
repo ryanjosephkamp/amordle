@@ -10,6 +10,7 @@ import {
   createRankedDaily,
   findRecoverableRankedDaily,
   finalizeRankedDaily,
+  getCombatGame,
   getRankedDailyStatus,
   joinDailyLobby,
   listDailyLobbies,
@@ -54,7 +55,16 @@ function DailyLobbyInner() {
         intent = null;
       }
       if (!intent) {
-        const recovered = await findRecoverableRankedDaily(dailyDateKey);
+        let recovered = await findRecoverableRankedDaily(dailyDateKey);
+        if (recovered?.status === 'matched' && recovered.matched_game_id) {
+          const existingMatch = await getCombatGame(recovered.matched_game_id).catch(() => null);
+          if (
+            existingMatch &&
+            (existingMatch.status === 'completed' || existingMatch.status === 'cancelled')
+          ) {
+            recovered = null;
+          }
+        }
         if (recovered) {
           intent = {
             schemaVersion: 3,

@@ -1514,7 +1514,9 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.goto(`${baseURL}/combat/daily`);
     await firstPage.getByLabel('Mode', { exact: true }).selectOption('go');
     await firstPage.getByLabel('Hard Mode').check();
-    await firstPage.getByRole('button', { name: 'Find ranked Daily' }).click();
+    const findRankedDailyGo = firstPage.getByRole('button', { name: 'Find ranked Daily' });
+    await expect(findRankedDailyGo).toBeEnabled({ timeout: 15_000 });
+    await findRankedDailyGo.click();
     const cancelledRankedDailyGo = await registerLatestQueueRequest(playerOne!, 'daily', 'go');
     await firstPage.getByRole('button', { name: 'Cancel ranked search' }).click();
     await expect(firstPage.getByText(/Ranked Daily search cancelled/i)).toBeVisible();
