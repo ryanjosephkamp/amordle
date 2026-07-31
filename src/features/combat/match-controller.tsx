@@ -731,7 +731,7 @@ function AuthoritativeMatch({
               {participant.seat === game.viewerSeat ? ' (you)' : ''}
             </span>
             <strong>{game.playerState[participant.seat].points} pts</strong>
-            {game.playerState[participant.seat].timeRemainingMs !== null && (
+            {game.playerState[participant.seat].timeRemainingMs != null && (
               <ClockValue game={game} seat={participant.seat} />
             )}
           </div>

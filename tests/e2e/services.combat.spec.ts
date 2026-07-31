@@ -1457,20 +1457,35 @@ test.describe.serial('protected Preview services', () => {
     if (!rankedDailyGameId) throw new Error('Ranked Daily game ID was unavailable.');
     await registerGame(rankedDailyGameId, 'ranked-daily-v3', [playerOne!.id, playerTwo!.id]);
     rankedDailyGameIds.push(rankedDailyGameId);
-    await expect(firstPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
-      timeout: 15_000,
-    });
+    await expect
+      .poll(
+        async () => {
+          const states = await Promise.all(
+            [firstPage, secondPage].map((page) => page.locator('.combat-turn-state').textContent()),
+          );
+          return states.filter((state) => /your turn/i.test(state ?? '')).length;
+        },
+        { timeout: 15_000 },
+      )
+      .toBe(1);
+    const firstPlayerStarts = /your turn/i.test(
+      (await firstPage.locator('.combat-turn-state').textContent()) ?? '',
+    );
+    const openingPage = firstPlayerStarts ? firstPage : secondPage;
+    const respondingPage = firstPlayerStarts ? secondPage : firstPage;
     await expect(firstPage.getByLabel(/time remaining/i)).toHaveCount(0);
-    await submitOnScreenGuess(firstPage, 'crane');
+    await expect(secondPage.getByLabel(/time remaining/i)).toHaveCount(0);
+    await submitOnScreenGuess(openingPage, 'crane');
     await waitForGameMoveCount(rankedDailyGameId, 1);
-    if ((await firstPage.getByRole('button', { name: 'UPDATE RATING' }).count()) === 0) {
-      await secondPage.reload();
-      await expect(secondPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
+    if ((await openingPage.getByRole('button', { name: 'UPDATE RATING' }).count()) === 0) {
+      await respondingPage.reload();
+      await expect(respondingPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
         timeout: 15_000,
       });
-      secondPage.once('dialog', (dialog) => void dialog.accept());
-      await secondPage.getByRole('button', { name: 'FORFEIT MATCH' }).click();
+      respondingPage.once('dialog', (dialog) => void dialog.accept());
+      await respondingPage.getByRole('button', { name: 'FORFEIT MATCH' }).click();
     }
+    await Promise.all([firstPage.reload(), secondPage.reload()]);
     await expect(firstPage.getByRole('button', { name: 'UPDATE RATING' })).toBeVisible({
       timeout: 15_000,
     });
