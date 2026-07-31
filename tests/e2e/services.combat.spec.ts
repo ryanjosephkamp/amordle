@@ -851,10 +851,11 @@ test.describe.serial('protected Preview services', () => {
     );
     const publicBank = JSON.parse(
       await readFile(path.resolve('data/word-lists/words_length_5.json'), 'utf8'),
-    ) as { answers: Array<{ word: string }>; validGuesses: string[] };
+    ) as { answers: string[]; validGuesses: string[] };
+    const rankedAnswers = publicBank.answers.map((word) => ({ word }));
     const ownerDigest = createHash('sha256').update(playerTwo!.id).digest('hex').slice(0, 24);
     const soloAnswer = selectPracticeAnswers({
-      answers: publicBank.answers,
+      answers: rankedAnswers,
       difficulty: 'standard',
       count: 1,
       ownerNamespace: `account:${ownerDigest}`,
@@ -862,7 +863,7 @@ test.describe.serial('protected Preview services', () => {
       length: 5,
       generation: 91,
     })[0]!;
-    const answerWords = new Set(publicBank.answers.map((entry) => entry.word));
+    const answerWords = new Set(publicBank.answers);
     const safeWrongGuess = publicBank.validGuesses.find((word) => !answerWords.has(word));
     if (!safeWrongGuess) throw new Error('A guaranteed non-answer Solo guess was unavailable.');
     await submitOnScreenGuess(secondPage, safeWrongGuess);
