@@ -1200,8 +1200,10 @@ test.describe.serial('protected Preview services', () => {
     ).toBeVisible({ timeout: 15_000 });
     await firstPage.getByRole('button', { name: /Notifications/i }).click();
     await expect(
-      firstPage.getByRole('dialog', { name: 'Notifications' }).getByText('Match result'),
-    ).toBeVisible();
+      firstPage
+        .getByRole('dialog', { name: 'Notifications' })
+        .locator(`a[href="/combat/results/${gameId}"]`),
+    ).toContainText('Match result');
     await firstPage
       .getByRole('dialog', { name: 'Notifications' })
       .getByRole('button', { name: 'Mark all read' })

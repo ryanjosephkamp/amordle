@@ -278,6 +278,7 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
   if (requestsResult.status === 'rejected') failedSources += 1;
 
   const items: PlayerNotification[] = [];
+  const terminalPracticeIds = new Set<string>();
   for (const request of requests) {
     const status = request.request_status.toLowerCase();
     if ((status === 'pending' || status === 'requested') && request.viewer_can_accept) {
@@ -310,6 +311,7 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
 
   for (const game of games) {
     const terminal = game.outcome.terminal;
+    if (terminal && game.scope === 'practice') terminalPracticeIds.add(game.id);
     const isTurn = !terminal && game.status === 'playing' && game.currentTurn === game.viewerSeat;
     const isMatch =
       !terminal && !isTurn && (game.status === 'waiting' || game.status === 'playing');
@@ -327,14 +329,13 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
     );
   }
 
-  const terminalPracticeIds: string[] = [];
   for (const row of legacy) {
     const seat = row.player_one_user_id === userId ? 'player-one' : 'player-two';
     const terminal = row.status === 'won' || row.status === 'lost' || row.status === 'cancelled';
     const hasPlay = row.projection.moves.length > 0;
     const isTurn = !terminal && row.status === 'playing' && row.current_turn === seat;
     const isMatch = !terminal && !isTurn && (row.status === 'waiting' || row.status === 'playing');
-    if (terminal && hasPlay) terminalPracticeIds.push(row.id);
+    if (terminal && hasPlay) terminalPracticeIds.add(row.id);
     if ((!terminal && !isTurn && !isMatch) || (terminal && !hasPlay)) continue;
     const kind = terminal ? 'result' : isTurn ? 'turn' : 'match';
     items.push(
@@ -350,7 +351,7 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
   }
 
   const rematchResults = await Promise.allSettled(
-    terminalPracticeIds.slice(0, 20).map((gameId) => listPracticeRematches(gameId)),
+    [...terminalPracticeIds].slice(0, 20).map((gameId) => listPracticeRematches(gameId)),
   );
   for (const result of rematchResults) {
     if (result.status === 'rejected') {
