@@ -48,7 +48,11 @@ export function SoloSetup() {
         >
           <label>
             Mode
-            <select value={mode} onChange={(event) => setMode(event.target.value as GameMode)}>
+            <select
+              aria-label="Mode"
+              value={mode}
+              onChange={(event) => setMode(event.target.value as GameMode)}
+            >
               <option value="og">OG · one answer</option>
               <option value="go">GO · answer chain</option>
             </select>

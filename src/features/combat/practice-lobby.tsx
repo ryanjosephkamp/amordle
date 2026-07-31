@@ -288,6 +288,7 @@ function PracticeLobbyInner({ length }: Props) {
           <label>
             Mode
             <select
+              aria-label="Mode"
               value={mode}
               disabled={Boolean(queue)}
               onChange={(event) => setMode(event.target.value as 'og' | 'go')}

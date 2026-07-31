@@ -178,7 +178,11 @@ function DailyLobbyInner() {
         <div className="field-stack">
           <label>
             Mode
-            <select value={mode} onChange={(event) => setMode(event.target.value as 'og' | 'go')}>
+            <select
+              aria-label="Mode"
+              value={mode}
+              onChange={(event) => setMode(event.target.value as 'og' | 'go')}
+            >
               <option value="og">OG</option>
               <option value="go">GO · five puzzles</option>
             </select>

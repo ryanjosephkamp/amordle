@@ -1375,7 +1375,7 @@ test.describe.serial('protected Preview services', () => {
     });
 
     await firstPage.goto(`${baseURL}/combat/practice?length=7`);
-    await firstPage.getByLabel('Mode').selectOption('go');
+    await firstPage.getByLabel('Mode', { exact: true }).selectOption('go');
     await firstPage.getByLabel('Puzzles').selectOption('10');
     await firstPage.getByRole('button', { name: 'Find ranked match' }).click();
     const cancelledGoPractice = await registerLatestQueueRequest(playerOne!, 'practice', 'go');
@@ -1403,7 +1403,7 @@ test.describe.serial('protected Preview services', () => {
 
     for (const mode of ['og', 'go'] as const) {
       await firstPage.goto(`${baseURL}/combat/daily`);
-      await firstPage.getByLabel('Mode').selectOption(mode);
+      await firstPage.getByLabel('Mode', { exact: true }).selectOption(mode);
       await firstPage.getByRole('button', { name: 'Create Daily lobby' }).click();
       await expect(firstPage).toHaveURL(/\/combat\/match\//);
       const unrankedDailyGameId = new URL(firstPage.url()).pathname.split('/').at(-1);
@@ -1414,7 +1414,7 @@ test.describe.serial('protected Preview services', () => {
       ]);
 
       await secondPage.goto(`${baseURL}/combat/daily`);
-      await secondPage.getByLabel('Mode').selectOption(mode);
+      await secondPage.getByLabel('Mode', { exact: true }).selectOption(mode);
       const dailyLobbyRow = secondPage.locator('.data-row').filter({ hasText: 'E2E Operator' });
       await expect(dailyLobbyRow).toBeVisible({ timeout: 15_000 });
       await dailyLobbyRow.getByRole('button', { name: 'Join' }).click();
@@ -1436,7 +1436,7 @@ test.describe.serial('protected Preview services', () => {
     }
 
     await firstPage.goto(`${baseURL}/combat/daily`);
-    await firstPage.getByLabel('Mode').selectOption('og');
+    await firstPage.getByLabel('Mode', { exact: true }).selectOption('og');
     await firstPage.getByLabel('Hard Mode').check();
     await firstPage.getByRole('button', { name: 'Find ranked Daily' }).click();
     const rankedDailyOne = await registerLatestQueueRequest(playerOne!, 'daily', 'og');
@@ -1446,7 +1446,7 @@ test.describe.serial('protected Preview services', () => {
     });
 
     await secondPage.goto(`${baseURL}/combat/daily`);
-    await secondPage.getByLabel('Mode').selectOption('og');
+    await secondPage.getByLabel('Mode', { exact: true }).selectOption('og');
     await secondPage.getByLabel('Hard Mode').check();
     await secondPage.getByRole('button', { name: 'Find ranked Daily' }).click();
     const rankedDailyTwo = await registerLatestQueueRequest(playerTwo!, 'daily', 'og');
@@ -1497,7 +1497,7 @@ test.describe.serial('protected Preview services', () => {
     });
 
     await firstPage.goto(`${baseURL}/combat/daily`);
-    await firstPage.getByLabel('Mode').selectOption('go');
+    await firstPage.getByLabel('Mode', { exact: true }).selectOption('go');
     await firstPage.getByLabel('Hard Mode').check();
     await firstPage.getByRole('button', { name: 'Find ranked Daily' }).click();
     const cancelledRankedDailyGo = await registerLatestQueueRequest(playerOne!, 'daily', 'go');
