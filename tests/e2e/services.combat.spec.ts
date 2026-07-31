@@ -1058,8 +1058,8 @@ test.describe.serial('protected Preview services', () => {
     const answer = await inspectAnswer(gameId);
     const bank = JSON.parse(
       await readFile(path.resolve('data/word-lists/words_length_5.json'), 'utf8'),
-    ) as { answers: Array<{ word: string }>; validGuesses: string[] };
-    const guesses = [...bank.validGuesses, ...bank.answers.map((entry) => entry.word)]
+    ) as { answers: string[]; validGuesses: string[] };
+    const guesses = [...bank.validGuesses, ...bank.answers]
       .map((word) => word.toLowerCase())
       .filter(
         (word, index, all) =>
