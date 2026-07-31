@@ -1089,7 +1089,7 @@ test.describe.serial('protected Preview services', () => {
     }
     await expect(
       secondPage.locator('.combat-transcript-entry').first().locator('.combat-transcript-meta'),
-    ).toContainText(/01\s*·\s*rival/i);
+    ).toContainText(/01\s*·\s*E2E Operator/i);
     await submitOnScreenGuess(secondPage, guesses[1]!);
     await waitForGameMoveCount(gameId, 2);
 
