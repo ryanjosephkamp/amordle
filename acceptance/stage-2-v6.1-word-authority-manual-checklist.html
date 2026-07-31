@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.1 Word Authority Manual Checklist</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        line-height: 1.55;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 64rem;
+        padding: 1.25rem;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        margin-top: 2rem;
+        padding-top: 1rem;
+      }
+      li {
+        margin-block: 0.55rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle v6.1 Word Authority Manual Checklist</h1>
+      <p>Candidate: <code>5ea61624c6c2e88922598aee160d50bff9042128</code></p>
+
+      <section>
+        <h2>Completed</h2>
+        <ul>
+          <li>☑ 34/34 content-addressed word assets verified.</li>
+          <li>☑ Home loads no word bank; consumers load one selected length.</li>
+          <li>☑ Offline and integrity behavior passes.</li>
+          <li>☑ No runtime Blob or Supabase Storage word calls remain.</li>
+          <li>☑ 237/237 clauses, 73/73 MP rows, 107/107 bootstrap files.</li>
+          <li>☑ 45 immutable plus 1 authorized migration; exactly 3 HTTP interfaces.</li>
+          <li>☑ Full local acceptance and every completed cleanup receipt are green.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>After Vercel resets the upload quota</h2>
+        <ul>
+          <li>☐ Deploy the exact candidate to a protected Preview.</li>
+          <li>☐ Record the deployment URL and ID.</li>
+          <li>☐ Run <code>E2E_BASE_URL=&lt;preview&gt; pnpm test:acceptance</code>.</li>
+          <li>☐ Confirm 15 fixtures, both hosted service journeys, and 9 visual journeys.</li>
+          <li>☐ Confirm exact zero-residue cleanup.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Credential cutover</h2>
+        <ul>
+          <li>☐ Remove only the Preview-scoped Blob token after hosted proof.</li>
+          <li>☐ Redeploy and rerun acceptance without Blob credentials.</li>
+          <li>☐ Confirm Production configuration remains unchanged.</li>
+          <li>☐ Leave the old Blob store undeleted absent separate authorization.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Final review</h2>
+        <ul>
+          <li>☐ Commit final evidence and update run state.</li>
+          <li>☐ Produce final paired report and checklist.</li>
+          <li>☐ Stop for manual review; do not merge or release Production.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>

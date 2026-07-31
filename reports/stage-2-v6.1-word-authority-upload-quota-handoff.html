@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.1 Word Authority — Upload-Quota Handoff</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        line-height: 1.55;
+      }
+      body {
+        margin: 0 auto;
+        max-width: 78rem;
+        padding: 1.25rem;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        margin-top: 2rem;
+        padding-top: 1rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .status {
+        border: 2px solid currentColor;
+        padding: 1rem;
+      }
+      li {
+        margin-block: 0.45rem;
+      }
+      a {
+        color: inherit;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle v6.1 Word Authority — Upload-Quota Handoff</h1>
+      <p class="status">
+        <strong
+          >Local candidate green; exact protected Preview blocked by Vercel’s zero-cost API upload
+          quota.</strong
+        >
+      </p>
+      <p>
+        Branch:
+        <code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code><br />
+        Candidate: <code>5ea61624c6c2e88922598aee160d50bff9042128</code><br />
+        Word revision:
+        <code>6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703</code>
+      </p>
+
+      <section>
+        <h2>Implemented</h2>
+        <ul>
+          <li>34 content-addressed, same-deployment word assets for lengths 2–35.</li>
+          <li>No browser runtime Vercel Blob or Supabase Storage word dependency.</li>
+          <li>No word data in JavaScript bundles; Home loads no word list.</li>
+          <li>Selected-length-only loading with SHA-256, byte, schema, and cache verification.</li>
+          <li>
+            Deterministic Hugging Face updater, provenance, ADR, contract amendment, and runbook.
+          </li>
+          <li>
+            Ranked Daily authority, recovery, DTO, polling, clock, and independent-lane repairs.
+          </li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Local acceptance</h2>
+        <ul>
+          <li><code>pnpm test:acceptance:local</code>: green</li>
+          <li>39 domain, 12 browser, 15 fixture, and 9 visual tests passed.</li>
+          <li>237/237 functional clauses and 73/73 MP audit rows.</li>
+          <li>107/107 bootstrap files; 45 immutable plus 1 authorized migration.</li>
+          <li>34/34 word assets totaling 6,097,886 bytes; exactly 3 HTTP interfaces.</li>
+          <li>Home: 179,911 B JS / 16,706 B CSS; game: 185,616 B JS / 20,848 B CSS.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>Hosted status</h2>
+        <p>
+          The last deployed checkpoint
+          <code>f3df01c7cc04036545e34424eab88af24d9a9fa9</code> at
+          <a href="https://amordle-33ym313yi-ryanjosephkamps-projects.vercel.app"
+            >the protected Preview</a
+          >
+          proved the full public matrix and primary hosted service journey. Its expanded COMBAT run
+          reached ranked Daily settlement and then identified the completed-lane recovery defect now
+          fixed locally.
+        </p>
+        <p>
+          Cleanup run <code>e2e_20260731T033557598Z_f3df01c7_6c1e8883</code> completed with zero
+          residue on attempt one.
+        </p>
+      </section>
+
+      <section>
+        <h2>Protected stop</h2>
+        <p>
+          Vercel refused the exact final upload with <code>api-upload-free</code>: the Hobby account
+          exceeded 5,000 API upload requests and must wait 24 hours. No paid upgrade was selected,
+          Production was not touched, and the Preview Blob token was not retired prematurely.
+        </p>
+      </section>
+
+      <section>
+        <h2>Resume after quota reset</h2>
+        <ol>
+          <li>Verify the clean branch and exact candidate commit.</li>
+          <li>Deploy that exact commit to a protected Preview.</li>
+          <li>Run <code>E2E_BASE_URL=&lt;preview&gt; pnpm test:acceptance</code>.</li>
+          <li>Require both hosted service journeys and exact zero-residue cleanup.</li>
+          <li>Remove only the Preview-scoped Blob token after green proof.</li>
+          <li>Redeploy and rerun acceptance without Blob credentials.</li>
+          <li>Leave the old Blob store undeleted absent separate authorization.</li>
+        </ol>
+      </section>
+
+      <section>
+        <h2>Boundaries preserved</h2>
+        <p>
+          Production <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>, the default branch, real
+          accounts, BRRRDLE-DEV, the locked shell, and the old Blob store are unchanged.
+        </p>
+        <p>
+          References: <a href="https://vercel.com/docs/limits">Vercel limits</a>,
+          <a href="https://vercel.com/docs/plans/hobby">Vercel Hobby</a>,
+          <a href="https://docs.github.com/en/billing/reference/product-usage-included"
+            >GitHub included usage</a
+          >, and
+          <a href="https://supabase.com/docs/guides/platform/manage-your-usage/egress"
+            >Supabase egress</a
+          >.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
