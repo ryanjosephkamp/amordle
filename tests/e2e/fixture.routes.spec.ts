@@ -103,7 +103,7 @@ test.describe('route and public boundary matrix', () => {
     }
 
     expect((await request.get('/api/cron/refresh-word-lists')).status()).toBe(401);
-    expect([401, 502]).toContain((await request.post('/api/admin-refresh')).status());
+    expect((await request.post('/api/admin-refresh')).status()).toBe(401);
     expect((await request.get('/api/admin-refresh')).status()).toBe(405);
   });
 

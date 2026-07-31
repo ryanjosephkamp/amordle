@@ -17,12 +17,12 @@ export type BearerIdentity =
   | { status: 'authenticated'; userId: string; role: string };
 
 export async function authenticateBearer(request: Request): Promise<BearerIdentity> {
-  const config = getPublicSupabaseConfig();
-  if (!config) return { status: 'unavailable' };
   const authorization = request.headers.get('authorization');
   if (!authorization?.startsWith('Bearer ')) return { status: 'unauthorized' };
   const token = authorization.slice('Bearer '.length).trim();
   if (!token) return { status: 'unauthorized' };
+  const config = getPublicSupabaseConfig();
+  if (!config) return { status: 'unavailable' };
 
   const client = createClient<Database>(config.url, config.anonKey, {
     auth: { persistSession: false, autoRefreshToken: false },
