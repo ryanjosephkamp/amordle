@@ -359,7 +359,11 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
       continue;
     }
     for (const request of result.value) {
-      if (request.request_status === 'pending' || request.request_status === 'accepted') {
+      if (
+        request.request_status === 'pending' ||
+        request.request_status === 'accepted' ||
+        request.request_status === 'created'
+      ) {
         const route = request.created_game_id
           ? `/combat/match/${request.created_game_id}`
           : `/combat/results/${request.source_game_id}`;

@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { combatProjectionSchema } from '@/adapters/cloud/combat';
+import { combatProjectionSchema, rematchRequestSchema } from '@/adapters/cloud/combat';
 import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
 import type { RankedPracticeConfig } from '@/domain/multiplayer';
 
@@ -166,5 +166,33 @@ describe('Ranked Practice queue contract', () => {
       tiles: [],
       pointsAwarded: 0,
     });
+  });
+
+  it('accepts the authoritative created rematch receipt', () => {
+    const parsed = rematchRequestSchema.parse({
+      created: true,
+      created_at: '2026-07-30T20:29:51.000Z',
+      created_game_id: 'amordle-rematch-v3-test',
+      expires_at: '2026-07-30T21:29:51.000Z',
+      go_puzzle_count: null,
+      hard_mode: false,
+      idempotent: false,
+      mode: 'og',
+      opponent_seat: 'player-two',
+      request_id: 'rematch-request',
+      request_status: 'created',
+      requester_seat: 'player-one',
+      responded_at: '2026-07-30T20:30:51.000Z',
+      source_game_id: 'amordle-public-practice-v3-test',
+      time_limit_ms: null,
+      updated_at: '2026-07-30T20:30:51.000Z',
+      viewer_can_accept: false,
+      viewer_can_cancel: false,
+      viewer_role: 'opponent',
+      word_length: 5,
+    });
+
+    expect(parsed.request_status).toBe('created');
+    expect(parsed.created_game_id).toBe('amordle-rematch-v3-test');
   });
 });

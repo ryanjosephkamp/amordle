@@ -936,7 +936,7 @@ export async function advanceLegacyGo(gameId: string, sanctionedWords: ReadonlyS
 }
 
 const rematchRequestStatusSchema = z
-  .enum(['requested', 'pending', 'accepted', 'declined', 'cancelled', 'expired'])
+  .enum(['requested', 'pending', 'accepted', 'created', 'declined', 'cancelled', 'expired'])
   .transform((status) => (status === 'requested' ? 'pending' : status));
 
 export const rematchRequestSchema = z
