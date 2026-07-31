@@ -2,7 +2,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   cancelRankedDaily,
   claimRankedDaily,
@@ -176,8 +176,12 @@ function DailyLobbyInner() {
           : 'Ranked Daily needs attention.',
       ),
   });
-  const pollRankedDaily = ranked.mutate;
-  const rankedDailyPollPending = ranked.isPending;
+  const rankedDailyPoll = useRef(ranked.mutate);
+  const rankedDailyPollPending = useRef(ranked.isPending);
+  useEffect(() => {
+    rankedDailyPoll.current = ranked.mutate;
+    rankedDailyPollPending.current = ranked.isPending;
+  }, [ranked.isPending, ranked.mutate]);
   useEffect(() => {
     if (!rankedIntent) return;
     const timer = window.setInterval(() => {
@@ -186,12 +190,12 @@ function DailyLobbyInner() {
         removeRankedDailyQueueIntent(rankedIntent.ownerUserId);
         setRankedIntent(null);
         setMessage('The UTC Daily changed. Start a new search for today.');
-      } else if (!rankedDailyPollPending) {
-        pollRankedDaily();
+      } else if (!rankedDailyPollPending.current) {
+        rankedDailyPoll.current();
       }
     }, 5_000);
     return () => window.clearInterval(timer);
-  }, [pollRankedDaily, rankedDailyPollPending, rankedIntent]);
+  }, [rankedIntent]);
   const cancelRanked = useMutation({
     mutationFn: async () => {
       if (rankedIntent) await cancelRankedDaily(rankedIntent.requestId);
