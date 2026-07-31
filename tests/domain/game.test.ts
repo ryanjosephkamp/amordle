@@ -83,6 +83,24 @@ describe('canonical game rules', () => {
     expect(evidence.q).toBe('unknown');
   });
 
+  it('normalizes authoritative uppercase tiles onto lowercase keyboard keys', () => {
+    const evidence = deriveKeyboardEvidence([
+      {
+        tiles: [
+          { letter: 'A', state: 'present' },
+          { letter: 'B', state: 'absent' },
+          { letter: 'E', state: 'correct' },
+          { letter: 'B', state: 'present' },
+        ],
+      },
+    ]);
+
+    expect(evidence.a).toBe('present');
+    expect(evidence.b).toBe('present');
+    expect(evidence.e).toBe('correct');
+    expect(evidence.A).toBeUndefined();
+  });
+
   it('derives keyboard evidence only from the visible GO puzzle and its rescored seeds', () => {
     const evidence = derivePuzzleKeyboardEvidence({
       currentPuzzleIndex: 1,

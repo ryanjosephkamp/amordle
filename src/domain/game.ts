@@ -123,11 +123,17 @@ export function deriveKeyboardEvidence<Row extends KeyboardEvidenceRow>(
   }
   for (const row of rows) {
     for (const tile of row.tiles) {
-      evidence[tile.letter] = mergeEvidence(evidence[tile.letter] ?? 'unknown', tile.state);
+      const letter = tile.letter.toLowerCase();
+      if (Object.hasOwn(evidence, letter)) {
+        evidence[letter] = mergeEvidence(evidence[letter] ?? 'unknown', tile.state);
+      }
     }
   }
   for (const letter of removed) {
-    evidence[letter] = 'removed';
+    const normalizedLetter = letter.toLowerCase();
+    if (Object.hasOwn(evidence, normalizedLetter)) {
+      evidence[normalizedLetter] = 'removed';
+    }
   }
   return evidence;
 }
