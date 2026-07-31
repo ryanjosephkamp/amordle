@@ -1,7 +1,11 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { combatProjectionSchema, rematchRequestSchema } from '@/adapters/cloud/combat';
-import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
+import {
+  rankedDailyExpiryUtc,
+  rankedPracticeQueueTransition,
+  sameRankedPracticeConfig,
+} from '@/domain/multiplayer';
 import type { RankedPracticeConfig } from '@/domain/multiplayer';
 
 const baseConfig: RankedPracticeConfig = {
@@ -14,6 +18,14 @@ const baseConfig: RankedPracticeConfig = {
 };
 
 describe('Ranked Practice queue contract', () => {
+  it('uses the backend-authoritative next UTC midnight for Ranked Daily expiry', () => {
+    expect(rankedDailyExpiryUtc('2026-07-31')).toBe('2026-08-01T00:00:00.000Z');
+    expect(rankedDailyExpiryUtc('2026-12-31')).toBe('2027-01-01T00:00:00.000Z');
+    expect(rankedDailyExpiryUtc('2028-02-29')).toBe('2028-03-01T00:00:00.000Z');
+    expect(() => rankedDailyExpiryUtc('2026-02-30')).toThrow('real UTC date');
+    expect(() => rankedDailyExpiryUtc('07/31/2026')).toThrow('YYYY-MM-DD');
+  });
+
   it('adopts an intent only for the exact account-visible compatibility tuple', () => {
     expect(sameRankedPracticeConfig(baseConfig, { ...baseConfig })).toBe(true);
     for (const changed of [

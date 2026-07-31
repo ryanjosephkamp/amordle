@@ -28,6 +28,28 @@ export interface RankedPracticeQueueTransition {
   shouldFinalize: boolean;
 }
 
+export function rankedDailyExpiryUtc(dailyDateKey: string): string {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dailyDateKey);
+  if (!match) {
+    throw new Error('Ranked Daily date keys must use YYYY-MM-DD.');
+  }
+
+  const [, yearText, monthText, dayText] = match;
+  const year = Number(yearText);
+  const monthIndex = Number(monthText) - 1;
+  const day = Number(dayText);
+  const start = new Date(Date.UTC(year, monthIndex, day));
+  if (
+    start.getUTCFullYear() !== year ||
+    start.getUTCMonth() !== monthIndex ||
+    start.getUTCDate() !== day
+  ) {
+    throw new Error('Ranked Daily date keys must identify a real UTC date.');
+  }
+
+  return new Date(Date.UTC(year, monthIndex, day + 1)).toISOString();
+}
+
 export function sameRankedPracticeConfig(
   left: RankedPracticeConfig,
   right: RankedPracticeConfig,

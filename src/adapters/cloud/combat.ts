@@ -2,6 +2,7 @@
 
 import { z } from 'zod';
 import { hardModeViolationForEvidence, playableAttemptBudget, scoreGuess } from '@/domain/game';
+import { rankedDailyExpiryUtc } from '@/domain/multiplayer';
 import type { Database, Json } from '@/types/database';
 import { getBrowserSupabase } from './browser';
 import { parseServiceList, parseServiceResult, ServiceError, throwServiceError } from './shared';
@@ -572,7 +573,7 @@ export async function createRankedDaily(input: {
     p_idempotency_key: input.idempotencyKey,
     p_scope: 'daily',
     p_daily_date_key: input.dailyDateKey,
-    p_expires_at: `${input.dailyDateKey}T23:59:59.999Z`,
+    p_expires_at: rankedDailyExpiryUtc(input.dailyDateKey),
   });
   if (error) throwServiceError(error);
   return parseServiceResult(rankedDailyQueueSchema, data?.[0]);
