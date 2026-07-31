@@ -54,13 +54,17 @@ export async function getAdminDashboard() {
 
 const refreshSchema = z
   .object({
-    revision: z.string(),
-    publishedAt: z.string(),
-    objectCount: z.number().int(),
+    status: z.enum(['current', 'upstream_release_available']),
+    deployedRevision: z.string().regex(/^[a-f0-9]{64}$/),
+    deployedUpstreamCommit: z.string().regex(/^[a-f0-9]{40}$/),
+    observedUpstreamCommit: z.string().regex(/^[a-f0-9]{40}$/),
+    observedReleaseDate: z.iso.date(),
+    checkedAt: z.iso.datetime(),
+    nextAction: z.enum(['none', 'repository_refresh_required']),
   })
   .strict();
 
-export async function requestWordRefresh() {
+export async function requestWordFreshness() {
   const { data } = await client().auth.getSession();
   const token = data.session?.access_token;
   if (!token) throw new ServiceError('Your session needs to be restored.', 'UNAUTHORIZED');
@@ -69,6 +73,6 @@ export async function requestWordRefresh() {
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok)
-    throw new ServiceError('The refresh was not accepted.', String(response.status));
+    throw new ServiceError('Word-list freshness could not be checked.', String(response.status));
   return parseServiceResult(refreshSchema, await response.json());
 }

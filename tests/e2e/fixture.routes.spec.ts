@@ -1,5 +1,6 @@
 import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
+import { createHash } from 'node:crypto';
 
 const canonicalRoutes = [
   '/',
@@ -76,9 +77,30 @@ test.describe('route and public boundary matrix', () => {
   test('the three HTTP interfaces expose only retained public method behavior', async ({
     request,
   }) => {
-    const manifest = await request.get('/api/word-lists/manifest');
-    expect(manifest.status()).toBe(200);
-    expect(await manifest.json()).toHaveProperty('manifest');
+    const manifestResponse = await request.get('/api/word-lists/manifest');
+    expect(manifestResponse.status()).toBe(200);
+    const body = (await manifestResponse.json()) as {
+      manifest: {
+        schemaVersion: number;
+        revision: string;
+        entries: Array<{ length: number; bytes: number; sha256: string; url: string }>;
+      };
+    };
+    expect(body.manifest.schemaVersion).toBe(2);
+    expect(body.manifest.entries).toHaveLength(34);
+    expect(body.manifest.entries.map((entry) => entry.length)).toEqual(
+      Array.from({ length: 34 }, (_, index) => index + 2),
+    );
+    for (const length of [2, 5, 7, 10, 35]) {
+      const entry = body.manifest.entries.find((candidate) => candidate.length === length);
+      expect(entry).toBeDefined();
+      const asset = await request.get(entry!.url);
+      expect(asset.status()).toBe(200);
+      const raw = await asset.body();
+      expect(raw.byteLength).toBe(entry!.bytes);
+      expect(createHash('sha256').update(raw).digest('hex')).toBe(entry!.sha256);
+      expect(asset.headers()['cache-control']).toContain('immutable');
+    }
 
     expect((await request.get('/api/cron/refresh-word-lists')).status()).toBe(401);
     expect([401, 502]).toContain((await request.post('/api/admin-refresh')).status());
@@ -101,10 +123,19 @@ test.describe('route and public boundary matrix', () => {
   test('Word Explorer opens immediate details and Calendar uses bounded month navigation', async ({
     page,
   }) => {
+    const wordRequests: string[] = [];
+    page.on('request', (request) => {
+      if (/\/word-lists\/[a-f0-9]{64}\//.test(request.url())) {
+        wordRequests.push(request.url());
+      }
+    });
     await page.goto('/words?length=5&q=cr&sort=az');
     const search = page.getByLabel('Search');
     await expect(search).toBeVisible();
     await expect(search).toHaveCSS('background-color', /.+/);
+    await expect(page.getByText(/accepted guesses/i)).toBeVisible();
+    expect(wordRequests).toHaveLength(1);
+    expect(wordRequests[0]).toMatch(/\/5-[a-f0-9]{64}\.json$/);
     const firstWord = page.getByRole('region', { name: 'Words' }).getByRole('option').first();
     const label = ((await firstWord.textContent()) ?? '').trim().slice(0, 5);
     await firstWord.click();
@@ -125,5 +156,42 @@ test.describe('route and public boundary matrix', () => {
       () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
     );
     expect(overflow).toBeLessThanOrEqual(1);
+  });
+
+  test('Word Explorer restores its integrity-checked selected-length cache offline', async ({
+    page,
+  }) => {
+    await page.goto('/words?length=7');
+    await expect(page.getByText(/accepted guesses/i)).toBeVisible();
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    await page.reload();
+    await expect(page.getByText(/accepted guesses/i)).toBeVisible();
+    expect(await page.evaluate(() => Boolean(navigator.serviceWorker.controller))).toBe(true);
+    await page.reload();
+    await expect(page.getByText(/accepted guesses/i)).toBeVisible();
+    await expect
+      .poll(() =>
+        page.evaluate(async (currentUrl) => {
+          const cache = await caches.open('amordle-shell-v1');
+          return Boolean(await cache.match(currentUrl));
+        }, page.url()),
+      )
+      .toBe(true);
+    const assetUrl = await page.evaluate(async () => {
+      const response = await fetch('/api/word-lists/manifest');
+      const body = (await response.json()) as {
+        manifest: { entries: Array<{ length: number; url: string }> };
+      };
+      return body.manifest.entries.find((entry) => entry.length === 7)!.url;
+    });
+    const cached = await page.evaluate(async (url) => {
+      const cache = await caches.open('amordle-public-word-lists-v2');
+      return Boolean(await cache.match(url));
+    }, assetUrl);
+    expect(cached).toBe(true);
+    await page.context().setOffline(true);
+    await page.reload();
+    await expect(page.getByText(/accepted guesses/i)).toBeVisible();
+    await page.context().setOffline(false);
   });
 });

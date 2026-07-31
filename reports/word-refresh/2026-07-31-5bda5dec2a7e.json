@@ -1,0 +1,1073 @@
+{
+  "schemaVersion": 1,
+  "dataset": "ryanjosephkamp/english-openlist",
+  "retrievedAt": "2026-07-31T01:51:14.737Z",
+  "upstreamCommit": "5bda5dec2a7ee0f7b2d770ea45ef3254d02b5e08",
+  "upstreamManifestSha256": "eed69c6ef02a8f8e2511879c9361684d56cc1fc63409369efd1ea6bd1bb2890a",
+  "upstreamReleaseDate": "2026-07-31",
+  "upstreamInputBytes": 8288475,
+  "previousRuntimeBytes": 6098226,
+  "candidateRuntimeBytes": 6098226,
+  "currentRevision": "b9241ed35a49857b1a4ad0751d640288a8e869509d72a5133290c4e5505522c6",
+  "candidateRevision": "b9241ed35a49857b1a4ad0751d640288a8e869509d72a5133290c4e5505522c6",
+  "currentTotal": 378661,
+  "candidateTotal": 378661,
+  "totalDelta": 0,
+  "blockers": [],
+  "lengths": [
+    {
+      "length": 2,
+      "before": {
+        "answers": 134,
+        "validGuesses": 134
+      },
+      "after": {
+        "answers": 134,
+        "validGuesses": 134
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 3,
+      "before": {
+        "answers": 1109,
+        "validGuesses": 1109
+      },
+      "after": {
+        "answers": 1109,
+        "validGuesses": 1109
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 4,
+      "before": {
+        "answers": 2000,
+        "validGuesses": 4276
+      },
+      "after": {
+        "answers": 2000,
+        "validGuesses": 4276
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 5,
+      "before": {
+        "answers": 2175,
+        "validGuesses": 9776
+      },
+      "after": {
+        "answers": 2175,
+        "validGuesses": 9776
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 6,
+      "before": {
+        "answers": 2962,
+        "validGuesses": 18128
+      },
+      "after": {
+        "answers": 2962,
+        "validGuesses": 18128
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 7,
+      "before": {
+        "answers": 3809,
+        "validGuesses": 29982
+      },
+      "after": {
+        "answers": 3809,
+        "validGuesses": 29982
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 8,
+      "before": {
+        "answers": 4496,
+        "validGuesses": 41781
+      },
+      "after": {
+        "answers": 4496,
+        "validGuesses": 41781
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 9,
+      "before": {
+        "answers": 4808,
+        "validGuesses": 47763
+      },
+      "after": {
+        "answers": 4808,
+        "validGuesses": 47763
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 10,
+      "before": {
+        "answers": 4729,
+        "validGuesses": 46220
+      },
+      "after": {
+        "answers": 4729,
+        "validGuesses": 46220
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 11,
+      "before": {
+        "answers": 4479,
+        "validGuesses": 41452
+      },
+      "after": {
+        "answers": 4479,
+        "validGuesses": 41452
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 12,
+      "before": {
+        "answers": 4142,
+        "validGuesses": 35447
+      },
+      "after": {
+        "answers": 4142,
+        "validGuesses": 35447
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 13,
+      "before": {
+        "answers": 3726,
+        "validGuesses": 28691
+      },
+      "after": {
+        "answers": 3726,
+        "validGuesses": 28691
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 14,
+      "before": {
+        "answers": 3296,
+        "validGuesses": 22449
+      },
+      "after": {
+        "answers": 3296,
+        "validGuesses": 22449
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 15,
+      "before": {
+        "answers": 2881,
+        "validGuesses": 17152
+      },
+      "after": {
+        "answers": 2881,
+        "validGuesses": 17152
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 16,
+      "before": {
+        "answers": 2349,
+        "validGuesses": 11407
+      },
+      "after": {
+        "answers": 2349,
+        "validGuesses": 11407
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 17,
+      "before": {
+        "answers": 2000,
+        "validGuesses": 7729
+      },
+      "after": {
+        "answers": 2000,
+        "validGuesses": 7729
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 18,
+      "before": {
+        "answers": 2000,
+        "validGuesses": 5190
+      },
+      "after": {
+        "answers": 2000,
+        "validGuesses": 5190
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 19,
+      "before": {
+        "answers": 2000,
+        "validGuesses": 3537
+      },
+      "after": {
+        "answers": 2000,
+        "validGuesses": 3537
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 20,
+      "before": {
+        "answers": 2000,
+        "validGuesses": 2245
+      },
+      "after": {
+        "answers": 2000,
+        "validGuesses": 2245
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 21,
+      "before": {
+        "answers": 1429,
+        "validGuesses": 1429
+      },
+      "after": {
+        "answers": 1429,
+        "validGuesses": 1429
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 22,
+      "before": {
+        "answers": 886,
+        "validGuesses": 886
+      },
+      "after": {
+        "answers": 886,
+        "validGuesses": 886
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 23,
+      "before": {
+        "answers": 617,
+        "validGuesses": 617
+      },
+      "after": {
+        "answers": 617,
+        "validGuesses": 617
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 24,
+      "before": {
+        "answers": 403,
+        "validGuesses": 403
+      },
+      "after": {
+        "answers": 403,
+        "validGuesses": 403
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 25,
+      "before": {
+        "answers": 276,
+        "validGuesses": 276
+      },
+      "after": {
+        "answers": 276,
+        "validGuesses": 276
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 26,
+      "before": {
+        "answers": 185,
+        "validGuesses": 185
+      },
+      "after": {
+        "answers": 185,
+        "validGuesses": 185
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 27,
+      "before": {
+        "answers": 110,
+        "validGuesses": 110
+      },
+      "after": {
+        "answers": 110,
+        "validGuesses": 110
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 28,
+      "before": {
+        "answers": 83,
+        "validGuesses": 83
+      },
+      "after": {
+        "answers": 83,
+        "validGuesses": 83
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 29,
+      "before": {
+        "answers": 64,
+        "validGuesses": 64
+      },
+      "after": {
+        "answers": 64,
+        "validGuesses": 64
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 30,
+      "before": {
+        "answers": 49,
+        "validGuesses": 49
+      },
+      "after": {
+        "answers": 49,
+        "validGuesses": 49
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 31,
+      "before": {
+        "answers": 31,
+        "validGuesses": 31
+      },
+      "after": {
+        "answers": 31,
+        "validGuesses": 31
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 32,
+      "before": {
+        "answers": 21,
+        "validGuesses": 21
+      },
+      "after": {
+        "answers": 21,
+        "validGuesses": 21
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 33,
+      "before": {
+        "answers": 16,
+        "validGuesses": 16
+      },
+      "after": {
+        "answers": 16,
+        "validGuesses": 16
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 34,
+      "before": {
+        "answers": 12,
+        "validGuesses": 12
+      },
+      "after": {
+        "answers": 12,
+        "validGuesses": 12
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    },
+    {
+      "length": 35,
+      "before": {
+        "answers": 11,
+        "validGuesses": 11
+      },
+      "after": {
+        "answers": 11,
+        "validGuesses": 11
+      },
+      "addedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedAnswers": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "addedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      },
+      "removedGuesses": {
+        "count": 0,
+        "sample": [],
+        "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+      }
+    }
+  ]
+}

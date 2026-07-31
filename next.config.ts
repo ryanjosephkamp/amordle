@@ -12,8 +12,29 @@ const nextConfig: NextConfig = {
     typedEnv: true,
   },
   outputFileTracingIncludes: {
-    '/api/admin-refresh': ['./data/word-lists/**/*'],
-    '/api/cron/refresh-word-lists': ['./data/word-lists/**/*'],
+    '/api/admin-refresh': ['./data/word-lists/manifest.json'],
+    '/api/cron/refresh-word-lists': ['./data/word-lists/manifest.json'],
+    '/api/word-lists/manifest': ['./data/word-lists/manifest.json'],
+    '/play/solo/daily/**': ['./data/word-lists/**/*'],
+    '/play/solo/practice/**': ['./data/word-lists/**/*'],
+    '/words': ['./data/word-lists/**/*'],
+  },
+  async headers() {
+    return [
+      {
+        source: '/word-lists/:revision/:asset',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+          {
+            key: 'X-Content-Type-Options',
+            value: 'nosniff',
+          },
+        ],
+      },
+    ];
   },
 };
 

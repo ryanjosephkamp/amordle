@@ -33,6 +33,13 @@ for (const path of files(sourceRoot).filter((candidate) =>
   if (/^\s*['"]use server['"];?/m.test(source)) {
     failures.push(`${projectPath} introduces an unauthorized Server Action boundary`);
   }
+  if (
+    /@vercel\/blob|blob\.vercel-storage\.com|BLOB_READ_WRITE_TOKEN|\/storage\/v1\/.*word-list/i.test(
+      source,
+    )
+  ) {
+    failures.push(`${projectPath} retains a forbidden runtime word-storage dependency`);
+  }
 }
 
 const publicFiles = files(resolve(root, 'public'));

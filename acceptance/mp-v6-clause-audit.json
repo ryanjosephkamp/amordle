@@ -19,7 +19,7 @@
         "20260724222000_amordle_authoritative_combat_v2.sql"
       ],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
@@ -63,7 +63,7 @@
         "20260724222000_amordle_authoritative_combat_v2.sql"
       ],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -87,7 +87,7 @@
         "20260724222000_amordle_authoritative_combat_v2.sql"
       ],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -268,7 +268,7 @@
       "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -949,7 +949,7 @@
       "adapterRpcTableAuthority": ["spectator privacy v3 RPC family"],
       "relevantMigrations": ["20260724223000_amordle_live_spectator_privacy_v3.sql"],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
@@ -1088,7 +1088,7 @@
         "20260724223000_amordle_live_spectator_privacy_v3.sql"
       ],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "actualEvidence": "Evidence covers only part of this clause and is not sufficient for acceptance.",
@@ -1109,7 +1109,7 @@
         "20260724222000_amordle_authoritative_combat_v2.sql"
       ],
       "automatedEvidence": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedEvidence": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],

@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
-import { readPublishedManifest } from '@/server/word-publication';
+import { readPackagedManifest } from '@/server/word-authority';
 
 export const runtime = 'nodejs';
 
 export async function GET() {
   try {
-    const manifest = await readPublishedManifest();
+    const manifest = await readPackagedManifest();
     return NextResponse.json(
       { manifest },
       {

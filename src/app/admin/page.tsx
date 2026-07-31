@@ -5,7 +5,7 @@ export default function AdminPage() {
   return (
     <div className="route-frame">
       <RouteHeader title="Admin">
-        <p>Role-first operator status and bounded Preview word-list refresh.</p>
+        <p>Role-first operator status and bounded word-authority freshness checks.</p>
       </RouteHeader>
       <AdminDashboard />
     </div>

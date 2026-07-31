@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getCronSecret } from '@/server/config';
-import { publishWordLists } from '@/server/word-publication';
+import { checkWordFreshness } from '@/server/word-authority';
 
 export const runtime = 'nodejs';
 
@@ -11,13 +11,8 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
   try {
-    const manifest = await publishWordLists();
-    return NextResponse.json({
-      revision: manifest.revision,
-      publishedAt: manifest.publishedAt,
-      objectCount: manifest.entries.length,
-    });
+    return NextResponse.json(await checkWordFreshness());
   } catch {
-    return NextResponse.json({ error: 'refresh_failed' }, { status: 502 });
+    return NextResponse.json({ error: 'word_freshness_unavailable' }, { status: 502 });
   }
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery } from '@tanstack/react-query';
-import { getAdminDashboard, getMyRole, requestWordRefresh } from '@/adapters/supabase/admin';
+import { getAdminDashboard, getMyRole, requestWordFreshness } from '@/adapters/supabase/admin';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 
@@ -27,7 +27,7 @@ function AdminDashboardInner() {
     enabled: role.data === 'admin',
   });
   const refresh = useMutation({
-    mutationFn: requestWordRefresh,
+    mutationFn: requestWordFreshness,
     onSuccess: () => void dashboard.refetch(),
   });
   if (role.isPending) return <p aria-live="polite">Checking authorization…</p>;
@@ -66,25 +66,22 @@ function AdminDashboardInner() {
         <p aria-live="polite">Loading diagnostics…</p>
       )}
       <section className="status-panel admin-refresh">
-        <h2>Word-list publication</h2>
+        <h2>Word-list freshness</h2>
         <p>
-          Publish immutable selected-length objects first, then promote the Preview manifest. A
-          failure leaves the prior pointer in place.
+          The running deployment is immutable. This check compares its packaged word authority with
+          the latest bounded English OpenList release; updates are prepared and reviewed in the
+          repository.
         </p>
-        <button
-          className="primary"
-          disabled={refresh.isPending}
-          onClick={() => {
-            if (window.confirm('Publish a new Preview word-list revision now?')) refresh.mutate();
-          }}
-        >
-          {refresh.isPending ? 'Publishing…' : 'Refresh Preview word lists'}
+        <button className="primary" disabled={refresh.isPending} onClick={() => refresh.mutate()}>
+          {refresh.isPending ? 'Checking…' : 'Check source freshness'}
         </button>
         <p aria-live="polite">
           {refresh.data
-            ? `${refresh.data.objectCount} objects · ${refresh.data.revision} · ${new Date(refresh.data.publishedAt).toLocaleString()}`
+            ? refresh.data.status === 'current'
+              ? `Current · release ${refresh.data.observedReleaseDate} · checked ${new Date(refresh.data.checkedAt).toLocaleString()}`
+              : `A newer source release (${refresh.data.observedReleaseDate}) is ready for a reviewed repository refresh.`
             : refresh.isError
-              ? 'Refresh failed; the prior manifest remains active.'
+              ? 'Freshness check is unavailable; the packaged word revision remains active.'
               : ''}
         </p>
       </section>

@@ -1050,10 +1050,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-HOME-NO-WORDS",
+        "E2E-FIXTURE-WORD-SELECTED-LENGTH"
+      ],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -1063,10 +1067,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "SERVER-WORD-ASSETS",
+        "BROWSER-WORD-INTEGRITY",
+        "E2E-DEPLOYMENT-WORD-HASH"
+      ],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -1076,10 +1084,10 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": ["STATIC-BOUNDARY", "E2E-DEPLOYMENT-WORD-PRIVACY"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -1089,10 +1097,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "VERIFY-WORD-ASSETS",
+        "WORD-UPDATER-IDEMPOTENCY",
+        "E2E-DEPLOYMENT-WORD-HASH"
+      ],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -1102,10 +1114,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "BROWSER-WORD-INTEGRITY",
+        "E2E-FIXTURE-WORD-OFFLINE",
+        "PWA-CACHE-BOUNDARY"
+      ],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -1896,7 +1912,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
@@ -1928,7 +1944,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -1946,7 +1962,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -2073,7 +2089,7 @@
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -2637,7 +2653,7 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
@@ -2744,7 +2760,7 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy"
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
@@ -2761,7 +2777,7 @@
       "implementationOwner": "NotificationCenter; notifications domain",
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy",
+        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
@@ -3094,10 +3110,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-FIXTURE-WORD-EXPLORER", "BROWSER-WORD-RESULTS"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3107,10 +3123,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-FIXTURE-WORD-SELECTED-LENGTH", "SERVER-WORD-ASSETS"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3120,10 +3136,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-FIXTURE-WORD-EXPLORER", "E2E-DEPLOYMENT-WORD-PRIVACY"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3133,10 +3149,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["BROWSER-WORD-INTEGRITY", "E2E-FIXTURE-ROUTES"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3224,10 +3240,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-SERVICES-ADMIN-AUTHORIZATION", "HTTP-INTERFACE-MATRIX"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3237,10 +3253,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-SERVICES-WORD-FRESHNESS", "WORD-UPDATER-IDEMPOTENCY"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3250,10 +3266,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-SERVICES-ADMIN-AUTHORIZATION", "DB-RLS-CONTRACT"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3263,10 +3279,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["VERIFY-WORD-ASSETS", "WORD-UPDATER-IDEMPOTENCY"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3276,10 +3292,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["E2E-SERVICES-WORD-FRESHNESS", "BROWSER-ADMIN-FRESHNESS"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     },
@@ -3289,10 +3305,10 @@
       "family": "SUP",
       "implementationOwner": "supporting-surfaces",
       "routeInterface": "Supporting routes and the three retained HTTP handlers",
-      "automatedTestIds": ["E2E-FIXTURE-SUPPORT", "E2E-SERVICES-ADMIN", "HTTP-INTERFACE-MATRIX"],
-      "hostedScenarioIds": ["PREVIEW-SUPPORT-AND-API"],
+      "automatedTestIds": ["VERIFY-WORD-ASSETS", "WORD-UPDATER-IDEMPOTENCY"],
+      "hostedScenarioIds": ["PREVIEW-DEPLOYMENT-WORD-AUTHORITY"],
       "screenshotManualEvidence": ["VISUAL-SUPPORT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "cleanupEvidence": ["DEPLOYMENT-ASSET-NONMUTATING", "RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
       "blocker": null
     }

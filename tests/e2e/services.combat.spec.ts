@@ -510,13 +510,22 @@ test.describe.serial('protected Preview services', () => {
     await mkdir(evidenceDir, { recursive: true, mode: 0o700 });
     await writeFile(resourcesPath, '', { mode: 0o600 });
     await writeFile(eventsPath, '', { mode: 0o600 });
+    const manifestResponse = await fetch(`${baseURL}/api/word-lists/manifest`, {
+      headers: bypassHeaders(),
+    });
+    const manifestBody = (await manifestResponse.json()) as {
+      manifest: { revision?: string } | null;
+    };
+    if (!manifestResponse.ok || !manifestBody.manifest?.revision) {
+      throw new Error('Deployment word manifest was unavailable during resource registration.');
+    }
     await appendJson(resourcesPath, {
       at: new Date().toISOString(),
-      kind: 'preview_manifest',
-      id: `word-lists/previews/${commitSha}/manifest.json`,
+      kind: 'deployment_word_manifest',
+      id: manifestBody.manifest.revision,
       owner: commitSha,
       disposable: false,
-      lifecycle: 'candidate',
+      lifecycle: 'immutable-deployment-asset',
     });
     await createAccount(1, 'admin');
     await createAccount(2, 'player');
@@ -527,9 +536,7 @@ test.describe.serial('protected Preview services', () => {
     await cleanup();
   });
 
-  test('publishes candidate words and proves UI multiplayer recovery and privacy', async ({
-    browser,
-  }) => {
+  test('proves deployment words, UI multiplayer recovery, and privacy', async ({ browser }) => {
     test.setTimeout(600_000);
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
@@ -564,7 +571,12 @@ test.describe.serial('protected Preview services', () => {
     });
     expect(cronResponse.status).toBe(401);
 
-    let refreshReceipt: { objectCount?: number } = {};
+    let freshnessReceipt: {
+      status?: string;
+      deployedRevision?: string;
+      observedUpstreamCommit?: string;
+      nextAction?: string;
+    } = {};
     await expect
       .poll(
         async () => {
@@ -573,7 +585,7 @@ test.describe.serial('protected Preview services', () => {
             headers: bypassHeaders({ Authorization: `Bearer ${playerOne!.accessToken}` }),
           });
           if (refreshResponse.status === 200) {
-            refreshReceipt = (await refreshResponse.json()) as { objectCount?: number };
+            freshnessReceipt = (await refreshResponse.json()) as typeof freshnessReceipt;
           }
           return refreshResponse.status;
         },
@@ -583,34 +595,52 @@ test.describe.serial('protected Preview services', () => {
         },
       )
       .toBe(200);
-    expect(refreshReceipt).toMatchObject({ objectCount: 34 });
-    let manifestEntries: Array<{ length: number; url: string }> = [];
-    await expect
-      .poll(
-        async () => {
-          const manifestResponse = await fetch(
-            `${baseURL}/api/word-lists/manifest?candidate=${encodeURIComponent(runId)}`,
-            {
-              headers: bypassHeaders(),
-            },
-          );
-          expect(manifestResponse.status).toBe(200);
-          const body = (await manifestResponse.json()) as {
-            manifest: { entries: Array<{ length: number; url: string }> } | null;
-          };
-          manifestEntries = body.manifest?.entries ?? [];
-          return manifestEntries.length;
-        },
-        {
-          timeout: 30_000,
-          intervals: [250, 500, 1_000, 2_000],
-        },
-      )
-      .toBe(34);
+    expect(freshnessReceipt.status).toMatch(/^(current|upstream_release_available)$/);
+    expect(freshnessReceipt.deployedRevision).toMatch(/^[a-f0-9]{64}$/);
+    expect(freshnessReceipt.observedUpstreamCommit).toMatch(/^[a-f0-9]{40}$/);
+    const manifestResponse = await fetch(`${baseURL}/api/word-lists/manifest`, {
+      headers: bypassHeaders(),
+    });
+    expect(manifestResponse.status).toBe(200);
+    const body = (await manifestResponse.json()) as {
+      manifest: {
+        schemaVersion: number;
+        revision: string;
+        entries: Array<{
+          length: number;
+          bytes: number;
+          sha256: string;
+          url: string;
+        }>;
+      } | null;
+    };
+    expect(body.manifest).not.toBeNull();
+    expect(body.manifest?.schemaVersion).toBe(2);
+    const manifestEntries = body.manifest?.entries ?? [];
     expect(manifestEntries.map((entry) => entry.length)).toEqual(
       Array.from({ length: 34 }, (_, index) => index + 2),
     );
-    await event('preview_manifest_published', { objectCount: 34 });
+    for (const length of [2, 5, 7, 10, 35]) {
+      const entry = manifestEntries.find((candidate) => candidate.length === length);
+      expect(entry).toBeDefined();
+      expect(entry!.url.startsWith('/')).toBe(true);
+      const assetUrl = new URL(entry!.url, baseURL);
+      expect(assetUrl.origin).toBe(new URL(baseURL).origin);
+      expect(assetUrl.hostname).not.toContain('blob.vercel-storage.com');
+      expect(assetUrl.pathname).not.toContain('/storage/v1/');
+      const assetResponse = await fetch(assetUrl, { headers: bypassHeaders() });
+      expect(assetResponse.status).toBe(200);
+      expect(assetResponse.headers.get('cache-control')).toContain('immutable');
+      const raw = Buffer.from(await assetResponse.arrayBuffer());
+      expect(raw.byteLength).toBe(entry!.bytes);
+      expect(createHash('sha256').update(raw).digest('hex')).toBe(entry!.sha256);
+    }
+    await event('deployment_word_authority_verified', {
+      objectCount: 34,
+      revision: body.manifest?.revision,
+      representativeLengths: [2, 5, 7, 10, 35],
+      freshnessStatus: freshnessReceipt.status,
+    });
 
     const legacySnapshot = legacyProgressFixture();
     const { error: legacyError } = await admin.from('progress_snapshots').upsert({

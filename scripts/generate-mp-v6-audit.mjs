@@ -7,7 +7,7 @@ const contract = readFileSync(contractPath, 'utf8');
 const clauses = [...contract.matchAll(/^- (MP-(\d{2})\.([a-z])): (.+)$/gm)];
 
 const h1 =
-  'tests/e2e/services.combat.spec.ts::publishes candidate words and proves UI multiplayer recovery and privacy';
+  'tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy';
 const transcript =
   'tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript';
 const transitions =

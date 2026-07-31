@@ -21,11 +21,6 @@ export function getPublicSupabaseConfig(): { url: string; anonKey: string } | nu
   };
 }
 
-export function getBlobToken(): string | null {
-  const token = process.env.BLOB_READ_WRITE_TOKEN;
-  return token && token.length >= 20 ? token : null;
-}
-
 export function getCronSecret(): string | null {
   const secret = process.env.CRON_SECRET;
   return secret && secret.length >= 20 ? secret : null;

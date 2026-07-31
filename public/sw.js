@@ -1,4 +1,5 @@
 const CACHE = 'amordle-shell-v1';
+const PRESERVED_CACHE_PREFIXES = ['amordle-public-word-lists-'];
 const SAFE_SHELL = ['/', '/play', '/play/solo', '/help', '/about'];
 
 self.addEventListener('install', (event) => {
@@ -10,7 +11,14 @@ self.addEventListener('activate', (event) => {
     caches
       .keys()
       .then((keys) =>
-        Promise.all(keys.filter((key) => key !== CACHE).map((key) => caches.delete(key))),
+        Promise.all(
+          keys
+            .filter(
+              (key) =>
+                key !== CACHE && !PRESERVED_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)),
+            )
+            .map((key) => caches.delete(key)),
+        ),
       ),
   );
 });
@@ -45,10 +53,29 @@ self.addEventListener('fetch', (event) => {
     event.request.method !== 'GET' ||
     url.origin !== self.location.origin ||
     url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/word-lists/') ||
     url.pathname.startsWith('/auth') ||
     url.pathname.startsWith('/combat') ||
     event.request.headers.has('authorization')
   ) {
+    return;
+  }
+  if (url.pathname === '/words') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches
+            .match(event.request)
+            .then(async (cached) => cached ?? (await caches.match('/words')) ?? caches.match('/')),
+        ),
+    );
     return;
   }
   if (url.pathname.startsWith('/play/solo/')) {

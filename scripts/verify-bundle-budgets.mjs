@@ -49,8 +49,34 @@ for (const [name, measured] of Object.entries({ home, game })) {
   }
 }
 
-const bootstrapWordBytes = statSync(resolve(root, 'data/word-lists/words_length_35.json')).size;
-if (bootstrapWordBytes <= 0) throw new Error('Word-list fixture is empty.');
+const wordManifest = JSON.parse(
+  readFileSync(resolve(root, 'data/word-lists/manifest.json'), 'utf8'),
+);
+if (wordManifest.entries?.length !== 34) {
+  throw new Error('Deployment word authority does not contain all 34 lengths.');
+}
+let deploymentWordBytes = statSync(resolve(root, 'data/word-lists/manifest.json')).size;
+for (const entry of wordManifest.entries) {
+  const runtimePath = resolve(root, `data/word-lists/words_length_${entry.length}.json`);
+  const publicPath = resolve(root, `public${entry.url}`);
+  if (!existsSync(runtimePath) || !existsSync(publicPath)) {
+    throw new Error(`Word-list length ${entry.length} is missing from a build authority.`);
+  }
+  if (statSync(runtimePath).size !== entry.bytes || statSync(publicPath).size !== entry.bytes) {
+    throw new Error(`Word-list length ${entry.length} has an unexpected emitted size.`);
+  }
+  deploymentWordBytes += entry.bytes;
+}
+if (deploymentWordBytes > 25 * 1024 * 1024) {
+  throw new Error(`Deployment word authority is ${deploymentWordBytes} bytes; budget is 25 MiB.`);
+}
+const representativeTransfers = Object.fromEntries(
+  [5, 7, 10].map((length) => {
+    const entry = wordManifest.entries.find((candidate) => candidate.length === length);
+    const raw = readFileSync(resolve(root, `data/word-lists/words_length_${length}.json`));
+    return [length, { raw: entry.bytes, gzip: gzipSync(raw).byteLength }];
+  }),
+);
 process.stdout.write(
-  `PASS compressed budgets home ${home.js}B JS/${home.css}B CSS; game ${game.js}B JS/${game.css}B CSS\n`,
+  `PASS compressed budgets home ${home.js}B JS/${home.css}B CSS; game ${game.js}B JS/${game.css}B CSS; deployment words ${deploymentWordBytes}B; transfers ${JSON.stringify(representativeTransfers)}\n`,
 );

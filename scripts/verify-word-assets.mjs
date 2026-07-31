@@ -1,18 +1,24 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
+import { runtimeSize, validateRuntimeAuthority, WORD_LENGTHS } from './lib/word-assets.mjs';
 
 const root = process.cwd();
-const sha256 = (value) => createHash('sha256').update(value).digest('hex');
-const names = [
+const baseline = JSON.parse(readFileSync(resolve(root, 'bootstrap/BUNDLE-MANIFEST.json'), 'utf8'));
+const baselineHashes = new Map(baseline.files.map((entry) => [entry.path, entry.sha256]));
+const bootstrapNames = [
   'manifest.json',
-  ...Array.from({ length: 34 }, (_, index) => `words_length_${index + 2}.json`),
+  ...WORD_LENGTHS.map((length) => `words_length_${length}.json`),
 ];
-for (const name of names) {
-  const source = readFileSync(resolve(root, 'bootstrap/source-data/word-lists', name));
-  const runtime = readFileSync(resolve(root, 'data/word-lists', name));
-  if (sha256(source) !== sha256(runtime)) {
-    throw new Error(`Runtime word-list asset drift: ${name}`);
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+for (const name of bootstrapNames) {
+  const expected = readFileSync(resolve(root, 'bootstrap/source-data/word-lists', name));
+  const relative = `bootstrap/source-data/word-lists/${name}`;
+  if (baselineHashes.get(relative) !== sha256(expected)) {
+    throw new Error(`Immutable bootstrap word authority drift: ${name}`);
   }
 }
-process.stdout.write('PASS 35/35 runtime word-list assets are byte-identical to authority\n');
+const { manifest } = validateRuntimeAuthority(resolve(root, 'data/word-lists'));
+process.stdout.write(
+  `PASS immutable bootstrap word authority and runtime schema v2 ${manifest.entries.length}/34 (${runtimeSize(resolve(root, 'data/word-lists'))} bytes)\n`,
+);

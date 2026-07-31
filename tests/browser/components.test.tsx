@@ -13,11 +13,67 @@ import {
 } from '@/adapters/session-combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
+import { validatePublicWordAsset } from '@/adapters/word-lists';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
 
 describe('browser components', () => {
+  it('rejects corrupt and structurally invalid cached word assets', async () => {
+    const raw = `${JSON.stringify({
+      schemaVersion: 2,
+      length: 2,
+      curation: {
+        method: 'stratified_quality_score_v1',
+        seed: 44,
+        targetSampleSize: 1,
+      },
+      answers: ['am'],
+      validGuesses: ['am'],
+    })}\n`;
+    const digest = [
+      ...new Uint8Array(await crypto.subtle.digest('SHA-256', new TextEncoder().encode(raw))),
+    ]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+    const entry = {
+      length: 2,
+      answers: 1,
+      validGuesses: 1,
+      bytes: new TextEncoder().encode(raw).byteLength,
+      sha256: digest,
+      url: `/word-lists/${'a'.repeat(64)}/2-${digest}.json`,
+    };
+    await expect(validatePublicWordAsset(raw, entry, 2)).resolves.toMatchObject({
+      answers: ['am'],
+      validGuesses: ['am'],
+    });
+    await expect(validatePublicWordAsset('{"corrupt":true}', entry, 2)).rejects.toThrow(
+      /byte count|integrity/i,
+    );
+
+    const duplicateRaw = raw.replace('["am"]}', '["am","am"]}');
+    const duplicateDigest = [
+      ...new Uint8Array(
+        await crypto.subtle.digest('SHA-256', new TextEncoder().encode(duplicateRaw)),
+      ),
+    ]
+      .map((byte) => byte.toString(16).padStart(2, '0'))
+      .join('');
+    await expect(
+      validatePublicWordAsset(
+        duplicateRaw,
+        {
+          ...entry,
+          validGuesses: 2,
+          bytes: new TextEncoder().encode(duplicateRaw).byteLength,
+          sha256: duplicateDigest,
+        },
+        2,
+      ),
+    ).rejects.toThrow(/invalid/i);
+  });
+
   it('strictly parses account-scoped Ranked Practice queue intent', () => {
     const intent = rankedPracticeQueueIntentSchema.parse({
       schemaVersion: 2,
