@@ -45,9 +45,8 @@ function DailyLobbyInner() {
   useEffect(() => {
     const userId = auth.user?.id;
     let active = true;
-    queueMicrotask(() => setRankedIntent(null));
-    if (!userId) return;
     const restore = async () => {
+      if (!userId) return;
       const stored = readRankedDailyQueueIntent(userId);
       let intent = stored.status === 'valid' ? stored.intent : null;
       if (intent && intent.dailyDateKey !== dailyDateKey) {
@@ -85,12 +84,16 @@ function DailyLobbyInner() {
       setRankedIntent(intent);
       setMessage('Restored your ranked Daily search for this account and tab.');
     };
-    void restore().catch(() => {
-      if (active) {
-        setMessage(
-          'Ranked Daily recovery could not refresh. You can retry without losing the queue.',
-        );
-      }
+    queueMicrotask(() => {
+      if (!active) return;
+      setRankedIntent(null);
+      void restore().catch(() => {
+        if (active) {
+          setMessage(
+            'Ranked Daily recovery could not refresh. You can retry without losing the queue.',
+          );
+        }
+      });
     });
     return () => {
       active = false;
