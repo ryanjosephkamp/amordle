@@ -1,5 +1,25 @@
 import type { NextConfig } from 'next';
 
+function validPublicUrl(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  try {
+    const url = new URL(value);
+    return url.protocol === 'https:' || url.protocol === 'http:' ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function validPublicKey(value: string | undefined): string | undefined {
+  return value && value.length >= 20 ? value : undefined;
+}
+
+const publicSupabaseUrl =
+  validPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? validPublicUrl(process.env.SUPABASE_URL);
+const publicSupabaseAnonKey =
+  validPublicKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ??
+  validPublicKey(process.env.SUPABASE_ANON_KEY);
+
 const nextConfig: NextConfig = {
   // Vercel's Next.js builder requires the conventional directory when it
   // packages functions. Keep the isolated local build output used by the
@@ -10,6 +30,10 @@ const nextConfig: NextConfig = {
   typedRoutes: true,
   experimental: {
     typedEnv: true,
+  },
+  env: {
+    ...(publicSupabaseUrl ? { NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl } : {}),
+    ...(publicSupabaseAnonKey ? { NEXT_PUBLIC_SUPABASE_ANON_KEY: publicSupabaseAnonKey } : {}),
   },
   outputFileTracingIncludes: {
     '/api/admin-refresh': ['./data/word-lists/manifest.json'],

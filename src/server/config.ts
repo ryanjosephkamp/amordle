@@ -4,21 +4,22 @@ import { z } from 'zod';
 
 const publicSupabaseSchema = z
   .object({
-    NEXT_PUBLIC_SUPABASE_URL: z.url(),
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: z.string().min(20),
+    url: z.url(),
+    anonKey: z.string().min(20),
   })
   .strict();
+const publicUrlSchema = z.url();
+const publicKeySchema = z.string().min(20);
 
 export function getPublicSupabaseConfig(): { url: string; anonKey: string } | null {
+  const browserUrl = publicUrlSchema.safeParse(process.env.NEXT_PUBLIC_SUPABASE_URL);
+  const browserKey = publicKeySchema.safeParse(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
   const parsed = publicSupabaseSchema.safeParse({
-    NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL,
-    NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    url: browserUrl.success ? browserUrl.data : process.env.SUPABASE_URL,
+    anonKey: browserKey.success ? browserKey.data : process.env.SUPABASE_ANON_KEY,
   });
   if (!parsed.success) return null;
-  return {
-    url: parsed.data.NEXT_PUBLIC_SUPABASE_URL,
-    anonKey: parsed.data.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-  };
+  return parsed.data;
 }
 
 export function getCronSecret(): string | null {
