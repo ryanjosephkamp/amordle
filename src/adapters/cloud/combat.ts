@@ -237,11 +237,12 @@ export const rankedDailyProjectionSchema = z
 
 export type RankedDailyProjection = z.infer<typeof rankedDailyProjectionSchema>;
 
-const rankedDailyQueueSchema = z
+export const rankedDailyQueueSchema = z
   .object({
     request_id: z.string(),
     request_status: z.enum(['queued', 'matched', 'cancelled', 'expired']),
     rating_bucket: z.string(),
+    rating_snapshot: z.number().int(),
     hard_mode: z.boolean(),
     word_length: z.literal(5),
     mode: z.enum(['og', 'go']),

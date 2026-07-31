@@ -1,6 +1,10 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { combatProjectionSchema, rematchRequestSchema } from '@/adapters/cloud/combat';
+import {
+  combatProjectionSchema,
+  rankedDailyQueueSchema,
+  rematchRequestSchema,
+} from '@/adapters/cloud/combat';
 import {
   rankedDailyExpiryUtc,
   rankedPracticeQueueTransition,
@@ -24,6 +28,24 @@ describe('Ranked Practice queue contract', () => {
     expect(rankedDailyExpiryUtc('2028-02-29')).toBe('2028-03-01T00:00:00.000Z');
     expect(() => rankedDailyExpiryUtc('2026-02-30')).toThrow('real UTC date');
     expect(() => rankedDailyExpiryUtc('07/31/2026')).toThrow('YYYY-MM-DD');
+  });
+
+  it('accepts the complete backend Ranked Daily queue response', () => {
+    expect(
+      rankedDailyQueueSchema.parse({
+        request_id: 'daily-request',
+        request_status: 'queued',
+        rating_bucket: 'multiplayer:og:daily:v1',
+        rating_snapshot: 1200,
+        hard_mode: true,
+        word_length: 5,
+        mode: 'og',
+        scope: 'daily',
+        daily_date_key: '2026-07-31',
+        queued_at: '2026-07-31T03:00:00.000Z',
+        expires_at: '2026-08-01T00:00:00.000Z',
+      }).rating_snapshot,
+    ).toBe(1200);
   });
 
   it('adopts an intent only for the exact account-visible compatibility tuple', () => {
