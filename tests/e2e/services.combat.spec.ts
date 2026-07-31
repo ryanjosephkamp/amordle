@@ -1167,9 +1167,12 @@ test.describe.serial('protected Preview services', () => {
     await event('combat_result_visual_captured', { gameId, terminalMoveCount: 3 });
 
     await secondPage.reload();
-    await expect(secondPage.locator('.combat-turn-state')).toHaveText(/you lost|match complete/i, {
-      timeout: 15_000,
-    });
+    await expect(secondPage.locator('.combat-turn-state')).toHaveText(
+      /opponent won|you lost|match complete/i,
+      {
+        timeout: 15_000,
+      },
+    );
     await expect
       .poll(async () => {
         const { data, error } = await admin

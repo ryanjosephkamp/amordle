@@ -8,10 +8,10 @@ import { z } from 'zod';
 import { readEnvelope, writeEnvelope } from '@/adapters/indexeddb';
 import { loadSettings } from '@/adapters/supabase/account';
 import {
-  listActiveCombat,
   listLegacyRecent,
   listPracticeRematches,
   listPrivateRequests,
+  listRecentCombat,
 } from '@/adapters/supabase/combat';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { mergeNotifications } from '@/domain/notifications';
@@ -261,7 +261,7 @@ function NotificationRefreshNotice({
 async function loadNotificationFeed(userId: string, namespace: string): Promise<NotificationFeed> {
   const [settingsResult, gamesResult, legacyResult, requestsResult] = await Promise.allSettled([
     loadSettings(userId),
-    listActiveCombat(),
+    listRecentCombat(),
     listLegacyRecent(userId),
     listPrivateRequests(),
   ]);

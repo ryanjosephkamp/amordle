@@ -511,11 +511,21 @@ export async function getCombatGame(gameId: string) {
   );
 }
 
-export async function listActiveCombat() {
+async function listCombatActivity() {
   return parseServiceList(
     combatProjectionSchema,
     await jsonRpc('list_amordle_combat_active_v2', { p_limit: 100 }),
-  ).items.filter((game) => ['waiting', 'playing', 'holding'].includes(game.status));
+  ).items;
+}
+
+export async function listActiveCombat() {
+  return (await listCombatActivity()).filter((game) =>
+    ['waiting', 'playing', 'holding'].includes(game.status),
+  );
+}
+
+export async function listRecentCombat() {
+  return listCombatActivity();
 }
 
 export async function saveCombatCommand(input: {
