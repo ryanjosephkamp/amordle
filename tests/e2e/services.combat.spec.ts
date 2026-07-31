@@ -634,6 +634,9 @@ test.describe.serial('protected Preview services', () => {
       const raw = Buffer.from(await assetResponse.arrayBuffer());
       expect(raw.byteLength).toBe(entry!.bytes);
       expect(createHash('sha256').update(raw).digest('hex')).toBe(entry!.sha256);
+      expect(raw.toString('utf8')).not.toMatch(
+        /"seed"|"activeAnswer"|"rankedAnswer"|"rawIdentity"|"userId"/,
+      );
     }
     await event('deployment_word_authority_verified', {
       objectCount: 34,

@@ -1,9 +1,9 @@
 import { createHash } from 'node:crypto';
 import { mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
-import { dirname, join, resolve } from 'node:path';
+import { basename, dirname, join, resolve } from 'node:path';
 
 export const WORD_LENGTHS = Object.freeze(Array.from({ length: 34 }, (_, index) => index + 2));
-export const WORD_GENERATOR_VERSION = '2.0.0';
+export const WORD_GENERATOR_VERSION = '2.1.0';
 export const WORD_DATASET = 'ryanjosephkamp/english-openlist';
 export const WORD_SCHEMA_VERSION = 2;
 export const WORD_ASSET_TOTAL_LIMIT = 25 * 1024 * 1024;
@@ -38,7 +38,7 @@ function normalizeAnswer(value, length) {
   return word;
 }
 
-export function normalizeWordBank(source, length) {
+export function normalizeWordBank(source, length, options = {}) {
   assert(Number.isInteger(length) && length >= 2 && length <= 35, 'Invalid word length.');
   assert(source && typeof source === 'object', `Length ${length} bank is not an object.`);
   const metadata = source.metadata && typeof source.metadata === 'object' ? source.metadata : {};
@@ -55,7 +55,14 @@ export function normalizeWordBank(source, length) {
     method === 'stratified_quality_score_v1',
     `Length ${length} uses an unexpected curation method.`,
   );
-  assert(seed === 42 + length, `Length ${length} uses an unexpected curation seed.`);
+  if (options.requireCurationSeed) {
+    assert(seed === 42 + length, `Length ${length} uses an unexpected curation seed.`);
+  } else {
+    assert(
+      seed === undefined || seed === 42 + length,
+      `Length ${length} uses an unexpected curation seed.`,
+    );
+  }
   assert(
     Number.isInteger(targetSampleSize) && targetSampleSize > 0,
     `Length ${length} has an invalid target sample size.`,
@@ -91,7 +98,6 @@ export function normalizeWordBank(source, length) {
     length,
     curation: {
       method,
-      seed,
       targetSampleSize,
     },
     answers,
@@ -127,7 +133,9 @@ export function buildRuntimeAuthority(sourceBanks, options) {
   const assets = new Map();
   const descriptor = [];
   for (const length of WORD_LENGTHS) {
-    const bank = normalizeWordBank(sourceBanks.get(length), length);
+    const bank = normalizeWordBank(sourceBanks.get(length), length, {
+      requireCurationSeed: options.requireCurationSeed !== false,
+    });
     const raw = stableJson(bank);
     const bytes = Buffer.byteLength(raw);
     assert(bytes > 0 && bytes <= WORD_ASSET_FILE_LIMIT, `Length ${length} asset is out of bounds.`);
@@ -178,7 +186,9 @@ export function validateRuntimeAuthority(root) {
     const name = `words_length_${length}.json`;
     const raw = readFileSync(resolve(root, name), 'utf8');
     assert(Buffer.byteLength(raw) <= WORD_ASSET_FILE_LIMIT, `${name} is out of bounds.`);
-    const parsed = normalizeWordBank(JSON.parse(raw), length);
+    const parsed = normalizeWordBank(JSON.parse(raw), length, {
+      requireCurationSeed: false,
+    });
     assert(raw === stableJson(parsed), `${name} is not canonical JSON.`);
     sourceBanks.set(length, parsed);
     rawAssets.set(length, raw);
@@ -186,6 +196,7 @@ export function validateRuntimeAuthority(root) {
   const rebuilt = buildRuntimeAuthority(sourceBanks, {
     generatedAt: manifest.generatedAt,
     source,
+    requireCurationSeed: false,
   });
   assert(
     stableJson(rebuilt.manifest) === stableJson(manifest),
@@ -206,6 +217,10 @@ function assertExactChild(root, candidate) {
 
 export function writeAuthorityDirectory(target, authority) {
   const resolvedTarget = resolve(target);
+  assert(
+    basename(resolvedTarget) === 'word-lists',
+    'Refusing to replace an unexpected authority directory.',
+  );
   const parent = dirname(resolvedTarget);
   mkdirSync(parent, { recursive: true });
   const nonce = `${process.pid}-${Date.now()}`;
@@ -213,6 +228,7 @@ export function writeAuthorityDirectory(target, authority) {
   const backup = `${resolvedTarget}.backup-${nonce}`;
   mkdirSync(candidate, { recursive: false });
   let movedExisting = false;
+  let activated = false;
   try {
     writeFileSync(join(candidate, 'manifest.json'), stableJson(authority.manifest));
     for (const length of WORD_LENGTHS) {
@@ -224,13 +240,17 @@ export function writeAuthorityDirectory(target, authority) {
       movedExisting = true;
     }
     renameSync(candidate, resolvedTarget);
+    activated = true;
     validateRuntimeAuthority(resolvedTarget);
     if (movedExisting) rmSync(assertExactChild(backup, backup), { recursive: true });
   } catch (error) {
     if (statSync(candidate, { throwIfNoEntry: false })) {
       rmSync(assertExactChild(candidate, candidate), { recursive: true });
     }
-    if (movedExisting && !statSync(resolvedTarget, { throwIfNoEntry: false })) {
+    if (activated && statSync(resolvedTarget, { throwIfNoEntry: false })) {
+      rmSync(assertExactChild(resolvedTarget, resolvedTarget), { recursive: true });
+    }
+    if (movedExisting && statSync(backup, { throwIfNoEntry: false })) {
       renameSync(backup, resolvedTarget);
     }
     throw error;
@@ -240,6 +260,10 @@ export function writeAuthorityDirectory(target, authority) {
 export function preparePublicAssets(runtimeRoot, publicRoot) {
   const { manifest, assets } = validateRuntimeAuthority(runtimeRoot);
   const resolvedPublic = assertExactChild(resolve(publicRoot), publicRoot);
+  assert(
+    resolvedPublic.endsWith('/public/word-lists'),
+    'Refusing to replace an unexpected public asset directory.',
+  );
   rmSync(resolvedPublic, { recursive: true, force: true });
   const revisionRoot = join(resolvedPublic, manifest.revision);
   mkdirSync(revisionRoot, { recursive: true });

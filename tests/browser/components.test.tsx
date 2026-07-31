@@ -13,7 +13,7 @@ import {
 } from '@/adapters/session-combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
-import { validatePublicWordAsset } from '@/adapters/word-lists';
+import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/word-lists';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
@@ -25,7 +25,6 @@ describe('browser components', () => {
       length: 2,
       curation: {
         method: 'stratified_quality_score_v1',
-        seed: 44,
         targetSampleSize: 1,
       },
       answers: ['am'],
@@ -72,6 +71,20 @@ describe('browser components', () => {
         2,
       ),
     ).rejects.toThrow(/invalid/i);
+  });
+
+  it('removes stale word revisions without touching the selected revision', async () => {
+    const currentRevision = 'a'.repeat(64);
+    const staleRevision = 'b'.repeat(64);
+    const cache = await caches.open('amordle-public-word-lists-v2');
+    const currentUrl = `/word-lists/${currentRevision}/5-${'c'.repeat(64)}.json`;
+    const staleUrl = `/word-lists/${staleRevision}/5-${'d'.repeat(64)}.json`;
+    await cache.put(currentUrl, new Response('{}'));
+    await cache.put(staleUrl, new Response('{}'));
+    await prunePublicWordAssetCache(currentRevision);
+    expect(await cache.match(currentUrl)).toBeDefined();
+    expect(await cache.match(staleUrl)).toBeUndefined();
+    await cache.delete(currentUrl);
   });
 
   it('strictly parses account-scoped Ranked Practice queue intent', () => {

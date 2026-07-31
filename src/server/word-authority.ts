@@ -38,7 +38,7 @@ export const packagedManifestSchema = z
         upstreamManifestSha256: hashSchema,
         releaseDate: z.iso.date(),
         license: z.literal('MIT'),
-        generatorVersion: z.literal('2.0.0'),
+        generatorVersion: z.literal('2.1.0'),
       })
       .strict(),
     entries: z.array(packagedEntrySchema).length(34),

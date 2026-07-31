@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { cpSync, mkdtempSync, readFileSync, rmSync, unlinkSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join, resolve } from 'node:path';
 import { runtimeSize, validateRuntimeAuthority, WORD_LENGTHS } from './lib/word-assets.mjs';
 
 const root = process.cwd();
@@ -18,7 +19,25 @@ for (const name of bootstrapNames) {
     throw new Error(`Immutable bootstrap word authority drift: ${name}`);
   }
 }
-const { manifest } = validateRuntimeAuthority(resolve(root, 'data/word-lists'));
+const runtimeRoot = resolve(root, 'data/word-lists');
+const { manifest } = validateRuntimeAuthority(runtimeRoot);
+const failureProbe = mkdtempSync(join(tmpdir(), 'amordle-word-authority-'));
+try {
+  const incomplete = join(failureProbe, 'word-lists');
+  cpSync(runtimeRoot, incomplete, { recursive: true });
+  unlinkSync(join(incomplete, 'words_length_35.json'));
+  let failedClosed = false;
+  try {
+    validateRuntimeAuthority(incomplete);
+  } catch {
+    failedClosed = true;
+  }
+  if (!failedClosed) {
+    throw new Error('An incomplete word authority did not fail closed.');
+  }
+} finally {
+  rmSync(failureProbe, { recursive: true, force: true });
+}
 process.stdout.write(
-  `PASS immutable bootstrap word authority and runtime schema v2 ${manifest.entries.length}/34 (${runtimeSize(resolve(root, 'data/word-lists'))} bytes)\n`,
+  `PASS immutable bootstrap word authority, runtime schema v2 ${manifest.entries.length}/34, and incomplete-build rejection (${runtimeSize(runtimeRoot)} bytes)\n`,
 );

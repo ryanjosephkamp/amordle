@@ -35,7 +35,7 @@ const publicManifestSchema = z
         upstreamManifestSha256: hashSchema,
         releaseDate: z.iso.date(),
         license: z.literal('MIT'),
-        generatorVersion: z.literal('2.0.0'),
+        generatorVersion: z.literal('2.1.0'),
       })
       .strict(),
     entries: z.array(entrySchema).length(34),
@@ -51,7 +51,6 @@ const wordBankSchema = z
     curation: z
       .object({
         method: z.literal('stratified_quality_score_v1'),
-        seed: z.number().int(),
         targetSampleSize: z.number().int().positive(),
       })
       .strict(),
@@ -62,6 +61,18 @@ const wordBankSchema = z
 
 const manifestDomain = 'word-lists:manifest:v2';
 const assetCache = 'amordle-public-word-lists-v2';
+
+export async function prunePublicWordAssetCache(revision: string): Promise<void> {
+  if (!('caches' in window) || !hashSchema.safeParse(revision).success) return;
+  const cache = await caches.open(assetCache);
+  const prefix = `${window.location.origin}/word-lists/${revision}/`;
+  const requests = await cache.keys();
+  await Promise.all(
+    requests
+      .filter((request) => !request.url.startsWith(prefix))
+      .map((request) => cache.delete(request)),
+  );
+}
 
 function validateManifestEntries(manifest: z.infer<typeof publicManifestSchema>) {
   const lengths = manifest.entries.map((entry) => entry.length);
@@ -95,10 +106,15 @@ async function loadManifest() {
       updatedAt: manifest.generatedAt,
       state: manifest,
     });
+    await prunePublicWordAssetCache(manifest.revision);
     return manifest;
   } catch (error) {
     const cached = await readEnvelope('public', manifestDomain, publicManifestSchema);
-    if (cached) return validateManifestEntries(cached.state);
+    if (cached) {
+      const manifest = validateManifestEntries(cached.state);
+      await prunePublicWordAssetCache(manifest.revision);
+      return manifest;
+    }
     throw error;
   }
 }
@@ -122,7 +138,6 @@ export async function validatePublicWordAsset(
   const bank = wordBankSchema.parse(JSON.parse(raw));
   if (
     bank.length !== requestedLength ||
-    bank.curation.seed !== 42 + requestedLength ||
     bank.answers.length !== entry.answers ||
     bank.validGuesses.length !== entry.validGuesses
   ) {

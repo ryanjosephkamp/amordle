@@ -13,7 +13,6 @@ const bankSchema = z
     curation: z
       .object({
         method: z.literal('stratified_quality_score_v1'),
-        seed: z.number().int(),
         targetSampleSize: z.number().int().positive(),
       })
       .strict(),
@@ -45,7 +44,7 @@ const manifestSchema = z
         upstreamManifestSha256: hashSchema,
         releaseDate: z.iso.date(),
         license: z.literal('MIT'),
-        generatorVersion: z.literal('2.0.0'),
+        generatorVersion: z.literal('2.1.0'),
       })
       .strict(),
     entries: z.array(entrySchema).length(34),
@@ -69,7 +68,7 @@ describe('deployment-bundled word authority', () => {
       const validGuesses = new Set(bank.validGuesses);
 
       expect(bank.length).toBe(entry.length);
-      expect(bank.curation.seed).toBe(42 + entry.length);
+      expect(bank.curation).not.toHaveProperty('seed');
       expect(bank.answers.length).toBe(entry.answers);
       expect(bank.validGuesses.length).toBe(entry.validGuesses);
       expect(answers.size).toBe(bank.answers.length);

@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "previousRevision": "b9241ed35a49857b1a4ad0751d640288a8e869509d72a5133290c4e5505522c6",
+  "sanitizedRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703",
+  "previousGeneratorVersion": "2.0.0",
+  "generatorVersion": "2.1.0",
+  "previousRuntimeBytes": 6098226,
+  "runtimeBytes": 6097886,
+  "lengths": 34,
+  "gameplayContentChanged": false,
+  "removedPublicFields": ["curation.seed"]
+}

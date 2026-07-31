@@ -12,7 +12,6 @@ const wordBankSchema = z
     curation: z
       .object({
         method: z.literal('stratified_quality_score_v1'),
-        seed: z.number().int(),
         targetSampleSize: z.number().int().positive(),
       })
       .strict(),
@@ -48,7 +47,7 @@ export async function loadWordBank(length: number): Promise<WordBank> {
       wordBankSchema.parse(JSON.parse(raw)),
     ),
   ]);
-  if (parsed.length !== length || parsed.curation.seed !== 42 + length) {
+  if (parsed.length !== length) {
     throw new Error('Word-list length metadata does not match the request.');
   }
   const answers = parsed.answers.map((word) => ({ word }));
