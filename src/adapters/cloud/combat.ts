@@ -281,6 +281,18 @@ const rankedDailyStatusSchema = z
   })
   .strict();
 
+const recoverableRankedDailyQueueSchema = z
+  .object({
+    id: z.string(),
+    mode: z.enum(['og', 'go']),
+    hard_mode: z.boolean(),
+    daily_date_key: z.string(),
+    status: z.enum(['queued', 'matched']),
+    matched_game_id: z.string().nullable(),
+    queued_at: z.string(),
+  })
+  .strict();
+
 const legacyMoveSchema = z
   .object({
     id: z.string(),
@@ -577,6 +589,23 @@ export async function createRankedDaily(input: {
   });
   if (error) throwServiceError(error);
   return parseServiceResult(rankedDailyQueueSchema, data?.[0]);
+}
+
+export async function findRecoverableRankedDaily(dailyDateKey: string) {
+  const { data, error } = await client()
+    .from('multiplayer_matchmaking_queue')
+    .select('id,mode,hard_mode,daily_date_key,status,matched_game_id,queued_at')
+    .eq('transport', 'async')
+    .eq('scope', 'daily')
+    .eq('ranked', true)
+    .eq('daily_date_key', dailyDateKey)
+    .in('status', ['queued', 'matched'])
+    .order('queued_at', { ascending: true })
+    .order('id', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  if (error) throwServiceError(error);
+  return data ? recoverableRankedDailyQueueSchema.parse(data) : null;
 }
 
 export async function getRankedDailyStatus(requestId: string) {

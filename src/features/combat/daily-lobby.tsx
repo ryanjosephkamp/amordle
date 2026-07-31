@@ -8,6 +8,7 @@ import {
   claimRankedDaily,
   createDailyLobby,
   createRankedDaily,
+  findRecoverableRankedDaily,
   finalizeRankedDaily,
   getRankedDailyStatus,
   joinDailyLobby,
@@ -43,29 +44,57 @@ function DailyLobbyInner() {
 
   useEffect(() => {
     const userId = auth.user?.id;
+    let active = true;
     queueMicrotask(() => setRankedIntent(null));
     if (!userId) return;
-    const restored = readRankedDailyQueueIntent(userId);
-    if (restored.status === 'corrupt') {
-      queueMicrotask(() =>
-        setMessage('A damaged ranked Daily search record was discarded for this account.'),
-      );
-      return;
-    }
-    if (restored.status !== 'valid') return;
-    if (restored.intent.dailyDateKey !== dailyDateKey) {
-      removeRankedDailyQueueIntent(userId);
-      queueMicrotask(() =>
-        setMessage('The saved ranked Daily search belonged to a prior UTC day.'),
-      );
-      return;
-    }
-    queueMicrotask(() => {
-      setMode(restored.intent.mode);
-      setHardMode(restored.intent.hardMode);
-      setRankedIntent(restored.intent);
+    const restore = async () => {
+      const stored = readRankedDailyQueueIntent(userId);
+      let intent = stored.status === 'valid' ? stored.intent : null;
+      if (intent && intent.dailyDateKey !== dailyDateKey) {
+        removeRankedDailyQueueIntent(userId);
+        intent = null;
+      }
+      if (!intent) {
+        const recovered = await findRecoverableRankedDaily(dailyDateKey);
+        if (recovered) {
+          intent = {
+            schemaVersion: 3,
+            ownerUserId: userId,
+            dailyDateKey: recovered.daily_date_key,
+            mode: recovered.mode,
+            hardMode: recovered.hard_mode,
+            requestId: recovered.id,
+            matchedGameId: recovered.matched_game_id ?? `ranked-daily-${crypto.randomUUID()}`,
+            creationKey: `recovered:${recovered.id}`,
+            claimActionId: operationId('ranked-daily-claim'),
+            finalizeActionId: operationId('ranked-daily-finalize'),
+            createdAt: recovered.queued_at,
+          };
+          writeRankedDailyQueueIntent(intent);
+        }
+      }
+      if (!active) return;
+      if (!intent) {
+        if (stored.status === 'corrupt') {
+          setMessage('A damaged ranked Daily search record was discarded for this account.');
+        }
+        return;
+      }
+      setMode(intent.mode);
+      setHardMode(intent.hardMode);
+      setRankedIntent(intent);
       setMessage('Restored your ranked Daily search for this account and tab.');
+    };
+    void restore().catch(() => {
+      if (active) {
+        setMessage(
+          'Ranked Daily recovery could not refresh. You can retry without losing the queue.',
+        );
+      }
     });
+    return () => {
+      active = false;
+    };
   }, [auth.user?.id, dailyDateKey]);
   const lobbies = useQuery({
     queryKey: ['combat', 'daily', mode],
