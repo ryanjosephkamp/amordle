@@ -176,6 +176,8 @@ function DailyLobbyInner() {
           : 'Ranked Daily needs attention.',
       ),
   });
+  const pollRankedDaily = ranked.mutate;
+  const rankedDailyPollPending = ranked.isPending;
   useEffect(() => {
     if (!rankedIntent) return;
     const timer = window.setInterval(() => {
@@ -184,12 +186,12 @@ function DailyLobbyInner() {
         removeRankedDailyQueueIntent(rankedIntent.ownerUserId);
         setRankedIntent(null);
         setMessage('The UTC Daily changed. Start a new search for today.');
-      } else if (!ranked.isPending) {
-        ranked.mutate();
+      } else if (!rankedDailyPollPending) {
+        pollRankedDaily();
       }
     }, 5_000);
     return () => window.clearInterval(timer);
-  }, [ranked, rankedIntent]);
+  }, [pollRankedDaily, rankedDailyPollPending, rankedIntent]);
   const cancelRanked = useMutation({
     mutationFn: async () => {
       if (rankedIntent) await cancelRankedDaily(rankedIntent.requestId);
