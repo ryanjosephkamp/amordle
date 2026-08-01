@@ -930,7 +930,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
       "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1173,7 +1173,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
       "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1192,7 +1192,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
       "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1405,7 +1405,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1423,7 +1423,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1454,7 +1454,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1485,7 +1485,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1503,7 +1503,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1846,7 +1846,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1877,7 +1877,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -1895,7 +1895,7 @@
       "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null
     },
     {
@@ -2592,14 +2592,14 @@
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2808,14 +2808,14 @@
       "routeInterface": "/combat/live",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2826,14 +2826,14 @@
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2862,14 +2862,14 @@
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
