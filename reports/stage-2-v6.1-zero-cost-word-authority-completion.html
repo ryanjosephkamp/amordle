@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.1 Completion</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 58rem;
+        margin: 0 auto;
+        padding: 1.5rem;
+        line-height: 1.6;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .status {
+        padding: 0.75rem 1rem;
+        border: 2px solid currentColor;
+        font-weight: 700;
+      }
+      li {
+        margin-block: 0.35rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.1</h1>
+      <p class="status">Review-ready protected Preview. Not merged or released to Production.</p>
+      <section>
+        <h2>Candidate</h2>
+        <ul>
+          <li>Application: <code>7f33829803eb93b560307b4b859d8109e1998db7</code></li>
+          <li>Deployment: <code>dpl_12LwcLEg3yXFMHr9ynMZMgiN78Ni</code></li>
+          <li>
+            <a href="https://amordle-hynrefg79-ryanjosephkamps-projects.vercel.app"
+              >Open protected Preview</a
+            >
+          </li>
+          <li>Hosted run: <code>e2e_20260801T012945823Z_7f338298_6f887a6e</code></li>
+        </ul>
+      </section>
+      <section>
+        <h2>Completed</h2>
+        <ul>
+          <li>34 deployment-bundled, content-addressed word assets for lengths 2–35.</li>
+          <li>No runtime Vercel Blob or Supabase Storage word-list dependency.</li>
+          <li>Home loads no word bank; gameplay and Word Explorer load one selected length.</li>
+          <li>237/237 functional clauses and 73/73 multiplayer clauses verified.</li>
+          <li>
+            Both protected hosted service journeys passed before and after credential retirement.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Acceptance</h2>
+        <ul>
+          <li>60 domain and 14 browser tests passed.</li>
+          <li>15 fixture and 9 visual journeys passed.</li>
+          <li>
+            107/107 bootstrap files and 45 immutable plus 1 authorized additive migration passed.
+          </li>
+          <li>Exactly three HTTP interfaces remain.</li>
+          <li>
+            Final cleanup removed three users, seven games, six queue records, one private request,
+            and one rematch on attempt 1 with zero residue.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Credential cutover</h2>
+        <p>
+          The Preview Blob token was removed only after a green protected run. The same application
+          commit was rebuilt and passed again without it. Production/Development custody and the old
+          Blob store were not changed.
+        </p>
+      </section>
+      <section>
+        <h2>Protected boundaries</h2>
+        <p>
+          Production remains <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>. No merge, Production
+          release, default-branch change, down migration, real-account deletion, or locked-shell
+          modification occurred.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
   "source": "bootstrap/FUNCTIONAL-CONTRACT.md",
-  "generatedFromCommit": "working-tree-post-v6.1-repair",
+  "generatedFromCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
   "requirementCount": 73,
   "requirements": [
     {
@@ -20,6 +20,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -44,6 +45,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -68,6 +70,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
@@ -94,6 +97,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -118,6 +122,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -142,6 +147,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -166,6 +172,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -190,6 +197,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -218,6 +226,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -246,6 +255,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -276,6 +286,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -294,6 +305,7 @@
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -311,6 +323,7 @@
       "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -328,6 +341,7 @@
       "adapterRpcTableAuthority": ["participant projections", "Realtime invalidation"],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -348,6 +362,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -368,6 +383,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -388,6 +404,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -412,6 +429,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -436,6 +454,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -460,6 +479,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
@@ -486,6 +506,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -510,6 +531,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -536,6 +558,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -560,6 +583,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -586,6 +610,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -606,6 +631,7 @@
       ],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
@@ -631,6 +657,7 @@
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
@@ -652,6 +679,7 @@
       ],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
@@ -676,6 +704,7 @@
       ],
       "relevantMigrations": ["20260724222000_amordle_authoritative_combat_v2.sql"],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
@@ -703,6 +732,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -727,6 +757,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
@@ -753,6 +784,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -778,6 +810,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -802,6 +835,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -826,6 +860,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -850,6 +885,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -874,6 +910,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -894,6 +931,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -914,6 +952,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -934,6 +973,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -955,6 +995,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -976,6 +1017,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -997,6 +1039,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1017,6 +1060,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1037,6 +1081,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1057,6 +1102,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1077,6 +1123,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1097,6 +1144,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1117,6 +1165,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1137,6 +1186,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1162,6 +1212,7 @@
         "20260724223000_amordle_live_spectator_privacy_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1187,6 +1238,7 @@
         "20260724223000_amordle_live_spectator_privacy_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1212,6 +1264,7 @@
         "20260724223000_amordle_live_spectator_privacy_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1237,6 +1290,7 @@
         "20260724223000_amordle_live_spectator_privacy_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1259,6 +1313,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
@@ -1283,6 +1338,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1306,6 +1362,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1328,6 +1385,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1350,6 +1408,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1372,6 +1431,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1395,6 +1455,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -1418,6 +1479,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -1441,6 +1503,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -1465,6 +1528,7 @@
       ],
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent"
       ],
@@ -1487,6 +1551,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1508,6 +1573,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1529,6 +1595,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1549,6 +1616,7 @@
       ],
       "relevantMigrations": [],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1569,6 +1637,7 @@
       ],
       "relevantMigrations": [],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1589,6 +1658,7 @@
       ],
       "relevantMigrations": [],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1617,6 +1687,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1645,6 +1716,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1673,6 +1745,7 @@
         "20260730193000_amordle_combat_authority_v3.sql"
       ],
       "automatedEvidence": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedEvidence": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],

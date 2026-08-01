@@ -4,20 +4,19 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.1-protected-preview-upload-quota-gate",
-  "status": "blocked-preview-upload-quota",
-  "lastGreenCommit": "5ea61624c6c2e88922598aee160d50bff9042128",
+  "currentCheckpoint": "stage-2-v6.1-final-protected-preview-candidate",
+  "status": "review-ready",
+  "lastGreenCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
   "v6Implementation": {
-    "truthfulMpAuditCommit": "d285084ab8252cd296379bb99b42e8b30bfb7244",
+    "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
     "decisionPacket": "reports/stage-2-v6-forward-only-migration-decision.md",
     "migrationApplied": true,
     "authorizedMigration": "20260730193000_amordle_combat_authority_v3.sql",
     "synchronizedMigrations": 46,
-    "applicationCandidateCommit": "5ea61624c6c2e88922598aee160d50bff9042128",
+    "applicationCandidateCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "hostedMutationsPerformed": true,
-    "hostedAcceptanceComplete": false,
-    "blockingCondition": "Vercel Hobby api-upload-free quota refused the exact final commit upload for 24 hours after more than 5000 API upload requests.",
+    "hostedAcceptanceComplete": true,
     "mpAudit": {
       "proven": 73,
       "implementedUnproven": 0,
@@ -35,82 +34,80 @@
     "finalImplementationCommit": "31be382e50fa451a9a8a961780f317f9555ed408",
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
-  "candidateVisualReference": {
-    "package": "design/references/stage2/v4-alt-screen-shell-2026-07-28",
-    "packageCommit": "813bbe13711349feafd5d7c170f4f814d71f1994",
-    "recommendedDirection": "alt-screen-terminal",
-    "approvalStatus": "superseded-provenance",
-    "createdAt": "2026-07-28T16:37:33Z"
-  },
   "localAcceptance": {
-    "candidateCommit": "5ea61624c6c2e88922598aee160d50bff9042128",
+    "candidateCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "check": "green",
-    "domainTests": 39,
-    "browserComponentTests": 12,
+    "domainTests": 60,
+    "browserComponentTests": 14,
     "fixtureE2E": 15,
     "visualE2E": 9,
-    "responsivePlayMatrix": "required widths, initial-play containment, internal extended-board scrolling, and horizontal-overflow probes green",
-    "mobileVitals": {
-      "lcpMs": 380,
-      "inpMs": 32,
-      "cls": 0
-    },
+    "parityRows": 237,
+    "mpAuditRows": 73,
+    "bootstrapFiles": "107/107",
+    "migrations": "45 immutable plus 1 authorized additive",
+    "httpInterfaces": 3,
     "homeCompressedBytes": {
-      "js": 179911,
+      "js": 180986,
       "css": 16706
     },
     "gameCompressedBytes": {
-      "js": 185616,
+      "js": 185662,
       "css": 20848
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
   },
   "hostedAcceptance": {
-    "candidateCommit": "5ea61624c6c2e88922598aee160d50bff9042128",
-    "status": "blocked-before-exact-candidate-upload",
-    "lastAttemptedDeploymentCommit": "f3df01c7cc04036545e34424eab88af24d9a9fa9",
-    "lastAttemptedDeploymentId": "dpl_2XNRuJ6TRu1XH31GofbTdMnDG7UV",
-    "lastAttemptedDeploymentUrl": "https://amordle-33ym313yi-ryanjosephkamps-projects.vercel.app",
-    "lastAttemptedFixtureE2E": 15,
-    "lastAttemptedServiceE2E": "first journey green; second journey reached completed ranked Daily settlement before exposing terminal-queue recovery defect",
-    "finalCandidateUploaded": false,
-    "finalCandidateHostedAcceptanceComplete": false,
-    "resumeCondition": "After the Vercel api-upload-free window resets, deploy exact commit 5ea61624c6c2e88922598aee160d50bff9042128 and rerun pnpm test:acceptance."
+    "candidateCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
+    "status": "green-without-preview-blob-credential",
+    "preRetirementDeploymentId": "dpl_9gWfu7PGjLyGkRQdcCsynsu7ZJyi",
+    "preRetirementDeploymentUrl": "https://amordle-bag1lnmk7-ryanjosephkamps-projects.vercel.app",
+    "preRetirementRunId": "e2e_20260801T012508075Z_7f338298_ec174743",
+    "finalDeploymentId": "dpl_12LwcLEg3yXFMHr9ynMZMgiN78Ni",
+    "finalDeploymentUrl": "https://amordle-hynrefg79-ryanjosephkamps-projects.vercel.app",
+    "finalRunId": "e2e_20260801T012945823Z_7f338298_6f887a6e",
+    "fixtureE2E": 15,
+    "serviceE2E": 2,
+    "visualE2E": 9,
+    "parityRows": 237,
+    "finalCandidateUploaded": true,
+    "finalCandidateHostedAcceptanceComplete": true
   },
   "preview": {
-    "deploymentId": "dpl_2XNRuJ6TRu1XH31GofbTdMnDG7UV",
-    "url": "https://amordle-33ym313yi-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_12LwcLEg3yXFMHr9ynMZMgiN78Ni",
+    "url": "https://amordle-hynrefg79-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "f3df01c7cc04036545e34424eab88af24d9a9fa9",
+    "applicationCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "evidenceCommit": null,
-    "supersededByLocalCandidate": true,
-    "projectSettingsRestored": true
+    "projectSettingsRestoredLocally": true,
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
-    "lastRunId": "e2e_20260731T033557598Z_f3df01c7_6c1e8883",
+    "lastRunId": "e2e_20260801T012945823Z_7f338298_6f887a6e",
     "attempt": 1,
-    "zeroResidue": true
+    "zeroResidue": true,
+    "authUsersRemoved": 3,
+    "gamesRemoved": 7,
+    "queueRecordsRemoved": 6,
+    "privateRequestsRemoved": 1,
+    "rematchRequestsRemoved": 1
+  },
+  "wordAuthority": {
+    "mode": "same-deployment-content-addressed-static-assets",
+    "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703",
+    "assetLengths": 34,
+    "blobRuntimeDependency": false,
+    "supabaseStorageDependency": false,
+    "oldBlobStoreDeleted": false
   },
   "securityFollowUp": {
     "code": "vercel-blob-credential-exposed-in-tool-output",
-    "scope": "ignored local Preview environment custody",
-    "requiredResolution": "Remove the Preview-scoped Vercel Blob read/write credential only after the deployment-bundled exact final candidate passes protected hosted acceptance.",
-    "ownerAuthorizedHostedRun": true,
-    "consecutiveBlockedGoalTurns": 0,
-    "ownerAuthorizedContinuationAt": "2026-07-28T19:59:04Z",
-    "oidcReplacementAttempt": "rejected-environment-not-allowed",
-    "v5HostedAcceptanceStatus": "green",
-    "v5_1HostedAcceptanceStatus": "green",
-    "v5_2HostedAcceptanceStatus": "green",
-    "v5_3HostedAcceptanceStatus": "green",
-    "lastReadOnlyRotationCheck": "2026-07-29T04:56:00Z",
-    "rotationCheckResult": "unchanged",
-    "lastAuthorizedHostedRun": "2026-07-31T03:35:57Z",
-    "wordAuthorityCutover": "implemented-locally-hosted-proof-pending",
-    "previewBlobTokenRetired": false,
-    "previewBlobTokenRetirementBlockedBy": "exact final protected Preview not yet deployable because of the Vercel api-upload-free quota"
+    "scope": "Preview environment",
+    "resolution": "Preview-scoped BLOB_READ_WRITE_TOKEN removed after a green protected hosted run; the same application commit was redeployed and passed hosted acceptance without it.",
+    "previewBlobTokenRetired": true,
+    "productionDevelopmentBindingUnchanged": true,
+    "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.1-local-green-hosted-upload-quota-handoff-ready",
-  "updatedAt": "2026-07-31T03:46:00Z"
+  "reportStatus": "v6.1-final-protected-preview-completion-ready",
+  "updatedAt": "2026-08-01T01:36:00Z"
 }

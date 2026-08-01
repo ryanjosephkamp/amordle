@@ -1912,6 +1912,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1929,6 +1930,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1946,6 +1948,7 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
@@ -1965,6 +1968,7 @@
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -1982,6 +1986,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -1999,6 +2004,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2016,6 +2022,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2033,6 +2040,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2050,6 +2058,7 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2067,6 +2076,7 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -2086,6 +2096,7 @@
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2104,6 +2115,7 @@
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2121,6 +2133,7 @@
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2138,6 +2151,7 @@
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2155,6 +2169,7 @@
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2172,6 +2187,7 @@
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2189,6 +2205,7 @@
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2206,6 +2223,7 @@
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2223,6 +2241,7 @@
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2240,6 +2259,7 @@
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
@@ -2259,6 +2279,7 @@
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2276,6 +2297,7 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -2295,6 +2317,7 @@
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2312,6 +2335,7 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
@@ -2331,6 +2355,7 @@
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2348,6 +2373,7 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
@@ -2370,6 +2396,7 @@
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
@@ -2388,6 +2415,7 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
@@ -2410,6 +2438,7 @@
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
@@ -2429,6 +2458,7 @@
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2446,6 +2476,7 @@
       "implementationOwner": "MatchController; rating/account-continuity domains",
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
@@ -2465,6 +2496,7 @@
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2483,6 +2515,7 @@
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2500,6 +2533,7 @@
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2517,6 +2551,7 @@
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2534,6 +2569,7 @@
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2551,6 +2587,7 @@
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2568,6 +2605,7 @@
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2585,6 +2623,7 @@
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2602,6 +2641,7 @@
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2619,6 +2659,7 @@
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2636,6 +2677,7 @@
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2653,6 +2695,7 @@
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2670,6 +2713,7 @@
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2687,6 +2731,7 @@
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2704,6 +2749,7 @@
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2721,6 +2767,7 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2738,6 +2785,7 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2755,6 +2803,7 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2772,6 +2821,7 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2789,6 +2839,7 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2806,6 +2857,7 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2823,6 +2875,7 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2840,6 +2893,7 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2857,6 +2911,7 @@
       "implementationOwner": "NotificationCenter; notifications domain",
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
@@ -2876,6 +2931,7 @@
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2894,6 +2950,7 @@
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2911,6 +2968,7 @@
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2928,6 +2986,7 @@
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2945,6 +3004,7 @@
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -2962,6 +3022,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2979,6 +3040,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -2996,6 +3058,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
@@ -3013,6 +3076,7 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent"
@@ -3032,6 +3096,7 @@
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3049,6 +3114,7 @@
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3066,6 +3132,7 @@
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3083,6 +3150,7 @@
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3100,6 +3168,7 @@
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3117,6 +3186,7 @@
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3134,6 +3204,7 @@
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3151,6 +3222,7 @@
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
@@ -3168,6 +3240,7 @@
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
       ],
       "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
