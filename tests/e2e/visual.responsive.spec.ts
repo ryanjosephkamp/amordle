@@ -364,19 +364,20 @@ test.describe('responsive and alternate presentation evidence', () => {
     for (const width of [320, 360, 390, 412]) {
       await page.setViewportSize({ width, height: 844 });
       await page.goto('/stats');
-      await page.evaluate(() => {
-        const main = document.querySelector('main');
-        if (!main) return;
-        main.innerHTML = `<section class="stats-section"><div class="rating-bucket-grid"><article class="rating-bucket"><header><span>Ranked COMBAT</span><strong>1220</strong></header><dl><div><dt>games</dt><dd>1</dd></div><div><dt>w–l–d</dt><dd>1–0–0</dd></div><div><dt>status</dt><dd>provisional</dd></div><div><dt>updated</dt><dd>7/19/2026</dd></div></dl></article></div></section>`;
-      });
       const containment = await page.evaluate(() => {
-        const bucket = document.querySelector('.rating-bucket') as HTMLElement | null;
+        const fixture = document.createElement('section');
+        fixture.className = 'stats-section';
+        fixture.innerHTML = `<div class="rating-bucket-grid"><article class="rating-bucket"><header><span>Ranked COMBAT</span><strong>1220</strong></header><dl><div><dt>games</dt><dd>1</dd></div><div><dt>w–l–d</dt><dd>1–0–0</dd></div><div><dt>status</dt><dd>provisional</dd></div><div><dt>updated</dt><dd>7/19/2026</dd></div></dl></article></div>`;
+        document.body.append(fixture);
+        const bucket = fixture.querySelector('.rating-bucket') as HTMLElement | null;
         const status = bucket?.querySelector('dl > div:nth-child(3) dd') as HTMLElement | null;
-        return {
+        const measurements = {
           documentOverflow: document.documentElement.scrollWidth - innerWidth,
           bucketOverflow: bucket ? bucket.scrollWidth - bucket.clientWidth : 1,
           statusOverflow: status ? status.scrollWidth - status.clientWidth : 1,
         };
+        fixture.remove();
+        return measurements;
       });
       expect(containment.documentOverflow).toBeLessThanOrEqual(1);
       expect(containment.bucketOverflow).toBeLessThanOrEqual(1);

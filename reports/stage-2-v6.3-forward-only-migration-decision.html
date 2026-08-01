@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.3 migration decision</title>
+    <style>
+      :root { color-scheme: light; font-family: ui-sans-serif, system-ui, sans-serif; }
+      body { margin: 0; background: #fff; color: #171717; line-height: 1.55; }
+      main { width: min(48rem, calc(100% - 2rem)); margin: 2rem auto 4rem; }
+      h1 { font-size: clamp(1.8rem, 7vw, 2.7rem); line-height: 1.08; }
+      h2 { margin-top: 2rem; font-size: 1.25rem; }
+      code { overflow-wrap: anywhere; background: #f2f2f2; padding: .12rem .3rem; }
+      li + li { margin-top: .35rem; }
+      blockquote { margin: 1rem 0; border-left: .25rem solid #111; padding: .75rem 1rem; background: #f6f6f6; }
+      .status { border: 1px solid #bbb; padding: 1rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.3 custom-accent migration decision</h1>
+      <section class="status">
+        <strong>Not applied.</strong> Authorization is requested for one
+        additive migration on <code>squqdstdvbsvhagfuzgj</code>.
+      </section>
+      <h2>Exact artifact</h2>
+      <p><code>20260801193000_amordle_accent_presets_v2.sql</code></p>
+      <p>SHA-256: <code>26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84</code></p>
+      <h2>Why it is needed</h2>
+      <p>The current database supports six named accents only. Private cross-device custom presets, atomic selection, a concurrent 24-item limit, and sanitized public active-color projection require additive database authority.</p>
+      <h2>What changes</h2>
+      <ul>
+        <li>A private Auth-owned preset table with canonical hex, bounded names, timestamps, and cascade cleanup.</li>
+        <li>Nullable active-preset and resolved-hex profile metadata. Existing rows are not rewritten.</li>
+        <li>Owner-only security-definer list, upsert/select, and delete RPCs under a per-account transaction lock.</li>
+        <li>Versioned v2 profile, directory, and leaderboard projections that expose only optional validated <code>accent_hex</code>.</li>
+        <li>Aurora becomes the default for new profiles; existing saved selections remain unchanged.</li>
+      </ul>
+      <h2>Privacy and compatibility</h2>
+      <p>Direct table access is revoked. RLS is enabled and forced. Public projections do not expose preset names, preset IDs, Auth IDs, email, or private account data. Existing v1 RPC signatures remain available, and v1 profile saves preserve a newer active custom selection.</p>
+      <h2>Verification</h2>
+      <ul>
+        <li>PostgreSQL syntax parser: pass.</li>
+        <li>Targeted domain contract tests: pass.</li>
+        <li>Linked dry run: exactly this migration pending.</li>
+        <li>Presentation checkpoint <code>3573430e3d3fd7d333477694ec21b73fd0c933b2</code>: <code>pnpm check</code> green.</li>
+        <li>Baseline is 48 synchronized migrations; authorized completion will be 49/49.</li>
+      </ul>
+      <p>No local Supabase container runtime is installed, so this gate does not claim Docker-backed local execution. Linked verification and generated-type integration follow immediately after authorization.</p>
+      <h2>Exact authorization text</h2>
+      <blockquote>I authorize applying <code>20260801193000_amordle_accent_presets_v2.sql</code> with SHA-256 <code>26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84</code> to linked Supabase project <code>squqdstdvbsvhagfuzgj</code>, followed by migration verification, type regeneration, v2 adapter and custom-preset UI completion, complete acceptance, protected Preview deployment, disposable-user hosted acceptance, exact cleanup, parity reconciliation, and final reporting. Do not merge or release Production.</blockquote>
+      <h2>Boundaries</h2>
+      <p>No merge, Production release, default-branch change, Vercel project-setting change, down migration, real-user deletion, existing E2E-profile deletion, Word Explorer change, or locked-shell mutation is authorized.</p>
+    </main>
+  </body>
+</html>
