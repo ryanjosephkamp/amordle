@@ -21,6 +21,8 @@ Supabase dry run identifies this file as the only pending migration.
   `ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52`.
 - Exact deployed application commit:
   `4a0dc068cebec52d60e80f7ee517fab04a8c1479`.
+- Reviewed repair decision checkpoint:
+  `ee5f93845dfc2851eaeccaa5cb98267e08854a10`.
 - Protected Preview deployment: `dpl_21jNGxPqKEGBPcu67AiDwPZjH9qe`.
 - Protected Preview:
   `https://amordle-p7azfoby6-ryanjosephkamps-projects.vercel.app`.

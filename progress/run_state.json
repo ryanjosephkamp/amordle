@@ -36,6 +36,7 @@
     "repairDecisionPacket": "reports/stage-2-v6.2-public-community-stats-repair-decision.md",
     "pendingRepairMigration": "20260801050000_amordle_public_community_stats_repair.sql",
     "pendingRepairMigrationSha256": "7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22",
+    "repairDecisionCheckpointCommit": "ee5f93845dfc2851eaeccaa5cb98267e08854a10",
     "supabaseMutated": true,
     "vercelMutated": true,
     "hostedAcceptanceComplete": false,
@@ -56,7 +57,7 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "4a0dc068cebec52d60e80f7ee517fab04a8c1479",
+    "candidateCommit": "ee5f93845dfc2851eaeccaa5cb98267e08854a10",
     "reviewedPendingRepairIncluded": true,
     "check": "green",
     "domainTests": 70,
@@ -131,5 +132,5 @@
     "oldBlobStoreDeleted": false
   },
   "reportStatus": "v6.2-public-community-stats-repair-decision-ready",
-  "updatedAt": "2026-08-01T05:08:00Z"
+  "updatedAt": "2026-08-01T05:12:00Z"
 }
