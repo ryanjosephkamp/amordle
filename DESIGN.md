@@ -104,3 +104,23 @@ wallpaper, fixed bottom navigation during play, box-drawing frames around every
 region, nested glass cards, generic SaaS dashboards, scanlines, CRT distortion,
 Matrix effects, fake command output, excessive glow, or terminal-only
 interaction.
+
+## v6.2 community and review-state extension
+
+- The six named profile accents may replace the shell's non-semantic cyan
+  tokens. Correct, present, absent, removed, warning, danger, and disabled
+  colors never inherit the player accent.
+- Profile images are square, profile-page-only identity elements. They do not
+  appear inside boards, leaderboards, lobbies, notifications, or dense player
+  lists. Missing and failed images use a deterministic initials treatment.
+- Player names are links only when the current projection includes a sanctioned
+  public profile identifier. The UI never constructs a profile route from an
+  Auth UUID or private identifier.
+- Public ratings use responsive terminal records rather than fixed desktop
+  tables. Mobile labels and values must not wrap one character per line.
+- Active play retains the contained dynamic-viewport contract. Terminal result
+  and review routes deliberately release the document for vertical touch
+  scrolling, render normal-flow navigation, and must not overlap the result.
+- Definition content uses an accessible modal or inline terminal section and
+  is fetched only after a deliberate request. It does not prefetch an entire
+  word list or History page.

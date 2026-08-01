@@ -6,6 +6,24 @@ export const accentNameSchema = z.enum(accentNames);
 
 export type AccentName = z.infer<typeof accentNameSchema>;
 
+export const flairNames = ['none', 'daily', 'combat'] as const;
+export const flairNameSchema = z.enum(flairNames);
+export type FlairName = z.infer<typeof flairNameSchema>;
+
+export const flairLabels: Record<FlairName, string> = {
+  none: 'No flair',
+  daily: 'Daily player',
+  combat: 'COMBAT player',
+};
+
+export const publicAvatarUrlSchema = z
+  .string()
+  .trim()
+  .max(2048)
+  .refine((value) => value === '' || value.startsWith('https://'), {
+    message: 'Use a secure https image URL.',
+  });
+
 export const accentLabels: Record<AccentName, string> = {
   ice: 'Ice',
   aurora: 'Aurora',
@@ -25,5 +43,27 @@ export const accentCssColors: Record<AccentName, string> = {
 };
 
 export function accentCssColor(value: AccentName | null | undefined): string {
-  return accentCssColors[value ?? 'ice'];
+  return accentCssColors[value ?? 'cyan'];
+}
+
+export const publicRatingBuckets = [
+  'multiplayer:og',
+  'multiplayer:go',
+  'multiplayer:og:daily:v1',
+  'multiplayer:go:daily:v1',
+] as const;
+
+export const publicRatingBucketSchema = z.enum(publicRatingBuckets);
+export type PublicRatingBucket = z.infer<typeof publicRatingBucketSchema>;
+
+export const publicRatingBucketLabels: Record<PublicRatingBucket, string> = {
+  'multiplayer:og': 'Ranked Practice · OG',
+  'multiplayer:go': 'Ranked Practice · GO',
+  'multiplayer:og:daily:v1': 'Ranked Daily · OG',
+  'multiplayer:go:daily:v1': 'Ranked Daily · GO',
+};
+
+export function ratingBucketLabel(bucket: string): string {
+  const parsed = publicRatingBucketSchema.safeParse(bucket);
+  return parsed.success ? publicRatingBucketLabels[parsed.data] : 'Ranked COMBAT';
 }

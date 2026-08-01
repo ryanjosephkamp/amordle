@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { page } from 'vitest/browser';
 import { render } from 'vitest-browser-react';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
 import {
@@ -400,22 +401,41 @@ describe('browser components', () => {
   });
 
   it('supports keyboard-reachable Word Explorer selection and honest eligibility labels', async () => {
+    const definitionLookup = vi.fn(async (word: string) => ({
+      schemaVersion: 1 as const,
+      word,
+      status: 'found' as const,
+      source: 'dictionary-api' as const,
+      definitions: [{ partOfSpeech: 'noun', definition: 'A word used in a browser test.' }],
+      checkedAt: '2026-08-01T03:00:00.000Z',
+      expiresAt: '2026-08-31T03:00:00.000Z',
+      cached: false,
+      stale: false,
+    }));
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
     render(
-      <WordResults
-        words={['crane', 'slate']}
-        answerEligible={['crane']}
-        total={2}
-        page={1}
-        pages={1}
-      />,
+      <QueryClientProvider client={queryClient}>
+        <WordResults
+          words={['crane', 'slate']}
+          answerEligible={['crane']}
+          total={2}
+          page={1}
+          pages={1}
+          definitionLookup={definitionLookup}
+        />
+      </QueryClientProvider>,
     );
     await expect
       .element(page.getByRole('option', { name: /crane/i }))
       .toHaveAttribute('aria-selected', 'true');
     await page.getByRole('option', { name: /slate/i }).click();
     await expect.element(page.getByRole('heading', { name: 'slate' })).toBeVisible();
+    await expect.element(page.getByText('A word used in a browser test.')).toBeVisible();
     await expect
-      .element(page.getByRole('link', { name: 'Search definition' }))
+      .element(page.getByRole('link', { name: 'Search web' }))
       .toHaveAttribute('href', 'https://www.google.com/search?q=define+slate');
+    expect(definitionLookup).toHaveBeenCalledWith('slate');
   });
 });

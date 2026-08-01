@@ -68,6 +68,8 @@ const overflowSurfaces = [
   '/leaderboards',
   '/words',
   '/profile',
+  '/players',
+  '/players/not-a-real-profile',
   '/stats',
   '/settings',
   '/help',
@@ -147,7 +149,7 @@ test.describe('responsive and alternate presentation evidence', () => {
     await page.emulateMedia({ colorScheme: 'light' });
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=45');
     await expect(page.locator('.app-shell.is-game-surface').first()).toBeVisible();
-    await expect(page.locator('.mobile-route-rail')).toHaveCount(0);
+    await expect(page.locator('.mobile-route-rail')).toBeHidden();
     await expect(page.getByRole('button', { name: /more navigation/i })).toBeVisible();
     await expect(page.locator('.board-row-number').first()).toHaveText('01');
     await expect(page.locator('.board-row.is-draft .tile').first()).toBeVisible();

@@ -33,6 +33,7 @@ import { operationId } from '@/adapters/supabase/shared';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
+import { WordDefinition } from '@/features/words/word-definition';
 import {
   continuationCost,
   selectIncorrectLettersToRemove,
@@ -780,6 +781,9 @@ export function SoloGame({
             The answer was{' '}
             <strong className="mono">{answers[session.puzzleIndex]?.toUpperCase()}</strong>.
           </p>
+          {answers[session.puzzleIndex] && (
+            <WordDefinition word={answers[session.puzzleIndex] ?? ''} />
+          )}
           <div className="action-row">
             <button
               type="button"
@@ -788,16 +792,6 @@ export function SoloGame({
             >
               COPY RESULT
             </button>
-            <a
-              className="button"
-              href={`https://www.google.com/search?q=define+${encodeURIComponent(
-                answers[session.puzzleIndex] ?? '',
-              )}`}
-              target="_blank"
-              rel="noreferrer"
-            >
-              FIND DEFINITION
-            </a>
             <Link className="button" href="/play/solo">
               PLAY AGAIN
             </Link>

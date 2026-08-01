@@ -5,3 +5,7 @@ export function accountEconomyNamespace(userId: string): string {
 export function economyQueryKey(namespace: string) {
   return ['economy', namespace] as const;
 }
+
+export function myProfileQueryKey(userId: string) {
+  return ['profile', 'mine', userId] as const;
+}

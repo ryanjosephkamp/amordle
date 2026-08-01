@@ -1,7 +1,7 @@
 'use client';
 
 import type { Session, User } from '@supabase/supabase-js';
-import { QueryClient, QueryClientProvider, useQueryClient } from '@tanstack/react-query';
+import { QueryClient, QueryClientProvider, useQuery, useQueryClient } from '@tanstack/react-query';
 import { usePathname } from 'next/navigation';
 import {
   createContext,
@@ -15,8 +15,13 @@ import {
 import type { PropsWithChildren } from 'react';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
 import { reconcileCompletionOutbox } from '@/application/completion-outbox';
-import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
+import {
+  accountEconomyNamespace,
+  economyQueryKey,
+  myProfileQueryKey,
+} from '@/application/query-keys';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
+import { getMyPublicProfile } from '@/adapters/supabase/public';
 
 interface AuthContextValue {
   status: 'loading' | 'signed-out' | 'signed-in' | 'unavailable' | 'error';
@@ -178,11 +183,30 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
+        <ProfileAccentBridge />
         <CompletionReconciler />
         {children}
       </AuthProvider>
     </QueryClientProvider>
   );
+}
+
+function ProfileAccentBridge() {
+  const auth = useAuth();
+  const userId = auth.user?.id ?? '';
+  const profile = useQuery({
+    queryKey: myProfileQueryKey(userId),
+    queryFn: getMyPublicProfile,
+    enabled: auth.status === 'signed-in' && Boolean(userId),
+    staleTime: 30_000,
+  });
+
+  useEffect(() => {
+    const accent = auth.status === 'signed-in' ? (profile.data?.accent_color ?? 'cyan') : 'cyan';
+    document.documentElement.dataset.accent = accent;
+  }, [auth.status, profile.data?.accent_color, userId]);
+
+  return null;
 }
 
 function CompletionReconciler() {

@@ -66,9 +66,15 @@ export const historyEntryV2Schema = z
   })
   .strict();
 
+export const historyEntryV3Schema = historyEntryV2Schema.extend({
+  schemaVersion: z.literal(3),
+  revealedAnswers: z.array(z.string().regex(/^[a-z]{2,35}$/)).max(10),
+});
+
 export const historyEntrySchema = z.discriminatedUnion('schemaVersion', [
   historyEntryV1Schema,
   historyEntryV2Schema,
+  historyEntryV3Schema,
 ]);
 
 export const historyRowSchema = z

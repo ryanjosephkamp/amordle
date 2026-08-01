@@ -34,12 +34,14 @@ import { loadPublicWordSet } from '@/adapters/word-lists';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
 import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
 import { GameKeyboard } from '@/components/game-keyboard';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
 import type { EvidenceState } from '@/domain/game';
 import { historyRowSchema } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
+import { WordDefinition } from '@/features/words/word-definition';
 import { MoveBoards } from './combat-transcript';
 
 interface MatchState {
@@ -76,15 +78,27 @@ async function loadMatch(gameId: string): Promise<MatchState> {
   }
 }
 
-export function MatchController({ gameId }: { gameId: string }) {
+export function MatchController({
+  gameId,
+  presentation = 'auto',
+}: {
+  gameId: string;
+  presentation?: 'auto' | 'review';
+}) {
   return (
     <AccountGate>
-      <MatchControllerInner gameId={gameId} />
+      <MatchControllerInner gameId={gameId} presentation={presentation} />
     </AccountGate>
   );
 }
 
-function MatchControllerInner({ gameId }: { gameId: string }) {
+function MatchControllerInner({
+  gameId,
+  presentation,
+}: {
+  gameId: string;
+  presentation: 'auto' | 'review';
+}) {
   const auth = useAuth();
   const queryClient = useQueryClient();
   const [draft, setDraft] = useState('');
@@ -104,6 +118,21 @@ function MatchControllerInner({ gameId }: { gameId: string }) {
     staleTime: Number.POSITIVE_INFINITY,
   });
   const refetchMatch = match.refetch;
+  const terminal = Boolean(
+    match.data?.game?.outcome.terminal ||
+    (match.data?.rankedDaily &&
+      ['won', 'lost', 'cancelled'].includes(match.data.rankedDaily.status)) ||
+    (match.data?.legacy &&
+      ['won', 'lost', 'cancelled'].includes(match.data.legacy.projection.status)),
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.gamePresentation =
+      presentation === 'review' || terminal ? 'review' : 'active';
+    return () => {
+      delete document.documentElement.dataset.gamePresentation;
+    };
+  }, [presentation, terminal]);
 
   useEffect(() => {
     const supabase = getBrowserSupabase();
@@ -728,7 +757,10 @@ function AuthoritativeMatch({
         {game.players.map((participant) => (
           <div key={participant.seat}>
             <span>
-              {participant.displayName}
+              <PlayerIdentityLink
+                publicProfileId={participant.publicProfileId}
+                displayName={participant.displayName}
+              />
               {participant.seat === game.viewerSeat ? ' (you)' : ''}
             </span>
             <strong>{game.playerState[participant.seat].points} pts</strong>
@@ -761,6 +793,11 @@ function AuthoritativeMatch({
             participant.seat,
             participant.seat === game.viewerSeat ? 'You' : participant.displayName || 'Rival',
           ]),
+        )}
+        actorProfileIds={Object.fromEntries(
+          game.players
+            .filter((participant) => participant.publicProfileId)
+            .map((participant) => [participant.seat, participant.publicProfileId]),
         )}
       />
       {!terminal && game.status === 'playing' && (
@@ -803,17 +840,10 @@ function AuthoritativeMatch({
             {game.outcome.reason?.replaceAll('_', ' ') ?? 'Final result recorded'} · {player.points}{' '}
             points
           </p>
-          {game.revealedAnswers && <p className="mono">{game.revealedAnswers.join(' · ')}</p>}
           {game.revealedAnswers && game.revealedAnswers.length > 0 && (
-            <div className="action-row" aria-label="Answer definitions">
+            <div className="result-definitions" aria-label="Answer definitions">
               {game.revealedAnswers.map((answer) => (
-                <Link
-                  className="button"
-                  href={`/words?length=${answer.length}&word=${encodeURIComponent(answer)}`}
-                  key={answer}
-                >
-                  DEFINE {answer.toUpperCase()}
-                </Link>
+                <WordDefinition word={answer} key={answer} />
               ))}
             </div>
           )}
@@ -1030,7 +1060,7 @@ function combatHistoryRow(
       user_id: userId,
       completed_at: game.endedAt ?? game.updatedAt,
       entry: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         kind: game.scope === 'daily' ? 'combat-daily' : 'combat-practice',
         lane: game.scope,
         mode: game.mode,
@@ -1055,6 +1085,7 @@ function combatHistoryRow(
         rewardXp: 0,
         ...(game.dailyDateKey === undefined ? {} : { dailyDate: game.dailyDateKey }),
         ratingDelta: game.ranked ? rankedPracticeRatingDelta : null,
+        revealedAnswers: game.revealedAnswers ?? [],
         ...(opponent
           ? {
               opponent: {
@@ -1138,7 +1169,7 @@ function combatHistoryRow(
       user_id: userId,
       completed_at: row.updated_at,
       entry: {
-        schemaVersion: 2,
+        schemaVersion: 3,
         kind: 'combat-practice',
         lane: 'practice',
         mode: game.mode,
@@ -1160,6 +1191,7 @@ function combatHistoryRow(
         rewardCoins: 0,
         rewardXp: 0,
         ratingDelta: null,
+        revealedAnswers: [game.answer],
         opponent: { displayName: 'Rival' },
       },
     });

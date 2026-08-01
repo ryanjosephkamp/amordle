@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.2 migration decision</title>
+    <style>
+      :root { color-scheme: light dark; font: 16px/1.55 system-ui, sans-serif; }
+      body { max-width: 52rem; margin: auto; padding: 1.25rem; }
+      h1, h2 { line-height: 1.15; }
+      code { overflow-wrap: anywhere; }
+      section { border-top: 1px solid currentColor; margin-top: 1.5rem; padding-top: .75rem; }
+      .gate { border: 2px solid currentColor; padding: 1rem; }
+      li + li { margin-top: .35rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.2 migration decision</h1>
+      <p class="gate">
+        <strong>Authorization requested:</strong> apply exactly
+        <code>20260801032334_amordle_public_community_v1.sql</code> to the linked Amordle
+        Supabase project. It is prepared and dry-run verified, but has not been applied.
+      </p>
+      <p><strong>SHA-256:</strong><br /><code>ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52</code></p>
+      <section>
+        <h2>Why it is required</h2>
+        <p>
+          Current authority accepts only the none flair, has no bounded public player directory
+          or public COMBAT aggregate, and cannot safely link spectator names without a sanctioned
+          public profile identifier. Presentation code cannot establish those privacy boundaries.
+        </p>
+      </section>
+      <section>
+        <h2>Minimum additive scope</h2>
+        <ol>
+          <li>Allow none, Daily, and COMBAT self-selected flair.</li>
+          <li>Use cyan as the new profile accent default and validator fallback.</li>
+          <li>Add one partial public-name prefix index.</li>
+          <li>Add a bounded, paginated public player directory projection.</li>
+          <li>Add a public COMBAT-only statistics and rating projection.</li>
+          <li>Add public Practice spectator v4 with sanctioned public profile IDs.</li>
+        </ol>
+      </section>
+      <section>
+        <h2>Privacy and compatibility</h2>
+        <ul>
+          <li>No direct table grants.</li>
+          <li>No Auth UUID, email, Solo History, economy, inventory, answer, or seed exposure.</li>
+          <li>No table, column, HTTP route, game rule, or rating rule change.</li>
+          <li>Existing v3 RPC signatures remain available.</li>
+          <li>Existing private profiles are not silently published.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Validation and next step</h2>
+        <p>
+          The linked Supabase dry run lists exactly this migration. Domain and browser contract
+          suites are green. After explicit authorization, the agent will apply it, regenerate
+          types, verify synchronized history, run full acceptance, deploy protected Preview,
+          perform disposable-user hosted checks and exact cleanup, and deliver final reports.
+        </p>
+      </section>
+      <section>
+        <h2>Excluded</h2>
+        <p>
+          No merge, Production release, default-branch change, old-shell mutation, real-account
+          deletion, down migration, or paid service is authorized.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>

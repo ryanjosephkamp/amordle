@@ -15,6 +15,7 @@ import {
 import type { DailyLobby, PublicPracticeLobby } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 
@@ -235,7 +236,16 @@ function PracticeLobbyRow({
   return (
     <div className="data-row" data-game-id={row.id}>
       <div>
-        <strong>{isOwner ? 'Your Practice lobby' : 'Open Practice player'}</strong>
+        <strong>
+          {isOwner ? (
+            'Your Practice lobby'
+          ) : (
+            <PlayerIdentityLink
+              publicProfileId={row.owner.publicProfileId}
+              displayName={row.owner.displayName || 'Open Practice player'}
+            />
+          )}
+        </strong>
         <p>
           Practice · {row.mode.toUpperCase()} · {row.wordLength} letters · {row.difficulty}
           {row.hardMode ? ' · Hard Mode' : ''}
@@ -271,7 +281,14 @@ function DailyLobbyRow({
     <div className="data-row" data-game-id={lobby.id}>
       <div>
         <strong>
-          {lobby.capabilities.canCancel ? 'Your Daily lobby' : lobby.owner.displayName}
+          {lobby.capabilities.canCancel ? (
+            'Your Daily lobby'
+          ) : (
+            <PlayerIdentityLink
+              publicProfileId={lobby.owner.publicProfileId}
+              displayName={lobby.owner.displayName}
+            />
+          )}
         </strong>
         <p>
           Daily · {lobby.mode.toUpperCase()} · {lobby.wordLength} letters

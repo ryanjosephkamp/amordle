@@ -22,6 +22,7 @@ const menuShortcut = directNavigationShortcuts.find((shortcut) => shortcut.id ==
 const secondary = [
   { href: '/play', label: 'All game modes' },
   { href: '/leaderboards', label: 'Leaderboards' },
+  { href: '/players', label: 'Players' },
   { href: '/history', label: 'History' },
   { href: '/words', label: 'Words' },
   { href: '/stats', label: 'Stats' },
@@ -182,7 +183,7 @@ export function AppShell({ children }: PropsWithChildren) {
                     {secondary.map((item) => (
                       <Link
                         key={item.href}
-                        href={item.href}
+                        href={item.href as Route}
                         role="menuitem"
                         onClick={() => setMoreOpenedOn(null)}
                       >
@@ -205,33 +206,31 @@ export function AppShell({ children }: PropsWithChildren) {
               </div>
             </div>
           </div>
-          {!gameSurface && (
-            <nav className="mobile-route-rail" aria-label="Primary">
-              {primary.slice(0, 4).map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href as Route}
-                  aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
-                  aria-keyshortcuts={item.ariaKeyShortcuts}
-                >
-                  <span aria-hidden="true">[{item.code.replace('Digit', '')}]</span>{' '}
-                  {item.label.toLowerCase()}
-                </Link>
-              ))}
-              <button
-                ref={mobileMoreButton}
-                type="button"
-                aria-label="More navigation"
-                aria-haspopup="menu"
-                aria-expanded={moreOpen}
-                aria-controls="more-navigation"
-                aria-keyshortcuts={menuShortcut?.ariaKeyShortcuts}
-                onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
+          <nav className="mobile-route-rail" aria-label="Primary">
+            {primary.slice(0, 4).map((item) => (
+              <Link
+                key={item.href}
+                href={item.href as Route}
+                aria-current={isCurrent(pathname, item.href) ? 'page' : undefined}
+                aria-keyshortcuts={item.ariaKeyShortcuts}
               >
-                [m] menu
-              </button>
-            </nav>
-          )}
+                <span aria-hidden="true">[{item.code.replace('Digit', '')}]</span>{' '}
+                {item.label.toLowerCase()}
+              </Link>
+            ))}
+            <button
+              ref={mobileMoreButton}
+              type="button"
+              aria-label="More navigation"
+              aria-haspopup="menu"
+              aria-expanded={moreOpen}
+              aria-controls="more-navigation"
+              aria-keyshortcuts={menuShortcut?.ariaKeyShortcuts}
+              onClick={() => setMoreOpenedOn(moreOpen ? null : pathname)}
+            >
+              [m] menu
+            </button>
+          </nav>
         </header>
       )}
       <main id="main-content" tabIndex={-1}>

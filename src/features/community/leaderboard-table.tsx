@@ -1,9 +1,9 @@
 'use client';
 
-import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { getLeaderboard, getSiteStats } from '@/adapters/supabase/public';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { SkeletonRows } from '@/components/route-states';
 
 const buckets = [
@@ -61,9 +61,10 @@ export function LeaderboardTable() {
                 <tr key={entry.leaderboard_key}>
                   <td data-label="Rank">{entry.rank}</td>
                   <td data-label="Player">
-                    <Link href={`/players/${entry.public_profile_id}`}>
-                      {entry.display_name || 'Player'}
-                    </Link>
+                    <PlayerIdentityLink
+                      publicProfileId={entry.public_profile_id}
+                      displayName={entry.display_name || 'Player'}
+                    />
                   </td>
                   <td data-label="Rating">
                     {Math.round(entry.rating)}

@@ -8,8 +8,20 @@ import { getMyPublicProfile, saveMyPublicProfile } from '@/adapters/supabase/pub
 import type { z } from 'zod';
 import { myPublicProfileSchema } from '@/adapters/supabase/public';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
-import { accentCssColors, accentLabels, accentNameSchema, accentNames } from '@/domain/profile';
-import type { AccentName } from '@/domain/profile';
+import { useAuth } from '@/components/providers';
+import { myProfileQueryKey } from '@/application/query-keys';
+import {
+  accentCssColors,
+  accentLabels,
+  accentNameSchema,
+  accentNames,
+  flairLabels,
+  flairNameSchema,
+  flairNames,
+  publicAvatarUrlSchema,
+} from '@/domain/profile';
+import type { AccentName, FlairName } from '@/domain/profile';
+import { ProfileAvatar } from '@/features/community/profile-avatar';
 
 export function ProfileEditor() {
   return (
@@ -21,15 +33,25 @@ export function ProfileEditor() {
 
 function ProfileEditorInner() {
   const queryClient = useQueryClient();
+  const auth = useAuth();
+  const userId = auth.user?.id ?? '';
   const profile = useQuery({
-    queryKey: ['profile', 'mine'],
+    queryKey: myProfileQueryKey(userId),
     queryFn: getMyPublicProfile,
+    enabled: Boolean(userId),
   });
   const save = useMutation({
     mutationFn: saveMyPublicProfile,
     onSuccess: (data) => {
-      queryClient.setQueryData(['profile', 'mine'], data);
-      void queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
+      queryClient.setQueryData(myProfileQueryKey(userId), data);
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['leaderboard'] }),
+        queryClient.invalidateQueries({ queryKey: ['player-directory'] }),
+        queryClient.invalidateQueries({ queryKey: ['public-profile', data.public_profile_id] }),
+        queryClient.invalidateQueries({
+          queryKey: ['public-profile-stats', data.public_profile_id],
+        }),
+      ]);
     },
   });
 
@@ -65,21 +87,45 @@ function ProfileForm({
 }) {
   const [displayName, setDisplayName] = useState(profile?.display_name ?? '');
   const [bio, setBio] = useState(profile?.bio ?? '');
-  const [visibility, setVisibility] = useState<'public' | 'private'>(
-    profile?.visibility === 'private' ? 'private' : 'public',
-  );
-  const [accentColor, setAccentColor] = useState<AccentName>(profile?.accent_color ?? 'ice');
-  const [flairKey, setFlairKey] = useState(profile?.flair_key || 'none');
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? '');
+  const [avatarError, setAvatarError] = useState('');
+  const [accentColor, setAccentColor] = useState<AccentName>(profile?.accent_color ?? 'cyan');
+  const [flairKey, setFlairKey] = useState<FlairName>(profile?.flair_key ?? 'none');
 
   return (
     <form
       className="form-panel field-stack"
       onSubmit={(event) => {
         event.preventDefault();
-        save.mutate({ displayName, bio, visibility, accentColor, flairKey });
+        const parsedAvatar = publicAvatarUrlSchema.safeParse(avatarUrl);
+        if (!parsedAvatar.success) {
+          setAvatarError(parsedAvatar.error.issues[0]?.message ?? 'Use a valid HTTPS image URL.');
+          return;
+        }
+        setAvatarError('');
+        save.mutate({
+          displayName,
+          bio,
+          visibility: 'public',
+          accentColor,
+          avatarUrl: parsedAvatar.data,
+          flairKey,
+        });
       }}
     >
       <h2>PUBLIC PROFILE</h2>
+      <div className="profile-editor-intro">
+        <ProfileAvatar
+          avatarUrl={avatarUrl || null}
+          displayName={displayName}
+          accentColor={accentColor}
+          label="Profile image preview"
+        />
+        <p>
+          Your player name, bio, flair, profile image, and public COMBAT totals are visible to other
+          players after you save. Account details, Solo History, settings, and economy stay private.
+        </p>
+      </div>
       <label>
         Player name
         <input
@@ -100,15 +146,28 @@ function ProfileForm({
         />
       </label>
       <label>
-        Public visibility
-        <select
-          value={visibility}
-          onChange={(event) => setVisibility(event.target.value as 'public' | 'private')}
-        >
-          <option value="public">Public</option>
-          <option value="private">Private</option>
-        </select>
+        Profile image URL
+        <input
+          type="url"
+          inputMode="url"
+          maxLength={2048}
+          placeholder="https://example.com/your-photo.jpg"
+          value={avatarUrl}
+          aria-describedby="profile-avatar-help profile-avatar-error"
+          aria-invalid={Boolean(avatarError)}
+          onChange={(event) => {
+            setAvatarUrl(event.target.value);
+            setAvatarError('');
+          }}
+        />
       </label>
+      <p id="profile-avatar-help" className="field-help">
+        Use a public HTTPS image URL. The image appears only on profile pages; clear this field to
+        remove it.
+      </p>
+      <p id="profile-avatar-error" className="field-error" aria-live="polite">
+        {avatarError}
+      </p>
       <fieldset className="accent-fieldset">
         <legend>Accent color</legend>
         <div className="accent-options">
@@ -133,12 +192,27 @@ function ProfileForm({
       </fieldset>
       <label>
         Flair
-        <select value={flairKey} onChange={(event) => setFlairKey(event.target.value)}>
-          <option value="none">None</option>
-          <option value="daily">Daily player</option>
-          <option value="combat">COMBAT player</option>
+        <select
+          value={flairKey}
+          onChange={(event) => setFlairKey(flairNameSchema.parse(event.target.value))}
+        >
+          {flairNames.map((flair) => (
+            <option value={flair} key={flair}>
+              {flairLabels[flair]}
+            </option>
+          ))}
         </select>
       </label>
+      <p className="field-help">
+        Flair is a self-selected profile label. It does not change matchmaking, rating, rewards, or
+        rank.
+      </p>
+      {profile?.visibility === 'private' && (
+        <p className="status-line status-line--warning" role="note">
+          This existing profile is private. Saving these fields will publish the profile details
+          listed above; nothing is published until you choose Save profile.
+        </p>
+      )}
       <button className="primary" disabled={save.isPending}>
         {save.isPending ? 'SAVING…' : 'SAVE PROFILE'}
       </button>
@@ -149,7 +223,6 @@ function ProfileForm({
             ? save.error.message || 'Profile could not be saved.'
             : ''}
       </p>
-      {profile?.public_profile_id && <p className="mono">Public ID: {profile.public_profile_id}</p>}
     </form>
   );
 }

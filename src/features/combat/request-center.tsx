@@ -17,6 +17,7 @@ import {
 } from '@/adapters/supabase/combat';
 import type { PrivateRequest } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { AccountGate } from '@/components/route-states';
 
 export function RequestCenter() {
@@ -62,6 +63,7 @@ function RequestCenterInner() {
         mode,
         wordLength: length,
         hardMode,
+        timeLimitMs: null,
         goPuzzleCount: mode === 'go' ? 5 : null,
         idempotencyKey: operationId('private-request'),
       }),
@@ -200,7 +202,12 @@ function RequestCenterInner() {
             {blocks.data.map((block) => (
               <div className="data-row" key={block.public_profile_id}>
                 <div>
-                  <strong>{block.display_name || 'Private player'}</strong>
+                  <strong>
+                    <PlayerIdentityLink
+                      publicProfileId={block.public_profile_id}
+                      displayName={block.display_name || 'Private player'}
+                    />
+                  </strong>
                   <p>Private requests remain blocked in both directions.</p>
                 </div>
                 <button
@@ -230,9 +237,18 @@ function RequestCenterInner() {
               <div className="request-row" key={request.request_id}>
                 <div>
                   <strong>
-                    {request.viewer_role === 'requester'
-                      ? request.opponent_display_name || 'Requested player'
-                      : request.requester_display_name || 'Player'}
+                    <PlayerIdentityLink
+                      publicProfileId={
+                        request.viewer_role === 'requester'
+                          ? request.opponent_public_profile_id
+                          : request.requester_public_profile_id
+                      }
+                      displayName={
+                        request.viewer_role === 'requester'
+                          ? request.opponent_display_name || 'Requested player'
+                          : request.requester_display_name || 'Player'
+                      }
+                    />
                   </strong>
                   <p>
                     {request.mode.toUpperCase()} · {request.word_length} letters

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": "bootstrap/FUNCTIONAL-CONTRACT.md",
   "requirementCount": 237,
-  "generatedAt": "2026-07-27T20:33:49Z",
+  "generatedAt": "2026-08-01T04:05:00.000Z",
   "requirements": [
     {
       "requirementId": "APP-01.a",
@@ -920,11 +920,17 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
-      "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-DEFINITIONS",
+        "BROWSER-DEFINITION-DIALOG"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
+      "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1157,11 +1163,17 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
-      "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-DEFINITIONS",
+        "BROWSER-DEFINITION-DIALOG"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
+      "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1170,11 +1182,17 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
-      "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-DEFINITIONS",
+        "BROWSER-DEFINITION-DIALOG"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-DEFINITION-SURFACES"],
+      "screenshotManualEvidence": ["V6.2-DEFINITION-SURFACES"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1378,11 +1396,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1391,11 +1414,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1417,11 +1445,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1443,11 +1476,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1456,11 +1494,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1794,11 +1837,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1820,11 +1868,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -1833,11 +1886,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
-      "status": "verified",
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-PUBLIC-COMMUNITY"
+      ],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null
     },
     {
@@ -2534,14 +2592,14 @@
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation",
-        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
+        "DOMAIN-PUBLIC-COMMUNITY"
       ],
-      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
-      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
-      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "verified",
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null,
-      "verificationStatus": "proven",
+      "verificationStatus": "implemented-unproven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2750,14 +2808,14 @@
       "routeInterface": "/combat/live",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery",
-        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
+        "DOMAIN-PUBLIC-COMMUNITY"
       ],
-      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
-      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
-      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "verified",
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null,
-      "verificationStatus": "proven",
+      "verificationStatus": "implemented-unproven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2768,14 +2826,14 @@
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
-        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
+        "DOMAIN-PUBLIC-COMMUNITY"
       ],
-      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
-      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
-      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "verified",
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null,
-      "verificationStatus": "proven",
+      "verificationStatus": "implemented-unproven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2804,14 +2862,14 @@
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation",
-        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
+        "DOMAIN-PUBLIC-COMMUNITY"
       ],
-      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
-      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
-      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "verified",
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "status": "implemented",
       "blocker": null,
-      "verificationStatus": "proven",
+      "verificationStatus": "implemented-unproven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {

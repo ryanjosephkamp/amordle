@@ -735,6 +735,27 @@ button.key.is-removed {
   overflow: auto;
   overscroll-behavior: contain;
   scrollbar-gutter: stable;
+  touch-action: pan-y;
+}
+
+html[data-game-presentation='review'] .combat-game {
+  height: auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .combat-transcript-frame {
+  min-height: 20rem;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .combat-history,
+html[data-game-presentation='review'] .combat-history .game-history-viewport {
+  height: auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .combat-history .latest-row-button {
+  display: none;
 }
 
 .game-history-viewport:focus-visible {

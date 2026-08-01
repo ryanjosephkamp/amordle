@@ -7,6 +7,9 @@ const spectatorV3 = read(
   'supabase/migrations/20260724223000_amordle_live_spectator_privacy_v3.sql',
 );
 const authorityV3 = read('supabase/migrations/20260730193000_amordle_combat_authority_v3.sql');
+const publicCommunityV1 = read(
+  'supabase/migrations/20260801032334_amordle_public_community_v1.sql',
+);
 const rankedDaily = read('supabase/migrations/20260710061039_phase55_ranked_daily_multiplayer.sql');
 const requestProtection = read(
   'supabase/migrations/20260711001811_phase56_private_request_center_and_anti_spam.sql',
@@ -215,6 +218,15 @@ describe('MP-01 through MP-21 acceptance authority', () => {
       "'canMutate', false",
     ]);
     expect(cloudCombat).toContain('spectatorGameSchema');
+    includesAll(publicCommunityV1, [
+      'get_amordle_public_practice_spectator_v4',
+      "'publicProfileId', profile.public_profile_id",
+      "authority.source_kind = 'public_lobby'",
+      "authority.visibility_kind = 'public'",
+      "authority.scope = 'practice'",
+      'and not authority.ranked',
+    ]);
+    expect(cloudCombat).toContain("rpc('get_amordle_public_practice_spectator_v4'");
   });
 
   it('proves MP-15 polling, invalidation, reconnect and visibility recovery', () => {
@@ -249,7 +261,7 @@ describe('MP-01 through MP-21 acceptance authority', () => {
       'PLAY DAILY',
       'VIEW RIVAL',
       'HISTORY',
-      'DEFINE ',
+      '<WordDefinition word={answer}',
     ]);
     expect(authorityV3).toContain('accept_practice_multiplayer_rematch_v3');
   });

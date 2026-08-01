@@ -12,7 +12,7 @@ export default async function CombatResultPage({
       <RouteHeader title="COMBAT result">
         <p>Review the final boards, answers, points, rating, and available next match.</p>
       </RouteHeader>
-      <MatchController gameId={resultId} />
+      <MatchController gameId={resultId} presentation="review" />
     </div>
   );
 }

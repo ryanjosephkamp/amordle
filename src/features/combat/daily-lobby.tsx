@@ -22,6 +22,7 @@ import {
   writeRankedDailyQueueIntent,
 } from '@/adapters/session-combat';
 import type { RankedDailyQueueIntent } from '@/adapters/session-combat';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 
@@ -275,7 +276,12 @@ function DailyLobbyInner() {
             {lobbies.data.map((lobby) => (
               <div className="data-row" key={lobby.id}>
                 <div>
-                  <strong>{lobby.owner.displayName}</strong>
+                  <strong>
+                    <PlayerIdentityLink
+                      publicProfileId={lobby.owner.publicProfileId}
+                      displayName={lobby.owner.displayName}
+                    />
+                  </strong>
                   <p>
                     {lobby.mode.toUpperCase()}
                     {lobby.hardMode ? ' · Hard Mode' : ''}

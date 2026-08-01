@@ -14,6 +14,7 @@ import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 import { defaultAccountProgress } from '@/domain/account-continuity';
 import { buildPlayerStats, nextLevelProgress } from '@/domain/account-stats';
+import { ratingBucketLabel } from '@/domain/profile';
 
 export function PrivateStats() {
   return (
@@ -108,6 +109,11 @@ function PrivateStatsInner() {
           label="recorded rewards"
           value={`${projection.rewardCoins} coins · ${projection.rewardXp} XP`}
         />
+        <ResultComposition
+          wins={projection.wins}
+          losses={projection.losses}
+          draws={projection.draws}
+        />
       </StatsSection>
 
       <StatsSection title="breakdowns" note="durable completed games">
@@ -125,6 +131,14 @@ function PrivateStatsInner() {
         <Metric
           label="ranked / unranked"
           value={`${projection.byRanking.ranked} / ${projection.byRanking.unranked}`}
+        />
+        <ComparisonBars
+          rows={[
+            ['Solo', projection.byKind['solo-practice'] + projection.byKind['solo-daily']],
+            ['COMBAT', projection.byKind['combat-practice'] + projection.byKind['combat-daily']],
+            ['Practice', projection.byLane.practice],
+            ['Daily', projection.byLane.daily],
+          ]}
         />
       </StatsSection>
 
@@ -155,35 +169,35 @@ function PrivateStatsInner() {
 
       <StatsSection title="ranked ratings" note="service-confirmed buckets">
         {ratings.data?.length ? (
-          <div className="table-scroll">
-            <table className="responsive-table stats-rating-table">
-              <thead>
-                <tr>
-                  <th>Bucket</th>
-                  <th>Rating</th>
-                  <th>Games</th>
-                  <th>W / L / D</th>
-                  <th>Status</th>
-                  <th>Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {ratings.data.map((rating) => (
-                  <tr key={rating.bucket}>
-                    <td data-label="Bucket">{rating.bucket.replaceAll(':', ' · ')}</td>
-                    <td data-label="Rating">{Math.round(rating.rating)}</td>
-                    <td data-label="Games">{rating.games_played}</td>
-                    <td data-label="W / L / D">
-                      {rating.wins} / {rating.losses} / {rating.draws}
-                    </td>
-                    <td data-label="Status">
-                      {rating.provisional ? 'Provisional' : 'Established'}
-                    </td>
-                    <td data-label="Updated">{new Date(rating.updated_at).toLocaleDateString()}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="rating-bucket-grid">
+            {ratings.data.map((rating) => (
+              <article className="rating-bucket" key={rating.bucket}>
+                <header>
+                  <span>{ratingBucketLabel(rating.bucket)}</span>
+                  <strong>{Math.round(rating.rating)}</strong>
+                </header>
+                <dl>
+                  <div>
+                    <dt>games</dt>
+                    <dd>{rating.games_played}</dd>
+                  </div>
+                  <div>
+                    <dt>w–l–d</dt>
+                    <dd>
+                      {rating.wins}–{rating.losses}–{rating.draws}
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>status</dt>
+                    <dd>{rating.provisional ? 'provisional' : 'established'}</dd>
+                  </div>
+                  <div>
+                    <dt>updated</dt>
+                    <dd>{new Date(rating.updated_at).toLocaleDateString()}</dd>
+                  </div>
+                </dl>
+              </article>
+            ))}
           </div>
         ) : (
           <p className="empty-copy">No ranked rating has been established yet.</p>
@@ -247,5 +261,53 @@ function Metric({ label, value }: { label: string; value: string | number }) {
       <span>{label}</span>
       <strong>{value}</strong>
     </div>
+  );
+}
+
+function ResultComposition({
+  wins,
+  losses,
+  draws,
+}: {
+  wins: number;
+  losses: number;
+  draws: number;
+}) {
+  const total = wins + losses + draws;
+  if (!total) return null;
+  return (
+    <figure className="stats-visual stats-result-composition">
+      <figcaption>
+        Result mix · {wins} wins, {losses} losses, {draws} draws
+      </figcaption>
+      <div className="result-composition-track" aria-hidden="true">
+        <span className="is-win" style={{ width: `${(wins / total) * 100}%` }} />
+        <span className="is-loss" style={{ width: `${(losses / total) * 100}%` }} />
+        <span className="is-draw" style={{ width: `${(draws / total) * 100}%` }} />
+      </div>
+      <div className="result-composition-legend" aria-hidden="true">
+        <span>WIN {Math.round((wins / total) * 100)}%</span>
+        <span>LOSS {Math.round((losses / total) * 100)}%</span>
+        <span>DRAW {Math.round((draws / total) * 100)}%</span>
+      </div>
+    </figure>
+  );
+}
+
+function ComparisonBars({ rows }: { rows: Array<[string, number]> }) {
+  const maximum = Math.max(1, ...rows.map(([, value]) => value));
+  return (
+    <figure className="stats-visual stats-comparison">
+      <figcaption>Completed-game comparison</figcaption>
+      {rows.map(([label, value]) => (
+        <div className="comparison-row" key={label}>
+          <span>{label}</span>
+          <span className="comparison-track" aria-hidden="true">
+            <span style={{ width: `${(value / maximum) * 100}%` }} />
+          </span>
+          <strong>{value}</strong>
+        </div>
+      ))}
+    </figure>
   );
 }

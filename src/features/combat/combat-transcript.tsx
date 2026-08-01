@@ -2,6 +2,7 @@
 
 import type { CSSProperties } from 'react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 
 export interface CombatTranscriptMove {
   id: string;
@@ -16,11 +17,13 @@ export function MoveBoards({
   length,
   viewerSeat,
   actorLabels,
+  actorProfileIds,
 }: {
   moves: CombatTranscriptMove[];
   length: number;
   viewerSeat?: 'player-one' | 'player-two';
   actorLabels?: Partial<Record<'player-one' | 'player-two', string>>;
+  actorProfileIds?: Partial<Record<'player-one' | 'player-two', string>>;
 }) {
   const orderedMoves = [...moves].sort(
     (left, right) =>
@@ -87,9 +90,11 @@ export function MoveBoards({
                   <span className="combat-meta-divider" aria-hidden="true">
                     ·
                   </span>
-                  <span className="combat-actor" title={actorLabel}>
-                    {actorLabel}
-                  </span>
+                  <PlayerIdentityLink
+                    className="combat-actor"
+                    publicProfileId={actorProfileIds?.[move.seat]}
+                    displayName={actorLabel}
+                  />
                 </span>
                 <div className="combat-transcript-move">
                   <TranscriptTileRow

@@ -2500,6 +2500,32 @@ export type Database = {
           word_length: number;
         }[];
       };
+      get_amordle_public_practice_spectator_v4: {
+        Args: {
+          p_game_id?: string;
+          p_limit?: number;
+          p_terminal_window_seconds?: number;
+        };
+        Returns: {
+          created_at: string;
+          current_turn_seat: string;
+          go_puzzle_count: number;
+          hard_mode: boolean;
+          id: string;
+          mode: string;
+          moves: Json;
+          outcome: Json;
+          players: Json;
+          progress: Json;
+          ranked: boolean;
+          scope: string;
+          spectator_capabilities: Json;
+          status: string;
+          terminal_at: string;
+          updated_at: string;
+          word_length: number;
+        }[];
+      };
       get_amordle_ranked_daily_status_v3: {
         Args: { p_request_id: string };
         Returns: Json;
@@ -2774,6 +2800,10 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_public_player_profile_stats_v1: {
+        Args: { p_public_profile_id: string };
+        Returns: Json;
+      };
       get_public_player_profiles: {
         Args: { p_public_profile_ids: string[] };
         Returns: {
@@ -2785,6 +2815,33 @@ export type Database = {
           flair_key: string;
           public_profile_id: string;
           updated_at: string;
+        }[];
+      };
+      list_public_player_directory_v1: {
+        Args: {
+          p_bucket?: string;
+          p_limit?: number;
+          p_max_rating?: number;
+          p_min_rating?: number;
+          p_offset?: number;
+          p_search?: string;
+          p_sort?: string;
+        };
+        Returns: {
+          accent_color: string;
+          bucket: string | null;
+          display_name: string;
+          draws: number | null;
+          flair_key: string;
+          games_played: number | null;
+          losses: number | null;
+          profile_updated_at: string;
+          provisional: boolean | null;
+          public_profile_id: string;
+          rating: number | null;
+          rating_updated_at: string | null;
+          total_count: number;
+          wins: number | null;
         }[];
       };
       get_public_ranked_leaderboard: {

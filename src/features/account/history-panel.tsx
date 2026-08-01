@@ -5,6 +5,7 @@ import { loadHistoryWithDiagnostics } from '@/adapters/supabase/account';
 import { loadPendingCompletions, resetCompletionOutbox } from '@/application/completion-outbox';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
+import { HistoryDefinitions } from '@/features/words/history-definitions';
 
 export function HistoryPanel() {
   return (
@@ -81,6 +82,7 @@ function HistoryInner() {
               <th>Progress</th>
               <th>Reward</th>
               <th>Status</th>
+              <th>Definitions</th>
             </tr>
           </thead>
           <tbody>
@@ -102,6 +104,13 @@ function HistoryInner() {
                     : `${row.entry.rewardCoins} coins · ${row.entry.rewardXp} XP`}
                 </td>
                 <td data-label="Status">{pendingIds.has(row.id) ? 'Sync pending' : 'Synced'}</td>
+                <td data-label="Definitions">
+                  {row.entry.schemaVersion === 3 ? (
+                    <HistoryDefinitions words={row.entry.revealedAnswers} />
+                  ) : (
+                    '—'
+                  )}
+                </td>
               </tr>
             ))}
           </tbody>

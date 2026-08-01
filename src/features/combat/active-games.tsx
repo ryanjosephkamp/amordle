@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
 import { writeCombatAttentionProjection } from '@/adapters/session-combat';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 
@@ -71,8 +72,15 @@ function ActiveGamesInner() {
               {game.status} · {game.wordLength} letters · move {game.moveCount}
             </p>
             <p>
-              {game.players.find((player) => player.seat !== game.viewerSeat)?.displayName ??
-                'Private player'}{' '}
+              <PlayerIdentityLink
+                publicProfileId={
+                  game.players.find((player) => player.seat !== game.viewerSeat)?.publicProfileId
+                }
+                displayName={
+                  game.players.find((player) => player.seat !== game.viewerSeat)?.displayName ??
+                  'Private player'
+                }
+              />{' '}
               · {game.currentTurn === game.viewerSeat ? 'your turn' : 'waiting on rival'}
             </p>
           </div>

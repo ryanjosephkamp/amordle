@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import type { DefinitionLookupResult } from '@/domain/definitions';
+import { WordDefinition } from './word-definition';
 
 export function WordResults({
   words,
@@ -9,6 +11,7 @@ export function WordResults({
   page,
   pages,
   initialWord,
+  definitionLookup,
 }: {
   words: string[];
   answerEligible: string[];
@@ -16,6 +19,7 @@ export function WordResults({
   page: number;
   pages: number;
   initialWord?: string;
+  definitionLookup?: (word: string) => Promise<DefinitionLookupResult>;
 }) {
   const [selected, setSelected] = useState(initialWord ?? words[0] ?? '');
   const dialog = useRef<HTMLDialogElement>(null);
@@ -85,20 +89,10 @@ export function WordResults({
                 ×
               </button>
             </header>
-            <p>No definition is bundled. Copy this word or search for its definition.</p>
-            <div className="action-row">
-              <button onClick={() => void navigator.clipboard.writeText(selected)}>
-                COPY WORD
-              </button>
-              <a
-                className="button primary"
-                href={`https://www.google.com/search?q=define+${encodeURIComponent(selected)}`}
-                target="_blank"
-                rel="noreferrer"
-              >
-                SEARCH DEFINITION
-              </a>
-            </div>
+            <WordDefinition
+              word={selected}
+              {...(definitionLookup === undefined ? {} : { lookupWord: definitionLookup })}
+            />
           </div>
         </dialog>
       )}

@@ -38,6 +38,31 @@ code are not design references.
    play.
 5. Treat responsive, accessible operation as core gameplay behavior.
 
+## Community and identity
+
+- Player profiles are public-facing game identities. Their sanctioned fields
+  are player name, bio, HTTPS profile image URL, accent, flair, and public
+  COMBAT record.
+- Auth identifiers, email, settings, Solo History, progression, inventory,
+  economy, private requests, blocks, and private match state remain private.
+- A player name with a sanctioned public profile identifier is navigable to
+  that profile. Opening one's own public identity resolves to the editable
+  profile surface.
+- Public discovery is bounded and paginated. It supports name-prefix and one
+  ranked-COMBAT-lane filter at a time; it is not an account directory.
+- Profile challenges reuse existing private-request preferences, blocks,
+  uniqueness, expiry, and anti-spam authority.
+
+## Definitions
+
+- Definitions are optional, user-triggered reference content. They are not
+  word-bank authority and never determine whether a guess is valid.
+- The browser may consult bounded public dictionary sources only after the
+  player asks for a definition. Successful and honest not-found results may be
+  cached locally with revisioned expiry metadata.
+- A definition failure never blocks gameplay, results, History, or word
+  exploration. Copy and web-search fallbacks remain available.
+
 ## Accessibility & Inclusion
 
 Meet WCAG 2.2 AA. Essential flows must work with keyboard, mouse, touch, and

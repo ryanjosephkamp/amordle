@@ -55,6 +55,11 @@ function SpectatorGamePanel({ game }: { game: SpectatorGame }) {
       <MoveBoards
         length={game.word_length}
         actorLabels={Object.fromEntries(game.players.map((player) => [player.seat, player.label]))}
+        actorProfileIds={Object.fromEntries(
+          game.players
+            .filter((player) => player.profile?.publicProfileId)
+            .map((player) => [player.seat, player.profile?.publicProfileId]),
+        )}
         moves={game.moves.map((move, index) => ({
           id: `${move.seat}:${move.puzzleIndex}:${index}`,
           seat: move.seat,

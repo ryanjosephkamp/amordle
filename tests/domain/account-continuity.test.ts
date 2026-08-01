@@ -121,6 +121,44 @@ describe('account continuity', () => {
     expect(JSON.stringify(row)).not.toContain('answer');
   });
 
+  it('allows terminal-authorized answers only in explicit v3 history rows', () => {
+    const row = historyRowSchema.parse({
+      id: 'combat:game-1:player-two',
+      user_id: userId,
+      completed_at: '2026-08-01T03:00:00.000Z',
+      entry: {
+        schemaVersion: 3,
+        kind: 'combat-practice',
+        lane: 'practice',
+        mode: 'go',
+        ranked: false,
+        result: 'won',
+        terminalReason: 'solved',
+        wordLength: 5,
+        difficulty: 'standard',
+        hardMode: false,
+        goPuzzleCount: 5,
+        acceptedGuesses: 8,
+        puzzlesSolved: 5,
+        points: 12,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ratingDelta: null,
+        revealedAnswers: ['crane', 'slate'],
+      },
+    });
+    expect(row.entry.schemaVersion).toBe(3);
+    if (row.entry.schemaVersion === 3) {
+      expect(row.entry.revealedAnswers).toEqual(['crane', 'slate']);
+    }
+    expect(
+      historyRowSchema.safeParse({
+        ...row,
+        entry: { ...row.entry, revealedAnswers: ['not two words'] },
+      }).success,
+    ).toBe(false);
+  });
+
   it('projects honest zero and mixed history statistics', () => {
     expect(buildPlayerStats([])).toMatchObject({
       completedGames: 0,

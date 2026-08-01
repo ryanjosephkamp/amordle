@@ -12,6 +12,14 @@ const authorizedAdditiveMigrations = new Map([
     '1ade2a1b7e49e50cb46bc938d393c9d1e6ca8e62508678baa8efef203c937179',
   ],
 ]);
+// Prepared and checksum-locked for owner review, but deliberately not applied
+// to the linked project until separate migration authorization is recorded.
+const reviewedPendingMigrations = new Map([
+  [
+    '20260801032334_amordle_public_community_v1.sql',
+    'ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52',
+  ],
+]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 
@@ -66,14 +74,18 @@ for (const [, expected, name] of rows) {
 
 const immutableNames = new Set(rows.map(([, , name]) => name));
 const additiveNames = migrations.filter((name) => !immutableNames.has(name));
+const recognizedAdditiveMigrations = new Map([
+  ...authorizedAdditiveMigrations,
+  ...reviewedPendingMigrations,
+]);
 if (
-  migrations.length !== rows.length + authorizedAdditiveMigrations.size ||
-  additiveNames.length !== authorizedAdditiveMigrations.size
+  migrations.length !== rows.length + recognizedAdditiveMigrations.size ||
+  additiveNames.length !== recognizedAdditiveMigrations.size
 ) {
-  failures.push('additive migration count is not authorized');
+  failures.push('additive migration count is not recognized');
 }
 for (const name of additiveNames) {
-  const expected = authorizedAdditiveMigrations.get(name);
+  const expected = recognizedAdditiveMigrations.get(name);
   const path = resolve(migrationsDirectory, name);
   if (!expected || !existsSync(path) || sha256(readFileSync(path)) !== expected) {
     failures.push(`unauthorized or changed additive migration: ${name}`);
@@ -82,7 +94,12 @@ for (const name of additiveNames) {
 
 if (!failures.some((failure) => failure.includes('migration'))) {
   process.stdout.write(
-    `PASS immutable migrations 45/45 + authorized additive ${additiveNames.length}/${authorizedAdditiveMigrations.size}\n`,
+    `PASS immutable migrations 45/45 + authorized additive ${
+      additiveNames.filter((name) => authorizedAdditiveMigrations.has(name)).length
+    }/${authorizedAdditiveMigrations.size}\n`,
+  );
+  process.stdout.write(
+    `PASS reviewed pending additive ${reviewedPendingMigrations.size}/${reviewedPendingMigrations.size}\n`,
   );
 }
 

@@ -130,7 +130,7 @@ export function buildSoloHistoryRow(
     user_id: userId,
     completed_at: session.updatedAt,
     entry: {
-      schemaVersion: 2,
+      schemaVersion: 3,
       kind,
       lane: dailyDate ? 'daily' : 'practice',
       mode: session.settings.mode,
@@ -148,6 +148,7 @@ export function buildSoloHistoryRow(
       rewardXp: reward.xp,
       ...(dailyDate === undefined ? {} : { dailyDate }),
       ratingDelta: null,
+      revealedAnswers: session.answers.slice(0, session.puzzleIndex + 1),
     },
   });
 }

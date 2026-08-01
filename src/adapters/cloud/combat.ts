@@ -1092,6 +1092,7 @@ export async function createPrivateRequest(input: {
   mode: 'og' | 'go';
   wordLength: number;
   hardMode: boolean;
+  timeLimitMs: 300_000 | null;
   goPuzzleCount: 5 | 7 | 10 | null;
   idempotencyKey: string;
 }) {
@@ -1100,6 +1101,7 @@ export async function createPrivateRequest(input: {
     p_mode: input.mode,
     p_word_length: input.wordLength,
     p_hard_mode: input.hardMode,
+    ...(input.timeLimitMs === null ? {} : { p_time_limit_ms: input.timeLimitMs }),
     ...(input.goPuzzleCount === null ? {} : { p_go_puzzle_count: input.goPuzzleCount }),
     p_idempotency_key: input.idempotencyKey,
   });
@@ -1193,6 +1195,7 @@ const spectatorPlayerSchema = z
     label: z.string(),
     profile: z
       .object({
+        publicProfileId: z.string().optional(),
         displayName: z.string().optional(),
         avatarUrl: z.string().optional(),
         accentColor: z.string().optional(),
@@ -1273,7 +1276,7 @@ export async function listPublicLive(gameId?: string) {
     ...(gameId === undefined ? {} : { p_game_id: gameId }),
   });
   if (legacy.error) throwServiceError(legacy.error);
-  const authoritative = await client().rpc('get_amordle_public_practice_spectator_v3', {
+  const authoritative = await client().rpc('get_amordle_public_practice_spectator_v4', {
     p_limit: 50,
     p_terminal_window_seconds: 15,
     ...(gameId === undefined ? {} : { p_game_id: gameId }),

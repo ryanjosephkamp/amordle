@@ -23,6 +23,7 @@ const canonicalRoutes = [
   '/leaderboards',
   '/words',
   '/profile',
+  '/players',
   '/players/not-a-real-profile',
   '/stats',
   '/settings',

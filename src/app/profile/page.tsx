@@ -5,7 +5,7 @@ export default function ProfilePage() {
   return (
     <div className="route-frame is-narrow">
       <RouteHeader title="Profile">
-        <p>Choose your player name and what other players can see.</p>
+        <p>Choose the public identity other players see across Amordle.</p>
       </RouteHeader>
       <ProfileEditor />
     </div>
