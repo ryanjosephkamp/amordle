@@ -22,6 +22,7 @@ import {
 } from '@/application/query-keys';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { getMyPublicProfile } from '@/adapters/supabase/public';
+import { defaultAccentName } from '@/domain/profile';
 
 interface AuthContextValue {
   status: 'loading' | 'signed-out' | 'signed-in' | 'unavailable' | 'error';
@@ -202,7 +203,10 @@ function ProfileAccentBridge() {
   });
 
   useEffect(() => {
-    const accent = auth.status === 'signed-in' ? (profile.data?.accent_color ?? 'cyan') : 'cyan';
+    const accent =
+      auth.status === 'signed-in'
+        ? (profile.data?.accent_color ?? defaultAccentName)
+        : defaultAccentName;
     document.documentElement.dataset.accent = accent;
   }, [auth.status, profile.data?.accent_color, userId]);
 

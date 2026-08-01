@@ -5,6 +5,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { readEnvelope, writeEnvelope } from '@/adapters/indexeddb';
+import type { VersionedEnvelope } from '@/adapters/indexeddb';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
 import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
 import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
@@ -191,12 +192,13 @@ export function SoloGame({
   );
   const [session, setSession] = useState<GameSession>(initial);
   const [hydrated, setHydrated] = useState(false);
-  const [saveState, setSaveState] = useState<'saved' | 'saving' | 'syncing' | 'error'>('saved');
+  const [cloudBackupNeedsAttention, setCloudBackupNeedsAttention] = useState(false);
   const [actionState, setActionState] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
   const [auxiliaryOpen, setAuxiliaryOpen] = useState(true);
   const revision = useRef(0);
   const persistQueue = useRef<Promise<void>>(Promise.resolve());
+  const latestEnvelope = useRef<VersionedEnvelope<GameSession> | null>(null);
   const sessionRef = useRef(session);
   const finalized = useRef(false);
   const pendingOperation = useRef<string | null>(null);
@@ -253,13 +255,28 @@ export function SoloGame({
     [soundEnabled],
   );
 
+  const syncCloudEnvelope = useCallback(
+    async (envelope: VersionedEnvelope<GameSession>) => {
+      if (!signedInUserId) return true;
+      try {
+        await saveCloudSolo(signedInUserId, envelope);
+        setCloudBackupNeedsAttention(false);
+        return true;
+      } catch {
+        setCloudBackupNeedsAttention(true);
+        return false;
+      }
+    },
+    [signedInUserId],
+  );
+
   const persist = useCallback(
     (next: GameSession) => {
       const operation = persistQueue.current
         .catch(() => undefined)
         .then(async () => {
           const nextRevision = revision.current + 1;
-          const envelope = {
+          const envelope: VersionedEnvelope<GameSession> = {
             schemaVersion: 1 as const,
             ownerNamespace,
             domain,
@@ -267,26 +284,22 @@ export function SoloGame({
             updatedAt: next.updatedAt,
             state: next,
           };
-          setSaveState('saving');
           await writeEnvelope(envelope);
           revision.current = nextRevision;
-          if (!signedInUserId) {
-            setSaveState('saved');
-            return;
-          }
-          setSaveState('syncing');
-          try {
-            await saveCloudSolo(signedInUserId, envelope);
-            setSaveState('saved');
-          } catch {
-            setSaveState('error');
-          }
+          latestEnvelope.current = envelope;
+          await syncCloudEnvelope(envelope);
         });
       persistQueue.current = operation;
       return operation;
     },
-    [domain, ownerNamespace, signedInUserId],
+    [domain, ownerNamespace, syncCloudEnvelope],
   );
+
+  const retryCloudBackup = useCallback(async () => {
+    const envelope = latestEnvelope.current;
+    if (!envelope || envelope.ownerNamespace !== ownerNamespace) return;
+    await syncCloudEnvelope(envelope);
+  }, [ownerNamespace, syncCloudEnvelope]);
 
   useEffect(() => {
     if (auth.status === 'loading') return;
@@ -299,7 +312,7 @@ export function SoloGame({
           try {
             remote = await loadCloudSolo(signedInUserId, domain);
           } catch {
-            if (active) setSaveState('error');
+            if (active) setCloudBackupNeedsAttention(true);
           }
         }
         const reconciled = reconcileRevisioned(local, remote);
@@ -311,6 +324,7 @@ export function SoloGame({
           JSON.stringify(stored.state.answers) === JSON.stringify(answers)
         ) {
           revision.current = stored.revision;
+          latestEnvelope.current = stored;
           setSession(stored.state);
           if (remote && stored === remote) await writeEnvelope(stored);
         }
@@ -353,7 +367,6 @@ export function SoloGame({
               );
           }
         } catch {
-          setSaveState('error');
           setSession({
             ...current,
             rejection: 'Your guess was not saved. Nothing changed; try again.',
@@ -366,7 +379,11 @@ export function SoloGame({
       try {
         await persist(next);
       } catch {
-        setSaveState('error');
+        setSession({
+          ...current,
+          rejection: 'Your change was not saved. Nothing changed; try again.',
+        });
+        return false;
       }
       return true;
     },
@@ -617,14 +634,6 @@ export function SoloGame({
           )}
           {settings.hardMode && <span>HARD MODE</span>}
         </div>
-        {saveState === 'error' && (
-          <div className="game-sync-notice" role="status">
-            <span>Saved on this device. Account backup needs attention.</span>
-            <button type="button" onClick={() => void persist(sessionRef.current)}>
-              RETRY
-            </button>
-          </div>
-        )}
       </header>
 
       <div className="game-board-region">
@@ -680,16 +689,31 @@ export function SoloGame({
         </GameHistoryViewport>
       </div>
 
-      <div className="game-message" aria-live="assertive">
-        <span aria-hidden="true">❯ </span>
-        {session.rejection ??
-          (session.status === 'holding'
-            ? 'Solved. Carrying that answer into the next puzzle…'
-            : session.status === 'won'
-              ? 'Solved. Nice work.'
-              : session.status === 'lost'
-                ? 'No attempts remain.'
-                : 'Ready for your guess.')}
+      <div className="game-message">
+        <span className="game-message-copy">
+          <span aria-hidden="true">❯ </span>
+          <span aria-live="assertive">
+            {session.rejection ??
+              (session.status === 'holding'
+                ? 'Solved. Carrying that answer into the next puzzle…'
+                : session.status === 'won'
+                  ? 'Solved. Nice work.'
+                  : session.status === 'lost'
+                    ? 'No attempts remain.'
+                    : 'Ready for your guess.')}
+          </span>
+        </span>
+        <span
+          className="game-backup-warning"
+          role={cloudBackupNeedsAttention ? 'status' : undefined}
+          aria-hidden={!cloudBackupNeedsAttention}
+          data-visible={cloudBackupNeedsAttention ? 'true' : 'false'}
+        >
+          <span>ACCOUNT BACKUP</span>
+          <button type="button" onClick={() => void retryCloudBackup()}>
+            RETRY
+          </button>
+        </span>
       </div>
 
       <details

@@ -168,6 +168,18 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(playFit!.keyboardBottom).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
     expect(playFit!.boardTop).toBeGreaterThan(0);
     expect(playFit!.documentHeight).toBeLessThanOrEqual(playFit!.viewportHeight + 1);
+    const stableBefore = await page.evaluate(() => ({
+      boardTop: document.querySelector('.game-board-region')?.getBoundingClientRect().top ?? 0,
+      keyboardTop: document.querySelector('.keyboard')?.getBoundingClientRect().top ?? 0,
+    }));
+    await page.keyboard.type('guess');
+    for (let index = 0; index < 5; index += 1) await page.keyboard.press('Backspace');
+    const stableAfter = await page.evaluate(() => ({
+      boardTop: document.querySelector('.game-board-region')?.getBoundingClientRect().top ?? 0,
+      keyboardTop: document.querySelector('.keyboard')?.getBoundingClientRect().top ?? 0,
+    }));
+    expect(Math.abs(stableAfter.boardTop - stableBefore.boardTop)).toBeLessThanOrEqual(1);
+    expect(Math.abs(stableAfter.keyboardTop - stableBefore.keyboardTop)).toBeLessThanOrEqual(1);
     const keyboardContrast = await page.evaluate(() => {
       const key = document.querySelector<HTMLButtonElement>('button.key.is-unknown');
       if (!key) return null;
@@ -235,6 +247,141 @@ test.describe('responsive and alternate presentation evidence', () => {
     }));
     expect(focusFit.documentHeight).toBeLessThanOrEqual(focusFit.viewportHeight + 1);
     expect(focusFit.keyboardBottom).toBeLessThanOrEqual(focusFit.viewportHeight + 1);
+  });
+
+  test('named accents personalize unknown keys and alert counts without changing evidence', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=82');
+    await expect(page.locator('button.key.is-unknown').first()).toBeVisible();
+
+    for (const colorScheme of ['light', 'dark'] as const) {
+      await page.emulateMedia({ colorScheme });
+      let semanticBaseline: Record<string, string> | null = null;
+      const unknownBackgrounds = new Set<string>();
+
+      for (const accent of ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber'] as const) {
+        await page.evaluate((nextAccent) => {
+          document.documentElement.dataset.accent = nextAccent;
+        }, accent);
+        await page.waitForTimeout(200);
+        const metrics = await page.evaluate(() => {
+          const source = document.querySelector<HTMLButtonElement>('button.key.is-unknown');
+          if (!source) return null;
+          const sample = (css: string): readonly [number, number, number] => {
+            const canvas = document.createElement('canvas');
+            canvas.width = 1;
+            canvas.height = 1;
+            const context = canvas.getContext('2d');
+            if (!context) return [0, 0, 0];
+            context.fillStyle = css;
+            context.fillRect(0, 0, 1, 1);
+            const [red = 0, green = 0, blue = 0] = context.getImageData(0, 0, 1, 1).data;
+            return [red, green, blue];
+          };
+          const luminance = ([red, green, blue]: readonly [number, number, number]) =>
+            [red, green, blue]
+              .map((value) => {
+                const normalized = value / 255;
+                return normalized <= 0.04045
+                  ? normalized / 12.92
+                  : ((normalized + 0.055) / 1.055) ** 2.4;
+              })
+              .reduce(
+                (total, channel, index) => total + channel * ([0.2126, 0.7152, 0.0722][index] ?? 0),
+                0,
+              );
+          const contrast = (foreground: string, background: string) => {
+            const first = luminance(sample(foreground));
+            const second = luminance(sample(background));
+            return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+          };
+          let attention = document.querySelector<HTMLElement>('[data-test-attention]');
+          if (!attention) {
+            attention = document.createElement('span');
+            attention.dataset.testAttention = 'true';
+            attention.className = 'attention-badge';
+            attention.textContent = '6';
+            document.body.append(attention);
+          }
+          const keyStyle = getComputedStyle(source);
+          const attentionStyle = getComputedStyle(attention);
+          const semantic = Object.fromEntries(
+            ['is-correct', 'is-present', 'is-absent', 'is-removed'].map((state) => {
+              const clone = source.cloneNode(true) as HTMLButtonElement;
+              clone.className = `key ${state}`;
+              document.body.append(clone);
+              const background = getComputedStyle(clone).backgroundColor;
+              clone.remove();
+              return [state, background];
+            }),
+          );
+          return {
+            unknownBackground: keyStyle.backgroundColor,
+            unknownContrast: contrast(keyStyle.color, keyStyle.backgroundColor),
+            attentionContrast: contrast(attentionStyle.color, attentionStyle.backgroundColor),
+            semantic,
+          };
+        });
+        expect(metrics).not.toBeNull();
+        expect(metrics!.unknownContrast).toBeGreaterThanOrEqual(4.5);
+        expect(metrics!.attentionContrast).toBeGreaterThanOrEqual(4.5);
+        unknownBackgrounds.add(metrics!.unknownBackground);
+        semanticBaseline ??= metrics!.semantic;
+        expect(metrics!.semantic).toEqual(semanticBaseline);
+      }
+      expect(unknownBackgrounds.size).toBe(6);
+    }
+  });
+
+  test('desktop frames are balanced while mobile rating buckets remain contained', async ({
+    page,
+  }) => {
+    for (const width of [960, 1440, 1920]) {
+      await page.setViewportSize({ width, height: 1024 });
+      await page.goto('/profile');
+      await expect(page.locator('.route-frame')).toBeVisible();
+      const frameGaps = await page.evaluate(() => {
+        const frame = document.querySelector('.route-frame')?.getBoundingClientRect();
+        if (!frame) return null;
+        return { left: frame.left, right: innerWidth - frame.right };
+      });
+      expect(frameGaps).not.toBeNull();
+      expect(Math.abs(frameGaps!.left - frameGaps!.right)).toBeLessThanOrEqual(1);
+
+      await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=83');
+      await expect(page.locator('.game-layout')).toBeVisible();
+      const gameGaps = await page.evaluate(() => {
+        const game = document.querySelector('.game-layout')?.getBoundingClientRect();
+        if (!game) return null;
+        return { left: game.left, right: innerWidth - game.right };
+      });
+      expect(gameGaps).not.toBeNull();
+      expect(Math.abs(gameGaps!.left - gameGaps!.right)).toBeLessThanOrEqual(1);
+    }
+
+    for (const width of [320, 360, 390, 412]) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/stats');
+      await page.evaluate(() => {
+        const main = document.querySelector('main');
+        if (!main) return;
+        main.innerHTML = `<section class="stats-section"><div class="rating-bucket-grid"><article class="rating-bucket"><header><span>Ranked COMBAT</span><strong>1220</strong></header><dl><div><dt>games</dt><dd>1</dd></div><div><dt>w–l–d</dt><dd>1–0–0</dd></div><div><dt>status</dt><dd>provisional</dd></div><div><dt>updated</dt><dd>7/19/2026</dd></div></dl></article></div></section>`;
+      });
+      const containment = await page.evaluate(() => {
+        const bucket = document.querySelector('.rating-bucket') as HTMLElement | null;
+        const status = bucket?.querySelector('dl > div:nth-child(3) dd') as HTMLElement | null;
+        return {
+          documentOverflow: document.documentElement.scrollWidth - innerWidth,
+          bucketOverflow: bucket ? bucket.scrollWidth - bucket.clientWidth : 1,
+          statusOverflow: status ? status.scrollWidth - status.clientWidth : 1,
+        };
+      });
+      expect(containment.documentOverflow).toBeLessThanOrEqual(1);
+      expect(containment.bucketOverflow).toBeLessThanOrEqual(1);
+      expect(containment.statusOverflow).toBeLessThanOrEqual(1);
+    }
   });
 
   test('Solo entry keeps the complete keyboard visible across the play viewport matrix', async ({

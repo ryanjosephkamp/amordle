@@ -15,6 +15,7 @@ import {
   accentLabels,
   accentNameSchema,
   accentNames,
+  defaultAccentName,
   flairLabels,
   flairNameSchema,
   flairNames,
@@ -89,7 +90,9 @@ function ProfileForm({
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? '');
   const [avatarError, setAvatarError] = useState('');
-  const [accentColor, setAccentColor] = useState<AccentName>(profile?.accent_color ?? 'cyan');
+  const [accentColor, setAccentColor] = useState<AccentName>(
+    profile?.accent_color ?? defaultAccentName,
+  );
   const [flairKey, setFlairKey] = useState<FlairName>(profile?.flair_key ?? 'none');
 
   return (
@@ -121,10 +124,6 @@ function ProfileForm({
           accentColor={accentColor}
           label="Profile image preview"
         />
-        <p>
-          Your player name, bio, flair, profile image, and public COMBAT totals are visible to other
-          players after you save. Account details, Solo History, settings, and economy stay private.
-        </p>
       </div>
       <label>
         Player name
@@ -203,6 +202,16 @@ function ProfileForm({
           ))}
         </select>
       </label>
+      <dl className="profile-visibility-summary" aria-label="Profile visibility summary">
+        <div>
+          <dt>Public</dt>
+          <dd>Player name, bio, flair, profile image, and public COMBAT totals.</dd>
+        </div>
+        <div>
+          <dt>Private</dt>
+          <dd>Account details, Solo History, settings, and economy.</dd>
+        </div>
+      </dl>
       <p className="field-help">
         Flair is a self-selected profile label. It does not change matchmaking, rating, rewards, or
         rank.

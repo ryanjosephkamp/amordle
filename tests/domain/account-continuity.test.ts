@@ -6,7 +6,15 @@ import {
   normalizeLegacyHistory,
 } from '@/domain/account-continuity';
 import { buildPlayerStats, nextLevelProgress } from '@/domain/account-stats';
-import { accentCssColor, accentNameSchema } from '@/domain/profile';
+import {
+  accentCssColor,
+  accentHexSchema,
+  accentNameSchema,
+  contrastRatio,
+  defaultAccentName,
+  normalizeAccentHex,
+  resolveAccentColor,
+} from '@/domain/profile';
 
 const userId = 'f75cc9a7-8983-4ee6-b7fa-790830202b61';
 
@@ -218,5 +226,28 @@ describe('account continuity', () => {
     expect(accentNameSchema.parse('violet')).toBe('violet');
     expect(accentNameSchema.safeParse('#00ffff').success).toBe(false);
     expect(accentCssColor('amber')).toMatch(/^oklch/);
+    expect(accentCssColor(undefined)).toBe(accentCssColor(defaultAccentName));
+  });
+
+  it.each([
+    ['000000', '#000000', '#FFFFFF'],
+    ['#ffffff', '#FFFFFF', '#050708'],
+    ['#777777', '#777777', '#050708'],
+    ['#00A35A', '#00A35A', '#050708'],
+    ['#E95A70', '#E95A70', '#050708'],
+    ['#B47A00', '#B47A00', '#050708'],
+  ])('normalizes and resolves a readable custom accent %s', (input, normalized, foreground) => {
+    expect(normalizeAccentHex(input)).toBe(normalized);
+    expect(accentHexSchema.parse(input)).toBe(normalized);
+    const resolved = resolveAccentColor(input);
+    expect(resolved).toMatchObject({ hex: normalized, foreground });
+    expect(resolved?.contrastRatio).toBeGreaterThanOrEqual(4.5);
+    expect(contrastRatio(normalized, foreground)).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('rejects malformed custom accents without browser-only parsing', () => {
+    expect(normalizeAccentHex('#fff')).toBeNull();
+    expect(normalizeAccentHex('#12345G')).toBeNull();
+    expect(resolveAccentColor('oklch(0.7 0.2 20)')).toBeNull();
   });
 });
