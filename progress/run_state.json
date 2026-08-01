@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.1-final-protected-preview-candidate",
-  "status": "review-ready",
-  "lastGreenCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
+  "currentCheckpoint": "stage-2-v6.2-forward-only-migration-authorization-gate",
+  "status": "authorization-required",
+  "lastGreenCommit": "fb46fe90e09e9df6d0509d656a6facf757a85f70",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -26,6 +26,22 @@
       "total": 73
     }
   },
+  "v6_2Implementation": {
+    "applicationCheckpointCommit": "fb46fe90e09e9df6d0509d656a6facf757a85f70",
+    "decisionPacket": "reports/stage-2-v6.2-forward-only-migration-decision.md",
+    "pendingMigration": "20260801032334_amordle_public_community_v1.sql",
+    "pendingMigrationSha256": "ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52",
+    "migrationApplied": false,
+    "supabaseMutated": false,
+    "vercelMutated": false,
+    "hostedAcceptanceComplete": false,
+    "parityStatus": {
+      "verified": 222,
+      "implementedPendingHostedProof": 15,
+      "total": 237
+    },
+    "resumeCondition": "explicit authorization for additive forward-only migration 20260801032334"
+  },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
     "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
@@ -35,24 +51,24 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
+    "candidateCommit": "fb46fe90e09e9df6d0509d656a6facf757a85f70",
     "check": "green",
-    "domainTests": 60,
+    "domainTests": 69,
     "browserComponentTests": 14,
     "fixtureE2E": 15,
     "visualE2E": 9,
     "parityRows": 237,
     "mpAuditRows": 73,
     "bootstrapFiles": "107/107",
-    "migrations": "45 immutable plus 1 authorized additive",
+    "migrations": "45 immutable plus 1 authorized additive plus 1 reviewed pending additive",
     "httpInterfaces": 3,
     "homeCompressedBytes": {
-      "js": 180986,
-      "css": 16706
+      "js": 182310,
+      "css": 19381
     },
     "gameCompressedBytes": {
-      "js": 185662,
-      "css": 20848
+      "js": 188730,
+      "css": 23594
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
@@ -108,6 +124,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.1-final-protected-preview-completion-ready",
-  "updatedAt": "2026-08-01T01:39:00Z"
+  "reportStatus": "v6.2-forward-only-migration-decision-ready",
+  "updatedAt": "2026-08-01T04:07:52Z"
 }

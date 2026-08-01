@@ -60,11 +60,17 @@ matchmaking rule, or game rule is added or changed.
 
 ## Verification before authorization
 
+- Application checkpoint:
+  `fb46fe90e09e9df6d0509d656a6facf757a85f70`.
+- `pnpm test:acceptance:local` is green: 69 domain, 14 browser-component,
+  15 fixture E2E, and 9 visual E2E tests.
 - `pnpm exec supabase db push --linked --dry-run` lists exactly this migration.
 - Domain tests validate enum bounds, directory pagination, returned DTOs,
   COMBAT-only public stats, grants, and the spectator allow/deny boundary.
 - The successor bootstrap verifier records 45 immutable migrations, one
   applied authorized additive migration, and this one reviewed pending file.
+- All 237 parity rows remain truthful; 222 retain verified evidence and the 15
+  affected clauses are marked implemented pending hosted proof.
 
 ## After authorization
 

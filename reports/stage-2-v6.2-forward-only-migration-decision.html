@@ -5,13 +5,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amordle v6.2 migration decision</title>
     <style>
-      :root { color-scheme: light dark; font: 16px/1.55 system-ui, sans-serif; }
-      body { max-width: 52rem; margin: auto; padding: 1.25rem; }
-      h1, h2 { line-height: 1.15; }
-      code { overflow-wrap: anywhere; }
-      section { border-top: 1px solid currentColor; margin-top: 1.5rem; padding-top: .75rem; }
-      .gate { border: 2px solid currentColor; padding: 1rem; }
-      li + li { margin-top: .35rem; }
+      :root {
+        color-scheme: light dark;
+        font:
+          16px/1.55 system-ui,
+          sans-serif;
+      }
+      body {
+        max-width: 52rem;
+        margin: auto;
+        padding: 1.25rem;
+      }
+      h1,
+      h2 {
+        line-height: 1.15;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        margin-top: 1.5rem;
+        padding-top: 0.75rem;
+      }
+      .gate {
+        border: 2px solid currentColor;
+        padding: 1rem;
+      }
+      li + li {
+        margin-top: 0.35rem;
+      }
     </style>
   </head>
   <body>
@@ -19,15 +42,19 @@
       <h1>Amordle Stage 2 v6.2 migration decision</h1>
       <p class="gate">
         <strong>Authorization requested:</strong> apply exactly
-        <code>20260801032334_amordle_public_community_v1.sql</code> to the linked Amordle
-        Supabase project. It is prepared and dry-run verified, but has not been applied.
+        <code>20260801032334_amordle_public_community_v1.sql</code> to the linked Amordle Supabase
+        project. It is prepared and dry-run verified, but has not been applied.
       </p>
-      <p><strong>SHA-256:</strong><br /><code>ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52</code></p>
+      <p>
+        <strong>SHA-256:</strong><br /><code
+          >ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52</code
+        >
+      </p>
       <section>
         <h2>Why it is required</h2>
         <p>
-          Current authority accepts only the none flair, has no bounded public player directory
-          or public COMBAT aggregate, and cannot safely link spectator names without a sanctioned
+          Current authority accepts only the none flair, has no bounded public player directory or
+          public COMBAT aggregate, and cannot safely link spectator names without a sanctioned
           public profile identifier. Presentation code cannot establish those privacy boundaries.
         </p>
       </section>
@@ -55,10 +82,14 @@
       <section>
         <h2>Validation and next step</h2>
         <p>
-          The linked Supabase dry run lists exactly this migration. Domain and browser contract
-          suites are green. After explicit authorization, the agent will apply it, regenerate
-          types, verify synchronized history, run full acceptance, deploy protected Preview,
-          perform disposable-user hosted checks and exact cleanup, and deliver final reports.
+          Application checkpoint
+          <code>fb46fe90e09e9df6d0509d656a6facf757a85f70</code> passed the complete local acceptance
+          stack: 69 domain, 14 browser-component, 15 fixture E2E, and 9 visual E2E tests. The linked
+          Supabase dry run lists exactly this migration. All 237 parity rows remain truthful; 15
+          affected rows await hosted proof. After explicit authorization, the agent will apply it,
+          regenerate types, verify synchronized history, run full acceptance, deploy protected
+          Preview, perform disposable-user hosted checks and exact cleanup, and deliver final
+          reports.
         </p>
       </section>
       <section>
