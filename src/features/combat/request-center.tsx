@@ -11,6 +11,7 @@ import {
   createPrivateRequest,
   declinePrivateRequest,
   getPrivateRequestPreference,
+  listPrivateRequestBlocks,
   listPrivateRequests,
   setPrivateRequestPreference,
 } from '@/adapters/supabase/combat';
@@ -43,9 +44,14 @@ function RequestCenterInner() {
     queryKey: ['combat', 'private-preference'],
     queryFn: getPrivateRequestPreference,
   });
+  const blocks = useQuery({
+    queryKey: ['combat', 'private-blocks'],
+    queryFn: listPrivateRequestBlocks,
+  });
   const refresh = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['combat', 'private-requests'] }),
+      queryClient.invalidateQueries({ queryKey: ['combat', 'private-blocks'] }),
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
     ]);
 
@@ -99,6 +105,15 @@ function RequestCenterInner() {
   const updatePreference = useMutation({
     mutationFn: setPrivateRequestPreference,
     onSuccess: (result) => queryClient.setQueryData(['combat', 'private-preference'], result),
+  });
+
+  const unblock = useMutation({
+    mutationFn: (publicProfileId: string) => blockPrivateRequester(publicProfileId, false),
+    onSuccess: () => {
+      setMessage('Player unblocked. New requests will use the current preference and limits.');
+      void refresh();
+    },
+    onError: (error) => setMessage(error instanceof Error ? error.message : 'Unblock failed.'),
   });
 
   return (
@@ -170,6 +185,37 @@ function RequestCenterInner() {
             {preference.data?.accept_private_practice_requests ? 'On' : 'Off'}
           </button>
         </div>
+        <div className="section-heading">
+          <h2>Blocked players</h2>
+          <span className="mono">{blocks.data?.length ?? 0}</span>
+        </div>
+        {blocks.isPending ? (
+          <p aria-live="polite">Loading blocked players…</p>
+        ) : blocks.isError ? (
+          <button type="button" onClick={() => void blocks.refetch()}>
+            Retry blocked players
+          </button>
+        ) : blocks.data?.length ? (
+          <div className="data-list" aria-label="Blocked players">
+            {blocks.data.map((block) => (
+              <div className="data-row" key={block.public_profile_id}>
+                <div>
+                  <strong>{block.display_name || 'Private player'}</strong>
+                  <p>Private requests remain blocked in both directions.</p>
+                </div>
+                <button
+                  type="button"
+                  disabled={unblock.isPending}
+                  onClick={() => unblock.mutate(block.public_profile_id)}
+                >
+                  Unblock
+                </button>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="prose">No blocked players.</p>
+        )}
       </section>
       <section aria-labelledby="request-center-heading">
         <div className="section-heading">

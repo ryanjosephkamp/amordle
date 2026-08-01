@@ -5,6 +5,11 @@ import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import { getEconomy, loadHistory, loadProgress } from '@/adapters/supabase/account';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
+import {
+  readCombatAttentionProjection,
+  writeCombatAttentionProjection,
+} from '@/adapters/session-combat';
+import type { CombatAttentionProjection } from '@/adapters/session-combat';
 import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 import { SkeletonRows } from '@/components/route-states';
@@ -12,6 +17,9 @@ import { SkeletonRows } from '@/components/route-states';
 export function HomeAttention() {
   const auth = useAuth();
   const [mounted, setMounted] = useState(false);
+  const [provisionalCombat, setProvisionalCombat] = useState<CombatAttentionProjection | null>(
+    null,
+  );
   const userId = auth.user?.id ?? '';
   const enabled = Boolean(userId);
   const economy = useQuery({
@@ -30,20 +38,49 @@ export function HomeAttention() {
     enabled,
   });
   const combat = useQuery({
-    queryKey: ['combat', 'active'],
-    queryFn: listActiveCombat,
-    enabled,
-    refetchInterval: 30_000,
-  });
-  const legacy = useQuery({
-    queryKey: ['combat', 'legacy-active', userId],
-    queryFn: () => listLegacyActive(userId),
+    queryKey: ['combat', 'home-attention', userId],
+    queryFn: async () => {
+      // Read the participant-authorized projection before the separate legacy
+      // waiting lane, then persist only a display-only same-account summary.
+      const authoritative = await listActiveCombat();
+      const legacy = await listLegacyActive(userId);
+      writeCombatAttentionProjection({
+        schemaVersion: 1,
+        ownerUserId: userId,
+        updatedAt: new Date().toISOString(),
+        games: [
+          ...authoritative.map((game) => ({
+            id: game.id,
+            label: `${game.ranked ? 'Ranked ' : ''}${game.scope} ${game.mode.toUpperCase()}`,
+            status: game.status,
+            href: `/combat/match/${game.id}`,
+          })),
+          ...legacy.map((game) => ({
+            id: game.id,
+            label: `Public Practice ${game.mode.toUpperCase()}`,
+            status: game.status,
+            href: `/combat/match/${game.id}`,
+          })),
+        ],
+      });
+      return { authoritative, legacy };
+    },
     enabled,
     refetchInterval: 30_000,
   });
   useEffect(() => {
     queueMicrotask(() => setMounted(true));
   }, []);
+  useEffect(() => {
+    queueMicrotask(() => {
+      if (!userId) {
+        setProvisionalCombat(null);
+        return;
+      }
+      const cached = readCombatAttentionProjection(userId);
+      setProvisionalCombat(cached.status === 'valid' ? cached.projection : null);
+    });
+  }, [userId]);
   if (!mounted || auth.status === 'loading') {
     return <SkeletonRows label="Checking your current games…" rows={2} />;
   }
@@ -61,16 +98,16 @@ export function HomeAttention() {
       </div>
     );
   }
-  const queries = [economy, progress, history, combat, legacy];
+  const queries = [economy, progress, history, combat];
   if (queries.every((query) => query.isPending)) {
     return <SkeletonRows label="Restoring account activity…" rows={3} />;
   }
-  const active =
-    (combat.data?.filter((game) => !game.outcome.terminal).length ?? 0) +
-    (legacy.data?.filter((game) => !['won', 'lost'].includes(game.status)).length ?? 0);
+  const active = combat.data
+    ? combat.data.authoritative.length + combat.data.legacy.length
+    : (provisionalCombat?.games.length ?? 0);
   const recent = history.data?.[0];
   const progressionUnavailable = economy.isError || progress.isError;
-  const combatUnavailable = combat.isError && legacy.isError;
+  const combatUnavailable = combat.isError && !provisionalCombat;
   return (
     <div className="data-list">
       <div className="data-row">
@@ -92,6 +129,7 @@ export function HomeAttention() {
         ) : active ? (
           <Link href="/combat/active">
             {active} active {active === 1 ? 'game' : 'games'}
+            {!combat.data && provisionalCombat ? ' · checking latest' : ''}
           </Link>
         ) : (
           <span>No active games</span>

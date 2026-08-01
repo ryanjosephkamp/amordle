@@ -21,6 +21,8 @@ const resourcesPath = path.join(evidenceDir, 'resources.jsonl');
 const eventsPath = path.join(evidenceDir, 'events.jsonl');
 const cleanupPath = path.join(evidenceDir, 'cleanup.json');
 const bypassStorageState = '.codex-internal/evidence/operator/vercel-protection-storage-state.json';
+const publicPrivateScenarioId = 'V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY';
+const rankedDailyScenarioId = 'V6.1-HOSTED-RANKED-PRACTICE-DAILY';
 
 interface Account {
   id: string;
@@ -538,6 +540,7 @@ test.describe.serial('protected Preview services', () => {
 
   test('proves deployment words, UI multiplayer recovery, and privacy', async ({ browser }) => {
     test.setTimeout(600_000);
+    await event('hosted_scenario_started', { scenarioId: publicPrivateScenarioId });
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
@@ -1258,6 +1261,7 @@ test.describe.serial('protected Preview services', () => {
       timeout: 15_000,
     });
     await event('notification_transitions_verified', {
+      scenarioId: publicPrivateScenarioId,
       transitions: ['match', 'turn', 'result', 'rematch'],
       rematchGameId,
       rematchAcceptedThroughUi: true,
@@ -1267,6 +1271,7 @@ test.describe.serial('protected Preview services', () => {
 
   test('proves ranked Practice and all four Daily lanes through player UI', async ({ browser }) => {
     test.setTimeout(300_000);
+    await event('hosted_scenario_started', { scenarioId: rankedDailyScenarioId });
     const [playerOne, playerTwo] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
@@ -1532,6 +1537,7 @@ test.describe.serial('protected Preview services', () => {
       })
       .toBe('cancelled');
     await event('ranked_daily_go_cancel_verified', {
+      scenarioId: rankedDailyScenarioId,
       requestId: cancelledRankedDailyGo.id,
       dailyDateKey: new Date().toISOString().slice(0, 10),
     });

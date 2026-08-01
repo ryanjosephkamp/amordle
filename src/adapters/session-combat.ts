@@ -134,3 +134,65 @@ export function writeRankedDailyQueueIntent(intent: RankedDailyQueueIntent): voi
 export function removeRankedDailyQueueIntent(userId: string): void {
   sessionStorage.removeItem(rankedDailyStorageKey(userId));
 }
+
+const combatAttentionGameSchema = z
+  .object({
+    id: z.string().min(1),
+    label: z.string().min(1),
+    status: z.string().min(1),
+    href: z.string().startsWith('/combat/match/'),
+  })
+  .strict();
+
+export const combatAttentionProjectionSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    ownerUserId: z.string().uuid(),
+    updatedAt: z.iso.datetime({ offset: true }),
+    games: z.array(combatAttentionGameSchema).max(100),
+  })
+  .strict();
+
+export type CombatAttentionProjection = z.infer<typeof combatAttentionProjectionSchema>;
+
+export type CombatAttentionProjectionRead =
+  | { status: 'missing' }
+  | { status: 'corrupt' }
+  | { status: 'valid'; projection: CombatAttentionProjection };
+
+function combatAttentionStorageKey(userId: string): string {
+  return `amordle:combat:attention:v1:${userId}`;
+}
+
+export function readCombatAttentionProjection(userId: string): CombatAttentionProjectionRead {
+  try {
+    const key = combatAttentionStorageKey(userId);
+    const raw = sessionStorage.getItem(key);
+    if (!raw) return { status: 'missing' };
+    const parsed = combatAttentionProjectionSchema.safeParse(JSON.parse(raw));
+    if (!parsed.success || parsed.data.ownerUserId !== userId) {
+      sessionStorage.removeItem(key);
+      return { status: 'corrupt' };
+    }
+    return { status: 'valid', projection: parsed.data };
+  } catch {
+    try {
+      sessionStorage.removeItem(combatAttentionStorageKey(userId));
+    } catch {
+      // Disabled session storage fails closed and cannot become write authority.
+    }
+    return { status: 'corrupt' };
+  }
+}
+
+export function writeCombatAttentionProjection(projection: CombatAttentionProjection): boolean {
+  try {
+    const parsed = combatAttentionProjectionSchema.parse(projection);
+    sessionStorage.setItem(combatAttentionStorageKey(parsed.ownerUserId), JSON.stringify(parsed));
+    return true;
+  } catch {
+    // Provisional recovery is display-only. Disabled or exhausted session
+    // storage must never make the participant-authoritative read fail.
+    return false;
+  }
+}

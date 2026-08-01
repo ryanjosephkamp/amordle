@@ -1912,14 +1912,14 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -1928,13 +1928,15 @@
       "family": "MP",
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -1944,15 +1946,15 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -1962,15 +1964,15 @@
       "implementationOwner": "PracticeLobby; MatchController; multiplayer/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-01 public Practice authority and complete configuration",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -1979,13 +1981,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -1994,13 +1998,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2009,13 +2015,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2024,13 +2032,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-02 four isolated Daily lanes and UTC authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2039,13 +2049,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2055,14 +2067,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2072,14 +2085,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-03 private drafts and optimistic concurrency",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2089,10 +2103,10 @@
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence",
         "tests/browser/components.test.tsx::renders COMBAT guesses as one chronological actor-labelled transcript"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
@@ -2106,13 +2120,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2121,13 +2137,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; MoveBoards; game evidence domain",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-04 chronological convergence and shared current-puzzle evidence"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2136,13 +2154,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2151,13 +2171,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2166,13 +2188,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; game/GO domains",
       "routeInterface": "/combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-05 authoritative multiplayer GO lifecycle"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2181,13 +2205,15 @@
       "family": "MP",
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2196,13 +2222,15 @@
       "family": "MP",
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2212,14 +2240,15 @@
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2229,14 +2258,15 @@
       "implementationOwner": "PracticeLobby; MatchController; clock/game domains",
       "routeInterface": "/combat/practice; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-06 Hard Mode and durable clock authority",
         "tests/domain/platform.test.ts::derives clocks from server time without debiting the inactive player"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2246,14 +2276,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2263,14 +2294,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2280,14 +2312,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2297,14 +2330,15 @@
       "implementationOwner": "MatchController; multiplayer domain",
       "routeInterface": "/combat/match/[matchId]; /combat/results/[resultId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-07 terminal precedence and idempotent settlement",
         "tests/domain/platform.test.ts::uses terminal precedence and expected revision/move evidence"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2314,17 +2348,18 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2334,15 +2369,16 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2352,17 +2388,18 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2372,15 +2409,16 @@
       "implementationOwner": "PracticeLobby; multiplayer domain; session-combat adapter",
       "routeInterface": "/combat/practice",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-08 ranked Practice queue compatibility and recovery",
         "tests/domain/multiplayer.test.ts::maps every queue status to an explicit recoverable lifecycle",
         "tests/domain/multiplayer.test.ts::retains exact server authority for supported clocks and concurrent claims"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2390,14 +2428,15 @@
       "implementationOwner": "MatchController; rating/account-continuity domains",
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2407,14 +2446,15 @@
       "implementationOwner": "MatchController; rating/account-continuity domains",
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2424,14 +2464,15 @@
       "implementationOwner": "MatchController; rating/account-continuity domains",
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2441,14 +2482,15 @@
       "implementationOwner": "MatchController; rating/account-continuity domains",
       "routeInterface": "/combat/results/[resultId]; /history; /stats; /leaderboards",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2457,13 +2499,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2472,13 +2516,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2487,13 +2533,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2502,13 +2550,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter; MatchController",
       "routeInterface": "/combat/lobby; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-10 private request lifecycle and server-owned game creation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2517,13 +2567,15 @@
       "family": "MP",
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2532,13 +2584,15 @@
       "family": "MP",
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2547,13 +2601,15 @@
       "family": "MP",
       "implementationOwner": "ActiveGames",
       "routeInterface": "/combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-11 participant-only Active recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2562,13 +2618,15 @@
       "family": "MP",
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2577,13 +2635,15 @@
       "family": "MP",
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2592,13 +2652,15 @@
       "family": "MP",
       "implementationOwner": "OpenLobbies",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-12 joinable Lobby filtering and tolerant recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2607,13 +2669,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2622,13 +2686,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2637,13 +2703,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames",
       "routeInterface": "/combat/live",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-13 sanitized public Live discovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "missing",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2653,14 +2721,14 @@
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2669,13 +2737,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2684,13 +2754,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2699,13 +2771,15 @@
       "family": "MP",
       "implementationOwner": "LiveGames; spectator transcript",
       "routeInterface": "/combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-14 privacy-safe read-only spectation"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2714,13 +2788,15 @@
       "family": "MP",
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2729,13 +2805,15 @@
       "family": "MP",
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2744,13 +2822,15 @@
       "family": "MP",
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2760,14 +2840,14 @@
       "implementationOwner": "COMBAT Query controllers; Realtime invalidation coordinator",
       "routeInterface": "/combat/active; /combat/lobby; /combat/live; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy"
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-15 polling, invalidation, reconnect and visibility recovery"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2777,15 +2857,15 @@
       "implementationOwner": "NotificationCenter; notifications domain",
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
-        "tests/e2e/services.combat.spec.ts::proves deployment words, UI multiplayer recovery, and privacy",
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
-      "hostedScenarioIds": ["V5.3-HOSTED-PUBLIC-PRACTICE-OG"],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
       "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
       "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
-      "status": "implemented",
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2795,14 +2875,15 @@
       "implementationOwner": "NotificationCenter; notifications domain",
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2812,14 +2893,15 @@
       "implementationOwner": "NotificationCenter; notifications domain",
       "routeInterface": "global alerts; /combat/lobby; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-16 durable exactly-once alerts",
         "tests/domain/platform.test.ts::deduplicates notifications and rejects stale auth epochs"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2828,13 +2910,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2843,13 +2927,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2858,13 +2944,15 @@
       "family": "MP",
       "implementationOwner": "MatchController; RematchActions",
       "routeInterface": "/combat/results/[resultId]; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-17 results, rematches and contextual next actions"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2873,13 +2961,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2888,13 +2978,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2903,13 +2995,15 @@
       "family": "MP",
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "migration-blocked",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2919,15 +3013,16 @@
       "implementationOwner": "DailyLobby; MatchController",
       "routeInterface": "/combat/daily; /combat/match/[matchId]",
       "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-18 sanitized Ranked Daily queue and settlement",
         "tests/domain/multiplayer.test.ts::adopts an intent only for the exact account-visible compatibility tuple",
         "tests/browser/components.test.tsx::strictly parses account-scoped Ranked Practice queue intent"
       ],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "hostedScenarioIds": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2936,13 +3031,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2951,13 +3048,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2966,13 +3065,15 @@
       "family": "MP",
       "implementationOwner": "RequestCenter",
       "routeInterface": "/combat/lobby",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-19 request preferences, blocking and anti-spam"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2981,13 +3082,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "missing",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -2996,13 +3099,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "missing",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -3011,13 +3116,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT recovery coordinator",
       "routeInterface": "/; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-20 account-scoped same-tab provisional recovery"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "missing",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -3026,13 +3133,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "partial-defective",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -3041,13 +3150,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "missing",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {
@@ -3056,13 +3167,15 @@
       "family": "MP",
       "implementationOwner": "HomeAttention; COMBAT startup coordinator",
       "routeInterface": "/; /combat/daily; /combat/active",
-      "automatedTestIds": [],
-      "hostedScenarioIds": [],
-      "screenshotManualEvidence": [],
-      "cleanupEvidence": [],
-      "status": "implemented",
+      "automatedTestIds": [
+        "tests/domain/multiplayer-acceptance.test.ts::proves MP-21 participant-first startup without Home word loading"
+      ],
+      "hostedScenarioIds": ["V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY"],
+      "screenshotManualEvidence": ["V5.3-COMBAT-HOSTED-SCREENSHOTS"],
+      "cleanupEvidence": ["V5.3-ZERO-RESIDUE-CLEANUP"],
+      "status": "verified",
       "blocker": null,
-      "verificationStatus": "implemented-unproven",
+      "verificationStatus": "proven",
       "auditSource": "acceptance/mp-v6-clause-audit.json"
     },
     {

@@ -10,7 +10,7 @@ export function LiveGames() {
   const games = useQuery({
     queryKey: ['combat', 'live'],
     queryFn: () => listPublicLive(),
-    refetchInterval: 5_000,
+    refetchInterval: 30_000,
   });
   if (games.isPending) return <SkeletonRows label="Loading live games…" rows={4} />;
   if (games.isError) {

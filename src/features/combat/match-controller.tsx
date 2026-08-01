@@ -687,6 +687,7 @@ function AuthoritativeMatch({
 }) {
   const terminal = game.outcome.terminal;
   const player = game.playerState[game.viewerSeat];
+  const opponent = game.players.find((participant) => participant.seat !== game.viewerSeat);
   const turn = game.currentTurn === game.viewerSeat && game.capabilities.canSubmitGuess;
   const visibleMoves = game.moves.filter(
     (move) => move.type === 'guess' && move.puzzleIndex === game.currentPuzzleIndex,
@@ -803,6 +804,19 @@ function AuthoritativeMatch({
             points
           </p>
           {game.revealedAnswers && <p className="mono">{game.revealedAnswers.join(' · ')}</p>}
+          {game.revealedAnswers && game.revealedAnswers.length > 0 && (
+            <div className="action-row" aria-label="Answer definitions">
+              {game.revealedAnswers.map((answer) => (
+                <Link
+                  className="button"
+                  href={`/words?length=${answer.length}&word=${encodeURIComponent(answer)}`}
+                  key={answer}
+                >
+                  DEFINE {answer.toUpperCase()}
+                </Link>
+              ))}
+            </div>
+          )}
           <div className="action-row">
             {game.capabilities.canSettleRating && !settlement && (
               <button className="primary" onClick={settle} disabled={pending}>
@@ -821,6 +835,31 @@ function AuthoritativeMatch({
             </p>
           )}
           {!game.ranked && game.scope === 'practice' && <RematchActions sourceGameId={game.id} />}
+          <nav className="action-row" aria-label="Next COMBAT actions">
+            {game.scope === 'practice' && (
+              <Link className="button" href={`/combat/practice?length=${game.wordLength}`}>
+                SEARCH AGAIN
+              </Link>
+            )}
+            {game.scope === 'practice' && (
+              <Link className="button" href="/combat/daily">
+                PLAY DAILY
+              </Link>
+            )}
+            {opponent?.publicProfileId && (
+              <Link className="button" href={`/players/${opponent.publicProfileId}`}>
+                VIEW RIVAL
+              </Link>
+            )}
+            {game.status !== 'cancelled' && (
+              <Link className="button" href="/history">
+                HISTORY
+              </Link>
+            )}
+            <Link className="button" href="/combat/active">
+              ACTIVE
+            </Link>
+          </nav>
         </div>
       )}
     </section>

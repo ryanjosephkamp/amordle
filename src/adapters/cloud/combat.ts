@@ -1153,6 +1153,24 @@ export async function setPrivateRequestPreference(accept: boolean) {
   return parseServiceResult(privatePreferenceSchema, data?.[0]);
 }
 
+export const privateRequestBlockSchema = z
+  .object({
+    public_profile_id: z.string(),
+    display_name: z.string(),
+    flair_key: z.string().nullable(),
+    avatar_url: z.string().nullable(),
+    blocked_at: z.string(),
+  })
+  .strict();
+
+export type PrivateRequestBlock = z.infer<typeof privateRequestBlockSchema>;
+
+export async function listPrivateRequestBlocks() {
+  const { data, error } = await client().rpc('get_private_multiplayer_request_blocks');
+  if (error) throwServiceError(error);
+  return parseServiceList(privateRequestBlockSchema, data).items;
+}
+
 export async function blockPrivateRequester(publicProfileId: string, blocked: boolean) {
   const responseSchema = z
     .object({

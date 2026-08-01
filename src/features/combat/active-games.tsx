@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { listActiveCombat, listLegacyActive } from '@/adapters/supabase/combat';
+import { writeCombatAttentionProjection } from '@/adapters/session-combat';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 
@@ -20,14 +21,31 @@ function ActiveGamesInner() {
   const active = useQuery({
     queryKey: ['combat', 'active', userId],
     queryFn: async () => {
-      const [authoritative, legacy] = await Promise.all([
-        listActiveCombat(),
-        listLegacyActive(userId),
-      ]);
+      const authoritative = await listActiveCombat();
+      const legacy = await listLegacyActive(userId);
+      writeCombatAttentionProjection({
+        schemaVersion: 1,
+        ownerUserId: userId,
+        updatedAt: new Date().toISOString(),
+        games: [
+          ...authoritative.map((game) => ({
+            id: game.id,
+            label: `${game.ranked ? 'Ranked ' : ''}${game.scope} ${game.mode.toUpperCase()}`,
+            status: game.status,
+            href: `/combat/match/${game.id}`,
+          })),
+          ...legacy.map((game) => ({
+            id: game.id,
+            label: `Public Practice ${game.mode.toUpperCase()}`,
+            status: game.status,
+            href: `/combat/match/${game.id}`,
+          })),
+        ],
+      });
       return { authoritative, legacy };
     },
     enabled: Boolean(userId),
-    refetchInterval: 30_000,
+    refetchInterval: () => (document.visibilityState === 'visible' ? 5_000 : false),
   });
   if (active.isPending) return <SkeletonRows label="Loading active games…" rows={4} />;
   if (active.isError || !active.data) {
@@ -51,6 +69,11 @@ function ActiveGamesInner() {
             </strong>
             <p>
               {game.status} · {game.wordLength} letters · move {game.moveCount}
+            </p>
+            <p>
+              {game.players.find((player) => player.seat !== game.viewerSeat)?.displayName ??
+                'Private player'}{' '}
+              · {game.currentTurn === game.viewerSeat ? 'your turn' : 'waiting on rival'}
             </p>
           </div>
           <Link className="button" href={`/combat/match/${game.id}`}>

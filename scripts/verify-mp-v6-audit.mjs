@@ -1,10 +1,11 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 
 const contract = readFileSync('bootstrap/FUNCTIONAL-CONTRACT.md', 'utf8');
 const audit = JSON.parse(readFileSync('acceptance/mp-v6-clause-audit.json', 'utf8'));
 const expected = [...contract.matchAll(/^- (MP-\d{2}\.[a-z]): /gm)].map((match) => match[1]);
 const rows = audit.requirements ?? [];
 const failures = [];
+const hostedSpec = readFileSync('tests/e2e/services.combat.spec.ts', 'utf8');
 const statuses = new Set([
   'proven',
   'implemented-unproven',
@@ -41,6 +42,25 @@ for (const row of rows) {
   }
   if (row.status === 'proven' && (!row.automatedEvidence.length || !row.hostedEvidence.length)) {
     failures.push(`${row.requirementId} is proven without exact automated and hosted evidence`);
+  }
+  if (row.status === 'proven') {
+    for (const evidence of row.automatedEvidence) {
+      const separator = evidence.indexOf('::');
+      if (separator < 1) {
+        failures.push(`${row.requirementId} has a malformed automated evidence id`);
+        continue;
+      }
+      const path = evidence.slice(0, separator);
+      const testName = evidence.slice(separator + 2);
+      if (!existsSync(path) || !readFileSync(path, 'utf8').includes(testName)) {
+        failures.push(`${row.requirementId} references missing automated evidence ${evidence}`);
+      }
+    }
+    for (const scenario of row.hostedEvidence) {
+      if (!hostedSpec.includes(scenario)) {
+        failures.push(`${row.requirementId} references missing hosted evidence ${scenario}`);
+      }
+    }
   }
 }
 

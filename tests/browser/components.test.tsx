@@ -4,13 +4,17 @@ import { render } from 'vitest-browser-react';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
 import {
+  combatAttentionProjectionSchema,
   rankedDailyQueueIntentSchema,
   rankedPracticeQueueIntentSchema,
+  readCombatAttentionProjection,
   readRankedDailyQueueIntent,
   readRankedPracticeQueueIntent,
   writeRankedDailyQueueIntent,
   writeRankedPracticeQueueIntent,
+  writeCombatAttentionProjection,
 } from '@/adapters/session-combat';
+import { privateRequestBlockSchema } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
 import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/word-lists';
@@ -160,6 +164,59 @@ describe('browser components', () => {
     expect(readRankedPracticeQueueIntent(otherUserId)).toEqual({ status: 'missing' });
     expect(readRankedDailyQueueIntent(otherUserId)).toEqual({ status: 'missing' });
     sessionStorage.clear();
+  });
+
+  it('keeps provisional COMBAT attention display-only and account-scoped', () => {
+    const ownerUserId = '11111111-1111-4111-8111-111111111111';
+    const otherUserId = '22222222-2222-4222-8222-222222222222';
+    const projection = combatAttentionProjectionSchema.parse({
+      schemaVersion: 1,
+      ownerUserId,
+      updatedAt: '2026-07-31T12:00:00.000Z',
+      games: [
+        {
+          id: 'game-one',
+          label: 'Ranked practice OG',
+          status: 'playing',
+          href: '/combat/match/game-one',
+        },
+      ],
+    });
+    writeCombatAttentionProjection(projection);
+    expect(readCombatAttentionProjection(ownerUserId)).toEqual({
+      status: 'valid',
+      projection,
+    });
+    expect(readCombatAttentionProjection(otherUserId)).toEqual({ status: 'missing' });
+    expect(
+      combatAttentionProjectionSchema.safeParse({
+        ...projection,
+        games: [{ ...projection.games[0], answer: 'crane' }],
+      }).success,
+    ).toBe(false);
+    sessionStorage.clear();
+  });
+
+  it('strictly parses the private-request block list used by unblock controls', () => {
+    expect(
+      privateRequestBlockSchema.parse({
+        public_profile_id: 'public-profile',
+        display_name: 'Rival',
+        flair_key: null,
+        avatar_url: null,
+        blocked_at: '2026-07-31T12:00:00.000Z',
+      }).display_name,
+    ).toBe('Rival');
+    expect(
+      privateRequestBlockSchema.safeParse({
+        public_profile_id: 'public-profile',
+        display_name: 'Rival',
+        flair_key: null,
+        avatar_url: null,
+        blocked_at: '2026-07-31T12:00:00.000Z',
+        blocked_user_id: 'private-id',
+      }).success,
+    ).toBe(false);
   });
 
   it('strictly parses Ranked Daily recovery and safely correlates hosted UI mutations', () => {
