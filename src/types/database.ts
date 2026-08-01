@@ -527,11 +527,7 @@ export type Database = {
         Returns: Json;
       };
       amordle_player_attempts: {
-        Args: {
-          p_game_id: string;
-          p_player_id: string;
-          p_puzzle_index: number;
-        };
+        Args: { p_game_id: string; p_player_id: string; p_puzzle_index: number };
         Returns: number;
       };
       amordle_player_points: {
@@ -539,11 +535,7 @@ export type Database = {
         Returns: number;
       };
       amordle_player_solved: {
-        Args: {
-          p_game_id: string;
-          p_player_id: string;
-          p_puzzle_index: number;
-        };
+        Args: { p_game_id: string; p_player_id: string; p_puzzle_index: number };
         Returns: boolean;
       };
       amordle_seeded_rows: {
@@ -618,11 +610,7 @@ export type Database = {
         Returns: string[];
       };
       phase55_ranked_daily_hard_mode_evidence: {
-        Args: {
-          p_answers: string[];
-          p_game_id: string;
-          p_puzzle_index: number;
-        };
+        Args: { p_answers: string[]; p_game_id: string; p_puzzle_index: number };
         Returns: Json;
       };
       phase55_ranked_daily_hard_mode_guess_is_valid: {
@@ -2481,10 +2469,7 @@ export type Database = {
           ranked_queue_stale_candidates: number;
         }[];
       };
-      get_amordle_combat_game_v2: {
-        Args: { p_game_id: string };
-        Returns: Json;
-      };
+      get_amordle_combat_game_v2: { Args: { p_game_id: string }; Returns: Json };
       get_amordle_practice_leaderboard_v2: {
         Args: { p_app_bucket: string; p_limit?: number; p_offset?: number };
         Returns: Json[];
@@ -3057,10 +3042,7 @@ export type Database = {
         Args: never;
         Returns: number;
       };
-      phase40_expire_private_match_requests: {
-        Args: never;
-        Returns: undefined;
-      };
+      phase40_expire_private_match_requests: { Args: never; Returns: undefined };
       phase40_private_match_request_response: {
         Args: {
           p_created?: boolean;

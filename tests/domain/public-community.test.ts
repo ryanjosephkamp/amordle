@@ -13,7 +13,7 @@ const migration = readFileSync(
   'utf8',
 );
 const statsRepairMigration = readFileSync(
-  'supabase/migrations/20260801050000_amordle_public_community_stats_repair.sql',
+  'supabase/migrations/20260801051509_amordle_public_community_stats_repair.sql',
   'utf8',
 );
 
