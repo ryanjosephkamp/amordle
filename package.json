@@ -11,7 +11,7 @@
     "preinstall": "node scripts/install-node24.mjs",
     "predev": "scripts/node24.sh scripts/prepare-public-word-assets.mjs",
     "dev": "scripts/node24.sh node_modules/next/dist/bin/next dev",
-    "prebuild": "scripts/node24.sh scripts/prepare-public-word-assets.mjs",
+    "prebuild": "scripts/node24.sh scripts/prepare-build.mjs",
     "build": "scripts/node24.sh node_modules/next/dist/bin/next build",
     "start": "scripts/node24.sh node_modules/next/dist/bin/next start",
     "format": "scripts/node24.sh node_modules/prettier/bin/prettier.cjs --write PRODUCT.md DESIGN.md acceptance progress public/manifest.webmanifest public/sw.js scripts src tests eslint.config.mjs next.config.ts package.json playwright.config.ts pnpm-workspace.yaml postcss.config.mjs tsconfig.json vitest.browser.config.ts vitest.config.ts",
