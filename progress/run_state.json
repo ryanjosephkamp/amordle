@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.2-public-community-stats-repair-authorization-gate",
-  "status": "authorization-required",
-  "lastGreenCommit": "4a0dc068cebec52d60e80f7ee517fab04a8c1479",
+  "currentCheckpoint": "stage-2-v6.2-public-community-stats-repair-local-acceptance",
+  "status": "in-progress",
+  "lastGreenCommit": "a6670fb7ee7fb25e2391f1fdb066d7f82e96f02a",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -27,26 +27,28 @@
     }
   },
   "v6_2Implementation": {
-    "applicationCheckpointCommit": "4a0dc068cebec52d60e80f7ee517fab04a8c1479",
+    "applicationCheckpointCommit": "a6670fb7ee7fb25e2391f1fdb066d7f82e96f02a",
     "decisionPacket": "reports/stage-2-v6.2-forward-only-migration-decision.md",
     "authorizedMigration": "20260801032334_amordle_public_community_v1.sql",
     "authorizedMigrationSha256": "ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52",
     "migrationApplied": true,
-    "synchronizedMigrations": 47,
+    "synchronizedMigrations": 48,
     "repairDecisionPacket": "reports/stage-2-v6.2-public-community-stats-repair-decision.md",
-    "pendingRepairMigration": "20260801050000_amordle_public_community_stats_repair.sql",
-    "pendingRepairMigrationSha256": "7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22",
+    "authorizedRepairArtifact": "20260801050000_amordle_public_community_stats_repair.sql",
+    "appliedRepairMigration": "20260801051509_amordle_public_community_stats_repair.sql",
+    "repairMigrationSha256": "7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22",
+    "repairMigrationApplied": true,
     "repairDecisionCheckpointCommit": "ee5f93845dfc2851eaeccaa5cb98267e08854a10",
     "supabaseMutated": true,
     "vercelMutated": true,
     "hostedAcceptanceComplete": false,
-    "hostedBlocker": "Public COMBAT totals omit authoritative unranked games and directory Practice filters use legacy rating buckets.",
+    "hostedBlocker": null,
     "parityStatus": {
       "verified": 222,
       "implementedPendingHostedProof": 15,
       "total": 237
     },
-    "resumeCondition": "explicit authorization for additive forward-only repair migration 20260801050000"
+    "resumeCondition": "deploy exact checkpoint and complete protected hosted acceptance"
   },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
@@ -57,8 +59,8 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "ee5f93845dfc2851eaeccaa5cb98267e08854a10",
-    "reviewedPendingRepairIncluded": true,
+    "candidateCommit": "a6670fb7ee7fb25e2391f1fdb066d7f82e96f02a",
+    "reviewedPendingRepairIncluded": false,
     "check": "green",
     "domainTests": 70,
     "browserComponentTests": 14,
@@ -67,7 +69,7 @@
     "parityRows": 237,
     "mpAuditRows": 73,
     "bootstrapFiles": "107/107",
-    "migrations": "45 immutable plus 2 authorized additive plus 1 reviewed pending repair",
+    "migrations": "45 immutable plus 3 authorized additive",
     "httpInterfaces": 3,
     "homeCompressedBytes": {
       "js": 182310,
@@ -132,5 +134,5 @@
     "oldBlobStoreDeleted": false
   },
   "reportStatus": "v6.2-public-community-stats-repair-decision-ready",
-  "updatedAt": "2026-08-01T05:12:00Z"
+  "updatedAt": "2026-08-01T05:20:00Z"
 }
