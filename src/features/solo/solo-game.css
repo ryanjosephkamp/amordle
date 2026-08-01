@@ -1249,12 +1249,23 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 @media (max-width: 35.49rem) and (max-height: 40rem) {
   .game-board {
-    gap: 0.08rem;
-    padding-block: 0.2rem;
+    gap: 0.04rem;
+    padding-block: 0.04rem;
   }
 
   .game-board .tile {
     width: clamp(1.75rem, 5.1dvh, 2.2rem);
+  }
+}
+
+@media (max-width: 35.49rem) and (min-height: 40.01rem) and (max-height: 43.75rem) {
+  .game-board {
+    gap: 0.08rem;
+    padding-block: 0.1rem;
+  }
+
+  .game-board .tile {
+    width: clamp(1.75rem, 6.2dvh, 2.85rem);
   }
 }
 

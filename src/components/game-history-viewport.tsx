@@ -17,6 +17,7 @@ export function GameHistoryViewport({
 }>) {
   const viewport = useRef<HTMLDivElement>(null);
   const previousKey = useRef(followKey);
+  const hasPositionedInitialHistory = useRef(false);
   const followsLatest = useRef(true);
   const [showLatest, setShowLatest] = useState(false);
 
@@ -31,6 +32,19 @@ export function GameHistoryViewport({
   useEffect(() => {
     const element = viewport.current;
     if (!element) return;
+
+    if (!hasPositionedInitialHistory.current) {
+      hasPositionedInitialHistory.current = true;
+      const overflows = element.scrollHeight - element.clientHeight > endTolerance;
+      if (overflows) moveToLatest();
+      else {
+        element.scrollTop = 0;
+        followsLatest.current = true;
+        setShowLatest(false);
+      }
+      return;
+    }
+
     if (previousKey.current !== followKey) {
       previousKey.current = followKey;
       if (followsLatest.current) moveToLatest();
