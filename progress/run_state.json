@@ -78,7 +78,7 @@
     "url": "https://amordle-hynrefg79-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
-    "evidenceCommit": null,
+    "evidenceCommit": "8d3db0a8be3f2318f3658a0d8e5aea16ab26f6ac",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
@@ -109,5 +109,5 @@
     "oldBlobStoreDeleted": false
   },
   "reportStatus": "v6.1-final-protected-preview-completion-ready",
-  "updatedAt": "2026-08-01T01:36:00Z"
+  "updatedAt": "2026-08-01T01:39:00Z"
 }

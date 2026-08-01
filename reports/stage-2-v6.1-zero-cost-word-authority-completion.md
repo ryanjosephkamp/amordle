@@ -6,6 +6,7 @@ Amordle v6.1 is review-ready on a protected Preview. The deployment-bundled word
 
 - Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
 - Application commit: `7f33829803eb93b560307b4b859d8109e1998db7`
+- Evidence checkpoint: `8d3db0a8be3f2318f3658a0d8e5aea16ab26f6ac`
 - Final deployment: `dpl_12LwcLEg3yXFMHr9ynMZMgiN78Ni`
 - Protected Preview: <https://amordle-hynrefg79-ryanjosephkamps-projects.vercel.app>
 - Final hosted run: `e2e_20260801T012945823Z_7f338298_6f887a6e`
