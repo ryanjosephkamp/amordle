@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import type { BrowserContext, Page } from '@playwright/test';
+import type { BrowserContext, Page, Route } from '@playwright/test';
 import { createClient } from '@supabase/supabase-js';
 import { createHash, randomBytes } from 'node:crypto';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -23,6 +23,8 @@ const cleanupPath = path.join(evidenceDir, 'cleanup.json');
 const bypassStorageState = '.codex-internal/evidence/operator/vercel-protection-storage-state.json';
 const publicPrivateScenarioId = 'V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY';
 const rankedDailyScenarioId = 'V6.1-HOSTED-RANKED-PRACTICE-DAILY';
+const publicCommunityScenarioId = 'V6.2-HOSTED-PUBLIC-COMMUNITY';
+const definitionScenarioId = 'V6.2-HOSTED-DEFINITION-SURFACES';
 
 interface Account {
   id: string;
@@ -541,6 +543,8 @@ test.describe.serial('protected Preview services', () => {
   test('proves deployment words, UI multiplayer recovery, and privacy', async ({ browser }) => {
     test.setTimeout(600_000);
     await event('hosted_scenario_started', { scenarioId: publicPrivateScenarioId });
+    await event('hosted_scenario_started', { scenarioId: publicCommunityScenarioId });
+    await event('hosted_scenario_started', { scenarioId: definitionScenarioId });
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
@@ -685,6 +689,29 @@ test.describe.serial('protected Preview services', () => {
     const firstPage = await firstContext.newPage();
     const secondPage = await secondContext.newPage();
     const spectatorPage = await spectatorContext.newPage();
+    let definitionSourceRequests = 0;
+    const fulfillDefinition = async (route: Route) => {
+      definitionSourceRequests += 1;
+      const word = new URL(route.request().url()).pathname.split('/').at(-1) ?? 'word';
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify([
+          {
+            meanings: [
+              {
+                partOfSpeech: 'verb',
+                definitions: [{ definition: `A verified hosted definition for ${word}.` }],
+              },
+            ],
+          },
+        ]),
+      });
+    };
+    await Promise.all(
+      [firstContext, secondContext, spectatorContext].map((context) =>
+        context.route('https://api.dictionaryapi.dev/api/v2/entries/en/**', fulfillDefinition),
+      ),
+    );
     await signIn(firstPage, playerOne!);
     await signIn(secondPage, playerTwo!);
     await signIn(spectatorPage, spectator!);
@@ -694,21 +721,43 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.goto(`${baseURL}/profile`);
     await expect(firstPage.getByRole('heading', { name: 'PUBLIC PROFILE' })).toBeVisible();
     await firstPage.getByLabel('Player name').fill('E2E Operator');
+    await firstPage.getByLabel('Bio').fill('V6.2 public profile proof.');
+    await firstPage
+      .getByLabel('Profile image URL')
+      .fill('https://avatars.githubusercontent.com/u/9919?s=200&v=4');
     await firstPage.getByText('Violet', { exact: true }).click();
     await expect(firstPage.getByRole('radio', { name: 'Violet' })).toBeChecked();
+    await firstPage.getByLabel('Flair').selectOption('combat');
     await firstPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
     await expect(firstPage.getByText('Profile saved.')).toBeVisible();
     await firstPage.reload();
     await expect(firstPage.getByRole('radio', { name: 'Violet' })).toBeChecked();
+    await expect(firstPage.getByLabel('Flair')).toHaveValue('combat');
+    await expect(firstPage.getByLabel('Profile image URL')).toHaveValue(
+      'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
+    );
     const { data: savedProfile, error: savedProfileError } = await admin
       .from('public_player_profiles')
-      .select('accent_color,public_profile_id')
+      .select('accent_color,avatar_url,bio,flair_key,public_profile_id,visibility')
       .eq('user_id', playerOne!.id)
       .single();
     if (savedProfileError) throw savedProfileError;
-    expect(savedProfile.accent_color).toBe('violet');
+    expect(savedProfile).toMatchObject({
+      accent_color: 'violet',
+      avatar_url: 'https://avatars.githubusercontent.com/u/9919?s=200&v=4',
+      bio: 'V6.2 public profile proof.',
+      flair_key: 'combat',
+      visibility: 'public',
+    });
     await spectatorPage.goto(`${baseURL}/players/${savedProfile.public_profile_id}`);
     await expect(spectatorPage.locator('.public-profile')).toContainText('E2E Operator');
+    await expect(spectatorPage.locator('.public-profile')).toContainText(
+      'V6.2 public profile proof.',
+    );
+    await expect(spectatorPage.locator('.public-profile')).toContainText('COMBAT player');
+    await expect(
+      spectatorPage.locator('.public-stat-grid').filter({ hasText: /completed\s*0/i }),
+    ).toBeVisible();
     await expect(spectatorPage.locator('.profile-avatar')).toHaveAttribute(
       'style',
       /border-color:/i,
@@ -719,6 +768,7 @@ test.describe.serial('protected Preview services', () => {
     });
     await secondPage.goto(`${baseURL}/profile`);
     await secondPage.getByLabel('Player name').fill('E2E Player Two');
+    await secondPage.getByLabel('Flair').selectOption('daily');
     await secondPage.getByText('Cyan', { exact: true }).click();
     await expect(secondPage.getByRole('radio', { name: 'Cyan' })).toBeChecked();
     await secondPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
@@ -730,17 +780,57 @@ test.describe.serial('protected Preview services', () => {
       .single();
     if (secondProfileError) throw secondProfileError;
 
-    await firstPage.goto(`${baseURL}/combat/lobby`);
-    await firstPage.getByLabel('Public profile ID').fill(secondProfile.public_profile_id);
-    await firstPage.getByRole('button', { name: 'Send private request' }).click();
-    await expect(firstPage.getByText('Private request sent.')).toBeVisible();
+    expect(definitionSourceRequests).toBe(0);
+    await spectatorPage.goto(`${baseURL}/words?length=5&q=abuse`);
+    await spectatorPage.getByRole('option', { name: /^abuse\b/i }).click();
+    const wordDialog = spectatorPage.getByRole('dialog', { name: 'ABUSE' });
+    await expect(wordDialog).toContainText('A verified hosted definition for abuse.');
+    await expect(wordDialog).toContainText('Free Dictionary API');
+    expect(definitionSourceRequests).toBe(1);
+    await wordDialog.getByRole('button', { name: 'Close word details' }).click();
+    const cachedDefinitionPage = await spectatorContext.newPage();
+    await cachedDefinitionPage.goto(`${baseURL}/words?length=5&q=abuse`);
+    await cachedDefinitionPage.getByRole('option', { name: /^abuse\b/i }).click();
+    const cachedWordDialog = cachedDefinitionPage.getByRole('dialog', { name: 'ABUSE' });
+    await expect(cachedWordDialog).toContainText('A verified hosted definition for abuse.');
+    await expect(cachedWordDialog).toContainText('Free Dictionary API · cached');
+    expect(definitionSourceRequests).toBe(1);
+    await cachedDefinitionPage.close();
+    await event('definition_surfaces_verified', {
+      scenarioId: definitionScenarioId,
+      word: 'abuse',
+      userTriggered: true,
+      sourceRequests: definitionSourceRequests,
+      persistentCacheHit: true,
+    });
+
+    await firstPage.goto(`${baseURL}/players`);
+    await firstPage.getByLabel('Player name').fill('E2E Player');
+    await firstPage.getByRole('button', { name: 'APPLY' }).click();
+    await firstPage.getByRole('link', { name: 'E2E Player Two', exact: true }).click();
+    await expect(firstPage).toHaveURL(`${baseURL}/players/${secondProfile.public_profile_id}`);
+    await expect(firstPage.getByText('Daily player', { exact: true })).toBeVisible();
+    await firstPage.getByLabel('Mode').selectOption('go');
+    await firstPage.getByLabel('Word length').fill('7');
+    await firstPage.getByLabel('Puzzles').selectOption('7');
+    await firstPage.getByLabel('Clock').selectOption('300000');
+    await firstPage.getByLabel('Hard Mode').check();
+    await firstPage.getByRole('button', { name: 'SEND PRIVATE REQUEST' }).click();
+    await expect(firstPage.getByText('Private request sent to E2E Player Two.')).toBeVisible();
     const { data: privateRequest, error: privateRequestError } = await admin
       .from('multiplayer_private_match_requests')
-      .select('id')
+      .select('id,go_puzzle_count,hard_mode,mode,time_limit_ms,word_length')
       .eq('requester_user_id', playerOne!.id)
       .eq('opponent_user_id', playerTwo!.id)
       .single();
     if (privateRequestError) throw privateRequestError;
+    expect(privateRequest).toMatchObject({
+      go_puzzle_count: 7,
+      hard_mode: true,
+      mode: 'go',
+      time_limit_ms: 300_000,
+      word_length: 7,
+    });
     privateRequestIds.push(privateRequest.id);
     await appendJson(resourcesPath, {
       at: new Date().toISOString(),
@@ -897,6 +987,9 @@ test.describe.serial('protected Preview services', () => {
 
     await submitOnScreenGuess(secondPage, soloAnswer);
     await expect(secondPage.getByRole('heading', { name: 'You solved it' })).toBeVisible();
+    await expect(secondPage.locator('.word-definition')).toContainText(
+      `A verified hosted definition for ${soloAnswer}.`,
+    );
     await expect(secondPage.getByText(/History, XP, and coins are synced/i)).toBeVisible({
       timeout: 15_000,
     });
@@ -936,6 +1029,21 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.reload();
     await secondPage.goto(`${baseURL}/history`);
     await expect(secondPage.getByText(/solo practice · OG/i)).toHaveCount(1);
+    await secondPage.getByRole('button', { name: 'Definition', exact: true }).click();
+    const historyDefinitionDialog = secondPage.getByRole('dialog', {
+      name: 'Completed game definitions',
+    });
+    await expect(historyDefinitionDialog).toContainText(soloAnswer.toUpperCase());
+    await expect(historyDefinitionDialog).toContainText(
+      `A verified hosted definition for ${soloAnswer}.`,
+    );
+    await historyDefinitionDialog.getByRole('button', { name: 'Close definitions' }).click();
+    await event('terminal_and_history_definitions_verified', {
+      scenarioId: definitionScenarioId,
+      word: soloAnswer,
+      terminalResult: true,
+      persistedHistoryV3: true,
+    });
     await secondPage.goto(`${baseURL}/stats`);
     await expect(
       secondPage.locator('.stats-metric').filter({ hasText: /completed\s*2/i }),
@@ -1116,6 +1224,39 @@ test.describe.serial('protected Preview services', () => {
     const anonymous = createClient<Database>(supabaseUrl, anonKey, {
       auth: { autoRefreshToken: false, persistSession: false },
     });
+    const { data: publicDirectoryRows, error: publicDirectoryError } = await anonymous.rpc(
+      'list_public_player_directory_v1',
+      {
+        p_bucket: 'multiplayer:og',
+        p_limit: 50,
+        p_offset: 0,
+        p_search: 'E2E',
+        p_sort: 'name',
+      },
+    );
+    if (publicDirectoryError) throw publicDirectoryError;
+    expect(publicDirectoryRows.length).toBeGreaterThanOrEqual(2);
+    const serializedDirectory = JSON.stringify(publicDirectoryRows);
+    expect(serializedDirectory).not.toMatch(/email|raw.?auth|user_id|avatar_url|bio/i);
+    for (const user of users) expect(serializedDirectory).not.toContain(user.id);
+    expect(Object.keys(publicDirectoryRows[0]!).sort()).toEqual(
+      [
+        'accent_color',
+        'bucket',
+        'display_name',
+        'draws',
+        'flair_key',
+        'games_played',
+        'losses',
+        'profile_updated_at',
+        'provisional',
+        'public_profile_id',
+        'rating',
+        'rating_updated_at',
+        'total_count',
+        'wins',
+      ].sort(),
+    );
     const anonymousRaw = await anonymous
       .from('async_multiplayer_games')
       .select('projection')
@@ -1195,6 +1336,17 @@ test.describe.serial('protected Preview services', () => {
     await event('combat_completion_continuity_verified', {
       gameId,
       participantHistoryRows: 2,
+    });
+    await spectatorPage.goto(`${baseURL}/players/${savedProfile.public_profile_id}`);
+    await expect(
+      spectatorPage.locator('.public-stat-grid').filter({ hasText: /completed\s*1/i }),
+    ).toBeVisible({ timeout: 15_000 });
+    await event('public_community_verified', {
+      scenarioId: publicCommunityScenarioId,
+      directorySearch: true,
+      profileChallenge: true,
+      publicStatsGamesCompleted: 1,
+      directoryPrivateFieldsDenied: true,
     });
 
     await firstPage.goto(`${baseURL}/combat/match/${gameId}`);

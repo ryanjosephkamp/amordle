@@ -527,7 +527,11 @@ export type Database = {
         Returns: Json;
       };
       amordle_player_attempts: {
-        Args: { p_game_id: string; p_player_id: string; p_puzzle_index: number };
+        Args: {
+          p_game_id: string;
+          p_player_id: string;
+          p_puzzle_index: number;
+        };
         Returns: number;
       };
       amordle_player_points: {
@@ -535,7 +539,11 @@ export type Database = {
         Returns: number;
       };
       amordle_player_solved: {
-        Args: { p_game_id: string; p_player_id: string; p_puzzle_index: number };
+        Args: {
+          p_game_id: string;
+          p_player_id: string;
+          p_puzzle_index: number;
+        };
         Returns: boolean;
       };
       amordle_seeded_rows: {
@@ -610,7 +618,11 @@ export type Database = {
         Returns: string[];
       };
       phase55_ranked_daily_hard_mode_evidence: {
-        Args: { p_answers: string[]; p_game_id: string; p_puzzle_index: number };
+        Args: {
+          p_answers: string[];
+          p_game_id: string;
+          p_puzzle_index: number;
+        };
         Returns: Json;
       };
       phase55_ranked_daily_hard_mode_guess_is_valid: {
@@ -2469,7 +2481,10 @@ export type Database = {
           ranked_queue_stale_candidates: number;
         }[];
       };
-      get_amordle_combat_game_v2: { Args: { p_game_id: string }; Returns: Json };
+      get_amordle_combat_game_v2: {
+        Args: { p_game_id: string };
+        Returns: Json;
+      };
       get_amordle_practice_leaderboard_v2: {
         Args: { p_app_bucket: string; p_limit?: number; p_offset?: number };
         Returns: Json[];
@@ -2817,33 +2832,6 @@ export type Database = {
           updated_at: string;
         }[];
       };
-      list_public_player_directory_v1: {
-        Args: {
-          p_bucket?: string;
-          p_limit?: number;
-          p_max_rating?: number;
-          p_min_rating?: number;
-          p_offset?: number;
-          p_search?: string;
-          p_sort?: string;
-        };
-        Returns: {
-          accent_color: string;
-          bucket: string | null;
-          display_name: string;
-          draws: number | null;
-          flair_key: string;
-          games_played: number | null;
-          losses: number | null;
-          profile_updated_at: string;
-          provisional: boolean | null;
-          public_profile_id: string;
-          rating: number | null;
-          rating_updated_at: string | null;
-          total_count: number;
-          wins: number | null;
-        }[];
-      };
       get_public_ranked_leaderboard: {
         Args: { p_bucket?: string; p_limit?: number; p_offset?: number };
         Returns: {
@@ -2955,6 +2943,33 @@ export type Database = {
         Args: { p_limit?: number; p_mode?: string };
         Returns: Json[];
       };
+      list_public_player_directory_v1: {
+        Args: {
+          p_bucket?: string;
+          p_limit?: number;
+          p_max_rating?: number;
+          p_min_rating?: number;
+          p_offset?: number;
+          p_search?: string;
+          p_sort?: string;
+        };
+        Returns: {
+          accent_color: string;
+          bucket: string;
+          display_name: string;
+          draws: number;
+          flair_key: string;
+          games_played: number;
+          losses: number;
+          profile_updated_at: string;
+          provisional: boolean;
+          public_profile_id: string;
+          rating: number;
+          rating_updated_at: string;
+          total_count: number;
+          wins: number;
+        }[];
+      };
       phase27_expected_score: {
         Args: { p_opponent_rating: number; p_rating: number };
         Returns: number;
@@ -3042,7 +3057,10 @@ export type Database = {
         Args: never;
         Returns: number;
       };
-      phase40_expire_private_match_requests: { Args: never; Returns: undefined };
+      phase40_expire_private_match_requests: {
+        Args: never;
+        Returns: undefined;
+      };
       phase40_private_match_request_response: {
         Args: {
           p_created?: boolean;

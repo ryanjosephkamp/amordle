@@ -11,15 +11,12 @@ const authorizedAdditiveMigrations = new Map([
     '20260730193000_amordle_combat_authority_v3.sql',
     '1ade2a1b7e49e50cb46bc938d393c9d1e6ca8e62508678baa8efef203c937179',
   ],
-]);
-// Prepared and checksum-locked for owner review, but deliberately not applied
-// to the linked project until separate migration authorization is recorded.
-const reviewedPendingMigrations = new Map([
   [
     '20260801032334_amordle_public_community_v1.sql',
     'ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52',
   ],
 ]);
+const reviewedPendingMigrations = new Map();
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 
