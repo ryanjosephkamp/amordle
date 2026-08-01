@@ -850,7 +850,10 @@ test.describe.serial('protected Preview services', () => {
 
     await firstPage.goto(`${baseURL}/settings`);
     await firstPage.getByLabel('Keyboard sound').selectOption('mechanical');
-    await firstPage.getByRole('checkbox', { name: 'Touch haptics' }).check();
+    await expect(firstPage.getByText('Settings saved to your account.')).toBeVisible();
+    const hapticsControl = firstPage.getByRole('checkbox', { name: 'Touch haptics' });
+    await hapticsControl.click();
+    await expect(hapticsControl).toBeChecked();
     await expect(firstPage.getByText('Settings saved to your account.')).toBeVisible();
     await firstPage.getByRole('button', { name: 'PREVIEW' }).click();
     const { data: feedbackSettings, error: feedbackSettingsError } = await admin

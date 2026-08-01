@@ -192,7 +192,12 @@
       "family": "APP",
       "implementationOwner": "app-shell-platform",
       "routeInterface": "Next.js application shell and platform adapters",
-      "automatedTestIds": ["E2E-FIXTURE-ROUTES", "E2E-VISUAL-A11Y", "STATIC-BOUNDARY"],
+      "automatedTestIds": [
+        "E2E-FIXTURE-ROUTES",
+        "E2E-VISUAL-A11Y",
+        "STATIC-BOUNDARY",
+        "BROWSER-TERMINAL-REVIEW-SCROLL"
+      ],
       "hostedScenarioIds": ["PREVIEW-ROUTES-ACCESSIBILITY"],
       "screenshotManualEvidence": ["VISUAL-RESPONSIVE-MATRIX"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
@@ -764,7 +769,13 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-SOLO-SESSION-REGISTRY",
+        "E2E-FIXTURE-SOLO-SESSIONS"
+      ],
       "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
@@ -777,7 +788,12 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-SOLO-SESSION-REGISTRY"
+      ],
       "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
@@ -790,7 +806,12 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-SOLO-SESSION-REGISTRY"
+      ],
       "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
@@ -1017,8 +1038,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-FEEDBACK-PREFERENCES",
+        "BROWSER-KEYBOARD-FEEDBACK"
+      ],
+      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE", "V6.4-HOSTED-FEEDBACK-PREFERENCES"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
@@ -1030,7 +1057,13 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-FEEDBACK-PREFERENCES",
+        "BROWSER-KEYBOARD-FEEDBACK"
+      ],
       "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
@@ -1043,8 +1076,14 @@
       "family": "GAME",
       "implementationOwner": "game-solo-domains",
       "routeInterface": "Pure game domains and Solo controllers",
-      "automatedTestIds": ["DOMAIN-GAME-RULES", "SERVER-WORD-ASSETS", "E2E-FIXTURE-SOLO"],
-      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE"],
+      "automatedTestIds": [
+        "DOMAIN-GAME-RULES",
+        "SERVER-WORD-ASSETS",
+        "E2E-FIXTURE-SOLO",
+        "DOMAIN-FEEDBACK-PREFERENCES",
+        "BROWSER-KEYBOARD-FEEDBACK"
+      ],
+      "hostedScenarioIds": ["PREVIEW-SOLO-RELOAD-OFFLINE", "V6.4-HOSTED-FEEDBACK-PREFERENCES"],
       "screenshotManualEvidence": ["VISUAL-SOLO-STATES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",
@@ -1414,9 +1453,15 @@
         "DB-RLS-CONTRACT",
         "DOMAIN-PUBLIC-COMMUNITY",
         "DOMAIN-ACCENT-PRESETS",
-        "BROWSER-ACCENT-PRESET-DIALOG"
+        "BROWSER-ACCENT-PRESET-DIALOG",
+        "DOMAIN-PROFILE-AVATAR-UPLOAD",
+        "E2E-SERVICES-PUBLIC-AVATAR"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "hostedScenarioIds": [
+        "V6.2-HOSTED-PUBLIC-COMMUNITY",
+        "V6.3-HOSTED-ACCENT-PRESETS",
+        "V6.4-HOSTED-PUBLIC-AVATAR"
+      ],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE", "V6.3-ACCENT-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
@@ -1434,9 +1479,14 @@
         "DB-RLS-CONTRACT",
         "DOMAIN-PUBLIC-COMMUNITY",
         "DOMAIN-ACCENT-PRESETS",
-        "BROWSER-ACCENT-PRESET-DIALOG"
+        "BROWSER-ACCENT-PRESET-DIALOG",
+        "DOMAIN-PROFILE-AVATAR-UPLOAD"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "hostedScenarioIds": [
+        "V6.2-HOSTED-PUBLIC-COMMUNITY",
+        "V6.3-HOSTED-ACCENT-PRESETS",
+        "V6.4-HOSTED-PUBLIC-AVATAR"
+      ],
       "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE", "V6.3-ACCENT-RESPONSIVE"],
       "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
@@ -1529,8 +1579,14 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-FEEDBACK-PREFERENCES",
+        "BROWSER-KEYBOARD-FEEDBACK"
+      ],
+      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT", "V6.4-HOSTED-FEEDBACK-PREFERENCES"],
       "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
       "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
       "status": "verified",

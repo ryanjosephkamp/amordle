@@ -1,9 +1,10 @@
 # Amordle Stage 2 v6.4 forward-only authority decision packet
 
-## Decision requested
+## Decision status
 
-Authorize these two separate additive, forward-only migrations for linked
-Amordle Supabase project `squqdstdvbsvhagfuzgj`:
+The owner authorized and the implementation run applied these two separate
+additive, forward-only migrations to linked Amordle Supabase project
+`squqdstdvbsvhagfuzgj`:
 
 1. `20260801221500_amordle_feedback_preferences_v2.sql`
    - SHA-256:
@@ -12,10 +13,11 @@ Amordle Supabase project `squqdstdvbsvhagfuzgj`:
    - SHA-256:
      `1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17`
 
-Both files are prepared, reviewed, tested, committed, and pushed privately.
-Neither has been applied locally or remotely. A linked
-`supabase db push --dry-run --include-all` lists these two files, and only
-these two files, as pending.
+Both files retain their reviewed hashes. Linked migration history now verifies
+51 synchronized migrations with no pending artifact. Linked TypeScript types
+were regenerated after application. Complete local and hosted acceptance,
+including owner/cross-account Storage probes and exact zero-residue cleanup,
+passed at the v6.4 protected Preview candidate.
 
 ## Verified gate state
 

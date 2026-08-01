@@ -7,7 +7,11 @@
     <style>
       :root {
         color-scheme: light;
-        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
         line-height: 1.55;
       }
       body {
@@ -60,12 +64,11 @@
     <main>
       <h1>Amordle Stage 2 v6.4 authority decision</h1>
       <p class="notice">
-        <strong>Status:</strong> local implementation is checkpointed and pushed. Neither pending
-        migration has been applied. Explicit authorization is required before Supabase or Storage
-        changes.
+        <strong>Status:</strong> authorized, applied, type-regenerated, and acceptance-proven. All
+        51 migrations are synchronized with no pending artifact.
       </p>
 
-      <h2>Decision requested</h2>
+      <h2>Decision completed</h2>
       <table>
         <thead>
           <tr>
@@ -89,8 +92,9 @@
         </tbody>
       </table>
       <p>
-        A linked dry run lists exactly these two pending files. Applying both would move linked
-        history from 49 to 51 synchronized migrations.
+        The linked application applied exactly these two reviewed files and moved history from 49 to
+        51 synchronized migrations. Local and hosted acceptance, Storage isolation, and cleanup are
+        green.
       </p>
 
       <h2>Verified gate state</h2>
@@ -116,19 +120,19 @@
       <h2>Why Solo does not need a migration</h2>
       <p>
         The existing account <code>progress.solo</code> JSON and versioned IndexedDB envelopes can
-        safely hold a summary registry. The checkpoint implements stable session IDs, three
-        Practice OG games, three Practice GO games, one Daily OG game, one Daily GO game,
-        account/guest isolation, deterministic reconciliation, exact resume links, explicit
-        abandon and conflict handling, Home/Solo discovery, and backward-compatible legacy save
-        discovery without adding a table, RPC, or HTTP endpoint.
+        safely hold a summary registry. The checkpoint implements stable session IDs, three Practice
+        OG games, three Practice GO games, one Daily OG game, one Daily GO game, account/guest
+        isolation, deterministic reconciliation, exact resume links, explicit abandon and conflict
+        handling, Home/Solo discovery, and backward-compatible legacy save discovery without adding
+        a table, RPC, or HTTP endpoint.
       </p>
 
       <h2>Feedback preference authority</h2>
       <p>
         The frozen v1 settings JSON has no reviewed cross-device fields for a selected keyboard
         sound profile or opt-in haptics. The first migration adds only two bounded columns to the
-        existing owner-scoped settings row. Existing JSON is not rewritten, and no table,
-        function, grant, public projection, or HTTP interface is added.
+        existing owner-scoped settings row. Existing JSON is not rewritten, and no table, function,
+        grant, public projection, or HTTP interface is added.
       </p>
 
       <h2>Avatar Storage authority</h2>
@@ -149,10 +153,16 @@
       <h2>Privacy, quota, and compatibility</h2>
       <ul>
         <li>Storage paths contain random UUIDs, not raw Auth IDs or email addresses.</li>
-        <li>No private game, word, answer, rating, History, economy, or draft data enters Storage.</li>
+        <li>
+          No private game, word, answer, rating, History, economy, or draft data enters Storage.
+        </li>
         <li>Existing v1 profile and settings behavior remains compatible.</li>
-        <li>The Supabase free tier is finite; quota failure is a closed, recoverable upload error.</li>
-        <li>No paid capability, new project, fourth HTTP interface, or new vendor is introduced.</li>
+        <li>
+          The Supabase free tier is finite; quota failure is a closed, recoverable upload error.
+        </li>
+        <li>
+          No paid capability, new project, fourth HTTP interface, or new vendor is introduced.
+        </li>
         <li>Avatar objects are removed before disposable Auth users during hosted cleanup.</li>
       </ul>
 
@@ -182,7 +192,8 @@
       </ol>
 
       <h2>Exact authorization text</h2>
-      <pre>I authorize applying 20260801221500_amordle_feedback_preferences_v2.sql with SHA-256 cde752fb637554292435292880b5375d6d8ce02c69793757d3655d7b1ba6c368 and 20260801222500_amordle_public_avatars_v1.sql with SHA-256 1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17 to linked Supabase project squqdstdvbsvhagfuzgj, followed by exact migration verification, type regeneration, sound and haptic settings completion, public avatar upload completion, complete local acceptance, protected Preview deployment, disposable-user hosted acceptance, exact Storage and Auth cleanup, parity reconciliation, final reporting, and a private golden checkpoint. Do not merge or release Production.</pre>
+      <pre>
+I authorize applying 20260801221500_amordle_feedback_preferences_v2.sql with SHA-256 cde752fb637554292435292880b5375d6d8ce02c69793757d3655d7b1ba6c368 and 20260801222500_amordle_public_avatars_v1.sql with SHA-256 1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17 to linked Supabase project squqdstdvbsvhagfuzgj, followed by exact migration verification, type regeneration, sound and haptic settings completion, public avatar upload completion, complete local acceptance, protected Preview deployment, disposable-user hosted acceptance, exact Storage and Auth cleanup, parity reconciliation, final reporting, and a private golden checkpoint. Do not merge or release Production.</pre>
 
       <h2>Rollback</h2>
       <p>
