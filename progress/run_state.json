@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.2-public-community-final-protected-preview-candidate",
+  "currentCheckpoint": "stage-2-v6.3-accent-personalization-final-protected-preview-candidate",
   "status": "review-ready",
-  "lastGreenCommit": "a6670fb7ee7fb25e2391f1fdb066d7f82e96f02a",
+  "lastGreenCommit": "6922cd59ddfeeb79d53c2a4d4922ac1b5e8dc4d5",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -53,6 +53,22 @@
     "zeroResidue": true,
     "resumeCondition": "manual review; merge and Production release require separate authorization"
   },
+  "v6_3Implementation": {
+    "goldenBaseline": "e4c0857bbe3749a8ffd44afebee300682bc48175",
+    "decisionPacket": "reports/stage-2-v6.3-forward-only-migration-decision.md",
+    "authorizedMigration": "20260801193000_amordle_accent_presets_v2.sql",
+    "authorizedMigrationSha256": "26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84",
+    "migrationApplied": true,
+    "synchronizedMigrations": 49,
+    "typesRegenerated": true,
+    "applicationCandidateCommit": "35597069a5852a0f42017b0e995f98b5c15cbf83",
+    "evidenceCommit": "6922cd59ddfeeb79d53c2a4d4922ac1b5e8dc4d5",
+    "hostedAcceptanceComplete": true,
+    "hostedRunId": "e2e_20260801T195633978Z_35597069_50360ac8",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "resumeCondition": "manual review; merge and Production release require separate authorization"
+  },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
     "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
@@ -62,25 +78,25 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "a6670fb7ee7fb25e2391f1fdb066d7f82e96f02a",
+    "candidateCommit": "35597069a5852a0f42017b0e995f98b5c15cbf83",
     "reviewedPendingRepairIncluded": false,
     "check": "green",
-    "domainTests": 70,
-    "browserComponentTests": 14,
+    "domainTests": 83,
+    "browserComponentTests": 16,
     "fixtureE2E": 15,
-    "visualE2E": 9,
+    "visualE2E": 11,
     "parityRows": 237,
     "mpAuditRows": 73,
     "bootstrapFiles": "107/107",
-    "migrations": "45 immutable plus 3 authorized additive",
+    "migrations": "45 immutable plus 4 authorized additive",
     "httpInterfaces": 3,
     "homeCompressedBytes": {
-      "js": 182310,
-      "css": 19381
+      "js": 183541,
+      "css": 21307
     },
     "gameCompressedBytes": {
-      "js": 188730,
-      "css": 23594
+      "js": 190072,
+      "css": 25630
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
@@ -117,24 +133,42 @@
     "zeroResidue": true,
     "status": "green"
   },
+  "v6_3HostedAcceptance": {
+    "candidateCommit": "35597069a5852a0f42017b0e995f98b5c15cbf83",
+    "evidenceCommit": "6922cd59ddfeeb79d53c2a4d4922ac1b5e8dc4d5",
+    "deploymentId": "dpl_GJe7uVkz57vS7G9cDAocjuQVBmb7",
+    "deploymentUrl": "https://amordle-p04gk2mv2-ryanjosephkamps-projects.vercel.app",
+    "migrationVersion": "20260801193000",
+    "migrationSha256": "26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84",
+    "fixtureE2E": 15,
+    "serviceE2E": 2,
+    "visualE2E": 11,
+    "parityRows": 237,
+    "finalRunId": "e2e_20260801T195633978Z_35597069_50360ac8",
+    "accentPresetRowsCleaned": 25,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "status": "green"
+  },
   "preview": {
-    "deploymentId": "dpl_21jNGxPqKEGBPcu67AiDwPZjH9qe",
-    "url": "https://amordle-p7azfoby6-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_GJe7uVkz57vS7G9cDAocjuQVBmb7",
+    "url": "https://amordle-p04gk2mv2-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "4a0dc068cebec52d60e80f7ee517fab04a8c1479",
-    "evidenceCommit": "05bf2e83b6d92371d3b2013895fb6cc47d463ef8",
+    "applicationCommit": "35597069a5852a0f42017b0e995f98b5c15cbf83",
+    "evidenceCommit": "6922cd59ddfeeb79d53c2a4d4922ac1b5e8dc4d5",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
-    "lastRunId": "e2e_20260801T052937627Z_d1b8e365_cc9d315f",
+    "lastRunId": "e2e_20260801T195633978Z_35597069_50360ac8",
     "attempt": 1,
     "zeroResidue": true,
     "authUsersRemoved": 3,
     "gamesRemoved": 7,
     "queueRecordsRemoved": 6,
     "privateRequestsRemoved": 1,
-    "rematchRequestsRemoved": 1
+    "rematchRequestsRemoved": 1,
+    "accentPresetsRemoved": 25
   },
   "wordAuthority": {
     "mode": "same-deployment-content-addressed-static-assets",
@@ -152,6 +186,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.2-public-community-final-report-and-checklist-complete",
-  "updatedAt": "2026-08-01T05:36:00Z"
+  "reportStatus": "v6.3-accent-personalization-final-report-and-checklist-complete",
+  "updatedAt": "2026-08-01T20:01:20Z"
 }

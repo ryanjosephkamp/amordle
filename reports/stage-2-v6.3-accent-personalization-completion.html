@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.3 Accent Personalization Completion</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 64rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      table {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.45rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      .status {
+        border: 2px solid currentColor;
+        padding: 0.75rem 1rem;
+        font-weight: 700;
+      }
+      li {
+        margin-block: 0.3rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.3</h1>
+      <p class="status">
+        Accent personalization and desktop UX stabilization are complete and ready for
+        protected-Preview review.
+      </p>
+      <section>
+        <h2>Candidate</h2>
+        <ul>
+          <li>Application: <code>35597069a5852a0f42017b0e995f98b5c15cbf83</code></li>
+          <li>Evidence: <code>6922cd59ddfeeb79d53c2a4d4922ac1b5e8dc4d5</code></li>
+          <li>Deployment: <code>dpl_GJe7uVkz57vS7G9cDAocjuQVBmb7</code></li>
+          <li>
+            <a href="https://amordle-p04gk2mv2-ryanjosephkamps-projects.vercel.app"
+              >Open protected Preview</a
+            >
+          </li>
+          <li>Hosted run: <code>e2e_20260801T195633978Z_35597069_50360ac8</code></li>
+        </ul>
+      </section>
+      <section>
+        <h2>Authorized migration</h2>
+        <p>
+          <code>20260801193000_amordle_accent_presets_v2.sql</code> was applied to
+          <code>squqdstdvbsvhagfuzgj</code> with SHA-256
+          <code>26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84</code>. All 49
+          migrations are synchronized. Presets are owner-only behind bounded RPCs; RLS is enabled
+          and forced; direct table grants remain revoked; v1 profile clients remain compatible.
+        </p>
+      </section>
+      <section>
+        <h2>Delivered experience</h2>
+        <ul>
+          <li>Six named light/dark palettes plus up to 24 named custom presets per account.</li>
+          <li>
+            Accessible native color dialog with picker, hex, name, live sample, edit, and delete.
+          </li>
+          <li>
+            Accent-aware alert count, unknown keys, prompts, focus, cursors, and public decoration.
+          </li>
+          <li>Semantic evidence colors remain fixed and independent.</li>
+          <li>Silent routine sync and fixed-height backup recovery with no gameplay jump.</li>
+          <li>
+            Centered desktop routes/COMBAT, unchanged approved mobile COMBAT, contained mobile
+            Stats.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Contrast evidence</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Hex</th>
+              <th>Alert</th>
+              <th>Light key</th>
+              <th>Dark key</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><code>#000000</code></td>
+              <td>21.00</td>
+              <td>9.74</td>
+              <td>17.93</td>
+            </tr>
+            <tr>
+              <td><code>#FFFFFF</code></td>
+              <td>20.19</td>
+              <td>17.89</td>
+              <td>6.50</td>
+            </tr>
+            <tr>
+              <td><code>#777777</code></td>
+              <td>4.51</td>
+              <td>13.10</td>
+              <td>11.74</td>
+            </tr>
+            <tr>
+              <td><code>#008000</code></td>
+              <td>5.14</td>
+              <td>12.44</td>
+              <td>12.45</td>
+            </tr>
+            <tr>
+              <td><code>#E85D75</code></td>
+              <td>6.01</td>
+              <td>13.33</td>
+              <td>11.16</td>
+            </tr>
+            <tr>
+              <td><code>#D28A00</code></td>
+              <td>7.09</td>
+              <td>13.96</td>
+              <td>10.47</td>
+            </tr>
+            <tr>
+              <td><code>#121826</code></td>
+              <td>17.73</td>
+              <td>10.39</td>
+              <td>16.81</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>All tested foregrounds meet or exceed 4.5:1.</p>
+      </section>
+      <section>
+        <h2>Acceptance</h2>
+        <ul>
+          <li>83 domain and 16 browser tests passed.</li>
+          <li>15 fixture, 2 real-service, and 11 visual journeys passed.</li>
+          <li>237/237 functional clauses and 73/73 multiplayer clauses remain proven.</li>
+          <li>107/107 bootstrap files, 34/34 word assets, and exactly 3 HTTP interfaces passed.</li>
+          <li>
+            Hosted cross-device presets, public sanitization, concurrency cap, fallback, gameplay,
+            and all established multiplayer journeys passed.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Fidelity disposition</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Supplied concern</th>
+              <th>Result</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Desktop COMBAT/right-side space</td>
+              <td>Centered shared axis; corrected.</td>
+            </tr>
+            <tr>
+              <td>Gameplay jump</td>
+              <td>Fixed status rail; ≤1 px bounding-box assertion.</td>
+            </tr>
+            <tr>
+              <td>Mobile COMBAT</td>
+              <td>Approved composition intentionally unchanged.</td>
+            </tr>
+            <tr>
+              <td>Profile disclosure</td>
+              <td>Compact semantic rows below Flair.</td>
+            </tr>
+            <tr>
+              <td>Accent alert/keyboard</td>
+              <td>Named/custom accents integrated; semantic states fixed.</td>
+            </tr>
+            <tr>
+              <td>Mobile Stats</td>
+              <td>Full-width cards; no spill or document overflow.</td>
+            </tr>
+            <tr>
+              <td>Desktop route framing</td>
+              <td>Balanced at 960, 1440, and 1920 px.</td>
+            </tr>
+            <tr>
+              <td>Custom accent editor</td>
+              <td>Implemented and hosted-proven.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Cleanup and boundaries</h2>
+        <p>
+          Cleanup succeeded on attempt 1: 25 presets, 3 users, 7 games, all queue/request and
+          dependent records were removed; every database and Auth probe returned zero. Production
+          remains <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>. No merge, Production release,
+          real-account deletion, down migration, project-setting change, paid service, Blob-store
+          deletion, or locked-shell mutation occurred.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
