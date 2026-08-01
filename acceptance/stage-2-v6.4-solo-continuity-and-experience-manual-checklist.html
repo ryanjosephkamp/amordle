@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.4 Manual Checklist</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 62rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      li {
+        margin-block: 0.55rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      a {
+        color: inherit;
+        font-weight: 700;
+      }
+      .done {
+        opacity: 0.78;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle v6.4 Manual Checklist</h1>
+      <p>
+        <a href="https://amordle-p2478e0c6-ryanjosephkamps-projects.vercel.app"
+          >Open the protected Preview</a
+        >
+      </p>
+      <section class="done">
+        <h2>Automated completion</h2>
+        <ul>
+          <li>☑ 51 synchronized migrations and regenerated types.</li>
+          <li>☑ 98 domain, 17 browser, 17 fixture, 2 service, and 11 visual journeys.</li>
+          <li>☑ 237/237 parity; 73/73 multiplayer; 107/107 bootstrap; exactly 3 APIs.</li>
+          <li>☑ Storage/database/Auth cleanup completed with zero residue.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Active Solo</h2>
+        <ul>
+          <li>☐ Create/resume three Practice OG and three Practice GO sessions independently.</li>
+          <li>☐ Confirm a fourth same-mode session is blocked without overwriting progress.</li>
+          <li>☐ Confirm one Daily OG and one Daily GO remain distinct.</li>
+          <li>☐ Abandon one session and confirm the slot becomes available.</li>
+          <li>☐ Confirm Home and Solo show exact active sessions; account switching leaks none.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Sound and haptics</h2>
+        <ul>
+          <li>☐ Preview and select all five keyboard sounds.</li>
+          <li>☐ Verify physical and on-screen keys use the selected sound; mute stops it.</li>
+          <li>☐ On supported mobile hardware, verify opt-in haptics for direct taps only.</li>
+          <li>☐ Verify Reduced effects, desktop, and unsupported browsers do not vibrate.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Avatar</h2>
+        <ul>
+          <li>☐ Confirm a public HTTPS URL still works.</li>
+          <li>☐ Upload valid PNG, JPEG, WebP, and animated GIF files.</li>
+          <li>☐ Replace/remove an upload and inspect the fallback.</li>
+          <li>☐ Confirm SVG, malformed, oversized, and over-dimension files fail clearly.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Mobile and freshness</h2>
+        <ul>
+          <li>☐ Confirm both mobile menu frame lines at 320–412 px.</li>
+          <li>☐ Complete Solo/Daily/COMBAT and scroll freely between result and board.</li>
+          <li>☐ Confirm active gameplay still keeps the complete keyboard available.</li>
+          <li>
+            ☐ Navigate to History, Stats, Leaderboards, Home, and Active; confirm current data
+            without a hard refresh.
+          </li>
+          <li>☐ Confirm no duplicates, infinite loading, or horizontal overflow.</li>
+        </ul>
+      </section>
+      <section class="done">
+        <h2>Protected boundaries</h2>
+        <ul>
+          <li>☑ Production <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code> unchanged.</li>
+          <li>
+            ☑ No merge, down migration, paid service, real-user deletion, or Vercel setting change.
+          </li>
+          <li>☑ Avatar bucket retained; only exact disposable objects were deleted.</li>
+        </ul>
+      </section>
+    </main>
+  </body>
+</html>
