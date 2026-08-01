@@ -1,18 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { accentCssColor } from '@/domain/profile';
+import { profileAccentCss } from '@/domain/profile';
 import type { AccentName } from '@/domain/profile';
 
 export function ProfileAvatar({
   avatarUrl,
   displayName,
   accentColor,
+  accentHex,
   label,
 }: {
   avatarUrl?: string | null;
   displayName?: string | null;
   accentColor?: AccentName | null;
+  accentHex?: string | null;
   label?: string;
 }) {
   const [failedUrl, setFailedUrl] = useState<string | null>(null);
@@ -28,7 +30,7 @@ export function ProfileAvatar({
   return (
     <div
       className="profile-avatar profile-avatar--large"
-      style={{ borderColor: accentCssColor(accentColor) }}
+      style={{ borderColor: profileAccentCss(accentColor, accentHex) }}
     >
       {avatarUrl && avatarUrl !== failedUrl ? (
         // Remote profile images are intentionally loaded by the browser from owner-supplied HTTPS URLs.

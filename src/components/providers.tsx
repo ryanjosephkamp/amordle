@@ -22,7 +22,7 @@ import {
 } from '@/application/query-keys';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { getMyPublicProfile } from '@/adapters/supabase/public';
-import { defaultAccentName } from '@/domain/profile';
+import { accentCssVariableMap, defaultAccentName } from '@/domain/profile';
 
 interface AuthContextValue {
   status: 'loading' | 'signed-out' | 'signed-in' | 'unavailable' | 'error';
@@ -203,12 +203,35 @@ function ProfileAccentBridge() {
   });
 
   useEffect(() => {
-    const accent =
-      auth.status === 'signed-in'
-        ? (profile.data?.accent_color ?? defaultAccentName)
-        : defaultAccentName;
-    document.documentElement.dataset.accent = accent;
-  }, [auth.status, profile.data?.accent_color, userId]);
+    const root = document.documentElement;
+    const customVariables = accentCssVariableMap(profile.data?.accent_hex ?? '');
+    const hasCustomAccent =
+      auth.status === 'signed-in' &&
+      Boolean(profile.data?.active_accent_preset_id) &&
+      Boolean(customVariables);
+
+    for (const property of Object.keys(accentCssVariableMap('#32BFA2') ?? {})) {
+      root.style.removeProperty(property);
+    }
+
+    if (hasCustomAccent && customVariables) {
+      root.dataset.accent = 'custom';
+      for (const [property, value] of Object.entries(customVariables)) {
+        root.style.setProperty(property, value);
+      }
+    } else {
+      root.dataset.accent =
+        auth.status === 'signed-in'
+          ? (profile.data?.accent_color ?? defaultAccentName)
+          : defaultAccentName;
+    }
+  }, [
+    auth.status,
+    profile.data?.accent_color,
+    profile.data?.accent_hex,
+    profile.data?.active_accent_preset_id,
+    userId,
+  ]);
 
   return null;
 }

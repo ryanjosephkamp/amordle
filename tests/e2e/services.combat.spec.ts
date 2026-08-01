@@ -25,6 +25,7 @@ const publicPrivateScenarioId = 'V6.1-HOSTED-PUBLIC-PRIVATE-RECOVERY';
 const rankedDailyScenarioId = 'V6.1-HOSTED-RANKED-PRACTICE-DAILY';
 const publicCommunityScenarioId = 'V6.2-HOSTED-PUBLIC-COMMUNITY';
 const definitionScenarioId = 'V6.2-HOSTED-DEFINITION-SURFACES';
+const accentPresetScenarioId = 'V6.3-HOSTED-ACCENT-PRESETS';
 
 interface Account {
   id: string;
@@ -44,6 +45,7 @@ const rankedDailyGameIds: string[] = [];
 const rankedDailyRequestIds: string[] = [];
 const privateRequestIds: string[] = [];
 const rematchRequestIds: string[] = [];
+const accentPresetIds: string[] = [];
 const contexts: BrowserContext[] = [];
 let cleanupComplete = false;
 
@@ -380,6 +382,14 @@ async function cleanup() {
           .in('host_user_id', userIds);
         if (error) throw error;
       }
+
+      if (accentPresetIds.length) {
+        const { error } = await admin
+          .from('public_profile_accent_presets')
+          .delete()
+          .in('preset_id', accentPresetIds);
+        if (error) throw error;
+      }
       const rpcCleanupGameIds = gameIds.filter(
         (id) => !directCascadeGameIds.includes(id) && !rankedDailyGameIds.includes(id),
       );
@@ -444,6 +454,16 @@ async function cleanup() {
         if (error) throw error;
         residue[name] = count ?? -1;
       }
+      if (accentPresetIds.length) {
+        const { count: accentPresetResidue, error: accentPresetResidueError } = await admin
+          .from('public_profile_accent_presets')
+          .select('preset_id', { count: 'exact', head: true })
+          .in('preset_id', accentPresetIds);
+        if (accentPresetResidueError) throw accentPresetResidueError;
+        residue.accentPresets = accentPresetResidue ?? -1;
+      } else {
+        residue.accentPresets = 0;
+      }
       for (const [table, column, ids] of exactDeletes) {
         const { count, error } = await admin
           .from(table)
@@ -489,6 +509,7 @@ async function cleanup() {
           rankedDailyRequests: rankedDailyRequestIds.length,
           privateRequests: privateRequestIds.length,
           rematchRequests: rematchRequestIds.length,
+          accentPresets: accentPresetIds.length,
         },
         residue,
         authResidue: 0,
@@ -545,6 +566,7 @@ test.describe.serial('protected Preview services', () => {
     await event('hosted_scenario_started', { scenarioId: publicPrivateScenarioId });
     await event('hosted_scenario_started', { scenarioId: publicCommunityScenarioId });
     await event('hosted_scenario_started', { scenarioId: definitionScenarioId });
+    await event('hosted_scenario_started', { scenarioId: accentPresetScenarioId });
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
@@ -749,6 +771,127 @@ test.describe.serial('protected Preview services', () => {
       flair_key: 'combat',
       visibility: 'public',
     });
+
+    await firstPage.getByRole('button', { name: 'CREATE CUSTOM ACCENT' }).click();
+    const createAccentDialog = firstPage.getByRole('dialog', {
+      name: 'Create custom accent',
+    });
+    await createAccentDialog.getByLabel('Hex').fill('#121826');
+    await createAccentDialog.getByLabel(/Name/).fill('E2E Midnight');
+    await createAccentDialog.getByRole('button', { name: 'SAVE AND USE' }).click();
+    await expect(createAccentDialog).toBeHidden();
+    await expect(firstPage.locator('html')).toHaveAttribute('data-accent', 'custom');
+    const { data: savedAccentPreset, error: savedAccentPresetError } = await admin
+      .from('public_profile_accent_presets')
+      .select('preset_id,name,accent_hex,user_id')
+      .eq('user_id', playerOne!.id)
+      .eq('name', 'E2E Midnight')
+      .single();
+    if (savedAccentPresetError) throw savedAccentPresetError;
+    accentPresetIds.push(savedAccentPreset.preset_id);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'public_profile_accent_preset',
+      id: savedAccentPreset.preset_id,
+      owner: runId,
+      userId: playerOne!.id,
+      disposable: true,
+    });
+    expect(savedAccentPreset).toMatchObject({
+      name: 'E2E Midnight',
+      accent_hex: '#121826',
+      user_id: playerOne!.id,
+    });
+    const anonymousProfileClient = createClient<Database>(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { data: publicAccentProjection, error: publicAccentProjectionError } =
+      await anonymousProfileClient.rpc('get_public_player_profile_v2', {
+        p_public_profile_id: savedProfile.public_profile_id,
+      });
+    if (publicAccentProjectionError) throw publicAccentProjectionError;
+    expect(publicAccentProjection[0]?.accent_hex).toBe('#121826');
+    expect(JSON.stringify(publicAccentProjection)).not.toMatch(/preset|user_id|email/i);
+
+    const isolatedAccentClient = createClient<Database>(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error: isolatedAccentSignInError } = await isolatedAccentClient.auth.signInWithPassword(
+      {
+        email: playerTwo!.email,
+        password: playerTwo!.password,
+      },
+    );
+    if (isolatedAccentSignInError) throw isolatedAccentSignInError;
+    const { data: isolatedAccentList, error: isolatedAccentListError } =
+      await isolatedAccentClient.rpc('list_my_accent_presets_v2');
+    if (isolatedAccentListError) throw isolatedAccentListError;
+    expect(isolatedAccentList).toHaveLength(0);
+    const { data: isolatedDelete, error: isolatedDeleteError } = await isolatedAccentClient.rpc(
+      'delete_my_accent_preset_v2',
+      { p_preset_id: savedAccentPreset.preset_id },
+    );
+    if (isolatedDeleteError) throw isolatedDeleteError;
+    expect(isolatedDelete[0]?.deleted).toBe(false);
+
+    const cappedAccentClient = createClient<Database>(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error: cappedAccentSignInError } = await cappedAccentClient.auth.signInWithPassword({
+      email: spectator!.email,
+      password: spectator!.password,
+    });
+    if (cappedAccentSignInError) throw cappedAccentSignInError;
+    const capResults = await Promise.all(
+      Array.from({ length: 25 }, async (_, index) => {
+        const result = await cappedAccentClient.rpc('upsert_my_accent_preset_v2', {
+          p_preset_id: null as unknown as string,
+          p_name: `Cap ${String(index + 1).padStart(2, '0')}`,
+          p_accent_hex: '#5848D8',
+          p_select: false,
+        });
+        const created = result.data?.[0];
+        if (created && !accentPresetIds.includes(created.preset_id)) {
+          accentPresetIds.push(created.preset_id);
+          await appendJson(resourcesPath, {
+            at: new Date().toISOString(),
+            kind: 'public_profile_accent_preset',
+            id: created.preset_id,
+            owner: runId,
+            userId: spectator!.id,
+            disposable: true,
+            fixture: 'concurrent-cap-proof',
+          });
+        }
+        return result;
+      }),
+    );
+    expect(capResults.filter((result) => result.data?.length === 1)).toHaveLength(24);
+    const capErrors = capResults.filter((result) => result.error);
+    expect(capErrors).toHaveLength(1);
+    expect(capErrors[0]?.error?.message).toMatch(/at most 24 accent presets/i);
+    await event('custom_accent_authority_verified', {
+      scenarioId: accentPresetScenarioId,
+      ownerIsolation: true,
+      concurrentSuccesses: 24,
+      capRejections: 1,
+    });
+
+    const profileSyncContext = await browser.newContext(contextOptions);
+    await profileSyncContext.addInitScript((correlationId) => {
+      (
+        window as typeof window & {
+          __AMORDLE_E2E_RUN_ID__?: string;
+        }
+      ).__AMORDLE_E2E_RUN_ID__ = correlationId;
+    }, runId);
+    contexts.push(profileSyncContext);
+    const profileSyncPage = await profileSyncContext.newPage();
+    await signIn(profileSyncPage, playerOne!);
+    await profileSyncPage.goto(`${baseURL}/profile`);
+    await expect(profileSyncPage.getByRole('radio', { name: /E2E Midnight/i })).toBeChecked();
+    await expect(profileSyncPage.locator('html')).toHaveAttribute('data-accent', 'custom');
+
     await spectatorPage.goto(`${baseURL}/players/${savedProfile.public_profile_id}`);
     await expect(spectatorPage.locator('.public-profile')).toContainText('E2E Operator');
     await expect(spectatorPage.locator('.public-profile')).toContainText(
@@ -762,11 +905,58 @@ test.describe.serial('protected Preview services', () => {
       'style',
       /border-color:/i,
     );
+    await expect(spectatorPage.locator('.public-profile')).toContainText('#121826 custom accent');
+    await firstPage.goto(`${baseURL}/play/solo/practice/og?length=5`);
+    const unknownKey = firstPage.getByRole('button', { name: 'A, unknown' });
+    await expect(unknownKey).toBeVisible();
+    const customKeyColors = await unknownKey.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return { background: style.backgroundColor, foreground: style.color };
+    });
+    expect(customKeyColors.background).not.toBe(customKeyColors.foreground);
+    await firstPage.screenshot({
+      path: path.join(evidenceDir, 'custom-accent-gameplay-desktop-dark.png'),
+      fullPage: true,
+    });
+    await event('custom_accent_cross_device_and_gameplay_verified', {
+      scenarioId: accentPresetScenarioId,
+      presetId: savedAccentPreset.preset_id,
+      accentHex: savedAccentPreset.accent_hex,
+      publicProjectionSanitized: true,
+      crossDevice: true,
+    });
+
+    await firstPage.goto(`${baseURL}/profile`);
+    await firstPage.getByRole('button', { name: 'EDIT' }).click();
+    const editAccentDialog = firstPage.getByRole('dialog', { name: 'Edit custom accent' });
+    await editAccentDialog.getByRole('button', { name: 'DELETE PRESET' }).click();
+    await editAccentDialog.getByRole('button', { name: 'CONFIRM DELETE' }).click();
+    await expect(editAccentDialog).toBeHidden();
+    await expect(firstPage.getByRole('radio', { name: 'Aurora' })).toBeChecked();
+    await expect(firstPage.locator('html')).toHaveAttribute('data-accent', 'aurora');
+    await profileSyncPage.reload();
+    await expect(profileSyncPage.getByRole('radio', { name: 'Aurora' })).toBeChecked();
+    await expect(profileSyncPage.getByText('E2E Midnight', { exact: true })).toHaveCount(0);
+    const { data: deletedAccentPreset, error: deletedAccentPresetError } = await admin
+      .from('public_profile_accent_presets')
+      .select('preset_id')
+      .eq('preset_id', savedAccentPreset.preset_id)
+      .maybeSingle();
+    if (deletedAccentPresetError) throw deletedAccentPresetError;
+    expect(deletedAccentPreset).toBeNull();
+    await event('custom_accent_delete_fallback_verified', {
+      scenarioId: accentPresetScenarioId,
+      presetId: savedAccentPreset.preset_id,
+      fallback: 'aurora',
+      crossDevice: true,
+    });
+
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'account-profile-desktop-light.png'),
       fullPage: true,
     });
     await secondPage.goto(`${baseURL}/profile`);
+    await expect(secondPage.getByText('E2E Midnight', { exact: true })).toHaveCount(0);
     await secondPage.getByLabel('Player name').fill('E2E Player Two');
     await secondPage.getByLabel('Flair').selectOption('daily');
     await secondPage.getByText('Cyan', { exact: true }).click();

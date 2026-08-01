@@ -55,6 +55,7 @@ describe('public community contract', () => {
       public_profile_id: 'a6b7e763-66d1-4cfb-a899-4f28061f00e4',
       display_name: 'Rival',
       accent_color: 'aurora',
+      accent_hex: null,
       flair_key: 'combat',
       profile_updated_at: '2026-08-01T03:00:00.000Z',
       bucket: 'multiplayer:go',
@@ -70,6 +71,9 @@ describe('public community contract', () => {
     expect(publicRatingBucketSchema.parse(row.bucket)).toBe('multiplayer:go');
     expect(
       publicDirectoryEntrySchema.safeParse({ ...row, user_id: 'private-auth-id' }).success,
+    ).toBe(false);
+    expect(
+      publicDirectoryEntrySchema.safeParse({ ...row, accent_preset_name: 'private-name' }).success,
     ).toBe(false);
   });
 

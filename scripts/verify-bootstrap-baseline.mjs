@@ -19,13 +19,12 @@ const authorizedAdditiveMigrations = new Map([
     '20260801051509_amordle_public_community_stats_repair.sql',
     '7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22',
   ],
-]);
-const reviewedPendingMigrations = new Map([
   [
     '20260801193000_amordle_accent_presets_v2.sql',
     '26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84',
   ],
 ]);
+const reviewedPendingMigrations = new Map([]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 

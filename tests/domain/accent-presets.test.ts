@@ -5,6 +5,7 @@ const migration = readFileSync(
   'supabase/migrations/20260801193000_amordle_accent_presets_v2.sql',
   'utf8',
 );
+const shellCss = readFileSync('src/app/tui-shell.css', 'utf8');
 
 const functionBoundary = (name: string, nextName: string) =>
   migration.slice(
@@ -110,5 +111,15 @@ describe('v6.3 custom accent authority', () => {
     expect(publicProjections).not.toContain('preset.name');
     expect(publicProjections).not.toContain('preset.user_id');
     expect(publicProjections).not.toContain('auth.users');
+  });
+
+  it('defines every named palette in both modes and keeps semantic evidence outside custom accents', () => {
+    for (const accent of ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber']) {
+      expect(shellCss.match(new RegExp(`:root\\[data-accent='${accent}'\\]`, 'g'))).toHaveLength(2);
+    }
+    expect(shellCss.match(/:root\[data-accent='custom'\]/g)).toHaveLength(2);
+    for (const block of shellCss.matchAll(/:root\[data-accent='custom'\]\s*\{([^}]+)\}/g)) {
+      expect(block[1]).not.toMatch(/--(?:correct|present|absent|removed):/);
+    }
   });
 });

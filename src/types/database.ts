@@ -1700,6 +1700,8 @@ export type Database = {
       public_player_profiles: {
         Row: {
           accent_color: string;
+          accent_hex: string | null;
+          active_accent_preset_id: string | null;
           avatar_url: string | null;
           bio: string | null;
           created_at: string;
@@ -1713,6 +1715,8 @@ export type Database = {
         };
         Insert: {
           accent_color?: string;
+          accent_hex?: string | null;
+          active_accent_preset_id?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
           created_at?: string;
@@ -1726,6 +1730,8 @@ export type Database = {
         };
         Update: {
           accent_color?: string;
+          accent_hex?: string | null;
+          active_accent_preset_id?: string | null;
           avatar_url?: string | null;
           bio?: string | null;
           created_at?: string;
@@ -1736,6 +1742,41 @@ export type Database = {
           updated_at?: string;
           user_id?: string;
           visibility?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: 'public_player_profiles_active_accent_preset_fkey';
+            columns: ['active_accent_preset_id'];
+            isOneToOne: false;
+            referencedRelation: 'public_profile_accent_presets';
+            referencedColumns: ['preset_id'];
+          },
+        ];
+      };
+      public_profile_accent_presets: {
+        Row: {
+          accent_hex: string;
+          created_at: string;
+          name: string;
+          preset_id: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          accent_hex: string;
+          created_at?: string;
+          name: string;
+          preset_id?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          accent_hex?: string;
+          created_at?: string;
+          name?: string;
+          preset_id?: string;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -2405,6 +2446,14 @@ export type Database = {
           word_length: number;
         }[];
       };
+      delete_my_accent_preset_v2: {
+        Args: { p_preset_id: string };
+        Returns: {
+          active_accent_color: string;
+          active_accent_hex: string;
+          deleted: boolean;
+        }[];
+      };
       finalize_amordle_ranked_daily_v3: {
         Args: { p_action_id: string; p_game_id: string; p_request_id: string };
         Returns: Json;
@@ -2644,6 +2693,23 @@ export type Database = {
           visibility: string;
         }[];
       };
+      get_my_public_player_profile_v2: {
+        Args: never;
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
+          active_accent_preset_id: string;
+          avatar_url: string;
+          bio: string;
+          created_at: string;
+          display_name: string;
+          flair_key: string;
+          moderation_status: string;
+          public_profile_id: string;
+          updated_at: string;
+          visibility: string;
+        }[];
+      };
       get_player_economy_state: {
         Args: never;
         Returns: {
@@ -2804,6 +2870,20 @@ export type Database = {
         Args: { p_public_profile_id: string };
         Returns: Json;
       };
+      get_public_player_profile_v2: {
+        Args: { p_public_profile_id: string };
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
+          avatar_url: string;
+          bio: string;
+          created_at: string;
+          display_name: string;
+          flair_key: string;
+          public_profile_id: string;
+          updated_at: string;
+        }[];
+      };
       get_public_player_profiles: {
         Args: { p_public_profile_ids: string[] };
         Returns: {
@@ -2817,10 +2897,49 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      get_public_player_profiles_v2: {
+        Args: { p_public_profile_ids: string[] };
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
+          avatar_url: string;
+          bio: string;
+          created_at: string;
+          display_name: string;
+          flair_key: string;
+          public_profile_id: string;
+          updated_at: string;
+        }[];
+      };
       get_public_ranked_leaderboard: {
         Args: { p_bucket?: string; p_limit?: number; p_offset?: number };
         Returns: {
           accent_color: string;
+          avatar_url: string;
+          bucket: string;
+          display_name: string;
+          draws: number;
+          flair_key: string;
+          games_played: number;
+          latest_rating_delta: number;
+          latest_rating_movement_at: string;
+          leaderboard_key: string;
+          leaderboard_updated_at: string;
+          losses: number;
+          peak_rating: number;
+          profile_updated_at: string;
+          provisional: boolean;
+          public_profile_id: string;
+          rank: number;
+          rating: number;
+          wins: number;
+        }[];
+      };
+      get_public_ranked_leaderboard_v2: {
+        Args: { p_bucket?: string; p_limit?: number; p_offset?: number };
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
           avatar_url: string;
           bucket: string;
           display_name: string;
@@ -2928,6 +3047,17 @@ export type Database = {
         Args: { p_limit?: number; p_mode?: string };
         Returns: Json[];
       };
+      list_my_accent_presets_v2: {
+        Args: never;
+        Returns: {
+          accent_hex: string;
+          created_at: string;
+          is_active: boolean;
+          name: string;
+          preset_id: string;
+          updated_at: string;
+        }[];
+      };
       list_public_player_directory_v1: {
         Args: {
           p_bucket?: string;
@@ -2940,6 +3070,34 @@ export type Database = {
         };
         Returns: {
           accent_color: string;
+          bucket: string;
+          display_name: string;
+          draws: number;
+          flair_key: string;
+          games_played: number;
+          losses: number;
+          profile_updated_at: string;
+          provisional: boolean;
+          public_profile_id: string;
+          rating: number;
+          rating_updated_at: string;
+          total_count: number;
+          wins: number;
+        }[];
+      };
+      list_public_player_directory_v2: {
+        Args: {
+          p_bucket?: string;
+          p_limit?: number;
+          p_max_rating?: number;
+          p_min_rating?: number;
+          p_offset?: number;
+          p_search?: string;
+          p_sort?: string;
+        };
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
           bucket: string;
           display_name: string;
           draws: number;
@@ -3180,6 +3338,14 @@ export type Database = {
           isSetofReturn: false;
         };
       };
+      phase63_validate_accent_hex: {
+        Args: { p_accent_hex: string };
+        Returns: string;
+      };
+      phase63_validate_accent_preset_name: {
+        Args: { p_accent_hex: string; p_name: string };
+        Returns: string;
+      };
       probe_amordle_combat_e2e_residue_v2: {
         Args: {
           p_game_ids: string[];
@@ -3341,6 +3507,22 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      upsert_my_accent_preset_v2: {
+        Args: {
+          p_accent_hex: string;
+          p_name: string;
+          p_preset_id: string;
+          p_select: boolean;
+        };
+        Returns: {
+          accent_hex: string;
+          created_at: string;
+          is_active: boolean;
+          name: string;
+          preset_id: string;
+          updated_at: string;
+        }[];
+      };
       upsert_my_public_player_profile: {
         Args: {
           p_accent_color?: string;
@@ -3352,6 +3534,31 @@ export type Database = {
         };
         Returns: {
           accent_color: string;
+          avatar_url: string;
+          bio: string;
+          created_at: string;
+          display_name: string;
+          flair_key: string;
+          moderation_status: string;
+          public_profile_id: string;
+          updated_at: string;
+          visibility: string;
+        }[];
+      };
+      upsert_my_public_player_profile_v2: {
+        Args: {
+          p_accent_color?: string;
+          p_active_accent_preset_id?: string;
+          p_avatar_url?: string;
+          p_bio?: string;
+          p_display_name?: string;
+          p_flair_key?: string;
+          p_visibility?: string;
+        };
+        Returns: {
+          accent_color: string;
+          accent_hex: string;
+          active_accent_preset_id: string;
           avatar_url: string;
           bio: string;
           created_at: string;

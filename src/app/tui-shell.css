@@ -117,6 +117,19 @@
   --key-unknown-ink: oklch(0.2 0.025 75);
 }
 
+:root[data-accent='custom'] {
+  --accent: var(--custom-accent);
+  --accent-text: var(--custom-accent-text-light);
+  --accent-ink: var(--custom-accent-ink);
+  --accent-soft: var(--custom-accent-soft-light);
+  --focus: var(--custom-focus-light);
+  --key-unknown-background: var(--custom-key-background-light);
+  --key-unknown-border: var(--custom-key-border-light);
+  --key-unknown-ink: var(--custom-key-ink-light);
+  --attention-background: var(--custom-accent);
+  --attention-ink: var(--custom-accent-ink);
+}
+
 @media (prefers-color-scheme: dark) {
   :root {
     --background: oklch(0.12 0.012 225);
@@ -214,6 +227,19 @@
     --key-unknown-background: oklch(0.25 0.04 70);
     --key-unknown-border: oklch(0.48 0.08 70);
     --key-unknown-ink: oklch(0.95 0.01 75);
+  }
+
+  :root[data-accent='custom'] {
+    --accent: var(--custom-accent);
+    --accent-text: var(--custom-accent-text-dark);
+    --accent-ink: var(--custom-accent-ink);
+    --accent-soft: var(--custom-accent-soft-dark);
+    --focus: var(--custom-focus-dark);
+    --key-unknown-background: var(--custom-key-background-dark);
+    --key-unknown-border: var(--custom-key-border-dark);
+    --key-unknown-ink: var(--custom-key-ink-dark);
+    --attention-background: var(--custom-accent);
+    --attention-ink: var(--custom-accent-ink);
   }
 }
 
@@ -2383,6 +2409,253 @@ html[data-game-presentation='review'] .game-route {
   outline-offset: -3px;
 }
 
+.custom-accent-heading {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.custom-accent-options {
+  display: grid;
+  grid-column: 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block-start: var(--terminal-rule);
+  border-inline-start: var(--terminal-rule);
+}
+
+.custom-accent-option {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border-inline-end: var(--terminal-rule);
+  border-block-end: var(--terminal-rule);
+}
+
+.custom-accent-option > label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 0.45rem;
+  padding: 0.45rem 0.55rem;
+  cursor: pointer;
+}
+
+.custom-accent-option input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.custom-accent-option label > span:last-child {
+  display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.custom-accent-option small {
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+
+.custom-accent-option:has(input:checked) {
+  background: var(--terminal-selected);
+  color: var(--terminal-selected-ink);
+}
+
+.custom-accent-option:has(input:focus-visible) {
+  outline: 2px solid var(--focus);
+  outline-offset: -3px;
+}
+
+.custom-accent-option .text-action {
+  min-width: 3.5rem;
+  border-block: 0;
+  border-inline-end: 0;
+  padding-inline: 0.55rem;
+}
+
+.custom-accent-create,
+.accent-fieldset > .field-error {
+  grid-column: 2;
+}
+
+.custom-accent-create {
+  width: 100%;
+}
+
+.accent-preset-dialog {
+  width: min(42rem, calc(100vw - 1.5rem));
+  max-height: calc(100dvh - 2rem);
+  margin: auto;
+  overflow: auto;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  padding: 0;
+  color: var(--ink);
+  box-shadow: 0 1rem 3rem oklch(0.04 0.015 230 / 0.48);
+}
+
+.accent-preset-dialog::backdrop {
+  background: oklch(0.04 0.01 220 / 0.68);
+}
+
+.accent-preset-form {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.85rem;
+}
+
+.accent-preset-form .section-heading {
+  margin: 0;
+}
+
+.dialog-close {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+  font-size: 1.1rem;
+}
+
+.accent-preset-fields {
+  display: grid;
+  grid-template-columns: 7rem 9rem minmax(0, 1fr);
+  gap: 0.65rem;
+}
+
+.accent-preset-fields label {
+  display: grid;
+  align-content: start;
+  gap: 0.35rem;
+  color: var(--muted);
+  font-size: 0.68rem;
+}
+
+.accent-color-picker input[type='color'] {
+  width: 100%;
+  min-height: 2.75rem;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--field-surface);
+  padding: 0.2rem;
+  cursor: pointer;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-weight: 400;
+}
+
+.accent-preset-preview {
+  display: grid;
+  gap: 0.65rem;
+  border: var(--terminal-rule);
+  background: var(--surface);
+  padding: 0.75rem;
+}
+
+.accent-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  color: var(--custom-accent-text-light);
+}
+
+.accent-preset-preview .attention-badge {
+  background: var(--custom-accent);
+  color: var(--custom-accent-ink);
+}
+
+.accent-preview-keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(2.6rem, 1fr));
+  gap: 0.3rem;
+}
+
+.accent-preview-key {
+  display: grid;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--custom-key-border-light);
+  background: var(--custom-key-background-light);
+  color: var(--custom-key-ink-light);
+  font-weight: 700;
+}
+
+.accent-preview-key--focus {
+  box-shadow: inset 0 0 0 2px var(--custom-focus-light);
+}
+
+.accent-preview-key--correct {
+  border-color: var(--correct);
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+  color: var(--ink);
+}
+
+.accent-preview-key--present {
+  border-color: var(--present);
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+  color: var(--ink);
+}
+
+.accent-preview-key--absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
+}
+
+.accent-preview-key--removed {
+  border-color: var(--removed);
+  background: color-mix(in oklch, var(--removed) 27%, transparent);
+  color: var(--ink);
+}
+
+.accent-preset-preview small {
+  color: var(--muted);
+  font-size: 0.58rem;
+}
+
+.accent-preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.accent-preset-actions button {
+  flex: 1 1 10rem;
+}
+
+.danger-action {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-preview-row {
+    color: var(--custom-accent-text-dark);
+  }
+
+  .accent-preview-key {
+    border-color: var(--custom-key-border-dark);
+    background: var(--custom-key-background-dark);
+    color: var(--custom-key-ink-dark);
+  }
+
+  .accent-preview-key--focus {
+    box-shadow: inset 0 0 0 2px var(--custom-focus-dark);
+  }
+}
+
 .stats-console {
   display: grid;
   gap: 1rem;
@@ -2769,6 +3042,11 @@ html[data-game-presentation='review'] .game-route {
   padding: 0.65rem;
 }
 
+.directory-list article,
+.leaderboard-table tbody tr {
+  box-shadow: inset 3px 0 var(--profile-accent, var(--accent));
+}
+
 .directory-player-name,
 .player-identity-link {
   color: var(--accent-text);
@@ -2967,6 +3245,29 @@ html[data-game-presentation='review'] .game-route {
     border-inline-start: 0;
   }
 
+  .custom-accent-heading {
+    min-height: 2.5rem;
+  }
+
+  .custom-accent-options,
+  .custom-accent-create,
+  .accent-fieldset > .field-error {
+    grid-column: 1;
+  }
+
+  .custom-accent-options {
+    grid-template-columns: minmax(0, 1fr);
+    border-inline-start: 0;
+  }
+
+  .accent-preset-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .accent-preview-keys {
+    grid-template-columns: repeat(3, minmax(2.6rem, 1fr));
+  }
+
   .stats-metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -3083,6 +3384,15 @@ html[data-game-presentation='review'] .game-route {
   .accent-swatch {
     border-color: CanvasText;
     background: CanvasText;
+  }
+
+  .accent-preset-dialog,
+  .accent-preset-preview,
+  .accent-preview-key {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
   }
 
   .attention-badge {

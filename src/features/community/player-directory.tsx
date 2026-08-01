@@ -4,7 +4,12 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { getPublicPlayerDirectory } from '@/adapters/supabase/public';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
-import { publicRatingBucketLabels, publicRatingBuckets, ratingBucketLabel } from '@/domain/profile';
+import {
+  profileAccentCss,
+  publicRatingBucketLabels,
+  publicRatingBuckets,
+  ratingBucketLabel,
+} from '@/domain/profile';
 import type { PublicRatingBucket } from '@/domain/profile';
 
 interface DirectoryFilters {
@@ -134,7 +139,14 @@ export function PlayerDirectory() {
       ) : directory.data?.length ? (
         <div className="directory-list" aria-busy={directory.isFetching}>
           {directory.data.map((player) => (
-            <article key={player.public_profile_id}>
+            <article
+              key={player.public_profile_id}
+              style={
+                {
+                  '--profile-accent': profileAccentCss(player.accent_color, player.accent_hex),
+                } as React.CSSProperties
+              }
+            >
               <div>
                 <PlayerIdentityLink
                   className="directory-player-name"

@@ -9,3 +9,7 @@ export function economyQueryKey(namespace: string) {
 export function myProfileQueryKey(userId: string) {
   return ['profile', 'mine', userId] as const;
 }
+
+export function myAccentPresetsQueryKey(userId: string) {
+  return ['profile', 'accent-presets', userId] as const;
+}

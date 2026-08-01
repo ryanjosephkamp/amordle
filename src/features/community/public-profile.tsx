@@ -12,7 +12,12 @@ import {
 import { myProfileQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 import { SkeletonRows } from '@/components/route-states';
-import { accentCssColor, flairLabels, flairNameSchema, ratingBucketLabel } from '@/domain/profile';
+import {
+  flairLabels,
+  flairNameSchema,
+  profileAccentCss,
+  ratingBucketLabel,
+} from '@/domain/profile';
 import { PrivateChallengeForm } from '@/features/combat/private-challenge-form';
 import { ProfileAvatar } from './profile-avatar';
 
@@ -61,7 +66,9 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
     <div
       className="public-profile-console"
       style={
-        { '--profile-accent': accentCssColor(profile.data.accent_color) } as React.CSSProperties
+        {
+          '--profile-accent': profileAccentCss(profile.data.accent_color, profile.data.accent_hex),
+        } as React.CSSProperties
       }
     >
       <section className="public-profile" aria-labelledby="public-player-name">
@@ -69,6 +76,7 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
           avatarUrl={profile.data.avatar_url}
           displayName={displayName}
           accentColor={profile.data.accent_color}
+          accentHex={profile.data.accent_hex}
         />
         <div className="public-profile-copy">
           <span className="profile-kicker">PUBLIC PLAYER</span>
@@ -76,7 +84,11 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
           <p className="prose">{profile.data.bio || 'No public bio.'}</p>
           <div className="profile-tags">
             <span>{flair.success ? flairLabels[flair.data] : 'No flair'}</span>
-            <span>{profile.data.accent_color ?? 'cyan'} accent</span>
+            <span>
+              {profile.data.accent_hex
+                ? `${profile.data.accent_hex} custom accent`
+                : `${profile.data.accent_color ?? 'aurora'} accent`}
+            </span>
           </div>
         </div>
         {isMine && (

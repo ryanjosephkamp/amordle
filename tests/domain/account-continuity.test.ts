@@ -8,6 +8,7 @@ import {
 import { buildPlayerStats, nextLevelProgress } from '@/domain/account-stats';
 import {
   accentCssColor,
+  accentCssVariableMap,
   accentHexSchema,
   accentNameSchema,
   contrastRatio,
@@ -242,7 +243,23 @@ describe('account continuity', () => {
     const resolved = resolveAccentColor(input);
     expect(resolved).toMatchObject({ hex: normalized, foreground });
     expect(resolved?.contrastRatio).toBeGreaterThanOrEqual(4.5);
+    expect(resolved?.light.keyContrastRatio).toBeGreaterThanOrEqual(4.5);
+    expect(resolved?.dark.keyContrastRatio).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(normalized, foreground)).toBeGreaterThanOrEqual(4.5);
+    const variables = accentCssVariableMap(input);
+    expect(variables?.['--custom-accent']).toBe(normalized);
+    expect(
+      contrastRatio(
+        variables?.['--custom-key-background-light'] ?? '',
+        variables?.['--custom-key-ink-light'] ?? '',
+      ),
+    ).toBeGreaterThanOrEqual(4.5);
+    expect(
+      contrastRatio(
+        variables?.['--custom-key-background-dark'] ?? '',
+        variables?.['--custom-key-ink-dark'] ?? '',
+      ),
+    ).toBeGreaterThanOrEqual(4.5);
   });
 
   it('rejects malformed custom accents without browser-only parsing', () => {

@@ -1,14 +1,20 @@
 'use client';
 
 import { z } from 'zod';
-import { accentNameSchema, flairNameSchema, publicRatingBucketSchema } from '@/domain/profile';
-import type { AccentName, FlairName, PublicRatingBucket } from '@/domain/profile';
+import {
+  accentHexSchema,
+  accentNameSchema,
+  flairNameSchema,
+  publicRatingBucketSchema,
+} from '@/domain/profile';
+import type { AccentSelection, FlairName, PublicRatingBucket } from '@/domain/profile';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
 export const publicProfileSchema = z
   .object({
     accent_color: accentNameSchema.nullable(),
+    accent_hex: accentHexSchema.nullable(),
     avatar_url: z.string().startsWith('https://').max(2048).nullable(),
     bio: z.string().nullable(),
     created_at: z.string(),
@@ -22,6 +28,7 @@ export const publicProfileSchema = z
 export const myPublicProfileSchema = publicProfileSchema
   .extend({
     moderation_status: z.string(),
+    active_accent_preset_id: z.string().uuid().nullable(),
     visibility: z.string(),
   })
   .strict();
@@ -29,6 +36,7 @@ export const myPublicProfileSchema = publicProfileSchema
 export const leaderboardEntrySchema = z
   .object({
     accent_color: accentNameSchema.nullable(),
+    accent_hex: accentHexSchema.nullable(),
     avatar_url: z.string().nullable(),
     bucket: z.string(),
     display_name: z.string().nullable(),
@@ -53,6 +61,7 @@ export const leaderboardEntrySchema = z
 export const publicDirectoryEntrySchema = z
   .object({
     accent_color: accentNameSchema,
+    accent_hex: accentHexSchema.nullable(),
     bucket: publicRatingBucketSchema.nullable(),
     display_name: z.string().min(1).max(50),
     draws: z.number().int().nonnegative().nullable(),
@@ -114,6 +123,19 @@ export const publicPlayerStatsSchema = z
 export type PublicDirectoryEntry = z.infer<typeof publicDirectoryEntrySchema>;
 export type PublicPlayerStats = z.infer<typeof publicPlayerStatsSchema>;
 
+export const accentPresetSchema = z
+  .object({
+    accent_hex: accentHexSchema,
+    created_at: z.string(),
+    is_active: z.boolean(),
+    name: z.string().min(1).max(32),
+    preset_id: z.string().uuid(),
+    updated_at: z.string(),
+  })
+  .strict();
+
+export type AccentPreset = z.infer<typeof accentPresetSchema>;
+
 export const siteStatsSchema = z
   .object({
     generated_at: z.string(),
@@ -135,7 +157,7 @@ function client() {
 }
 
 export async function getPublicProfile(publicProfileId: string) {
-  const { data, error } = await client().rpc('get_public_player_profile', {
+  const { data, error } = await client().rpc('get_public_player_profile_v2', {
     p_public_profile_id: publicProfileId,
   });
   if (error) throwServiceError(error);
@@ -143,7 +165,7 @@ export async function getPublicProfile(publicProfileId: string) {
 }
 
 export async function getMyPublicProfile() {
-  const { data, error } = await client().rpc('get_my_public_player_profile');
+  const { data, error } = await client().rpc('get_my_public_player_profile_v2');
   if (error) throwServiceError(error);
   return parseServiceResult(myPublicProfileSchema.nullable(), data?.[0] ?? null);
 }
@@ -152,20 +174,61 @@ export async function saveMyPublicProfile(input: {
   displayName: string;
   bio: string;
   visibility: 'public';
-  accentColor: AccentName;
+  accentSelection: AccentSelection;
   avatarUrl?: string;
   flairKey: FlairName;
 }) {
-  const { data, error } = await client().rpc('upsert_my_public_player_profile', {
+  const { data, error } = await client().rpc('upsert_my_public_player_profile_v2', {
     p_display_name: input.displayName,
     p_bio: input.bio,
     p_visibility: input.visibility,
-    p_accent_color: input.accentColor,
+    p_accent_color: input.accentSelection.kind === 'named' ? input.accentSelection.name : 'aurora',
+    p_active_accent_preset_id: (input.accentSelection.kind === 'custom'
+      ? input.accentSelection.presetId
+      : null) as string,
     ...(input.avatarUrl === undefined ? {} : { p_avatar_url: input.avatarUrl }),
     p_flair_key: input.flairKey,
   });
   if (error) throwServiceError(error);
   return parseServiceResult(myPublicProfileSchema, data?.[0]);
+}
+
+export async function getMyAccentPresets() {
+  const { data, error } = await client().rpc('list_my_accent_presets_v2');
+  if (error) throwServiceError(error);
+  return parseServiceResult(z.array(accentPresetSchema).max(24), data ?? []);
+}
+
+export async function upsertMyAccentPreset(input: {
+  presetId: string | null;
+  name: string;
+  accentHex: string;
+  select: boolean;
+}) {
+  const { data, error } = await client().rpc('upsert_my_accent_preset_v2', {
+    p_preset_id: input.presetId as string,
+    p_name: input.name,
+    p_accent_hex: input.accentHex,
+    p_select: input.select,
+  });
+  if (error) throwServiceError(error);
+  return parseServiceResult(accentPresetSchema, data?.[0]);
+}
+
+const deleteAccentPresetResultSchema = z
+  .object({
+    active_accent_color: accentNameSchema,
+    active_accent_hex: accentHexSchema.nullable(),
+    deleted: z.boolean(),
+  })
+  .strict();
+
+export async function deleteMyAccentPreset(presetId: string) {
+  const { data, error } = await client().rpc('delete_my_accent_preset_v2', {
+    p_preset_id: presetId,
+  });
+  if (error) throwServiceError(error);
+  return parseServiceResult(deleteAccentPresetResultSchema, data?.[0]);
 }
 
 export async function getPublicPlayerStats(publicProfileId: string) {
@@ -185,7 +248,7 @@ export async function getPublicPlayerDirectory(input: {
   offset: number;
   limit?: number;
 }) {
-  const { data, error } = await client().rpc('list_public_player_directory_v1', {
+  const { data, error } = await client().rpc('list_public_player_directory_v2', {
     p_search: input.search,
     p_bucket: input.bucket,
     ...(input.minRating === null ? {} : { p_min_rating: input.minRating }),
@@ -199,7 +262,7 @@ export async function getPublicPlayerDirectory(input: {
 }
 
 export async function getLeaderboard(bucket: string) {
-  const { data, error } = await client().rpc('get_public_ranked_leaderboard', {
+  const { data, error } = await client().rpc('get_public_ranked_leaderboard_v2', {
     p_bucket: bucket,
     p_limit: 50,
     p_offset: 0,

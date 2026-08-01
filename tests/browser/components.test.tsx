@@ -22,6 +22,7 @@ import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/w
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
+import { AccentPresetDialog } from '@/features/account/accent-preset-dialog';
 
 describe('browser components', () => {
   it('rejects corrupt and structurally invalid cached word assets', async () => {
@@ -437,5 +438,56 @@ describe('browser components', () => {
       .element(page.getByRole('link', { name: 'Search web' }))
       .toHaveAttribute('href', 'https://www.google.com/search?q=define+slate');
     expect(definitionLookup).toHaveBeenCalledWith('slate');
+  });
+
+  it('creates a normalized custom accent through the keyboard-safe native dialog', async () => {
+    const onSave = vi.fn(async () => true);
+    const onClose = vi.fn();
+    render(
+      <AccentPresetDialog
+        preset={null}
+        busy={false}
+        error=""
+        onClose={onClose}
+        onSave={onSave}
+        onDelete={vi.fn(async () => true)}
+      />,
+    );
+    await expect.element(page.getByRole('heading', { name: 'Create custom accent' })).toBeVisible();
+    await page.getByLabelText('Hex').fill('#ffffff');
+    await page.getByLabelText(/Name/).fill('Paper');
+    await page.getByRole('button', { name: 'SAVE AND USE' }).click();
+    expect(onSave).toHaveBeenCalledWith({
+      presetId: null,
+      name: 'Paper',
+      accentHex: '#FFFFFF',
+      select: true,
+    });
+    expect(onClose).toHaveBeenCalledOnce();
+  });
+
+  it('requires an explicit second action before deleting a custom accent', async () => {
+    const onDelete = vi.fn(async () => true);
+    render(
+      <AccentPresetDialog
+        preset={{
+          preset_id: '11111111-1111-4111-8111-111111111111',
+          name: 'Aurora north',
+          accent_hex: '#32BFA2',
+          is_active: true,
+          created_at: '2026-08-01T12:00:00.000Z',
+          updated_at: '2026-08-01T12:00:00.000Z',
+        }}
+        busy={false}
+        error=""
+        onClose={vi.fn()}
+        onSave={vi.fn(async () => true)}
+        onDelete={onDelete}
+      />,
+    );
+    await page.getByRole('button', { name: 'DELETE PRESET' }).click();
+    expect(onDelete).not.toHaveBeenCalled();
+    await page.getByRole('button', { name: 'CONFIRM DELETE' }).click();
+    expect(onDelete).toHaveBeenCalledOnce();
   });
 });

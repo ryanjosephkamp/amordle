@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { getLeaderboard, getSiteStats } from '@/adapters/supabase/public';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { SkeletonRows } from '@/components/route-states';
+import { profileAccentCss } from '@/domain/profile';
 
 const buckets = [
   { id: 'multiplayer:og', label: 'OG' },
@@ -46,7 +47,7 @@ export function LeaderboardTable() {
         </section>
       ) : leaderboard.data.length ? (
         <div className="table-scroll">
-          <table className="responsive-table">
+          <table className="responsive-table leaderboard-table">
             <thead>
               <tr>
                 <th>Rank</th>
@@ -58,7 +59,14 @@ export function LeaderboardTable() {
             </thead>
             <tbody>
               {leaderboard.data.map((entry) => (
-                <tr key={entry.leaderboard_key}>
+                <tr
+                  key={entry.leaderboard_key}
+                  style={
+                    {
+                      '--profile-accent': profileAccentCss(entry.accent_color, entry.accent_hex),
+                    } as React.CSSProperties
+                  }
+                >
                   <td data-label="Rank">{entry.rank}</td>
                   <td data-label="Player">
                     <PlayerIdentityLink

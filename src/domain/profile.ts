@@ -21,6 +21,18 @@ export interface ResolvedAccentColor {
   hex: string;
   foreground: '#050708' | '#FFFFFF';
   contrastRatio: number;
+  light: ResolvedAccentMode;
+  dark: ResolvedAccentMode;
+}
+
+export interface ResolvedAccentMode {
+  accentText: string;
+  accentSoft: string;
+  focus: string;
+  keyBackground: string;
+  keyBorder: string;
+  keyInk: '#050708' | '#FFFFFF';
+  keyContrastRatio: number;
 }
 
 export const flairNames = ['none', 'daily', 'combat'] as const;
@@ -63,6 +75,13 @@ export function accentCssColor(value: AccentName | null | undefined): string {
   return accentCssColors[value ?? defaultAccentName];
 }
 
+export function profileAccentCss(
+  value: AccentName | null | undefined,
+  customHex?: string | null,
+): string {
+  return normalizeAccentHex(customHex ?? '') ?? accentCssColor(value);
+}
+
 export function normalizeAccentHex(value: string): string | null {
   const parsed = accentHexSchema.safeParse(value);
   return parsed.success ? parsed.data : null;
@@ -92,18 +111,113 @@ export function contrastRatio(firstHex: string, secondHex: string): number | nul
   return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
 }
 
+function hexChannels(hexValue: string): [number, number, number] | null {
+  const hex = normalizeAccentHex(hexValue);
+  if (!hex) return null;
+  return [
+    Number.parseInt(hex.slice(1, 3), 16),
+    Number.parseInt(hex.slice(3, 5), 16),
+    Number.parseInt(hex.slice(5, 7), 16),
+  ];
+}
+
+function channelsToHex(channels: [number, number, number]): string {
+  return `#${channels
+    .map((channel) =>
+      Math.max(0, Math.min(255, Math.round(channel)))
+        .toString(16)
+        .padStart(2, '0'),
+    )
+    .join('')}`.toUpperCase();
+}
+
+/** Mix `foreground` into `background` by a ratio from 0 to 1. */
+export function mixHex(foreground: string, background: string, ratio: number): string | null {
+  const first = hexChannels(foreground);
+  const second = hexChannels(background);
+  if (!first || !second || !Number.isFinite(ratio)) return null;
+  const weight = Math.max(0, Math.min(1, ratio));
+  return channelsToHex([
+    first[0] * weight + second[0] * (1 - weight),
+    first[1] * weight + second[1] * (1 - weight),
+    first[2] * weight + second[2] * (1 - weight),
+  ]);
+}
+
+function bestForeground(background: string): {
+  color: '#050708' | '#FFFFFF';
+  ratio: number;
+} {
+  const dark = '#050708' as const;
+  const light = '#FFFFFF' as const;
+  const darkContrast = contrastRatio(background, dark) ?? 0;
+  const lightContrast = contrastRatio(background, light) ?? 0;
+  return darkContrast >= lightContrast
+    ? { color: dark, ratio: darkContrast }
+    : { color: light, ratio: lightContrast };
+}
+
+function contrastSafeTint(color: string, background: string, minimum = 4.5): string {
+  if ((contrastRatio(color, background) ?? 0) >= minimum) return color;
+  const target = bestForeground(background).color;
+  for (let step = 1; step <= 20; step += 1) {
+    const candidate = mixHex(target, color, step / 20) ?? target;
+    if ((contrastRatio(candidate, background) ?? 0) >= minimum) return candidate;
+  }
+  return target;
+}
+
+function resolveAccentMode(
+  hex: string,
+  background: string,
+  surface: string,
+  keyMix: number,
+  borderMix: number,
+): ResolvedAccentMode {
+  const keyBackground = mixHex(hex, surface, keyMix) ?? surface;
+  const keyForeground = bestForeground(keyBackground);
+  return {
+    accentText: contrastSafeTint(hex, background),
+    accentSoft: mixHex(hex, surface, 0.14) ?? surface,
+    focus: contrastSafeTint(hex, background, 3),
+    keyBackground,
+    keyBorder: mixHex(hex, bestForeground(surface).color, borderMix) ?? hex,
+    keyInk: keyForeground.color,
+    keyContrastRatio: keyForeground.ratio,
+  };
+}
+
 export function resolveAccentColor(value: string): ResolvedAccentColor | null {
   const hex = normalizeAccentHex(value);
   if (!hex) return null;
-  const dark = '#050708' as const;
-  const light = '#FFFFFF' as const;
-  const darkContrast = contrastRatio(hex, dark) ?? 0;
-  const lightContrast = contrastRatio(hex, light) ?? 0;
-  const foreground = darkContrast >= lightContrast ? dark : light;
+  const foreground = bestForeground(hex);
   return {
     hex,
-    foreground,
-    contrastRatio: Math.max(darkContrast, lightContrast),
+    foreground: foreground.color,
+    contrastRatio: foreground.ratio,
+    light: resolveAccentMode(hex, '#F7F9FA', '#E7EEF0', 0.24, 0.58),
+    dark: resolveAccentMode(hex, '#151A20', '#172127', 0.28, 0.62),
+  };
+}
+
+export function accentCssVariableMap(value: string): Record<string, string> | null {
+  const resolved = resolveAccentColor(value);
+  if (!resolved) return null;
+  return {
+    '--custom-accent': resolved.hex,
+    '--custom-accent-ink': resolved.foreground,
+    '--custom-accent-text-light': resolved.light.accentText,
+    '--custom-accent-soft-light': resolved.light.accentSoft,
+    '--custom-focus-light': resolved.light.focus,
+    '--custom-key-background-light': resolved.light.keyBackground,
+    '--custom-key-border-light': resolved.light.keyBorder,
+    '--custom-key-ink-light': resolved.light.keyInk,
+    '--custom-accent-text-dark': resolved.dark.accentText,
+    '--custom-accent-soft-dark': resolved.dark.accentSoft,
+    '--custom-focus-dark': resolved.dark.focus,
+    '--custom-key-background-dark': resolved.dark.keyBackground,
+    '--custom-key-border-dark': resolved.dark.keyBorder,
+    '--custom-key-ink-dark': resolved.dark.keyInk,
   };
 }
 
