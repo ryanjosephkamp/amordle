@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Amordle v6.2 public community repair decision</title>
+  <style>
+    :root { color-scheme: light dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
+    body { max-width: 52rem; margin: 0 auto; padding: 1.25rem; line-height: 1.55; }
+    h1, h2 { line-height: 1.2; }
+    code { overflow-wrap: anywhere; }
+    .decision { border: 2px solid currentColor; padding: 1rem; }
+    li + li { margin-top: .4rem; }
+  </style>
+</head>
+<body>
+  <h1>Amordle Stage 2 v6.2 public community repair decision</h1>
+  <section class="decision">
+    <h2>Decision requested</h2>
+    <p>Authorize the single additive, forward-only repair migration:</p>
+    <p><code>20260801050000_amordle_public_community_stats_repair.sql</code></p>
+    <p>SHA-256:<br><code>7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22</code></p>
+    <p>The migration is prepared locally and has not been applied. The linked dry run lists only this file.</p>
+  </section>
+
+  <h2>Why the repair is required</h2>
+  <ol>
+    <li>A real disposable public Practice match produced both History rows and updated private Stats, but the anonymous public profile remained at <code>completed 0</code>. The original projection reads ranked settlement tables only and therefore omits current authoritative unranked games.</li>
+    <li>The public directory maps Practice filters to legacy <code>async:og</code>/<code>async:go</code> buckets, while current settlement writes <code>async:og:amordle:v2</code>/<code>async:go:amordle:v2</code>.</li>
+  </ol>
+
+  <h2>Minimum change</h2>
+  <ul>
+    <li>Keep the two existing RPC signatures and strict public DTOs.</li>
+    <li>Read current terminal aggregate counts from private authoritative COMBAT and its accepted-action ledger.</li>
+    <li>Retain legacy settled results only when no authoritative source game exists, preventing duplicates.</li>
+    <li>Map public Practice filters and ratings to current v2 bucket names.</li>
+    <li>Reassert existing grants and private-table revocations.</li>
+  </ul>
+  <p>No table, column, HTTP interface, route, game rule, rating calculation, persistence format, or paid service changes.</p>
+
+  <h2>Verified state</h2>
+  <ul>
+    <li>Linked project: <code>squqdstdvbsvhagfuzgj</code>.</li>
+    <li>47 applied migrations synchronized; one reviewed repair pending.</li>
+    <li>Protected Preview: <a href="https://amordle-p7azfoby6-ryanjosephkamps-projects.vercel.app">amordle-p7azfoby6…</a>, deployment <code>dpl_21jNGxPqKEGBPcu67AiDwPZjH9qe</code>.</li>
+    <li>Exact deployed commit: <code>4a0dc068cebec52d60e80f7ee517fab04a8c1479</code>.</li>
+    <li>Full local acceptance passes: <code>pnpm check</code>, 70 domain tests, 14 browser component tests, 15 fixture E2E journeys, and 9 responsive/visual journeys.</li>
+    <li>Bootstrap 107/107; immutable migrations 45/45; applied additive 2/2; reviewed pending 1/1.</li>
+    <li>Every diagnostic disposable-user run ended with zero residue.</li>
+    <li>Production remains <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>.</li>
+  </ul>
+
+  <h2>After authorization</h2>
+  <p>Apply exactly this repair, regenerate types, verify 48/48 migration history, run the full local and protected hosted stacks, clean every disposable resource, then produce the final paired report and checklist. No merge or Production release is included.</p>
+
+  <h2>Rollback</h2>
+  <p>Use forward Git reverts and exact known-good Preview redeployment. A database correction is forward-only; no down migration.</p>
+</body>
+</html>

@@ -12,6 +12,10 @@ const migration = readFileSync(
   'supabase/migrations/20260801032334_amordle_public_community_v1.sql',
   'utf8',
 );
+const statsRepairMigration = readFileSync(
+  'supabase/migrations/20260801050000_amordle_public_community_stats_repair.sql',
+  'utf8',
+);
 
 describe('public community contract', () => {
   it('accepts only the supported public identity presentation values', () => {
@@ -110,6 +114,45 @@ describe('public community contract', () => {
     expect(statsBoundary).not.toContain('game_history');
     expect(statsBoundary).not.toContain('account_progress');
     expect(statsBoundary).not.toContain('economy');
+  });
+
+  it('repairs public totals and directory ratings from current authoritative data', () => {
+    const directoryBoundary = statsRepairMigration.slice(
+      statsRepairMigration.indexOf(
+        'create or replace function public.list_public_player_directory_v1',
+      ),
+      statsRepairMigration.indexOf(
+        'create or replace function public.get_public_player_profile_stats_v1',
+      ),
+    );
+    expect(directoryBoundary).toContain("when 'multiplayer:og' then 'async:og:amordle:v2'");
+    expect(directoryBoundary).toContain("when 'multiplayer:go' then 'async:go:amordle:v2'");
+    expect(directoryBoundary).not.toContain("when 'multiplayer:og' then 'async:og'");
+
+    const statsBoundary = statsRepairMigration.slice(
+      statsRepairMigration.indexOf(
+        'create or replace function public.get_public_player_profile_stats_v1',
+      ),
+      statsRepairMigration.indexOf('comment on function public.list_public_player_directory_v1'),
+    );
+    for (const fragment of [
+      'brrrdle_private.amordle_combat_authority',
+      'brrrdle_private.amordle_combat_action_ledger',
+      "authority.status = 'completed'",
+      'viewer.player_id is not null',
+      'multiplayer_player_results',
+      "'async:og:amordle:v2'",
+      "'async:go:amordle:v2'",
+    ]) {
+      expect(statsBoundary).toContain(fragment);
+    }
+    expect(statsBoundary).not.toContain('game_history');
+    expect(statsBoundary).not.toContain('authority.answers');
+    expect(statsBoundary).not.toContain('requested_guess');
+    expect(statsBoundary).not.toContain('player_one_user_id as');
+    expect(statsRepairMigration).toContain(
+      'revoke all on all tables in schema brrrdle_private from public, anon, authenticated',
+    );
   });
 
   it('keeps clickable spectator identities inside public unranked Practice only', () => {

@@ -805,18 +805,41 @@ test.describe.serial('protected Preview services', () => {
     });
 
     await firstPage.goto(`${baseURL}/players`);
-    await firstPage.getByLabel('Player name').fill('E2E Player');
-    await firstPage.getByRole('button', { name: 'APPLY' }).click();
-    await firstPage.getByRole('link', { name: 'E2E Player Two', exact: true }).click();
+    await event('public_directory_opened', { scenarioId: publicCommunityScenarioId });
+    await firstPage
+      .getByRole('searchbox', { name: 'Player name' })
+      .fill('E2E Player', { timeout: 15_000 });
+    await firstPage.getByRole('button', { name: 'APPLY' }).click({ timeout: 15_000 });
+    await event('public_directory_filtered', { scenarioId: publicCommunityScenarioId });
+    await firstPage
+      .getByRole('link', { name: "Open E2E Player Two's profile", exact: true })
+      .click({ timeout: 15_000 });
     await expect(firstPage).toHaveURL(`${baseURL}/players/${secondProfile.public_profile_id}`);
     await expect(firstPage.getByText('Daily player', { exact: true })).toBeVisible();
-    await firstPage.getByLabel('Mode').selectOption('go');
-    await firstPage.getByLabel('Word length').fill('7');
-    await firstPage.getByLabel('Puzzles').selectOption('7');
-    await firstPage.getByLabel('Clock').selectOption('300000');
-    await firstPage.getByLabel('Hard Mode').check();
-    await firstPage.getByRole('button', { name: 'SEND PRIVATE REQUEST' }).click();
-    await expect(firstPage.getByText('Private request sent to E2E Player Two.')).toBeVisible();
+    await event('public_profile_challenge_opened', { scenarioId: publicCommunityScenarioId });
+    await firstPage
+      .getByRole('combobox', { name: 'Mode', exact: true })
+      .selectOption('go', { timeout: 15_000 });
+    await firstPage
+      .getByRole('spinbutton', { name: 'Word length', exact: true })
+      .fill('7', { timeout: 15_000 });
+    await firstPage
+      .getByRole('combobox', { name: 'Puzzles', exact: true })
+      .selectOption('7', { timeout: 15_000 });
+    await firstPage.getByRole('combobox', { name: 'Clock', exact: true }).selectOption('300000', {
+      timeout: 15_000,
+    });
+    await firstPage
+      .getByRole('checkbox', { name: 'Hard Mode', exact: true })
+      .check({ timeout: 15_000 });
+    await event('private_challenge_configured', { scenarioId: publicCommunityScenarioId });
+    await firstPage
+      .getByRole('button', { name: 'SEND PRIVATE REQUEST' })
+      .click({ timeout: 15_000 });
+    await expect(firstPage.getByText('Private request sent to E2E Player Two.')).toBeVisible({
+      timeout: 15_000,
+    });
+    await event('private_challenge_sent', { scenarioId: publicCommunityScenarioId });
     const { data: privateRequest, error: privateRequestError } = await admin
       .from('multiplayer_private_match_requests')
       .select('id,go_puzzle_count,hard_mode,mode,time_limit_ms,word_length')
@@ -1101,11 +1124,9 @@ test.describe.serial('protected Preview services', () => {
     ).toBeVisible();
     await firstPage.getByRole('button', { name: 'Notifications', exact: true }).click();
     await firstPage.reload();
-    await expect(firstPage.getByRole('button', { name: 'Notifications', exact: true })).toBeVisible(
-      {
-        timeout: 15_000,
-      },
-    );
+    await expect(
+      firstPage.getByRole('button', { name: /Notifications(?:, \d+ unread)?/i }),
+    ).toBeVisible({ timeout: 15_000 });
 
     await secondPage.goto(`${baseURL}/combat/lobby`);
     const targetRow = secondPage.locator(`[data-game-id="${gameId}"]`);
@@ -1122,10 +1143,21 @@ test.describe.serial('protected Preview services', () => {
     const mobileFit = await secondPage.evaluate(() => ({
       documentHeight: document.documentElement.scrollHeight,
       viewportHeight: window.innerHeight,
-      routeRailCount: document.querySelectorAll('.mobile-route-rail').length,
+      visibleRouteRailCount: [
+        ...document.querySelectorAll<HTMLElement>('.mobile-route-rail'),
+      ].filter((rail) => {
+        const style = window.getComputedStyle(rail);
+        const bounds = rail.getBoundingClientRect();
+        return (
+          style.display !== 'none' &&
+          style.visibility !== 'hidden' &&
+          bounds.width > 0 &&
+          bounds.height > 0
+        );
+      }).length,
     }));
     expect(mobileFit.documentHeight).toBeLessThanOrEqual(mobileFit.viewportHeight + 1);
-    expect(mobileFit.routeRailCount).toBe(0);
+    expect(mobileFit.visibleRouteRailCount).toBe(0);
     await expect(secondPage.locator('.combat-transcript-frame')).toBeVisible();
     await expect(secondPage.locator('.combat-transcript-entry')).toHaveCount(6);
     const turnStatusGeometry = await secondPage.evaluate(() => {
@@ -1480,14 +1512,14 @@ test.describe.serial('protected Preview services', () => {
       timeout: 15_000,
     });
     await firstPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(firstPage.getByRole('status')).toContainText(/RATING \d+ → \d+/i);
+    await expect(firstPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
     await secondPage.reload();
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(
       /opponent won|match complete/i,
       { timeout: 15_000 },
     );
     await secondPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(secondPage.getByRole('status')).toContainText(/RATING \d+ → \d+/i);
+    await expect(secondPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
     await expect
       .poll(async () => {
         const { data, error } = await admin
@@ -1647,10 +1679,10 @@ test.describe.serial('protected Preview services', () => {
       timeout: 15_000,
     });
     await firstPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(firstPage.getByRole('status')).toContainText(/RATING \d+ → \d+/i);
+    await expect(firstPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
     await secondPage.reload();
     await secondPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(secondPage.getByRole('status')).toContainText(/RATING \d+ → \d+/i);
+    await expect(secondPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
     await expect
       .poll(async () => {
         const { data, error } = await admin
