@@ -22,7 +22,7 @@ file, and only this file, as pending.
   `amordle-stage2-v6.2-public-community-golden-2026-08-01` at
   `e4c0857bbe3749a8ffd44afebee300682bc48175`.
 - v6.3 presentation checkpoint:
-  `3573430e3d3fd7d333477694ec21b73fd0c933b2`.
+  `3573430d2e3b6c82e063a2382cd4ddddd7f2e330`.
 - Applied linked history: 48 synchronized migrations through
   `20260801051509_amordle_public_community_stats_repair.sql`.
 - After authorization and successful application, the truthful synchronized
