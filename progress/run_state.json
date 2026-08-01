@@ -122,7 +122,7 @@
     "url": "https://amordle-p7azfoby6-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "4a0dc068cebec52d60e80f7ee517fab04a8c1479",
-    "evidenceCommit": null,
+    "evidenceCommit": "05bf2e83b6d92371d3b2013895fb6cc47d463ef8",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
@@ -152,6 +152,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.2-public-community-final-report-pending-checkpoint",
-  "updatedAt": "2026-08-01T05:31:00Z"
+  "reportStatus": "v6.2-public-community-final-report-and-checklist-complete",
+  "updatedAt": "2026-08-01T05:36:00Z"
 }
