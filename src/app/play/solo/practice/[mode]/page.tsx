@@ -56,16 +56,28 @@ export default async function SoloPracticePage({ params, searchParams }: Props) 
     length,
     generation,
   });
-  const sessionId = [
-    'practice',
-    mode,
-    length,
+  const sessionToken = first(query.session);
+  if (sessionToken && !/^[0-9a-f]{8}-[0-9a-f-]{27,}$/i.test(sessionToken)) notFound();
+  const sessionId = sessionToken
+    ? `practice:${mode}:${sessionToken}`
+    : [
+        'practice',
+        mode,
+        length,
+        difficulty,
+        settings.hardMode ? 'hard' : 'normal',
+        goCount,
+        generation,
+        bank.revision,
+      ].join(':');
+  const resumeHref = `/play/solo/practice/${mode}?${new URLSearchParams({
+    length: String(length),
     difficulty,
-    settings.hardMode ? 'hard' : 'normal',
-    goCount,
-    generation,
-    bank.revision,
-  ].join(':');
+    hard: settings.hardMode ? '1' : '0',
+    generation: String(generation),
+    ...(mode === 'go' ? { count: String(goCount) } : {}),
+    ...(sessionToken ? { session: sessionToken } : {}),
+  }).toString()}`;
 
   return (
     <SoloGame
@@ -74,6 +86,7 @@ export default async function SoloPracticePage({ params, searchParams }: Props) 
       settings={settings}
       answers={answers}
       validGuesses={bank.validGuesses}
+      resumeHref={resumeHref}
     />
   );
 }

@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { RouteHeader, WorkbenchRegion } from '@/components/route-states';
 import { HomeAttention } from '@/features/home/home-attention';
+import { getOwnerNamespace } from '@/server/identity';
 
-export default function HomePage() {
+export default async function HomePage() {
+  const ownerNamespace = await getOwnerNamespace();
   return (
     <div className="route-frame home-workspace">
       <RouteHeader title="Choose your next game">
@@ -11,7 +13,7 @@ export default function HomePage() {
       <div className="home-layout">
         <WorkbenchRegion title="game commands" status="select one" className="home-commands">
           <div className="command-list">
-            <Link className="command-row is-primary" href="/play/solo/practice/og">
+            <Link className="command-row is-primary" href="/play/solo">
               <span className="command-code">
                 <i aria-hidden="true">❯</i> solo practice
               </span>
@@ -49,7 +51,7 @@ export default function HomePage() {
           </div>
         </WorkbenchRegion>
         <WorkbenchRegion title="right now" status="account attention">
-          <HomeAttention />
+          <HomeAttention ownerNamespace={ownerNamespace} />
         </WorkbenchRegion>
       </div>
     </div>

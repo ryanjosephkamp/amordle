@@ -1,7 +1,8 @@
 'use client';
 
 import { z } from 'zod';
-import { mutateEnvelope, readEnvelope } from './indexeddb';
+import { keyboardSoundProfileSchema } from '@/domain/feedback';
+import { mutateEnvelope, readEnvelope, writeEnvelope } from './indexeddb';
 
 export const localEconomySchema = z
   .object({
@@ -122,22 +123,42 @@ export async function creditLocalCoins(
   }));
 }
 
+const localPreferencesV1Schema = z
+  .object({ schemaVersion: z.literal(1), sound: z.boolean() })
+  .strict();
+
 export const localPreferencesSchema = z
   .object({
-    schemaVersion: z.literal(1),
+    schemaVersion: z.literal(2),
     sound: z.boolean(),
+    keyboardSoundProfile: keyboardSoundProfileSchema,
+    hapticsEnabled: z.boolean(),
+    reducedEffects: z.boolean(),
   })
   .strict();
 
 const preferencesDomain = 'account:preferences';
 
 export async function loadLocalPreferences(ownerNamespace: string) {
-  return (
-    (await readEnvelope(ownerNamespace, preferencesDomain, localPreferencesSchema))?.state ?? {
-      schemaVersion: 1 as const,
-      sound: true,
-    }
-  );
+  const current = await readEnvelope(ownerNamespace, preferencesDomain, localPreferencesSchema);
+  if (current) return current.state;
+  const legacy = await readEnvelope(ownerNamespace, preferencesDomain, localPreferencesV1Schema);
+  const next = {
+    schemaVersion: 2 as const,
+    sound: legacy?.state.sound ?? true,
+    keyboardSoundProfile: 'terminal' as const,
+    hapticsEnabled: false,
+    reducedEffects: false,
+  };
+  await writeEnvelope({
+    schemaVersion: 1,
+    ownerNamespace,
+    domain: preferencesDomain,
+    revision: (legacy?.revision ?? 0) + 1,
+    updatedAt: new Date().toISOString(),
+    state: next,
+  });
+  return next;
 }
 
 export async function saveLocalSound(ownerNamespace: string, sound: boolean) {
@@ -145,7 +166,35 @@ export async function saveLocalSound(ownerNamespace: string, sound: boolean) {
     ownerNamespace,
     preferencesDomain,
     localPreferencesSchema,
-    { schemaVersion: 1 as const, sound: true },
+    {
+      schemaVersion: 2 as const,
+      sound: true,
+      keyboardSoundProfile: 'terminal' as const,
+      hapticsEnabled: false,
+      reducedEffects: false,
+    },
     (state) => ({ ...state, sound }),
+  );
+}
+
+export async function saveLocalFeedback(
+  ownerNamespace: string,
+  input: {
+    keyboardSoundProfile?: z.infer<typeof keyboardSoundProfileSchema>;
+    hapticsEnabled?: boolean;
+  },
+) {
+  return mutateEnvelope(
+    ownerNamespace,
+    preferencesDomain,
+    localPreferencesSchema,
+    {
+      schemaVersion: 2 as const,
+      sound: true,
+      keyboardSoundProfile: 'terminal' as const,
+      hapticsEnabled: false,
+      reducedEffects: false,
+    },
+    (state) => ({ ...state, ...input }),
   );
 }

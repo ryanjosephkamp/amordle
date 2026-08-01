@@ -15,6 +15,7 @@ const requestProtection = read(
   'supabase/migrations/20260711001811_phase56_private_request_center_and_anti_spam.sql',
 );
 const matchController = read('src/features/combat/match-controller.tsx');
+const accountFreshness = read('src/application/account-query-freshness.ts');
 const practiceLobby = read('src/features/combat/practice-lobby.tsx');
 const dailyLobby = read('src/features/combat/daily-lobby.tsx');
 const openLobbies = read('src/features/combat/open-lobbies.tsx');
@@ -153,10 +154,11 @@ describe('MP-01 through MP-21 acceptance authority', () => {
       'provisional = games_played + 1 < 10',
     ]);
     includesAll(authorityV3, ['settle_amordle_ranked_daily_v3', 'rating_bucket']);
-    includesAll(matchController, [
-      "queryKey: ['history'",
-      "queryKey: ['stats'",
-      "queryKey: ['ratings'",
+    includesAll(matchController, ['invalidateAccountProjections']);
+    includesAll(accountFreshness, [
+      'historyQueryKey(userId)',
+      'progressQueryKey(userId)',
+      'ratingsQueryKey(userId)',
     ]);
   });
 

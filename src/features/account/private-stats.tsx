@@ -31,26 +31,31 @@ function PrivateStatsInner() {
     queryKey: ['progress', userId],
     queryFn: () => loadProgress(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   const history = useQuery({
     queryKey: ['history', userId],
     queryFn: () => loadHistoryWithDiagnostics(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   const pending = useQuery({
     queryKey: ['completion-outbox', userId],
     queryFn: () => loadPendingCompletions(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   const economy = useQuery({
     queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   const ratings = useQuery({
     queryKey: ['ratings', userId],
     queryFn: () => loadRatingProfiles(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
 
   const queries = [progress, history, pending, economy, ratings];

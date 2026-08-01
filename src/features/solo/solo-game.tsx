@@ -51,6 +51,11 @@ import type { GameCommand, GameSession, GameSettings, GuessRow } from '@/domain/
 import { reconcileRevisioned } from '@/domain/reconciliation';
 import { gameSessionSchema } from './session-schema';
 import { soloReward } from '@/adapters/supabase/solo';
+import { registerSoloSessionSummary, upsertSoloSessionSummary } from '@/adapters/solo-sessions';
+import { soloSessionsQueryKey } from '@/application/solo-query-keys';
+import { invalidateAccountProjections } from '@/application/account-query-freshness';
+import { playKeyboardSound } from '@/application/keyboard-feedback';
+import type { KeyboardFeedbackEvent, KeyboardSoundProfile } from '@/domain/feedback';
 
 interface SoloGameProps {
   sessionId: string;
@@ -59,6 +64,7 @@ interface SoloGameProps {
   answers: string[];
   validGuesses: string[];
   dailyDate?: string;
+  resumeHref: string;
 }
 
 function now(): string {
@@ -175,6 +181,7 @@ export function SoloGame({
   answers,
   validGuesses,
   dailyDate,
+  resumeHref,
 }: SoloGameProps) {
   const auth = useAuth();
   const queryClient = useQueryClient();
@@ -195,6 +202,10 @@ export function SoloGame({
   const [cloudBackupNeedsAttention, setCloudBackupNeedsAttention] = useState(false);
   const [actionState, setActionState] = useState('');
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [soundProfile, setSoundProfile] = useState<KeyboardSoundProfile>('terminal');
+  const [hapticsEnabled, setHapticsEnabled] = useState(false);
+  const [reducedEffects, setReducedEffects] = useState(false);
+  const [sessionRegistryError, setSessionRegistryError] = useState('');
   const [auxiliaryOpen, setAuxiliaryOpen] = useState(true);
   const revision = useRef(0);
   const persistQueue = useRef<Promise<void>>(Promise.resolve());
@@ -202,7 +213,9 @@ export function SoloGame({
   const sessionRef = useRef(session);
   const finalized = useRef(false);
   const pendingOperation = useRef<string | null>(null);
-  const audioContext = useRef<AudioContext | null>(null);
+  const boardRegion = useRef<HTMLDivElement | null>(null);
+  const resultPanel = useRef<HTMLElement | null>(null);
+  const announcedTerminal = useRef(false);
   const domain = `solo:${sessionId}`;
   const signedInUserId = auth.status === 'signed-in' ? auth.user?.id : undefined;
   const isPractice = dailyDate === undefined;
@@ -220,9 +233,68 @@ export function SoloGame({
       signedInUserId ? loadSettings(signedInUserId) : loadLocalPreferences(ownerNamespace),
   });
 
+  const syncRegistry = useCallback(
+    async (next: GameSession, lifecycle?: 'reserved' | 'active' | 'terminal') => {
+      const acceptedGuesses = next.rows.filter((row) => row.kind === 'accepted').length;
+      const resolvedLifecycle =
+        lifecycle ?? (next.status === 'won' || next.status === 'lost' ? 'terminal' : 'active');
+      const registry = await upsertSoloSessionSummary(ownerNamespace, signedInUserId, {
+        schemaVersion: 2,
+        id: next.id,
+        ownerNamespace,
+        lane: dailyDate ? 'daily' : 'practice',
+        settings: next.settings,
+        localDate: dailyDate ?? null,
+        resumeHref,
+        lifecycle: resolvedLifecycle,
+        acceptedGuesses,
+        puzzleIndex: next.puzzleIndex,
+        createdAt: next.createdAt,
+        updatedAt: next.updatedAt,
+        lastPlayedAt: next.updatedAt,
+      });
+      queryClient.setQueryData(soloSessionsQueryKey(ownerNamespace), registry);
+    },
+    [dailyDate, ownerNamespace, queryClient, resumeHref, signedInUserId],
+  );
+
+  const registerRegistry = useCallback(
+    async (next: GameSession) => {
+      const acceptedGuesses = next.rows.filter((row) => row.kind === 'accepted').length;
+      const registry = await registerSoloSessionSummary(ownerNamespace, signedInUserId, {
+        schemaVersion: 2,
+        id: next.id,
+        ownerNamespace,
+        lane: dailyDate ? 'daily' : 'practice',
+        settings: next.settings,
+        localDate: dailyDate ?? null,
+        resumeHref,
+        lifecycle: next.status === 'won' || next.status === 'lost' ? 'terminal' : 'active',
+        acceptedGuesses,
+        puzzleIndex: next.puzzleIndex,
+        createdAt: next.createdAt,
+        updatedAt: next.updatedAt,
+        lastPlayedAt: next.updatedAt,
+      });
+      queryClient.setQueryData(soloSessionsQueryKey(ownerNamespace), registry);
+    },
+    [dailyDate, ownerNamespace, queryClient, resumeHref, signedInUserId],
+  );
+
   useEffect(() => {
     if (preferences.data) {
-      queueMicrotask(() => setSoundEnabled(preferences.data.sound));
+      queueMicrotask(() => {
+        setSoundEnabled(preferences.data.sound);
+        setSoundProfile(
+          'keyboardSoundProfile' in preferences.data
+            ? preferences.data.keyboardSoundProfile
+            : 'terminal',
+        );
+        setHapticsEnabled(
+          'hapticsEnabled' in preferences.data ? preferences.data.hapticsEnabled : false,
+        );
+        setReducedEffects(preferences.data.reducedEffects);
+      });
     }
   }, [preferences.data]);
 
@@ -239,20 +311,11 @@ export function SoloGame({
   }, [session]);
 
   const playCue = useCallback(
-    (frequency: number) => {
+    (event: KeyboardFeedbackEvent) => {
       if (!soundEnabled) return;
-      const context = audioContext.current ?? new AudioContext();
-      audioContext.current = context;
-      const oscillator = context.createOscillator();
-      const gain = context.createGain();
-      oscillator.frequency.value = frequency;
-      gain.gain.setValueAtTime(0.035, context.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 0.06);
-      oscillator.connect(gain).connect(context.destination);
-      oscillator.start();
-      oscillator.stop(context.currentTime + 0.06);
+      void playKeyboardSound(soundProfile, event);
     },
-    [soundEnabled],
+    [soundEnabled, soundProfile],
   );
 
   const syncCloudEnvelope = useCallback(
@@ -317,16 +380,26 @@ export function SoloGame({
         }
         const reconciled = reconcileRevisioned(local, remote);
         const stored = reconciled === remote ? remote : local;
-        if (
-          active &&
-          stored &&
-          stored.state.id === sessionId &&
-          JSON.stringify(stored.state.answers) === JSON.stringify(answers)
-        ) {
+        if (active && stored && stored.state.id === sessionId) {
           revision.current = stored.revision;
           latestEnvelope.current = stored;
           setSession(stored.state);
+          void registerRegistry(stored.state).catch((error: unknown) => {
+            if (active) {
+              setSessionRegistryError(
+                error instanceof Error ? error.message : 'This Solo game cannot be resumed safely.',
+              );
+            }
+          });
           if (remote && stored === remote) await writeEnvelope(stored);
+        } else if (active) {
+          void registerRegistry(initial).catch((error: unknown) => {
+            if (active) {
+              setSessionRegistryError(
+                error instanceof Error ? error.message : 'This Solo game cannot be started safely.',
+              );
+            }
+          });
         }
       } finally {
         if (active) setHydrated(true);
@@ -336,7 +409,7 @@ export function SoloGame({
     return () => {
       active = false;
     };
-  }, [answers, auth.status, domain, ownerNamespace, sessionId, signedInUserId]);
+  }, [auth.status, domain, initial, ownerNamespace, registerRegistry, sessionId, signedInUserId]);
 
   const issue = useCallback(
     async (command: GameCommand) => {
@@ -347,14 +420,15 @@ export function SoloGame({
         next.rows.filter((row) => row.kind === 'accepted').length >
         current.rows.filter((row) => row.kind === 'accepted').length;
       if (command.type === 'submit') {
-        playCue(accepted ? (next.status === 'won' ? 660 : 420) : 190);
+        playCue(accepted ? (next.status === 'won' ? 'success' : 'submit') : 'reject');
       } else if (command.type === 'insert' || command.type === 'delete') {
-        playCue(300);
+        playCue(command.type === 'delete' ? 'delete' : 'input');
       }
       if (accepted) {
         try {
           await persist(next);
           setSession(next);
+          void syncRegistry(next).catch(() => undefined);
           if (dailyDate && signedInUserId) {
             void setDailyEntitlement(signedInUserId, `${dailyDate}:${settings.mode}`, 'unlocked')
               .then(() =>
@@ -378,6 +452,9 @@ export function SoloGame({
       setSession(next);
       try {
         await persist(next);
+        if (command.type !== 'insert' && command.type !== 'delete') {
+          void syncRegistry(next).catch(() => undefined);
+        }
       } catch {
         setSession({
           ...current,
@@ -387,7 +464,7 @@ export function SoloGame({
       }
       return true;
     },
-    [dailyDate, persist, playCue, queryClient, settings.mode, signedInUserId],
+    [dailyDate, persist, playCue, queryClient, settings.mode, signedInUserId, syncRegistry],
   );
 
   useEffect(() => {
@@ -446,12 +523,7 @@ export function SoloGame({
             ? 'Result is saved on this device. Account sync will retry automatically.'
             : 'Result, History, XP, and coins are synced.',
         );
-        void queryClient.invalidateQueries({
-          queryKey: economyQueryKey(accountEconomyNamespace(signedInUserId)),
-        });
-        void queryClient.invalidateQueries({ queryKey: ['history', signedInUserId] });
-        void queryClient.invalidateQueries({ queryKey: ['progress', signedInUserId] });
-        void queryClient.invalidateQueries({ queryKey: ['completion-outbox', signedInUserId] });
+        void invalidateAccountProjections(queryClient, signedInUserId);
       })
       .catch(() => {
         finalized.current = false;
@@ -486,6 +558,26 @@ export function SoloGame({
   const keyboard = deriveKeyboardEvidence(currentRows, new Set(session.removedLetters));
   const isTerminal = session.status === 'won' || session.status === 'lost';
   const seededCount = session.rows.filter((row) => row.kind === 'seeded').length;
+
+  useEffect(() => {
+    const root = document.documentElement;
+    root.dataset.gamePresentation = isTerminal ? 'review' : 'active';
+    return () => {
+      if (root.dataset.gamePresentation === (isTerminal ? 'review' : 'active')) {
+        delete root.dataset.gamePresentation;
+      }
+    };
+  }, [isTerminal]);
+
+  useEffect(() => {
+    if (!isTerminal || announcedTerminal.current) return;
+    announcedTerminal.current = true;
+    const frame = window.requestAnimationFrame(() => {
+      resultPanel.current?.focus({ preventScroll: true });
+      resultPanel.current?.scrollIntoView({ block: 'start', behavior: 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [isTerminal]);
   const shareText = [
     `Amordle ${dailyDate ? `Daily ${dailyDate}` : 'Practice'} ${settings.mode.toUpperCase()}`,
     `${settings.length} letters · ${settings.difficulty}${settings.hardMode ? ' · Hard Mode' : ''}`,
@@ -516,7 +608,7 @@ export function SoloGame({
       });
     }
     const position = selectRevealPosition({
-      answer: answers[session.puzzleIndex] ?? '',
+      answer: session.answers[session.puzzleIndex] ?? '',
       knownPositions: known,
       operationId: id,
     });
@@ -533,7 +625,7 @@ export function SoloGame({
         type: 'reveal-position',
         operationId: id,
         position,
-        letter: answers[session.puzzleIndex]?.[position] ?? '',
+        letter: session.answers[session.puzzleIndex]?.[position] ?? '',
         now: now(),
       });
       queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
@@ -552,7 +644,7 @@ export function SoloGame({
     const id = pendingOperation.current ?? operationId(`solo-remove:${session.id}`);
     pendingOperation.current = id;
     const letters = selectIncorrectLettersToRemove({
-      answer: answers[session.puzzleIndex] ?? '',
+      answer: session.answers[session.puzzleIndex] ?? '',
       draft: session.draft,
       alreadyAbsentOrRemoved: new Set(
         Object.entries(keyboard)
@@ -604,6 +696,18 @@ export function SoloGame({
     );
   }
 
+  if (sessionRegistryError) {
+    return (
+      <section className="status-panel" role="alert">
+        <h1>Solo session limit reached</h1>
+        <p>{sessionRegistryError}</p>
+        <Link className="button primary" href="/play/solo">
+          REVIEW ACTIVE SOLO GAMES
+        </Link>
+      </section>
+    );
+  }
+
   return (
     <section
       className="game-layout"
@@ -636,7 +740,7 @@ export function SoloGame({
         </div>
       </header>
 
-      <div className="game-board-region">
+      <div className="game-board-region" ref={boardRegion} id="solo-board-review">
         <div className="game-region-header" aria-hidden="true">
           <span>GUESS BOARD</span>
           <span>{session.status.toUpperCase()}</span>
@@ -772,6 +876,8 @@ export function SoloGame({
             })
           }
           onDelete={() => void issue({ type: 'delete', now: now() })}
+          hapticsEnabled={hapticsEnabled}
+          reducedEffects={reducedEffects}
         />
       )}
 
@@ -797,18 +903,32 @@ export function SoloGame({
       )}
 
       {isTerminal && (session.status === 'won' || session.answerRevealed || !isPractice) && (
-        <section className="result-panel" aria-labelledby="result-heading">
+        <section
+          className="result-panel"
+          aria-labelledby="result-heading"
+          ref={resultPanel}
+          tabIndex={-1}
+          id="solo-result-review"
+        >
           <h2 id="result-heading">
             {session.status === 'won' ? 'You solved it' : 'Game complete'}
           </h2>
           <p>
             The answer was{' '}
-            <strong className="mono">{answers[session.puzzleIndex]?.toUpperCase()}</strong>.
+            <strong className="mono">{session.answers[session.puzzleIndex]?.toUpperCase()}</strong>.
           </p>
-          {answers[session.puzzleIndex] && (
-            <WordDefinition word={answers[session.puzzleIndex] ?? ''} />
+          {session.answers[session.puzzleIndex] && (
+            <WordDefinition word={session.answers[session.puzzleIndex] ?? ''} />
           )}
           <div className="action-row">
+            <button
+              type="button"
+              onClick={() =>
+                boardRegion.current?.scrollIntoView({ block: 'start', behavior: 'smooth' })
+              }
+            >
+              VIEW BOARD
+            </button>
             <button
               type="button"
               className="primary"

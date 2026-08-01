@@ -22,11 +22,13 @@ function HistoryInner() {
     queryKey: ['history', userId],
     queryFn: () => loadHistoryWithDiagnostics(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   const pending = useQuery({
     queryKey: ['completion-outbox', userId],
     queryFn: () => loadPendingCompletions(userId),
     enabled: Boolean(userId),
+    refetchOnMount: 'always',
   });
   if (history.isPending && pending.isPending) {
     return <SkeletonRows label="Loading History…" rows={5} />;

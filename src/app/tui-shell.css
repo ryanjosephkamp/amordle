@@ -549,18 +549,48 @@ button.primary:hover {
 
 .menu-heading,
 .menu-footer {
+  position: relative;
+  min-height: 1.15rem;
   border: 0;
   background: transparent;
-  padding: 0.45rem 0.65rem;
+  padding: 0.45rem 0.65rem 0.2rem;
   color: var(--muted);
   font-family: var(--tui-font);
   font-size: 0.68rem;
   letter-spacing: 0;
-  white-space: pre;
+  white-space: nowrap;
+}
+
+.menu-heading::before,
+.menu-heading::after,
+.menu-footer::before,
+.menu-footer::after {
+  position: absolute;
+  inset-inline: 0.45rem;
+  height: 0.55rem;
+  border-inline: var(--terminal-rule);
+  content: '';
+}
+
+.menu-heading::before {
+  top: 0.28rem;
+  border-top: var(--terminal-rule);
+}
+
+.menu-heading span {
+  position: relative;
+  z-index: 1;
+  background: var(--surface-inset);
+  padding-inline: 0.35rem;
 }
 
 .menu-footer {
   padding-block: 0.15rem 0.45rem;
+}
+
+.menu-footer::before {
+  bottom: 0.28rem;
+  border-bottom: var(--terminal-rule);
 }
 
 .menu-popover a {
@@ -815,6 +845,17 @@ button.primary:hover {
 
 .data-list {
   border: 0;
+}
+
+.active-solo-compact {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+}
+
+.active-solo-compact a {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .data-row,

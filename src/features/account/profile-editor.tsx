@@ -1,7 +1,7 @@
 'use client';
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import type { z } from 'zod';
 import {
@@ -30,6 +30,14 @@ import {
 import type { AccentSelection, FlairName } from '@/domain/profile';
 import { ProfileAvatar } from '@/features/community/profile-avatar';
 import { AccentPresetDialog, type AccentPresetDraft } from './accent-preset-dialog';
+import {
+  flushAvatarCleanup,
+  ownedAvatarPathFromCurrentProject,
+  prepareAvatarFile,
+  queueAvatarCleanup,
+  removeOwnedAvatar,
+  uploadPreparedAvatar,
+} from '@/adapters/avatar-storage';
 
 type MyPublicProfile = z.infer<typeof myPublicProfileSchema>;
 type AccentPreset = z.infer<typeof accentPresetSchema>;
@@ -116,6 +124,12 @@ function ProfileForm({
   const [bio, setBio] = useState(profile?.bio ?? '');
   const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url ?? '');
   const [avatarError, setAvatarError] = useState('');
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const avatarPreviewUrl = useMemo(
+    () => (avatarFile ? URL.createObjectURL(avatarFile) : null),
+    [avatarFile],
+  );
+  const [avatarUploading, setAvatarUploading] = useState(false);
   const [accentSelection, setAccentSelection] = useState<AccentSelection>(() =>
     initialAccentSelection(profile),
   );
@@ -123,6 +137,18 @@ function ProfileForm({
   const [editingPreset, setEditingPreset] = useState<AccentPreset | null | undefined>(undefined);
   const [presetError, setPresetError] = useState('');
   const lastDialogOpener = useRef<HTMLElement | null>(null);
+  const savedAvatarUrl = useRef(profile?.avatar_url ?? '');
+
+  useEffect(() => {
+    void flushAvatarCleanup(userId);
+  }, [userId]);
+
+  useEffect(
+    () => () => {
+      if (avatarPreviewUrl) URL.revokeObjectURL(avatarPreviewUrl);
+    },
+    [avatarPreviewUrl],
+  );
 
   const invalidatePublicProfile = (data: MyPublicProfile | null | undefined) => {
     void Promise.all([
@@ -144,6 +170,14 @@ function ProfileForm({
   const save = useMutation({
     mutationFn: saveMyPublicProfile,
     onSuccess: (data) => {
+      const previousUrl = savedAvatarUrl.current;
+      const previousPath = ownedAvatarPathFromCurrentProject(previousUrl);
+      savedAvatarUrl.current = data?.avatar_url ?? '';
+      if (previousPath && data?.avatar_url !== previousUrl) {
+        void removeOwnedAvatar(previousPath).then((removed) => {
+          if (!removed) queueAvatarCleanup(userId, previousPath);
+        });
+      }
       queryClient.setQueryData(myProfileQueryKey(userId), data);
       queryClient.setQueryData<AccentPreset[]>(myAccentPresetsQueryKey(userId), (current = []) =>
         current.map((preset) => ({
@@ -254,6 +288,35 @@ function ProfileForm({
     }
   }
 
+  async function uploadAvatarFile() {
+    if (!avatarFile || avatarUploading) return;
+    setAvatarUploading(true);
+    setAvatarError('');
+    let uploadedPath: string | null = null;
+    try {
+      const prepared = await prepareAvatarFile(avatarFile);
+      const uploaded = await uploadPreparedAvatar(prepared);
+      uploadedPath = uploaded.path;
+      await save.mutateAsync({
+        displayName,
+        bio,
+        visibility: 'public',
+        accentSelection,
+        avatarUrl: uploaded.publicUrl,
+        flairKey,
+      });
+      setAvatarUrl(uploaded.publicUrl);
+      setAvatarFile(null);
+    } catch (error) {
+      if (uploadedPath && !(await removeOwnedAvatar(uploadedPath))) {
+        queueAvatarCleanup(userId, uploadedPath);
+      }
+      setAvatarError(error instanceof Error ? error.message : 'The image could not be uploaded.');
+    } finally {
+      setAvatarUploading(false);
+    }
+  }
+
   return (
     <>
       <form
@@ -279,7 +342,7 @@ function ProfileForm({
         <h2>PUBLIC PROFILE</h2>
         <div className="profile-editor-intro">
           <ProfileAvatar
-            avatarUrl={avatarUrl || null}
+            avatarUrl={(avatarPreviewUrl ?? avatarUrl) || null}
             displayName={displayName}
             accentColor={namedAccent}
             accentHex={customAccentHex}
@@ -322,9 +385,30 @@ function ProfileForm({
           />
         </label>
         <p id="profile-avatar-help" className="field-help">
-          Use a public HTTPS image URL. The image appears only on profile pages; clear this field to
-          remove it.
+          Use a public HTTPS image URL, or upload a PNG, JPEG, WebP, or animated GIF up to 6 MiB and
+          4096 × 4096 pixels. Profile images are public; still-image metadata is removed during
+          processing, while GIF metadata may remain.
         </p>
+        <label>
+          Upload profile image
+          <input
+            type="file"
+            accept="image/png,image/jpeg,image/webp,image/gif"
+            onChange={(event) => {
+              setAvatarFile(event.target.files?.[0] ?? null);
+              setAvatarError('');
+            }}
+          />
+        </label>
+        {avatarFile && (
+          <button
+            type="button"
+            disabled={avatarUploading || save.isPending}
+            onClick={() => void uploadAvatarFile()}
+          >
+            {avatarUploading ? 'UPLOADING…' : 'UPLOAD AND USE'}
+          </button>
+        )}
         <p id="profile-avatar-error" className="field-error" aria-live="polite">
           {avatarError}
         </p>

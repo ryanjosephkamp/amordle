@@ -15,11 +15,11 @@ import {
 import type { PropsWithChildren } from 'react';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
 import { reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { myProfileQueryKey } from '@/application/query-keys';
 import {
-  accountEconomyNamespace,
-  economyQueryKey,
-  myProfileQueryKey,
-} from '@/application/query-keys';
+  invalidateAccountProjections,
+  isAccountProjectionRoute,
+} from '@/application/account-query-freshness';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { getMyPublicProfile } from '@/adapters/supabase/public';
 import { accentCssVariableMap, defaultAccentName } from '@/domain/profile';
@@ -241,25 +241,35 @@ function CompletionReconciler() {
   const queryClient = useQueryClient();
   const pathname = usePathname();
   const userId = auth.user?.id;
+  const previousUserId = useRef<string | undefined>(undefined);
 
   const reconcile = useCallback(async () => {
     if (!userId) return;
     const result = await reconcileCompletionOutbox(userId);
     if (result.synced > 0) {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['completion-outbox', userId] }),
-        queryClient.invalidateQueries({ queryKey: ['history', userId] }),
-        queryClient.invalidateQueries({ queryKey: ['progress', userId] }),
-        queryClient.invalidateQueries({
-          queryKey: economyQueryKey(accountEconomyNamespace(userId)),
-        }),
-      ]);
+      await invalidateAccountProjections(queryClient, userId, { includeRanked: true });
     }
   }, [queryClient, userId]);
 
   useEffect(() => {
     if (!userId) return;
-    void reconcile().catch(() => undefined);
+    const previous = previousUserId.current;
+    previousUserId.current = userId;
+    if (previous && previous !== userId) {
+      void queryClient.cancelQueries();
+      queryClient.removeQueries({
+        predicate: (query) => query.queryKey.some((part) => part === previous),
+      });
+    }
+    void reconcile()
+      .then(() => {
+        if (isAccountProjectionRoute(pathname)) {
+          return invalidateAccountProjections(queryClient, userId, {
+            includeRanked: pathname === '/leaderboards' || pathname === '/stats',
+          });
+        }
+      })
+      .catch(() => undefined);
     const onOnline = () => void reconcile().catch(() => undefined);
     const onVisibility = () => {
       if (document.visibilityState === 'visible') void reconcile().catch(() => undefined);
@@ -270,7 +280,7 @@ function CompletionReconciler() {
       window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [pathname, reconcile, userId]);
+  }, [pathname, queryClient, reconcile, userId]);
 
   return null;
 }

@@ -759,6 +759,26 @@ html[data-game-presentation='review'] .combat-game {
   overflow: visible;
 }
 
+html[data-game-presentation='review'] .game-layout {
+  min-height: 0;
+  grid-template-rows: auto auto auto auto auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .game-board-region,
+html[data-game-presentation='review'] .game-board-region .game-history-shell,
+html[data-game-presentation='review'] .game-board-region .game-history-viewport {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  overscroll-behavior: auto;
+  touch-action: pan-y;
+}
+
+html[data-game-presentation='review'] .game-board-region .latest-row-button {
+  display: none;
+}
+
 html[data-game-presentation='review'] .combat-transcript-frame {
   min-height: 20rem;
   overflow: visible;

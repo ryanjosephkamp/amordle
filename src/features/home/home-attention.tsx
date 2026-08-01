@@ -13,8 +13,9 @@ import type { CombatAttentionProjection } from '@/adapters/session-combat';
 import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 import { SkeletonRows } from '@/components/route-states';
+import { ActiveSoloSessions } from '@/features/solo/active-solo-sessions';
 
-export function HomeAttention() {
+export function HomeAttention({ ownerNamespace }: { ownerNamespace: string }) {
   const auth = useAuth();
   const [mounted, setMounted] = useState(false);
   const [provisionalCombat, setProvisionalCombat] = useState<CombatAttentionProjection | null>(
@@ -89,7 +90,10 @@ export function HomeAttention() {
       <div className="data-list">
         <div className="data-row">
           <strong>Guest Solo</strong>
-          <span>Games save on this device.</span>
+          <div>
+            <span>Games save on this device.</span>
+            <ActiveSoloSessions ownerNamespace={ownerNamespace} compact />
+          </div>
         </div>
         <div className="data-row">
           <strong>Account play</strong>
@@ -110,6 +114,10 @@ export function HomeAttention() {
   const combatUnavailable = combat.isError && !provisionalCombat;
   return (
     <div className="data-list">
+      <div className="data-row">
+        <strong>Solo attention</strong>
+        <ActiveSoloSessions ownerNamespace={ownerNamespace} compact />
+      </div>
       <div className="data-row">
         <strong>Progression</strong>
         {progressionUnavailable ? (

@@ -125,4 +125,55 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await page.keyboard.press('Shift+1');
     await expect(page).toHaveURL(/\/auth$/);
   });
+
+  test('keeps three OG and three GO Practice sessions independently resumable', async ({
+    page,
+  }) => {
+    for (const mode of ['og', 'go'] as const) {
+      for (let index = 0; index < 3; index += 1) {
+        await page.goto('/play/solo');
+        await page.getByLabel('Mode', { exact: true }).selectOption(mode);
+        await page.getByRole('button', { name: 'START NEW PRACTICE' }).click();
+        await expect(
+          page.getByRole('heading', { name: new RegExp(`${mode} (puzzle|run)`, 'i') }),
+        ).toBeVisible();
+      }
+    }
+
+    await page.goto('/play/solo');
+    const activeSessions = page.locator('[aria-label="Active Solo games"]');
+    await expect(activeSessions.locator('.data-row')).toHaveCount(6);
+    const resumeTargets = await page
+      .locator('[aria-label="Active Solo games"]')
+      .getByRole('link', { name: 'RESUME' })
+      .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
+    expect(new Set(resumeTargets)).toHaveProperty('size', 6);
+
+    await page.getByLabel('Mode', { exact: true }).selectOption('og');
+    await expect(page.getByRole('button', { name: 'START NEW PRACTICE' })).toBeDisabled();
+    await expect(page.getByText(/three active OG Practice games/i)).toBeVisible();
+    await activeSessions
+      .locator('.data-row', { hasText: 'Practice · OG' })
+      .first()
+      .getByRole('button', { name: 'ABANDON' })
+      .click();
+    await expect(page.getByRole('button', { name: 'START NEW PRACTICE' })).toBeEnabled();
+  });
+
+  test('renders both terminal menu frame edges at mobile widths', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=31');
+    await page.getByRole('button', { name: /more navigation/i }).click();
+    await expect(page.getByRole('menu', { name: 'More navigation' })).toBeVisible();
+    const frame = await page.evaluate(() => {
+      const top = document.querySelector('.menu-heading');
+      const bottom = document.querySelector('.menu-footer');
+      if (!top || !bottom) return null;
+      return {
+        top: getComputedStyle(top, '::before').borderTopStyle,
+        bottom: getComputedStyle(bottom, '::before').borderBottomStyle,
+      };
+    });
+    expect(frame).toEqual({ top: 'solid', bottom: 'solid' });
+  });
 });

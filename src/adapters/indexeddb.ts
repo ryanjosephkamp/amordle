@@ -175,3 +175,41 @@ export async function deleteEnvelope(ownerNamespace: string, domain: string): Pr
     database.close();
   }
 }
+
+export async function listEnvelopes<T>(
+  ownerNamespace: string,
+  domainPrefix: string,
+  stateSchema: z.ZodType<T>,
+): Promise<VersionedEnvelope<T>[]> {
+  const database = await openDatabase();
+  try {
+    return await new Promise<VersionedEnvelope<T>[]>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, 'readonly');
+      const lower = key(ownerNamespace, domainPrefix);
+      const request = transaction
+        .objectStore(STORE_NAME)
+        .openCursor(IDBKeyRange.bound(lower, `${lower}\uffff`));
+      const envelopes: VersionedEnvelope<T>[] = [];
+      request.onerror = () => reject(request.error ?? new Error('List failed.'));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        const parsedEnvelope = baseEnvelopeSchema.safeParse(cursor.value);
+        if (
+          parsedEnvelope.success &&
+          parsedEnvelope.data.ownerNamespace === ownerNamespace &&
+          parsedEnvelope.data.domain.startsWith(domainPrefix)
+        ) {
+          const parsedState = stateSchema.safeParse(parsedEnvelope.data.state);
+          if (parsedState.success)
+            envelopes.push({ ...parsedEnvelope.data, state: parsedState.data });
+        }
+        cursor.continue();
+      };
+      transaction.oncomplete = () => resolve(envelopes);
+      transaction.onerror = () => reject(transaction.error ?? new Error('List failed.'));
+    });
+  } finally {
+    database.close();
+  }
+}

@@ -178,7 +178,7 @@ export function AppShell({ children }: PropsWithChildren) {
                     aria-label="More navigation"
                   >
                     <div className="menu-heading" aria-hidden="true">
-                      ┌─ destinations ─────────────────┐
+                      <span>destinations</span>
                     </div>
                     {secondary.map((item) => (
                       <Link
@@ -198,9 +198,7 @@ export function AppShell({ children }: PropsWithChildren) {
                       <span aria-hidden="true">›</span>{' '}
                       {auth.status === 'signed-in' ? 'Profile' : 'Sign in'}
                     </Link>
-                    <div className="menu-footer" aria-hidden="true">
-                      └────────────────────────────────┘
-                    </div>
+                    <div className="menu-footer" aria-hidden="true" />
                   </div>
                 )}
               </div>

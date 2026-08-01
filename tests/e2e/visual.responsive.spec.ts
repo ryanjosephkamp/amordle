@@ -390,9 +390,7 @@ test.describe('responsive and alternate presentation evidence', () => {
   }, testInfo) => {
     for (const viewport of gameViewports) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      await page.goto(
-        `/play/solo/practice/og?length=5&difficulty=standard&generation=${viewport.width + viewport.height}`,
-      );
+      await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=113');
       await expect(page.getByRole('heading', { name: /OG puzzle/i })).toBeVisible();
       const fit = await page.evaluate(() => {
         const keyboard = document.querySelector('.keyboard')?.getBoundingClientRect();

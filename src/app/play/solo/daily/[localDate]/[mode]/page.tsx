@@ -65,6 +65,7 @@ export default async function SoloDailyPage({ params }: Props) {
         answers={answers}
         validGuesses={bank.validGuesses}
         dailyDate={localDate}
+        resumeHref={`/play/solo/daily/${localDate}/${mode}`}
       />
     </DailyAccessGate>
   );

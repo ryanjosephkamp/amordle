@@ -32,6 +32,7 @@ import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { invalidateAccountProjections } from '@/application/account-query-freshness';
 import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
@@ -289,10 +290,9 @@ function MatchControllerInner({
         setMessage('Rating settled.');
       }
       void match.refetch();
-      void queryClient.invalidateQueries({ queryKey: ['history', auth.user?.id] });
-      void queryClient.invalidateQueries({ queryKey: ['stats', auth.user?.id] });
-      void queryClient.invalidateQueries({ queryKey: ['ratings', auth.user?.id] });
-      void queryClient.invalidateQueries({ queryKey: ['leaderboards'] });
+      if (auth.user?.id) {
+        void invalidateAccountProjections(queryClient, auth.user.id, { includeRanked: true });
+      }
     },
     onError: () => setMessage('Rating settlement needs attention. It is safe to retry.'),
   });
@@ -306,13 +306,7 @@ function MatchControllerInner({
     if (!row || !userId) return;
     void queueAccountCompletion(row)
       .then(() => reconcileCompletionOutbox(userId))
-      .then(() =>
-        Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['completion-outbox', userId] }),
-          queryClient.invalidateQueries({ queryKey: ['history', userId] }),
-          queryClient.invalidateQueries({ queryKey: ['progress', userId] }),
-        ]),
-      )
+      .then(() => invalidateAccountProjections(queryClient, userId, { includeRanked: true }))
       .catch(() => undefined);
   }, [auth.user?.id, match.data, queryClient, rankedPracticeSettlement?.ratingDelta]);
 

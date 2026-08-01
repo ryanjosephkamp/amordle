@@ -18,11 +18,13 @@ export function LeaderboardTable() {
     queryKey: ['leaderboard', bucket],
     queryFn: () => getLeaderboard(bucket),
     refetchInterval: 30_000,
+    refetchOnMount: 'always',
   });
   const site = useQuery({
     queryKey: ['site-stats'],
     queryFn: getSiteStats,
     refetchInterval: 30_000,
+    refetchOnMount: 'always',
   });
   return (
     <>

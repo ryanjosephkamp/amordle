@@ -13,6 +13,14 @@ import {
 import { ServiceError } from './shared';
 import { historyRowSchema } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
+import {
+  emptySoloSessionRegistry,
+  mergeSoloSessionRegistries,
+  soloSessionRegistryForOwner,
+  soloSessionRegistryDomain,
+  soloSessionRegistrySchema,
+} from '@/domain/solo-sessions';
+import type { SoloSessionRegistry } from '@/domain/solo-sessions';
 
 const envelopeSchema = z
   .object({
@@ -25,6 +33,17 @@ const envelopeSchema = z
   })
   .strict();
 
+const registryEnvelopeSchema = z
+  .object({
+    schemaVersion: z.literal(1),
+    ownerNamespace: z.string().min(1),
+    domain: z.literal(soloSessionRegistryDomain),
+    revision: z.number().int().nonnegative(),
+    updatedAt: z.iso.datetime({ offset: true }),
+    state: soloSessionRegistrySchema,
+  })
+  .strict();
+
 export async function loadCloudSolo(
   userId: string,
   domain: string,
@@ -34,6 +53,17 @@ export async function loadCloudSolo(
   if (candidate === undefined) return null;
   const envelope = envelopeSchema.safeParse(candidate);
   return envelope.success ? envelope.data : null;
+}
+
+export async function loadCloudSoloEnvelopes(
+  userId: string,
+): Promise<VersionedEnvelope<GameSession>[]> {
+  const progress = await loadProgress(userId);
+  return Object.entries(progress.solo ?? {}).flatMap(([domain, value]) => {
+    if (domain === soloSessionRegistryDomain) return [];
+    const parsed = envelopeSchema.safeParse(value);
+    return parsed.success ? [parsed.data] : [];
+  });
 }
 
 async function writeSnapshotCas(
@@ -78,6 +108,50 @@ export async function saveCloudSolo(userId: string, envelope: VersionedEnvelope<
       solo: { ...snapshot.solo, [parsed.domain]: parsed },
     };
   });
+}
+
+export async function loadCloudSoloRegistry(
+  userId: string,
+): Promise<VersionedEnvelope<SoloSessionRegistry> | null> {
+  const progress = await loadProgress(userId);
+  const parsed = registryEnvelopeSchema.safeParse(progress.solo?.[soloSessionRegistryDomain]);
+  return parsed.success ? parsed.data : null;
+}
+
+export async function mutateCloudSoloRegistry(
+  userId: string,
+  ownerNamespace: string,
+  transform: (registry: SoloSessionRegistry) => SoloSessionRegistry,
+): Promise<VersionedEnvelope<SoloSessionRegistry>> {
+  let result: VersionedEnvelope<SoloSessionRegistry> | null = null;
+  await writeSnapshotCas(userId, (snapshot) => {
+    const parsed = registryEnvelopeSchema.safeParse(snapshot.solo?.[soloSessionRegistryDomain]);
+    const current =
+      parsed.success && parsed.data.ownerNamespace === ownerNamespace
+        ? {
+            ...parsed.data,
+            state: soloSessionRegistryForOwner(parsed.data.state, ownerNamespace),
+          }
+        : null;
+    const nextState = soloSessionRegistrySchema.parse(
+      transform(current?.state ?? emptySoloSessionRegistry()),
+    );
+    result = {
+      schemaVersion: 1,
+      ownerNamespace,
+      domain: soloSessionRegistryDomain,
+      revision: (current?.revision ?? 0) + 1,
+      updatedAt: new Date().toISOString(),
+      state: current ? mergeSoloSessionRegistries(current.state, nextState) : nextState,
+    };
+    return {
+      ...snapshot,
+      revision: snapshot.revision + 1,
+      solo: { ...snapshot.solo, [soloSessionRegistryDomain]: result },
+    };
+  });
+  if (!result) throw new ServiceError('Solo session registry was not saved.', 'INVALID_STATE');
+  return registryEnvelopeSchema.parse(result);
 }
 
 export function soloReward(session: GameSession): { coins: number; xp: number } {
