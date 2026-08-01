@@ -13,6 +13,7 @@ import {
   progressSchema,
 } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
+import { keyboardSoundProfileSchema } from '@/domain/feedback';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
@@ -27,7 +28,7 @@ export const economySchema = z
   })
   .strict();
 
-export const playerSettingsSchema = z
+const storedPlayerSettingsV1Schema = z
   .object({
     schemaVersion: z.literal(1),
     sound: z.boolean(),
@@ -36,6 +37,11 @@ export const playerSettingsSchema = z
     defaultHardMode: z.boolean(),
   })
   .strict();
+
+export const playerSettingsSchema = storedPlayerSettingsV1Schema.extend({
+  keyboardSoundProfile: keyboardSoundProfileSchema,
+  hapticsEnabled: z.boolean(),
+});
 
 export type PlayerSettings = z.infer<typeof playerSettingsSchema>;
 
@@ -82,7 +88,7 @@ export async function purchaseConsumable(
 export async function loadSettings(userId: string): Promise<PlayerSettings> {
   const { data, error } = await client()
     .from('settings')
-    .select('settings')
+    .select('settings,keyboard_sound_profile,haptics_enabled')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throwServiceError(error);
@@ -92,16 +98,32 @@ export async function loadSettings(userId: string): Promise<PlayerSettings> {
     reducedEffects: false,
     notifications: true,
     defaultHardMode: false,
+    keyboardSoundProfile: 'terminal',
+    hapticsEnabled: false,
   };
   if (!data) return defaults;
-  return parseServiceResult(playerSettingsSchema, data.settings);
+  const stored = parseServiceResult(storedPlayerSettingsV1Schema, data.settings);
+  return playerSettingsSchema.parse({
+    ...stored,
+    keyboardSoundProfile: keyboardSoundProfileSchema.parse(data.keyboard_sound_profile),
+    hapticsEnabled: data.haptics_enabled,
+  });
 }
 
 export async function saveSettings(userId: string, settings: PlayerSettings) {
   const parsed = playerSettingsSchema.parse(settings);
+  const stored = storedPlayerSettingsV1Schema.parse({
+    schemaVersion: 1,
+    sound: parsed.sound,
+    reducedEffects: parsed.reducedEffects,
+    notifications: parsed.notifications,
+    defaultHardMode: parsed.defaultHardMode,
+  });
   const { error } = await client().from('settings').upsert({
     user_id: userId,
-    settings: parsed,
+    settings: stored,
+    keyboard_sound_profile: parsed.keyboardSoundProfile,
+    haptics_enabled: parsed.hapticsEnabled,
     updated_at: new Date().toISOString(),
   });
   if (error) throwServiceError(error);

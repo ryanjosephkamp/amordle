@@ -7,15 +7,24 @@ let sharedContext: AudioContext | null = null;
 let activeVoices = 0;
 const maximumVoices = 5;
 
+function audioContextConstructor(): typeof AudioContext | null {
+  if (typeof window === 'undefined') return null;
+  const browserWindow = window as typeof window & {
+    webkitAudioContext?: typeof AudioContext;
+  };
+  return browserWindow.AudioContext ?? browserWindow.webkitAudioContext ?? null;
+}
+
 export async function playKeyboardSound(
   profile: KeyboardSoundProfile,
   event: KeyboardFeedbackEvent,
 ): Promise<boolean> {
-  if (typeof AudioContext === 'undefined' || activeVoices >= maximumVoices) return false;
+  const AudioContextConstructor = audioContextConstructor();
+  if (!AudioContextConstructor || activeVoices >= maximumVoices) return false;
   try {
-    const context = sharedContext ?? new AudioContext({ latencyHint: 'interactive' });
+    const context = sharedContext ?? new AudioContextConstructor({ latencyHint: 'interactive' });
     sharedContext = context;
-    if (context.state === 'suspended') await context.resume();
+    if (context.state !== 'running') await context.resume();
     if (context.state !== 'running') return false;
     const specification = feedbackFrequencies(profile, event);
     const startedAt = context.currentTime;

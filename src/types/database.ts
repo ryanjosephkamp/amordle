@@ -1782,16 +1782,22 @@ export type Database = {
       };
       settings: {
         Row: {
+          haptics_enabled: boolean;
+          keyboard_sound_profile: string;
           settings: Json;
           updated_at: string;
           user_id: string;
         };
         Insert: {
+          haptics_enabled?: boolean;
+          keyboard_sound_profile?: string;
           settings: Json;
           updated_at?: string;
           user_id: string;
         };
         Update: {
+          haptics_enabled?: boolean;
+          keyboard_sound_profile?: string;
           settings?: Json;
           updated_at?: string;
           user_id?: string;

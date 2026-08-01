@@ -18,6 +18,7 @@ import {
 import { privateRequestBlockSchema } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
+import { playKeyboardHaptic } from '@/application/keyboard-feedback';
 import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/word-lists';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
@@ -309,6 +310,32 @@ describe('browser components', () => {
       .toHaveAttribute('data-evidence', 'unknown');
     await expect.element(page.getByText('×')).toBeVisible();
     await expect.element(page.getByRole('button', { name: 'Z, removed' })).toBeDisabled();
+  });
+
+  it('uses haptics only for direct touch keyboard gestures and fails closed', () => {
+    const vibrate = vi.fn(() => true);
+    const originalVibrate = navigator.vibrate;
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: vibrate,
+    });
+    expect(playKeyboardHaptic({ enabled: true, pointerType: 'touch', reducedEffects: false })).toBe(
+      true,
+    );
+    expect(vibrate).toHaveBeenCalledWith(8);
+    expect(playKeyboardHaptic({ enabled: true, pointerType: 'mouse', reducedEffects: false })).toBe(
+      false,
+    );
+    expect(
+      playKeyboardHaptic({ enabled: false, pointerType: 'touch', reducedEffects: false }),
+    ).toBe(false);
+    expect(playKeyboardHaptic({ enabled: true, pointerType: 'touch', reducedEffects: true })).toBe(
+      false,
+    );
+    Object.defineProperty(navigator, 'vibrate', {
+      configurable: true,
+      value: originalVibrate,
+    });
   });
 
   it('lets manual history scrolling pause following and exposes Latest row recovery', async () => {

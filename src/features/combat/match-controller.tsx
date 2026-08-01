@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   acceptPracticeRematch,
@@ -29,10 +29,12 @@ import type {
   RematchRequest,
 } from '@/adapters/supabase/combat';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
+import { loadSettings } from '@/adapters/supabase/account';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
 import { invalidateAccountProjections } from '@/application/account-query-freshness';
+import { playKeyboardSound } from '@/application/keyboard-feedback';
 import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
@@ -40,6 +42,7 @@ import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
 import type { EvidenceState } from '@/domain/game';
+import type { KeyboardFeedbackEvent } from '@/domain/feedback';
 import { historyRowSchema } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { WordDefinition } from '@/features/words/word-definition';
@@ -980,6 +983,24 @@ function CombatInput({
   submit(): void;
   disabled: boolean;
 }) {
+  const auth = useAuth();
+  const userId = auth.user?.id ?? '';
+  const preferences = useQuery({
+    queryKey: ['combat-preferences', userId],
+    queryFn: () => loadSettings(userId),
+    enabled: Boolean(userId),
+    staleTime: 5_000,
+  });
+  const soundEnabled = preferences.data?.sound ?? true;
+  const soundProfile = preferences.data?.keyboardSoundProfile ?? 'terminal';
+  const hapticsEnabled = preferences.data?.hapticsEnabled ?? false;
+  const reducedEffects = preferences.data?.reducedEffects ?? false;
+  const playCue = useCallback(
+    (event: KeyboardFeedbackEvent) => {
+      if (soundEnabled) void playKeyboardSound(soundProfile, event);
+    },
+    [soundEnabled, soundProfile],
+  );
   useEffect(() => {
     const onKey = (event: KeyboardEvent) => {
       if (
@@ -987,24 +1008,29 @@ function CombatInput({
         matchDirectNavigationShortcut(event) ||
         event.metaKey ||
         event.ctrlKey ||
-        event.altKey
+        event.altKey ||
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
       ) {
         return;
       }
       if (/^[a-zA-Z]$/.test(event.key) && draft.length < length) {
         event.preventDefault();
         setDraft(`${draft}${event.key.toLowerCase()}`);
-      } else if (event.key === 'Backspace') {
+        playCue('input');
+      } else if (event.key === 'Backspace' && draft.length > 0) {
         event.preventDefault();
         setDraft(draft.slice(0, -1));
-      } else if (event.key === 'Enter') {
+        playCue('delete');
+      } else if (event.key === 'Enter' && draft.length === length) {
         event.preventDefault();
+        playCue('submit');
         submit();
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [disabled, draft, length, setDraft, submit]);
+  }, [disabled, draft, length, playCue, setDraft, submit]);
   return (
     <div
       className="combat-input"
@@ -1024,10 +1050,21 @@ function CombatInput({
         submitDisabled={disabled || draft.length !== length}
         deleteDisabled={disabled || !draft}
         onLetter={(letter) => {
-          if (draft.length < length) setDraft(`${draft}${letter}`);
+          if (draft.length < length) {
+            setDraft(`${draft}${letter}`);
+            playCue('input');
+          }
         }}
-        onSubmit={submit}
-        onDelete={() => setDraft(draft.slice(0, -1))}
+        onSubmit={() => {
+          playCue('submit');
+          submit();
+        }}
+        onDelete={() => {
+          setDraft(draft.slice(0, -1));
+          playCue('delete');
+        }}
+        hapticsEnabled={hapticsEnabled}
+        reducedEffects={reducedEffects}
       />
     </div>
   );

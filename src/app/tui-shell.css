@@ -896,6 +896,32 @@ button.primary:hover {
   color: var(--accent-text);
 }
 
+.feedback-profile-row {
+  align-items: start;
+}
+
+.feedback-profile-control {
+  display: grid;
+  width: min(100%, 24rem);
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.45rem;
+}
+
+.feedback-profile-control select,
+.feedback-profile-control button {
+  min-height: 2.75rem;
+}
+
+.settings-description {
+  margin: 0;
+  border-bottom: var(--terminal-rule);
+  padding: 0.55rem 0.65rem 0.55rem 1.55rem;
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: 0.7rem;
+  line-height: 1.55;
+}
+
 .form-panel,
 .status-panel:not(.workbench-region),
 .confirmation-panel,
@@ -1319,6 +1345,11 @@ button.calendar-day.is-selected {
   .metric {
     grid-template-columns: minmax(7.5rem, 0.8fr) minmax(0, 1.2fr);
     gap: 0.55rem;
+  }
+
+  .feedback-profile-control {
+    width: 100%;
+    grid-template-columns: 1fr;
   }
 
   .route-link {

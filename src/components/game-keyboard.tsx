@@ -1,5 +1,7 @@
 'use client';
 
+import { playKeyboardHaptic } from '@/application/keyboard-feedback';
+
 type KeyState = 'unknown' | 'correct' | 'present' | 'absent' | 'removed';
 
 const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
@@ -26,14 +28,7 @@ export function GameKeyboard({
   reducedEffects?: boolean;
 }) {
   const touchFeedback = (pointerType: string) => {
-    if (
-      pointerType === 'touch' &&
-      hapticsEnabled &&
-      !reducedEffects &&
-      typeof navigator.vibrate === 'function'
-    ) {
-      navigator.vibrate(8);
-    }
+    playKeyboardHaptic({ enabled: hapticsEnabled, pointerType, reducedEffects });
   };
   return (
     <div className="keyboard" aria-label="On-screen keyboard">

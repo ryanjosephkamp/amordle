@@ -26,6 +26,9 @@ const rankedDailyScenarioId = 'V6.1-HOSTED-RANKED-PRACTICE-DAILY';
 const publicCommunityScenarioId = 'V6.2-HOSTED-PUBLIC-COMMUNITY';
 const definitionScenarioId = 'V6.2-HOSTED-DEFINITION-SURFACES';
 const accentPresetScenarioId = 'V6.3-HOSTED-ACCENT-PRESETS';
+const feedbackScenarioId = 'V6.4-HOSTED-FEEDBACK-PREFERENCES';
+const avatarScenarioId = 'V6.4-HOSTED-PUBLIC-AVATAR';
+const avatarBucket = 'amordle-public-avatars-v1';
 
 interface Account {
   id: string;
@@ -46,6 +49,7 @@ const rankedDailyRequestIds: string[] = [];
 const privateRequestIds: string[] = [];
 const rematchRequestIds: string[] = [];
 const accentPresetIds: string[] = [];
+const avatarPaths: string[] = [];
 const contexts: BrowserContext[] = [];
 let cleanupComplete = false;
 
@@ -306,6 +310,10 @@ async function cleanup() {
   let lastError: unknown;
   for (let attempt = 1; attempt <= 3; attempt += 1) {
     try {
+      if (avatarPaths.length) {
+        const { error } = await admin.storage.from(avatarBucket).remove(avatarPaths);
+        if (error) throw error;
+      }
       if (rematchRequestIds.length) {
         const { error } = await admin
           .from('multiplayer_practice_rematch_requests')
@@ -464,6 +472,17 @@ async function cleanup() {
       } else {
         residue.accentPresets = 0;
       }
+      if (avatarPaths.length) {
+        const avatarNames = new Set(avatarPaths.map((value) => value.split('/').at(-1)));
+        const { data, error } = await admin.storage.from(avatarBucket).list('avatars', {
+          limit: 100,
+          search: avatarPaths[0]?.split('/').at(-1) ?? '',
+        });
+        if (error) throw error;
+        residue.avatarObjects = (data ?? []).filter((entry) => avatarNames.has(entry.name)).length;
+      } else {
+        residue.avatarObjects = 0;
+      }
       for (const [table, column, ids] of exactDeletes) {
         const { count, error } = await admin
           .from(table)
@@ -510,6 +529,7 @@ async function cleanup() {
           privateRequests: privateRequestIds.length,
           rematchRequests: rematchRequestIds.length,
           accentPresets: accentPresetIds.length,
+          avatarObjects: avatarPaths.length,
         },
         residue,
         authResidue: 0,
@@ -567,6 +587,8 @@ test.describe.serial('protected Preview services', () => {
     await event('hosted_scenario_started', { scenarioId: publicCommunityScenarioId });
     await event('hosted_scenario_started', { scenarioId: definitionScenarioId });
     await event('hosted_scenario_started', { scenarioId: accentPresetScenarioId });
+    await event('hosted_scenario_started', { scenarioId: feedbackScenarioId });
+    await event('hosted_scenario_started', { scenarioId: avatarScenarioId });
     const [playerOne, playerTwo, spectator] = users;
     expect(playerOne).toBeDefined();
     expect(playerTwo).toBeDefined();
@@ -772,6 +794,83 @@ test.describe.serial('protected Preview services', () => {
       visibility: 'public',
     });
 
+    const avatarPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+    await firstPage.getByLabel('Upload profile image').setInputFiles({
+      name: 'e2e-avatar.png',
+      mimeType: 'image/png',
+      buffer: avatarPng,
+    });
+    await firstPage.getByRole('button', { name: 'UPLOAD AND USE' }).click();
+    await expect(firstPage.getByLabel('Profile image URL')).toHaveValue(
+      new RegExp(`/storage/v1/object/public/${avatarBucket}/avatars/`),
+    );
+    const uploadedAvatarUrl = await firstPage.getByLabel('Profile image URL').inputValue();
+    const avatarMarker = `/storage/v1/object/public/${avatarBucket}/`;
+    const uploadedAvatarPath = decodeURIComponent(
+      new URL(uploadedAvatarUrl).pathname.split(avatarMarker)[1] ?? '',
+    );
+    expect(uploadedAvatarPath).toMatch(
+      /^avatars\/[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\.png$/,
+    );
+    avatarPaths.push(uploadedAvatarPath);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'storage_object',
+      bucket: avatarBucket,
+      id: uploadedAvatarPath,
+      owner: runId,
+      userId: playerOne!.id,
+      disposable: true,
+    });
+    const publicAvatarResponse = await fetch(uploadedAvatarUrl);
+    expect(publicAvatarResponse.status).toBe(200);
+    expect(publicAvatarResponse.headers.get('content-type')).toContain('image/png');
+    const isolatedAvatarClient = createClient<Database>(supabaseUrl, anonKey, {
+      auth: { autoRefreshToken: false, persistSession: false },
+    });
+    const { error: isolatedAvatarSignInError } = await isolatedAvatarClient.auth.signInWithPassword(
+      {
+        email: playerTwo!.email,
+        password: playerTwo!.password,
+      },
+    );
+    if (isolatedAvatarSignInError) throw isolatedAvatarSignInError;
+    await isolatedAvatarClient.storage.from(avatarBucket).remove([uploadedAvatarPath]);
+    expect((await fetch(uploadedAvatarUrl)).status).toBe(200);
+    await event('public_avatar_upload_verified', {
+      scenarioId: avatarScenarioId,
+      path: uploadedAvatarPath,
+      publicRead: true,
+      ownerUpload: true,
+      crossAccountDeleteDenied: true,
+    });
+
+    await firstPage.goto(`${baseURL}/settings`);
+    await firstPage.getByLabel('Keyboard sound').selectOption('mechanical');
+    await firstPage.getByRole('checkbox', { name: 'Touch haptics' }).check();
+    await expect(firstPage.getByText('Settings saved to your account.')).toBeVisible();
+    await firstPage.getByRole('button', { name: 'PREVIEW' }).click();
+    const { data: feedbackSettings, error: feedbackSettingsError } = await admin
+      .from('settings')
+      .select('keyboard_sound_profile,haptics_enabled,settings')
+      .eq('user_id', playerOne!.id)
+      .single();
+    if (feedbackSettingsError) throw feedbackSettingsError;
+    expect(feedbackSettings.keyboard_sound_profile).toBe('mechanical');
+    expect(feedbackSettings.haptics_enabled).toBe(true);
+    expect(feedbackSettings.settings).toMatchObject({ schemaVersion: 1 });
+    await event('feedback_preferences_verified', {
+      scenarioId: feedbackScenarioId,
+      soundProfile: feedbackSettings.keyboard_sound_profile,
+      hapticsEnabled: feedbackSettings.haptics_enabled,
+      legacyJsonPreserved: true,
+    });
+
+    await firstPage.goto(`${baseURL}/profile`);
+
     await firstPage.getByRole('button', { name: 'CREATE CUSTOM ACCENT' }).click();
     const createAccentDialog = firstPage.getByRole('dialog', {
       name: 'Create custom accent',
@@ -888,6 +987,9 @@ test.describe.serial('protected Preview services', () => {
     contexts.push(profileSyncContext);
     const profileSyncPage = await profileSyncContext.newPage();
     await signIn(profileSyncPage, playerOne!);
+    await profileSyncPage.goto(`${baseURL}/settings`);
+    await expect(profileSyncPage.getByLabel('Keyboard sound')).toHaveValue('mechanical');
+    await expect(profileSyncPage.getByRole('checkbox', { name: 'Touch haptics' })).toBeChecked();
     await profileSyncPage.goto(`${baseURL}/profile`);
     await expect(profileSyncPage.getByRole('radio', { name: /E2E Midnight/i })).toBeChecked();
     await expect(profileSyncPage.locator('html')).toHaveAttribute('data-accent', 'custom');

@@ -180,8 +180,10 @@ export async function saveLocalSound(ownerNamespace: string, sound: boolean) {
 export async function saveLocalFeedback(
   ownerNamespace: string,
   input: {
+    sound?: boolean;
     keyboardSoundProfile?: z.infer<typeof keyboardSoundProfileSchema>;
     hapticsEnabled?: boolean;
+    reducedEffects?: boolean;
   },
 ) {
   return mutateEnvelope(
