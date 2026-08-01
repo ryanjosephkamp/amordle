@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.4 authority decision</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family: ui-sans-serif, system-ui, -apple-system, sans-serif;
+        line-height: 1.55;
+      }
+      body {
+        max-width: 52rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        color: #151515;
+        background: #fff;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-top: 1px solid #bbb;
+        padding-top: 1rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      pre {
+        overflow-x: auto;
+        border: 1px solid #aaa;
+        padding: 1rem;
+        white-space: pre-wrap;
+      }
+      .notice {
+        border: 2px solid #111;
+        padding: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #aaa;
+        padding: 0.55rem;
+        text-align: left;
+        vertical-align: top;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.4 authority decision</h1>
+      <p class="notice">
+        <strong>Status:</strong> local implementation is checkpointed and pushed. Neither pending
+        migration has been applied. Explicit authorization is required before Supabase or Storage
+        changes.
+      </p>
+
+      <h2>Decision requested</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Migration</th>
+            <th>SHA-256</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>20260801221500_amordle_feedback_preferences_v2.sql</code></td>
+            <td>
+              <code>cde752fb637554292435292880b5375d6d8ce02c69793757d3655d7b1ba6c368</code>
+            </td>
+          </tr>
+          <tr>
+            <td><code>20260801222500_amordle_public_avatars_v1.sql</code></td>
+            <td>
+              <code>1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17</code>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+      <p>
+        A linked dry run lists exactly these two pending files. Applying both would move linked
+        history from 49 to 51 synchronized migrations.
+      </p>
+
+      <h2>Verified gate state</h2>
+      <ul>
+        <li>
+          Branch:
+          <code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code>
+        </li>
+        <li>
+          Intake golden checkpoint:
+          <code>762b0fc2257e24eaab7c6f75664b592a92c7b6aa</code>
+        </li>
+        <li>
+          v6.4 local implementation checkpoint:
+          <code>78d275a4156a534fd9f9b4b5b9cada0cd2b51e15</code>
+        </li>
+        <li>107/107 immutable bootstrap files.</li>
+        <li>237/237 truthful functional registry.</li>
+        <li>73/73 multiplayer audit.</li>
+        <li>Exactly three application HTTP interfaces.</li>
+      </ul>
+
+      <h2>Why Solo does not need a migration</h2>
+      <p>
+        The existing account <code>progress.solo</code> JSON and versioned IndexedDB envelopes can
+        safely hold a summary registry. The checkpoint implements stable session IDs, three
+        Practice OG games, three Practice GO games, one Daily OG game, one Daily GO game,
+        account/guest isolation, deterministic reconciliation, exact resume links, explicit
+        abandon and conflict handling, Home/Solo discovery, and backward-compatible legacy save
+        discovery without adding a table, RPC, or HTTP endpoint.
+      </p>
+
+      <h2>Feedback preference authority</h2>
+      <p>
+        The frozen v1 settings JSON has no reviewed cross-device fields for a selected keyboard
+        sound profile or opt-in haptics. The first migration adds only two bounded columns to the
+        existing owner-scoped settings row. Existing JSON is not rewritten, and no table,
+        function, grant, public projection, or HTTP interface is added.
+      </p>
+
+      <h2>Avatar Storage authority</h2>
+      <p>
+        The second migration creates one public bucket named
+        <code>amordle-public-avatars-v1</code>. Public reads are intentional because profile images
+        are public. Authenticated owners alone may insert, update, or delete. Objects are capped at
+        6 MiB, limited to PNG, JPEG, WebP, and GIF, and named with random UUID v4 paths under
+        <code>avatars/</code>. SVG and arbitrary binary uploads are excluded.
+      </p>
+      <p>
+        The application additionally verifies magic bytes, MIME agreement, dimensions, and
+        megapixels; re-encodes still images to strip metadata; preserves animated GIFs; and keeps
+        the existing public HTTPS URL option. A collision with an incompatible bucket fails the
+        migration instead of rewriting provider configuration.
+      </p>
+
+      <h2>Privacy, quota, and compatibility</h2>
+      <ul>
+        <li>Storage paths contain random UUIDs, not raw Auth IDs or email addresses.</li>
+        <li>No private game, word, answer, rating, History, economy, or draft data enters Storage.</li>
+        <li>Existing v1 profile and settings behavior remains compatible.</li>
+        <li>The Supabase free tier is finite; quota failure is a closed, recoverable upload error.</li>
+        <li>No paid capability, new project, fourth HTTP interface, or new vendor is introduced.</li>
+        <li>Avatar objects are removed before disposable Auth users during hosted cleanup.</li>
+      </ul>
+
+      <h2>Evidence already green</h2>
+      <ul>
+        <li><code>pnpm check</code>, including the production build and all static gates.</li>
+        <li>98/98 domain tests.</li>
+        <li>16/16 browser component tests.</li>
+        <li>Fixture coverage across Chromium, Firefox, and WebKit.</li>
+        <li>11/11 visual/responsive tests.</li>
+        <li>Six simultaneous Practice sessions and category-limit recovery.</li>
+        <li>Mobile terminal menu top and bottom frame edges.</li>
+        <li>No required horizontal overflow across the viewport matrix.</li>
+      </ul>
+
+      <h2>After authorization</h2>
+      <ol>
+        <li>Apply only the two exact hashed migrations.</li>
+        <li>Verify 51/51 linked history and regenerate TypeScript database types.</li>
+        <li>Finish Settings sound/haptic controls and COMBAT integration.</li>
+        <li>Finish avatar upload, replacement, removal, fallback, and cleanup UI.</li>
+        <li>Run complete local acceptance.</li>
+        <li>Deploy one exact green commit to protected Preview.</li>
+        <li>Run serial disposable-user hosted acceptance and privacy probes.</li>
+        <li>Prove zero residue and publish paired final reports/checklists.</li>
+        <li>Create a private golden checkpoint for manual review.</li>
+      </ol>
+
+      <h2>Exact authorization text</h2>
+      <pre>I authorize applying 20260801221500_amordle_feedback_preferences_v2.sql with SHA-256 cde752fb637554292435292880b5375d6d8ce02c69793757d3655d7b1ba6c368 and 20260801222500_amordle_public_avatars_v1.sql with SHA-256 1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17 to linked Supabase project squqdstdvbsvhagfuzgj, followed by exact migration verification, type regeneration, sound and haptic settings completion, public avatar upload completion, complete local acceptance, protected Preview deployment, disposable-user hosted acceptance, exact Storage and Auth cleanup, parity reconciliation, final reporting, and a private golden checkpoint. Do not merge or release Production.</pre>
+
+      <h2>Rollback</h2>
+      <p>
+        Code and Preview rollback use forward Git reverts and exact known-good deployment commits.
+        There is no down migration. A database or Storage defect receives a separately reviewed
+        additive forward repair. The bucket is never destructively deleted without separate owner
+        authorization and proof that it contains no real player objects.
+      </p>
+    </main>
+  </body>
+</html>
