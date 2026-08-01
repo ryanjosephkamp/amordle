@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "source": "bootstrap/FUNCTIONAL-CONTRACT.md",
   "requirementCount": 237,
-  "generatedAt": "2026-08-01T04:05:00.000Z",
+  "generatedAt": "2026-08-01T19:58:00.000Z",
   "requirements": [
     {
       "requirementId": "APP-01.a",
@@ -1305,10 +1305,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-ACCENT-PRESETS",
+        "BROWSER-ACCENT-PRESET-DIALOG"
+      ],
+      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES", "V6.3-ACCENT-RESPONSIVE"],
+      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
       "blocker": null
     },
@@ -1383,10 +1389,16 @@
       "family": "ACC",
       "implementationOwner": "account-persistence-progression",
       "routeInterface": "Auth, account, economy, History, and profile repositories",
-      "automatedTestIds": ["DOMAIN-ACCOUNT-PLATFORM", "E2E-SERVICES-ACCOUNT", "DB-RLS-CONTRACT"],
-      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT"],
-      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES"],
-      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE"],
+      "automatedTestIds": [
+        "DOMAIN-ACCOUNT-PLATFORM",
+        "E2E-SERVICES-ACCOUNT",
+        "DB-RLS-CONTRACT",
+        "DOMAIN-ACCENT-PRESETS",
+        "BROWSER-ACCENT-PRESET-DIALOG"
+      ],
+      "hostedScenarioIds": ["PREVIEW-ACCOUNT-FRESH-CONTEXT", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "screenshotManualEvidence": ["VISUAL-ACCOUNT-SURFACES", "V6.3-ACCENT-RESPONSIVE"],
+      "cleanupEvidence": ["RESOURCE-LEDGER-ZERO-RESIDUE", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
       "blocker": null
     },
@@ -1400,11 +1412,13 @@
         "DOMAIN-ACCOUNT-PLATFORM",
         "E2E-SERVICES-ACCOUNT",
         "DB-RLS-CONTRACT",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "DOMAIN-PUBLIC-COMMUNITY",
+        "DOMAIN-ACCENT-PRESETS",
+        "BROWSER-ACCENT-PRESET-DIALOG"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE", "V6.3-ACCENT-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
       "blocker": null
     },
@@ -1418,11 +1432,13 @@
         "DOMAIN-ACCOUNT-PLATFORM",
         "E2E-SERVICES-ACCOUNT",
         "DB-RLS-CONTRACT",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "DOMAIN-PUBLIC-COMMUNITY",
+        "DOMAIN-ACCENT-PRESETS",
+        "BROWSER-ACCENT-PRESET-DIALOG"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE", "V6.3-ACCENT-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
       "blocker": null
     },
@@ -1480,11 +1496,12 @@
         "DOMAIN-ACCOUNT-PLATFORM",
         "E2E-SERVICES-ACCOUNT",
         "DB-RLS-CONTRACT",
-        "DOMAIN-PUBLIC-COMMUNITY"
+        "DOMAIN-PUBLIC-COMMUNITY",
+        "DOMAIN-ACCENT-PRESETS"
       ],
-      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY"],
-      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE"],
-      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP"],
+      "hostedScenarioIds": ["V6.2-HOSTED-PUBLIC-COMMUNITY", "V6.3-HOSTED-ACCENT-PRESETS"],
+      "screenshotManualEvidence": ["V6.2-PUBLIC-COMMUNITY-RESPONSIVE", "V6.3-ACCENT-RESPONSIVE"],
+      "cleanupEvidence": ["V6.2-ZERO-RESIDUE-CLEANUP", "V6.3-ZERO-RESIDUE-CLEANUP"],
       "status": "verified",
       "blocker": null
     },
