@@ -9,7 +9,7 @@ Preview and has passed the complete local and hosted acceptance stacks.
 - Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
 - v6.5 golden baseline: `68c28c1be51f3db75eb9facc8478e285bfd6c473`
 - Application repair: `f4ba9de031400eef3be7fa2ef134750e1d8e265c`
-- Evidence checkpoint: `PENDING_EVIDENCE_COMMIT`
+- Evidence checkpoint: `d27081b7128e0c769716363357204297ed83ea8a`
 - Deployment: `dpl_4QniuMyXds5vjRSqtVJxewtJ8ti1`
 - Protected Preview: <https://amordle-77f8b403z-ryanjosephkamps-projects.vercel.app>
 - Hosted run: `e2e_20260802T043218080Z_f4ba9de0_5eccd35b`
