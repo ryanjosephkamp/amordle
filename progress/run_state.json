@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.4-owner-accepted-v6.5-intake",
-  "status": "plan-mode-alignment-required",
-  "lastGreenCommit": "d41326b931d2fb8a4a354719f464fe21933842dd",
+  "currentCheckpoint": "stage-2-v6.5-final-protected-preview-candidate",
+  "status": "owner-review-required",
+  "lastGreenCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -100,11 +100,32 @@
       "focus-mode-authority-audit",
       "stable-game-tool-controls"
     ],
-    "implementationAuthorized": false,
+    "implementationAuthorized": true,
     "serviceMutationAuthorized": false,
     "mergeAuthorized": false,
     "productionReleaseAuthorized": false,
-    "resumeCondition": "read-only Plan-mode alignment followed by separate implementation authorization"
+    "resumeCondition": "implementation completed; owner manual review, merge, and Production release require separate authorization"
+  },
+  "v6_5Implementation": {
+    "intakeGoldenCheckpoint": "79f0e89dbfcd0c3b9c50e68e56c80bf2e260ffd0",
+    "intakeArtifact": "reports/stage-2-v6.5-solo-go-results-help-and-interactions-intake.md",
+    "applicationCandidateCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
+    "authorityMutationRequired": false,
+    "synchronizedMigrations": 51,
+    "deliveredAreas": [
+      "encountered-only-solo-go-definitions",
+      "collapsed-avatar-upload-guidance",
+      "account-settings-shortcut-and-copy",
+      "centralized-trusted-touch-button-haptics",
+      "help-teaching-aids-and-information-hierarchy",
+      "discoverable-retained-focus-mode",
+      "stable-idempotent-game-tool-controls"
+    ],
+    "hostedAcceptanceComplete": true,
+    "hostedRunId": "e2e_20260802T013849885Z_7716ba72_0d863be5",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "resumeCondition": "owner manual review; merge and Production release require separate authorization"
   },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
@@ -115,12 +136,12 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "8a530fa9e76df25b03fee057ede7ffaa952d11a0",
+    "candidateCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
     "reviewedPendingRepairIncluded": false,
     "check": "green",
-    "domainTests": 98,
-    "browserComponentTests": 17,
-    "fixtureE2E": 17,
+    "domainTests": 109,
+    "browserComponentTests": 20,
+    "fixtureE2E": 19,
     "visualE2E": 11,
     "parityRows": 237,
     "mpAuditRows": 73,
@@ -128,12 +149,12 @@
     "migrations": "45 immutable plus 6 authorized additive",
     "httpInterfaces": 3,
     "homeCompressedBytes": {
-      "js": 189032,
-      "css": 21503
+      "js": 191258,
+      "css": 23012
     },
     "gameCompressedBytes": {
-      "js": 194077,
-      "css": 25870
+      "js": 197126,
+      "css": 27499
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
@@ -207,17 +228,32 @@
     "zeroResidue": true,
     "status": "green"
   },
+  "v6_5HostedAcceptance": {
+    "candidateCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
+    "deploymentId": "dpl_F98YqGocuoGPMM9KWYXqkMX4FybD",
+    "deploymentUrl": "https://amordle-h4q2k6xo0-ryanjosephkamps-projects.vercel.app",
+    "fixtureE2E": 19,
+    "serviceE2E": 2,
+    "visualE2E": 11,
+    "parityRows": 237,
+    "mpAuditRows": 73,
+    "finalRunId": "e2e_20260802T013849885Z_7716ba72_0d863be5",
+    "avatarObjectsCleaned": 1,
+    "accentPresetRowsCleaned": 25,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "status": "green"
+  },
   "preview": {
-    "deploymentId": "dpl_3mETdjizULk7DPP9g6zSHn2s92f6",
-    "url": "https://amordle-p2478e0c6-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_F98YqGocuoGPMM9KWYXqkMX4FybD",
+    "url": "https://amordle-h4q2k6xo0-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "8a530fa9e76df25b03fee057ede7ffaa952d11a0",
-    "evidenceCommit": "d41326b931d2fb8a4a354719f464fe21933842dd",
+    "applicationCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
-    "lastRunId": "e2e_20260801T223654814Z_8a530fa9_f2ef9987",
+    "lastRunId": "e2e_20260802T013849885Z_7716ba72_0d863be5",
     "attempt": 1,
     "zeroResidue": true,
     "authUsersRemoved": 3,
@@ -244,6 +280,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.4-owner-accepted-v6.5-intake-recorded",
-  "updatedAt": "2026-08-02T00:14:57Z"
+  "reportStatus": "v6.5-protected-preview-acceptance-complete-owner-review-required",
+  "updatedAt": "2026-08-02T01:44:15Z"
 }

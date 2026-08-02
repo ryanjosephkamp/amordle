@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.5 Manual Checklist</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 68rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      li {
+        margin-block: 0.45rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+      }
+      .done {
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.5 Manual Checklist</h1>
+      <p>
+        <a href="https://amordle-h4q2k6xo0-ryanjosephkamps-projects.vercel.app"
+          >Open protected Preview</a
+        >
+      </p>
+      <section>
+        <h2>Automated completion</h2>
+        <ul class="done">
+          <li>✓ 109 domain, 20 browser, 19 fixture, 2 service, and 11 visual journeys.</li>
+          <li>
+            ✓ 237/237 parity; 73/73 multiplayer; 107/107 bootstrap; 51 migrations; 3 HTTP
+            interfaces.
+          </li>
+          <li>✓ Future-answer privacy probes and zero-residue cleanup on attempt 1.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Solo GO review</h2>
+        <ul>
+          <li>
+            ☐ Win Practice GO; verify all reached puzzles appear in order with definition actions.
+          </li>
+          <li>☐ Lose Practice/Daily GO; verify review stops exactly at the reached puzzle.</li>
+          <li>
+            ☐ Verify offline/missing definitions fail gracefully and no future answer appears.
+          </li>
+          <li>
+            ☐ Verify View Board, Copy Result, Play Again, scrolling, Solo OG, and COMBAT remain
+            correct.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Profile and Account</h2>
+        <ul>
+          <li>
+            ☐ Verify Profile image help is closed initially and works by touch, mouse, keyboard,
+            Escape, and outside dismissal.
+          </li>
+          <li>
+            ☐ Verify Account order: View Profile, Open Settings, Sign Out; Open Settings routes
+            correctly.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Haptics</h2>
+        <ul>
+          <li>
+            ☐ With haptics enabled, verify one pulse for button-like touch controls and on-screen
+            keys.
+          </li>
+          <li>
+            ☐ Verify disabled, prose-link, mouse, physical-keyboard, unsupported, and
+            reduced-effects exclusions.
+          </li>
+          <li>☐ Verify keyboard sound selection remains independent and correct.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Help and Focus Mode</h2>
+        <ul>
+          <li>
+            ☐ Review every teaching aid in light/dark, mobile, 200% zoom, reduced motion, and forced
+            colors.
+          </li>
+          <li>☐ Verify Hard Mode facts and authoritative tool prices are accurate.</li>
+          <li>☐ Verify the advanced keyboard manual is collapsed and keyboard-operable.</li>
+          <li>
+            ☐ Enter Focus Mode from More; verify same game, guaranteed exit, Back, and query
+            behavior.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Solo tools</h2>
+        <ul>
+          <li>☐ Toggle Sound and verify the control changes immediately without disappearing.</li>
+          <li>
+            ☐ Use Reveal/Remove repeatedly; verify stable layout, current counts, safe duplicate
+            handling, and announced status.
+          </li>
+          <li>☐ Verify no board/keyboard shift or forced keyboard input.</li>
+        </ul>
+      </section>
+      <section>
+        <h2>Protected boundaries</h2>
+        <p class="done">
+          ✓ Production, default branch, real accounts, migrations, Storage, Vercel settings, and the
+          locked shell are unchanged. No merge or Production release occurred.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
