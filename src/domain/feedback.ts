@@ -59,3 +59,24 @@ export function shouldUseHaptics(input: {
     input.vibrationAvailable
   );
 }
+
+export function isGuessRuleRejection(error: unknown): boolean {
+  if (!(error instanceof Error)) return false;
+  const code =
+    typeof error === 'object' && error !== null && 'code' in error
+      ? String((error as { code?: unknown }).code ?? '')
+      : '';
+  const message = error.message.toLowerCase();
+  if (
+    ['42501', '401', '403', 'UNAVAILABLE', 'NETWORK', 'INVALID_RESPONSE'].includes(code) ||
+    /network|offline|authentication|sign in|permission|expected version|stale/.test(message)
+  ) {
+    return false;
+  }
+  return (
+    ['22023', '23514', 'INVALID_GUESS', 'RULE_REJECTED'].includes(code) ||
+    /invalid (?:guess|word)|not (?:an )?accepted word|must contain|hard mode|letter word|word length|cannot use|ruled out/.test(
+      message,
+    )
+  );
+}

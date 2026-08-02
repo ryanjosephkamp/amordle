@@ -100,6 +100,11 @@ function PrivateStatsInner() {
         <Metric label="coins" value={economy.data?.coins ?? '—'} />
         <Metric label="reveal letters" value={economy.data?.reveal_one_letter ?? '—'} />
         <Metric label="remove letters" value={economy.data?.remove_incorrect_letters ?? '—'} />
+        <LevelProgress
+          level={accountProgress.level}
+          xp={accountProgress.xp}
+          percentage={level.percentage}
+        />
       </StatsSection>
 
       <StatsSection title="overall results" note={`${projection.completedGames} game sample`}>
@@ -150,7 +155,12 @@ function PrivateStatsInner() {
       <StatsSection title="solo attempt distribution" note="guesses used">
         {projection.soloGuessDistribution.length ? (
           projection.soloGuessDistribution.map((bucket) => (
-            <div className="distribution-row" key={bucket.guesses}>
+            <div
+              className="distribution-row"
+              key={bucket.guesses}
+              tabIndex={0}
+              aria-label={`${bucket.games} Solo ${bucket.games === 1 ? 'game' : 'games'} completed in ${bucket.guesses} guesses`}
+            >
               <span>{bucket.guesses} guesses</span>
               <span aria-hidden="true" className="distribution-track">
                 <span
@@ -207,6 +217,7 @@ function PrivateStatsInner() {
         ) : (
           <p className="empty-copy">No ranked rating has been established yet.</p>
         )}
+        {ratings.data?.length ? <RatingComparison ratings={ratings.data} /> : null}
       </StatsSection>
 
       <StatsSection title="recent activity" note="latest five completions">
@@ -283,12 +294,33 @@ function ResultComposition({
   return (
     <figure className="stats-visual stats-result-composition">
       <figcaption>
-        Result mix · {wins} wins, {losses} losses, {draws} draws
+        Result mix · {wins} wins, {losses} losses, {draws} draws · {total} total
       </figcaption>
-      <div className="result-composition-track" aria-hidden="true">
-        <span className="is-win" style={{ width: `${(wins / total) * 100}%` }} />
-        <span className="is-loss" style={{ width: `${(losses / total) * 100}%` }} />
-        <span className="is-draw" style={{ width: `${(draws / total) * 100}%` }} />
+      <div className="result-composition-track">
+        {wins > 0 ? (
+          <span
+            className="is-win"
+            tabIndex={0}
+            aria-label={`${wins} wins, ${Math.round((wins / total) * 100)} percent`}
+            style={{ width: `${(wins / total) * 100}%` }}
+          />
+        ) : null}
+        {losses > 0 ? (
+          <span
+            className="is-loss"
+            tabIndex={0}
+            aria-label={`${losses} losses, ${Math.round((losses / total) * 100)} percent`}
+            style={{ width: `${(losses / total) * 100}%` }}
+          />
+        ) : null}
+        {draws > 0 ? (
+          <span
+            className="is-draw"
+            tabIndex={0}
+            aria-label={`${draws} draws, ${Math.round((draws / total) * 100)} percent`}
+            style={{ width: `${(draws / total) * 100}%` }}
+          />
+        ) : null}
       </div>
       <div className="result-composition-legend" aria-hidden="true">
         <span>WIN {Math.round((wins / total) * 100)}%</span>
@@ -305,7 +337,12 @@ function ComparisonBars({ rows }: { rows: Array<[string, number]> }) {
     <figure className="stats-visual stats-comparison">
       <figcaption>Completed-game comparison</figcaption>
       {rows.map(([label, value]) => (
-        <div className="comparison-row" key={label}>
+        <div
+          className="comparison-row"
+          key={label}
+          tabIndex={0}
+          aria-label={`${label}: ${value} completed games`}
+        >
           <span>{label}</span>
           <span className="comparison-track" aria-hidden="true">
             <span style={{ width: `${(value / maximum) * 100}%` }} />
@@ -313,6 +350,61 @@ function ComparisonBars({ rows }: { rows: Array<[string, number]> }) {
           <strong>{value}</strong>
         </div>
       ))}
+    </figure>
+  );
+}
+
+function LevelProgress({
+  level,
+  xp,
+  percentage,
+}: {
+  level: number;
+  xp: number;
+  percentage: number;
+}) {
+  const rounded = Math.max(0, Math.min(100, Math.round(percentage)));
+  return (
+    <figure className="stats-visual stats-level-progress">
+      <figcaption>
+        Level {level} progress · {xp} total XP · {rounded}% toward level {level + 1}
+      </figcaption>
+      <div
+        className="stats-progress-track"
+        role="progressbar"
+        aria-label={`Progress toward level ${level + 1}`}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-valuenow={rounded}
+      >
+        <span style={{ width: `${rounded}%` }} />
+      </div>
+    </figure>
+  );
+}
+
+function RatingComparison({ ratings }: { ratings: Array<{ bucket: string; rating: number }> }) {
+  const maximum = Math.max(1, ...ratings.map((rating) => rating.rating));
+  return (
+    <figure className="stats-visual stats-rating-comparison">
+      <figcaption>Current service-confirmed rating comparison</figcaption>
+      {ratings.map((rating) => {
+        const value = Math.round(rating.rating);
+        return (
+          <div
+            className="comparison-row"
+            key={rating.bucket}
+            tabIndex={0}
+            aria-label={`${ratingBucketLabel(rating.bucket)} rating ${value}`}
+          >
+            <span>{ratingBucketLabel(rating.bucket)}</span>
+            <span className="comparison-track" aria-hidden="true">
+              <span style={{ width: `${(value / maximum) * 100}%` }} />
+            </span>
+            <strong>{value}</strong>
+          </div>
+        );
+      })}
     </figure>
   );
 }

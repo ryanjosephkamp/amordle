@@ -44,7 +44,12 @@ describe('MP-01 through MP-21 acceptance authority', () => {
       'p_go_puzzle_count not in (5, 7, 10)',
       'p_time_limit_ms is not null and p_time_limit_ms <> 300000',
     ]);
-    includesAll(transcript, ['actorLabel', 'orderedMoves', 'Math.max(6, orderedMoves.length + 1)']);
+    includesAll(transcript, [
+      'actorLabel',
+      'orderedMoves',
+      'const rows: CombatTranscriptRow[]',
+      'Math.max(6, rows.length + 1)',
+    ]);
   });
 
   it('proves MP-02 four isolated Daily lanes and UTC authority', () => {

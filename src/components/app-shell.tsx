@@ -183,7 +183,7 @@ export function AppShell({ children }: PropsWithChildren) {
               <span aria-hidden="true">❯</span> amordle
             </Link>
             <div className="toolbar-context" aria-label="Current location">
-              <span>{routeContext(pathname)}</span>
+              <span title={routeContext(pathname)}>{routeContext(pathname)}</span>
               <span className="context-ready">ready</span>
             </div>
             <nav className="desktop-nav" aria-label="Primary">

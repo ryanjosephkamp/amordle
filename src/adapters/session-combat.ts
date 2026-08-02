@@ -196,3 +196,7 @@ export function writeCombatAttentionProjection(projection: CombatAttentionProjec
     return false;
   }
 }
+
+export function removeCombatAttentionProjection(userId: string): void {
+  sessionStorage.removeItem(combatAttentionStorageKey(userId));
+}

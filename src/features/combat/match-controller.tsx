@@ -43,7 +43,9 @@ import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
 import type { EvidenceState } from '@/domain/game';
 import type { KeyboardFeedbackEvent } from '@/domain/feedback';
+import { isGuessRuleRejection } from '@/domain/feedback';
 import { historyRowSchema } from '@/domain/account-continuity';
+import { validSeededTranscriptRows } from '@/domain/combat-transcript';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { WordDefinition } from '@/features/words/word-definition';
 import { MoveBoards } from './combat-transcript';
@@ -105,6 +107,7 @@ function MatchControllerInner({
 }) {
   const auth = useAuth();
   const queryClient = useQueryClient();
+  const feedback = useFeedbackPreferences();
   const [draft, setDraft] = useState('');
   const [message, setMessage] = useState('');
   const [rankedPracticeSettlement, setRankedPracticeSettlement] =
@@ -231,7 +234,15 @@ function MatchControllerInner({
       void queryClient.invalidateQueries({ queryKey: ['combat', 'active'] });
       void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
-    onError: (error) => {
+    onError: (error, kind) => {
+      if (
+        kind === 'guess' &&
+        feedback.settings.sound &&
+        !feedback.settings.reducedEffects &&
+        isGuessRuleRejection(error)
+      ) {
+        void playKeyboardSound(feedback.settings.keyboardSoundProfile, 'reject');
+      }
       setMessage(error instanceof Error ? error.message : 'That action was not accepted.');
       void match.refetch();
     },
@@ -529,6 +540,7 @@ function LegacyMatch({
           return solvedMove
             ? {
                 id: solvedMove.id,
+                sourcePuzzleIndex: puzzleIndex,
                 guess: solvedMove.guess,
                 tiles: scoreGuess(game.answer, solvedMove.guess),
               }
@@ -566,17 +578,18 @@ function LegacyMatch({
           <span>Both players get the same puzzle.</span>
         </div>
       )}
-      {game.mode === 'go' && currentPuzzleIndex > 0 && (
-        <div className="seeded-evidence">
-          <h2>SEED EVIDENCE</h2>
-          {seededRows.map((seededRow) => (
-            <TileRow key={seededRow.id} guess={seededRow.guess} tiles={seededRow.tiles} />
-          ))}
-        </div>
-      )}
       <MoveBoards
         moves={visibleMoves}
         length={game.wordLength}
+        seededRows={validSeededTranscriptRows({
+          candidates: seededRows.map((row) => ({
+            sourcePuzzleIndex: row.sourcePuzzleIndex,
+            guess: row.guess,
+            tiles: row.tiles,
+          })),
+          currentPuzzleIndex,
+          wordLength: game.wordLength,
+        })}
         viewerSeat={seat}
         actorLabels={{
           [seat]: 'You',
@@ -767,14 +780,6 @@ function AuthoritativeMatch({
           </div>
         ))}
       </div>
-      {game.seededRows.length > 0 && (
-        <div className="seeded-evidence">
-          <h2>SEED EVIDENCE</h2>
-          {game.seededRows.map((row) => (
-            <TileRow key={row.sourcePuzzleIndex} guess={row.guess} tiles={row.tiles} />
-          ))}
-        </div>
-      )}
       <MoveBoards
         moves={visibleMoves.map((move) => ({
           id: move.actionId,
@@ -784,6 +789,11 @@ function AuthoritativeMatch({
           acceptedAt: move.createdAt,
         }))}
         length={game.wordLength}
+        seededRows={validSeededTranscriptRows({
+          candidates: game.seededRows,
+          currentPuzzleIndex: game.currentPuzzleIndex,
+          wordLength: game.wordLength,
+        })}
         viewerSeat={game.viewerSeat}
         actorLabels={Object.fromEntries(
           game.players.map((participant) => [
@@ -936,35 +946,6 @@ function CombatHeader({
         </strong>
       </div>
     </header>
-  );
-}
-
-function TileRow({
-  guess,
-  tiles,
-}: {
-  guess: string;
-  tiles: Array<{ letter: string; state: 'correct' | 'present' | 'absent' }>;
-}) {
-  return (
-    <div className="board-row" role="row" aria-label={guess}>
-      {tiles.map((tile, index) => {
-        const glyph = tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×';
-        return (
-          <div
-            key={`${index}:${tile.letter}`}
-            className={`tile is-${tile.state}`}
-            role="cell"
-            aria-label={`${tile.letter}, ${tile.state}`}
-          >
-            <span className="tile-letter">{tile.letter.toUpperCase()}</span>
-            <span className="tile-evidence" aria-hidden="true">
-              {glyph}
-            </span>
-          </div>
-        );
-      })}
-    </div>
   );
 }
 

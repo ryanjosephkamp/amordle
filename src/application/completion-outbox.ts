@@ -71,6 +71,20 @@ export async function resetCompletionOutbox(userId: string): Promise<void> {
   await deleteEnvelope(namespace(userId), domain);
 }
 
+export async function removeSoloPendingCompletions(userId: string): Promise<'clean' | 'corrupt'> {
+  const ownerNamespace = namespace(userId);
+  const result = await readEnvelopeDiagnostic(ownerNamespace, domain, completionOutboxSchema);
+  if (result.status === 'missing') return 'clean';
+  if (result.status === 'corrupt') return 'corrupt';
+  await mutateEnvelope(ownerNamespace, domain, completionOutboxSchema, [], (current) =>
+    current.filter(
+      (record) =>
+        record.row.entry.kind !== 'solo-practice' && record.row.entry.kind !== 'solo-daily',
+    ),
+  );
+  return 'clean';
+}
+
 export async function reconcileCompletionOutbox(userId: string): Promise<ReconciliationResult> {
   const existing = inflight.get(userId);
   if (existing) return existing;

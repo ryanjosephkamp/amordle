@@ -161,3 +161,7 @@ export async function flushAvatarCleanup(userId: string): Promise<number> {
   localStorage.setItem(cleanupStorageKey(userId), JSON.stringify(remaining));
   return removed;
 }
+
+export function clearAvatarCleanupQueue(userId: string): void {
+  localStorage.removeItem(cleanupStorageKey(userId));
+}

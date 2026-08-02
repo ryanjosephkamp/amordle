@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.6 account-lifecycle authority decision</title>
+    <style>
+      :root {
+        color-scheme: light;
+        font-family:
+          ui-sans-serif,
+          system-ui,
+          -apple-system,
+          sans-serif;
+        line-height: 1.55;
+      }
+      body {
+        max-width: 54rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        color: #151515;
+        background: #fff;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+      h2 {
+        margin-top: 2rem;
+        border-top: 1px solid #aaa;
+        padding-top: 1rem;
+      }
+      code,
+      pre {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      pre {
+        overflow-x: auto;
+        border: 1px solid #888;
+        padding: 1rem;
+        white-space: pre-wrap;
+      }
+      .notice {
+        border: 2px solid #111;
+        padding: 1rem;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border: 1px solid #999;
+        padding: 0.55rem;
+        text-align: left;
+        vertical-align: top;
+        overflow-wrap: anywhere;
+      }
+      a {
+        color: #0645ad;
+      }
+      @media print {
+        body {
+          max-width: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.6 account-lifecycle authority decision</h1>
+      <p class="notice">
+        <strong>Status:</strong> awaiting exact owner authorization. The application and authority
+        artifacts are implemented and locally verified. The migration is not applied, the Edge
+        Function is not deployed, and no hosted service was mutated.
+      </p>
+
+      <h2>Verified gate state</h2>
+      <ul>
+        <li>Branch: <code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code>.</li>
+        <li>Rollback checkpoint: <code>b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69</code>.</li>
+        <li>Linked Supabase project: <code>squqdstdvbsvhagfuzgj</code>.</li>
+        <li>Current authority: 51 synchronized migrations; pending result: 52.</li>
+        <li>107/107 immutable bootstrap files.</li>
+        <li>237/237 functional clauses and 73/73 multiplayer clauses.</li>
+        <li>Exactly three Next.js application HTTP interfaces.</li>
+      </ul>
+
+      <h2>Exact reviewed artifacts</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Artifact</th>
+            <th>SHA-256</th>
+            <th>State</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><code>20260802193000_amordle_account_lifecycle_v1.sql</code></td>
+            <td><code>caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3</code></td>
+            <td>Reviewed pending; not applied</td>
+          </tr>
+          <tr>
+            <td><code>account-lifecycle-v1/index.ts</code></td>
+            <td><code>fb961d9e60d39008c50492561a8fa2c04fde12e49264c0a534f3522709cb5dc1</code></td>
+            <td>Reviewed pending; not deployed</td>
+          </tr>
+          <tr>
+            <td><code>account-lifecycle-v1/deno.json</code></td>
+            <td><code>fc9fc38c21441b7f67a91280ed28b8ca4ad67fc69d713db441f5c0fd9a6abf9f</code></td>
+            <td>Reviewed pending; not deployed</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Why new authority is required</h2>
+      <p>
+        Signed-in email and password changes can use Supabase Auth's existing
+        <code>updateUser</code> authority after reauthentication. Destructive account actions cannot
+        securely run in the browser. They require a bounded service that verifies the password,
+        issues one-time confirmations, preserves opponent-side shared facts, removes an avatar, and
+        invokes administrative Auth deletion without exposing the service-role credential.
+      </p>
+
+      <h2>Migration authority</h2>
+      <h3>Private confirmation records</h3>
+      <p>
+        The new private table stores only token hashes. Each challenge is bound to one user and one
+        enumerated action, expires after five minutes, and is serialized with a per-account advisory
+        lock. Non-account-deletion actions are consumed once. Permanent deletion enters a private
+        cleanup-only processing state until Storage and Auth finish. Issuance is bounded to five
+        recent attempts in fifteen minutes. Browser roles receive no table or function access.
+      </p>
+      <h3>Competitive generations</h3>
+      <p>
+        A private generation marker supports a fresh personal 1200/provisional/zero W-L-D rating
+        generation without erasing settled matches or opponent evidence.
+      </p>
+      <h3>Shared facts</h3>
+      <p>
+        Settled multiplayer participant references become nullable and retain stable seat keys.
+        Account deletion replaces personal display data with <code>Deleted player</code> while
+        preserving opponent History and rating integrity. Pending queues, reservations, requests,
+        and unfinished account-owned claims are removed first.
+      </p>
+
+      <h2>Destructive scopes</h2>
+      <ul>
+        <li>
+          <strong>Delete Solo history and progress:</strong> removes Solo sessions, History,
+          statistical sources, streak, and pending Solo completions; preserves economy, purchases,
+          settings, and COMBAT.
+        </li>
+        <li>
+          <strong>Restart competitive profile:</strong> refuses during active COMBAT, cancels
+          waiting state, hides the requesting player's pre-reset personal COMBAT History, and starts
+          fresh rating buckets; preserves settled shared facts and opponent data.
+        </li>
+        <li>
+          <strong>Delete account permanently:</strong> refuses during active COMBAT, removes
+          personal data, detaches settled participant facts, deletes the exact avatar, then deletes
+          the Auth user. Browser caches are cleared only after success.
+        </li>
+      </ul>
+
+      <h2>Edge Function contract</h2>
+      <p>
+        <code>account-lifecycle-v1</code> accepts authenticated <code>POST</code> requests up to
+        4096 bytes. Its only operations are <code>prepare</code> with the current password and
+        <code>confirm</code> with the one-time token. It reauthenticates in a non-persistent client,
+        generates a 256-bit token, persists only its SHA-256 hash, calls only service-role lifecycle
+        procedures, and returns sanitized receipts. The source has no logging statements.
+      </p>
+      <p>
+        Database confirmation enters a private processing state and retains the exact avatar
+        cleanup receipt before Storage or Auth deletion. The same confirmation can retry only that
+        idempotent external cleanup; an expired or closed confirmation requires fresh password
+        verification and inherits only the pending receipt. Avatar paths must belong to the linked
+        project's exact public avatar bucket. Storage deletion receives at most three exact retries;
+        Auth deletion occurs only after Storage succeeds. Residue or a partial cross-service failure
+        blocks completion and requires exact cleanup or a forward repair.
+      </p>
+
+      <h2>HTTP contract reconciliation</h2>
+      <p>
+        The three Next.js application interfaces remain unchanged. The proposed Edge Function is one
+        separate authenticated Supabase service surface, limited to two operations and three
+        actions. It is not a general administrative API and does not authorize service-role browser
+        access, another vendor, another project, or Production mutation.
+      </p>
+
+      <h2>Compatibility, privacy, and replay review</h2>
+      <ul>
+        <li>Existing browser RPC signatures, grants, and responses remain unchanged.</li>
+        <li>Migration application does not rewrite existing shared rows.</li>
+        <li>
+          Passwords are never stored, logged, included in URLs, analytics, traces, or reports.
+        </li>
+        <li>
+          Public deletion snapshots contain no email, raw Auth ID, avatar URL, or profile data.
+        </li>
+        <li>Wrong, expired, replayed, cross-account, and cross-action tokens fail closed.</li>
+        <li>Action locking prevents concurrent duplicate mutation.</li>
+        <li>
+          Static tests lock all three hashes and prove confirm-before-Storage-before-Auth order.
+        </li>
+        <li>
+          No local Deno or Docker-backed Supabase runtime is installed; real linked replay and
+          disposable-user verification follow only after authorization.
+        </li>
+      </ul>
+
+      <h2>Pre-authorization evidence</h2>
+      <ul>
+        <li><code>pnpm check</code> and the production build passed.</li>
+        <li>45/45 immutable + 6/6 authorized + 1/1 reviewed pending migrations.</li>
+        <li>120/120 domain tests and 21/21 browser component tests.</li>
+        <li>20/20 fixture E2E tests across Chromium, Firefox, and WebKit.</li>
+        <li>13/13 visual/responsive E2E tests.</li>
+        <li>Word boundaries, API count, parity, multiplayer audit, and bundle budgets passed.</li>
+      </ul>
+
+      <h2>After authorization</h2>
+      <ol>
+        <li>Reverify project and migration identities.</li>
+        <li>Apply only the exact migration and verify 52 synchronized migrations.</li>
+        <li>Deploy only the exact function artifacts and regenerate linked types.</li>
+        <li>Run password, replay, action-scope, deletion, and opponent-integrity probes.</li>
+        <li>Rerun complete local acceptance and deploy one exact protected Preview.</li>
+        <li>Run serial disposable-user hosted acceptance and prove zero residue.</li>
+        <li>Reconcile evidence, reports, checklists, and the final private golden checkpoint.</li>
+      </ol>
+
+      <h2>Exact authorization text</h2>
+      <pre>
+I authorize applying 20260802193000_amordle_account_lifecycle_v1.sql with SHA-256 caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3 to linked Supabase project squqdstdvbsvhagfuzgj and deploying Supabase Edge Function account-lifecycle-v1 from index.ts with SHA-256 fb961d9e60d39008c50492561a8fa2c04fde12e49264c0a534f3522709cb5dc1 and deno.json with SHA-256 fc9fc38c21441b7f67a91280ed28b8ca4ad67fc69d713db441f5c0fd9a6abf9f, followed by exact migration and function verification, type regeneration, account UI and adapter completion, complete local acceptance, protected Preview deployment, disposable-user hosted acceptance, exact database, Storage, function-test, and Auth cleanup, parity reconciliation, final reporting, and a private golden checkpoint. Do not merge or release Production.</pre>
+
+      <h2>Rollback</h2>
+      <p>
+        Application rollback uses a forward revert and redeployment of
+        <code>b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69</code>. The previous protected Preview
+        remains available until a new green candidate exists. There is no down migration. Database
+        or function defects receive separately reviewed additive forward repairs.
+      </p>
+    </main>
+  </body>
+</html>

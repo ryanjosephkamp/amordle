@@ -449,6 +449,42 @@ describe('browser components', () => {
     );
   });
 
+  it('renders validated GO seed answers as chronological rows before player guesses', async () => {
+    render(
+      <MoveBoards
+        length={5}
+        viewerSeat="player-one"
+        seededRows={[
+          {
+            kind: 'seeded',
+            id: 'seed:0:slave',
+            sourcePuzzleIndex: 0,
+            actorLabel: 'Puzzle 1 answer',
+            guess: 'slave',
+            tiles: [...'slave'].map((letter) => ({ letter, state: 'present' as const })),
+          },
+        ]}
+        moves={[
+          {
+            id: 'move-one',
+            seat: 'player-one',
+            guess: 'frank',
+            acceptedAt: '2026-08-02T12:00:00.000Z',
+            tiles: [...'frank'].map((letter) => ({ letter, state: 'absent' as const })),
+          },
+        ]}
+      />,
+    );
+    await expect.element(page.getByRole('row', { name: 'Puzzle 1 answer slave' })).toBeVisible();
+    const entries = [...document.querySelectorAll<HTMLElement>('.combat-transcript-entry')];
+    expect(entries[0]?.dataset.actor).toBe('seeded');
+    expect(entries[0]?.textContent).toContain('SEED 1');
+    expect(entries[0]?.querySelector('.board-row')?.getAttribute('aria-label')).toBe(
+      'Puzzle 1 answer slave',
+    );
+    expect(entries[1]?.dataset.actor).toBe('you');
+  });
+
   it('renders an honest empty Word Explorer state', async () => {
     render(<WordResults words={[]} answerEligible={[]} total={0} page={1} pages={0} />);
     await expect.element(page.getByText('No words match this search.')).toBeVisible();

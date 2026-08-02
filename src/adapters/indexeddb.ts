@@ -176,6 +176,63 @@ export async function deleteEnvelope(ownerNamespace: string, domain: string): Pr
   }
 }
 
+export async function deleteOwnerEnvelopes(ownerNamespace: string): Promise<number> {
+  const database = await openDatabase();
+  try {
+    return await new Promise<number>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const prefix = `${ownerNamespace}\0`;
+      const request = store.openCursor(IDBKeyRange.bound(prefix, `${prefix}\uffff`));
+      let removed = 0;
+      request.onerror = () => reject(request.error ?? new Error('Account cleanup failed.'));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        cursor.delete();
+        removed += 1;
+        cursor.continue();
+      };
+      transaction.oncomplete = () => resolve(removed);
+      transaction.onerror = () => reject(transaction.error ?? new Error('Account cleanup failed.'));
+      transaction.onabort = () =>
+        reject(transaction.error ?? new Error('Account cleanup was cancelled.'));
+    });
+  } finally {
+    database.close();
+  }
+}
+
+export async function deleteOwnerEnvelopesByDomainPrefix(
+  ownerNamespace: string,
+  domainPrefix: string,
+): Promise<number> {
+  const database = await openDatabase();
+  try {
+    return await new Promise<number>((resolve, reject) => {
+      const transaction = database.transaction(STORE_NAME, 'readwrite');
+      const store = transaction.objectStore(STORE_NAME);
+      const prefix = key(ownerNamespace, domainPrefix);
+      const request = store.openCursor(IDBKeyRange.bound(prefix, `${prefix}\uffff`));
+      let removed = 0;
+      request.onerror = () => reject(request.error ?? new Error('Account cleanup failed.'));
+      request.onsuccess = () => {
+        const cursor = request.result;
+        if (!cursor) return;
+        cursor.delete();
+        removed += 1;
+        cursor.continue();
+      };
+      transaction.oncomplete = () => resolve(removed);
+      transaction.onerror = () => reject(transaction.error ?? new Error('Account cleanup failed.'));
+      transaction.onabort = () =>
+        reject(transaction.error ?? new Error('Account cleanup was cancelled.'));
+    });
+  } finally {
+    database.close();
+  }
+}
+
 export async function listEnvelopes<T>(
   ownerNamespace: string,
   domainPrefix: string,

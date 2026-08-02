@@ -234,8 +234,8 @@ function PracticeLobbyRow({
   cancel(): void;
 }) {
   return (
-    <div className="data-row" data-game-id={row.id}>
-      <div>
+    <div className="data-row lobby-row" data-game-id={row.id}>
+      <div className="lobby-row-summary">
         <strong>
           {isOwner ? (
             'Your Practice lobby'
@@ -253,15 +253,17 @@ function PracticeLobbyRow({
         </p>
         <span className="mono">opened {formatAge(row.createdAt)}</span>
       </div>
-      {isOwner ? (
-        <button type="button" disabled={pending} onClick={cancel}>
-          Cancel
-        </button>
-      ) : (
-        <button className="primary" type="button" disabled={pending} onClick={join}>
-          Join
-        </button>
-      )}
+      <div className="lobby-row-action">
+        {isOwner ? (
+          <button type="button" disabled={pending} onClick={cancel}>
+            Cancel
+          </button>
+        ) : (
+          <button className="primary" type="button" disabled={pending} onClick={join}>
+            Join
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -278,8 +280,8 @@ function DailyLobbyRow({
   cancel(): void;
 }) {
   return (
-    <div className="data-row" data-game-id={lobby.id}>
-      <div>
+    <div className="data-row lobby-row" data-game-id={lobby.id}>
+      <div className="lobby-row-summary">
         <strong>
           {lobby.capabilities.canCancel ? (
             'Your Daily lobby'
@@ -296,17 +298,19 @@ function DailyLobbyRow({
         </p>
         <span className="mono">opened {formatAge(lobby.createdAt)}</span>
       </div>
-      {lobby.capabilities.canCancel ? (
-        <button type="button" disabled={pending} onClick={cancel}>
-          Cancel
-        </button>
-      ) : lobby.capabilities.canJoin ? (
-        <button className="primary" type="button" disabled={pending} onClick={join}>
-          Join
-        </button>
-      ) : (
-        <span className="badge">Unavailable</span>
-      )}
+      <div className="lobby-row-action">
+        {lobby.capabilities.canCancel ? (
+          <button type="button" disabled={pending} onClick={cancel}>
+            Cancel
+          </button>
+        ) : lobby.capabilities.canJoin ? (
+          <button className="primary" type="button" disabled={pending} onClick={join}>
+            Join
+          </button>
+        ) : (
+          <span className="badge">Unavailable</span>
+        )}
+      </div>
     </div>
   );
 }

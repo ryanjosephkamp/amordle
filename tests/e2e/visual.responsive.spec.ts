@@ -542,6 +542,124 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  test('intermediate desktop widths truncate toolbar context and stack lobby panels before collision', async ({
+    page,
+  }) => {
+    const longMatchId = `amordle-public-practice-v3-${'990e1b31-8dfe-41b2-aaf0-'.repeat(4)}536b28227163`;
+    for (const width of [1280, 1024, 853, 768, 640]) {
+      await page.setViewportSize({ width, height: 1024 });
+      await page.goto(`/combat/match/${longMatchId}`);
+      await expect(page.locator('.app-toolbar')).toBeVisible();
+      const toolbar = await page.evaluate(() => {
+        const context = document.querySelector('.toolbar-context')?.getBoundingClientRect();
+        const title = document
+          .querySelector('.toolbar-context > span:first-child')
+          ?.getBoundingClientRect();
+        const tools = document.querySelector('.topbar-tools')?.getBoundingClientRect();
+        const titleElement = document.querySelector<HTMLElement>(
+          '.toolbar-context > span:first-child',
+        );
+        if (!context || !title || !tools || !titleElement) return null;
+        return {
+          contextRight: context.right,
+          titleRight: title.right,
+          toolsLeft: tools.left,
+          titleOverflow: titleElement.scrollWidth - titleElement.clientWidth,
+          documentOverflow: document.documentElement.scrollWidth - innerWidth,
+        };
+      });
+      expect(toolbar).not.toBeNull();
+      expect(toolbar!.contextRight).toBeLessThanOrEqual(toolbar!.toolsLeft + 1);
+      expect(toolbar!.titleRight).toBeLessThanOrEqual(toolbar!.contextRight + 1);
+      expect(toolbar!.documentOverflow).toBeLessThanOrEqual(1);
+
+      await page.goto('/combat/lobby');
+      await expect(page.locator('.combat-lobby-region--private')).toBeVisible();
+      const lobby = await page.evaluate(() => {
+        const privateRegion = document.querySelector('.combat-lobby-region--private');
+        if (!privateRegion) return null;
+        const fixture = document.createElement('div');
+        fixture.className = 'split-layout';
+        fixture.innerHTML = `
+          <section class="form-panel"><div class="field-stack"><label>Public profile ID<input value="player-identifier-that-must-remain-contained" /></label><button>Send private request</button></div></section>
+          <section><div class="section-heading"><h2>Request center</h2><button>Refresh</button></div><p>Open match details remain in their own panel.</p></section>`;
+        privateRegion.append(fixture);
+        const [first, second] = [...fixture.children].map((child) => child.getBoundingClientRect());
+        const input = fixture.querySelector('input')?.getBoundingClientRect();
+        const result =
+          first && second && input
+            ? {
+                separated:
+                  first.right <= second.left + 1 ||
+                  second.right <= first.left + 1 ||
+                  first.bottom <= second.top + 1 ||
+                  second.bottom <= first.top + 1,
+                inputContained: input.right <= first.right + 1,
+                documentOverflow: document.documentElement.scrollWidth - innerWidth,
+              }
+            : null;
+        fixture.remove();
+        return result;
+      });
+      expect(lobby).not.toBeNull();
+      expect(lobby!.separated).toBe(true);
+      expect(lobby!.inputContained).toBe(true);
+      expect(lobby!.documentOverflow).toBeLessThanOrEqual(1);
+    }
+  });
+
+  test('light selected surfaces keep primary and muted descendant text readable', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.emulateMedia({ colorScheme: 'dark' });
+    await page.goto('/combat');
+    const command = page.locator('.route-link').first();
+    await expect(command).toBeVisible();
+    await command.hover();
+    const contrast = await command.evaluate((row) => {
+      const muted = row.querySelector('span');
+      const primary = row.querySelector('strong');
+      if (!muted || !primary) return null;
+      const sample = (css: string): readonly [number, number, number] => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1;
+        canvas.height = 1;
+        const context = canvas.getContext('2d');
+        if (!context) return [0, 0, 0];
+        context.fillStyle = css;
+        context.fillRect(0, 0, 1, 1);
+        const [red = 0, green = 0, blue = 0] = context.getImageData(0, 0, 1, 1).data;
+        return [red, green, blue];
+      };
+      const luminance = ([red, green, blue]: readonly [number, number, number]) =>
+        [red, green, blue]
+          .map((value) => {
+            const normalized = value / 255;
+            return normalized <= 0.04045
+              ? normalized / 12.92
+              : ((normalized + 0.055) / 1.055) ** 2.4;
+          })
+          .reduce(
+            (total, channel, index) => total + channel * ([0.2126, 0.7152, 0.0722][index] ?? 0),
+            0,
+          );
+      const ratio = (foreground: string, background: string) => {
+        const first = luminance(sample(foreground));
+        const second = luminance(sample(background));
+        return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+      };
+      const background = getComputedStyle(row).backgroundColor;
+      return {
+        primary: ratio(getComputedStyle(primary).color, background),
+        muted: ratio(getComputedStyle(muted).color, background),
+      };
+    });
+    expect(contrast).not.toBeNull();
+    expect(contrast!.primary).toBeGreaterThanOrEqual(4.5);
+    expect(contrast!.muted).toBeGreaterThanOrEqual(4.5);
+  });
+
   test('200 percent reflow, reduced motion, and forced colors preserve operation', async ({
     page,
   }, testInfo) => {

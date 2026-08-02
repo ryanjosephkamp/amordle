@@ -41,6 +41,7 @@
   --terminal-title: oklch(0.88 0.008 220 / 0.96);
   --terminal-selected: oklch(0.24 0.025 225);
   --terminal-selected-ink: oklch(0.98 0.004 220);
+  --terminal-selected-muted: oklch(0.86 0.01 220);
   --field-surface: oklch(0.925 0.01 220);
   --field-surface-hover: oklch(0.895 0.014 220);
   --field-border: oklch(0.56 0.025 220);
@@ -163,6 +164,7 @@
     --terminal-title: oklch(0.22 0.012 225 / 0.96);
     --terminal-selected: oklch(0.9 0.008 205);
     --terminal-selected-ink: oklch(0.13 0.015 225);
+    --terminal-selected-muted: oklch(0.34 0.018 225);
     --field-surface: oklch(0.205 0.016 225);
     --field-surface-hover: oklch(0.245 0.02 225);
     --field-border: oklch(0.49 0.025 220);
@@ -295,6 +297,15 @@ button:hover,
   border-color: var(--ink);
   background: var(--terminal-selected);
   color: var(--terminal-selected-ink);
+}
+
+button:hover :is(p, small, span),
+.button:hover :is(p, small, span),
+.button.primary :is(p, small, span),
+button.primary :is(p, small, span),
+[aria-current='page'] :is(p, small, span),
+[aria-pressed='true'] :is(p, small, span) {
+  color: inherit;
 }
 
 button:active,
@@ -891,6 +902,11 @@ button.primary:hover {
   text-align: left;
 }
 
+.data-row > :last-child:is(button, .button),
+.data-row > :last-child > :is(button, .button) {
+  color: inherit;
+}
+
 .data-row a,
 .request-row a {
   color: var(--accent-text);
@@ -903,7 +919,7 @@ button.primary:hover {
 .feedback-profile-control {
   display: grid;
   width: min(100%, 24rem);
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 0.45rem;
 }
 
@@ -920,6 +936,196 @@ button.primary:hover {
   font-family: var(--tui-font);
   font-size: 0.7rem;
   line-height: 1.55;
+}
+
+.account-settings-list,
+.danger-zone,
+.danger-action-list,
+.account-action-form,
+.danger-disclosure {
+  display: grid;
+  gap: 0.8rem;
+  min-width: 0;
+}
+
+.account-setting-card,
+.danger-action-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  border-bottom: var(--terminal-rule);
+  padding: 0.8rem;
+}
+
+.account-setting-card h3,
+.account-setting-card p,
+.danger-action-list h3,
+.danger-action-list p,
+.danger-zone-warning p,
+.danger-disclosure h3,
+.danger-final-confirmation p {
+  margin: 0;
+}
+
+.account-setting-card h3,
+.danger-action-list h3,
+.danger-zone-warning strong,
+.danger-disclosure h3 {
+  font-family: var(--tui-font);
+  font-size: 0.7rem;
+}
+
+.account-setting-card p,
+.danger-action-list p,
+.danger-zone-warning p,
+.danger-disclosure,
+.danger-final-confirmation {
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: 0.64rem;
+}
+
+.danger-zone {
+  border: 1px solid var(--danger);
+}
+
+.danger-zone-warning {
+  border-bottom: 1px solid var(--danger);
+  padding: 0.8rem;
+}
+
+.danger-zone-warning strong,
+.danger-action-list h3,
+.danger-disclosure section:first-child h3 {
+  color: var(--danger);
+}
+
+.danger-action,
+.danger-action:hover,
+.danger-action:focus-visible {
+  border-color: var(--danger);
+}
+
+.danger-action--final {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+.account-action-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: var(--terminal-rule);
+  padding: 0;
+  color: var(--ink);
+  background: var(--surface-strong);
+}
+
+.account-action-dialog::backdrop {
+  background: rgb(0 0 0 / 76%);
+}
+
+.account-action-form {
+  padding: 1rem;
+}
+
+.account-action-form label {
+  display: grid;
+  gap: 0.35rem;
+  font-family: var(--tui-font);
+  font-size: 0.66rem;
+}
+
+.danger-dialog {
+  border-color: var(--danger);
+}
+
+.danger-disclosure {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.danger-disclosure section {
+  min-width: 0;
+  border: var(--terminal-rule);
+  padding: 0.75rem;
+}
+
+.danger-disclosure ul {
+  margin-block: 0.6rem 0;
+  padding-inline-start: 1.2rem;
+}
+
+.danger-final-confirmation {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid var(--danger);
+  padding: 0.75rem;
+}
+
+@media (max-width: 47.99rem) {
+  .account-setting-card,
+  .danger-action-list article,
+  .danger-disclosure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-setting-card > button,
+  .danger-action-list article > button {
+    width: 100%;
+  }
+}
+
+.combat-lobby-region {
+  min-width: 0;
+  border: var(--terminal-rule);
+  padding: 0.85rem;
+  container-type: inline-size;
+}
+
+.combat-lobby-region + .combat-lobby-region {
+  margin-top: 1rem;
+}
+
+.combat-lobby-region-heading {
+  border-bottom: var(--terminal-rule);
+  padding-bottom: 0.7rem;
+}
+
+.combat-lobby-region-heading p {
+  margin-top: 0.25rem;
+  color: var(--muted);
+}
+
+.open-lobbies {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.lobby-row {
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 18rem);
+  padding-inline-end: 0.65rem;
+}
+
+.lobby-row-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.lobby-row-action,
+.lobby-row-action > :is(button, .button) {
+  width: 100%;
+  min-width: 0;
+}
+
+@container (max-width: 42rem) {
+  .lobby-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lobby-row-action {
+    width: min(100%, 18rem);
+  }
 }
 
 .form-panel,
@@ -1102,10 +1308,16 @@ tbody tr:hover {
   grid-template-columns: auto minmax(10rem, 0.7fr) minmax(0, 1.3fr);
 }
 
-.route-link:hover {
+.route-link:hover,
+.route-link:focus-visible {
   border-color: var(--border);
   background: var(--terminal-selected);
   color: var(--terminal-selected-ink);
+}
+
+.route-link:hover span,
+.route-link:focus-visible span {
+  color: var(--terminal-selected-muted);
 }
 
 .route-link strong,
@@ -1600,7 +1812,9 @@ body::before {
 
 .toolbar-context {
   display: flex;
-  min-width: 12rem;
+  min-width: 0;
+  flex: 1 1 12rem;
+  overflow: hidden;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
@@ -1609,6 +1823,12 @@ body::before {
   color: var(--muted);
   font-size: 0.66rem;
   white-space: nowrap;
+}
+
+.toolbar-context > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .context-ready {
@@ -1640,6 +1860,7 @@ body::before {
 }
 
 .topbar-tools {
+  flex: 0 0 auto;
   margin-inline-start: auto;
 }
 
@@ -3246,7 +3467,7 @@ html[data-game-presentation='review'] .game-route {
 .public-rating-list,
 .rating-bucket-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   border: var(--terminal-rule);
 }
 
@@ -3357,6 +3578,10 @@ html[data-game-presentation='review'] .game-route {
   grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
+.rating-bucket dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
 .directory-list dl > div,
 .rating-bucket dl > div {
   min-width: 0;
@@ -3394,6 +3619,15 @@ html[data-game-presentation='review'] .game-route {
   font-size: 1.15rem;
 }
 
+.rating-bucket dd {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.rating-bucket dl > div:nth-child(2n) {
+  border-inline-end: 0;
+}
+
 @media (max-width: 63.99rem) {
   .directory-controls {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -3420,11 +3654,33 @@ html[data-game-presentation='review'] .game-route {
 }
 
 .result-composition-track,
-.comparison-track {
+.comparison-track,
+.stats-progress-track {
   display: flex;
   height: 0.72rem;
   overflow: hidden;
   border: var(--terminal-rule);
+}
+
+.stats-progress-track {
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+}
+
+.stats-progress-track > span {
+  display: block;
+  background: var(--accent);
+}
+
+.result-composition-track > span:focus-visible,
+.comparison-row:focus-visible,
+.distribution-row:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.stats-rating-comparison .comparison-row > span:first-child {
+  overflow-wrap: anywhere;
 }
 
 .result-composition-track .is-win {

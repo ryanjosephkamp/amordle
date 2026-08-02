@@ -34,5 +34,5 @@
     "**/*.mts",
     "dist/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "bootstrap/source-data"]
+  "exclude": ["node_modules", "bootstrap/source-data", "supabase/functions"]
 }

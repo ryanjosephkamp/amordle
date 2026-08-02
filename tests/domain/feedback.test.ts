@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   feedbackFrequencies,
+  isGuessRuleRejection,
   keyboardSoundProfileSchema,
   shouldUseHaptics,
 } from '@/domain/feedback';
@@ -39,5 +40,14 @@ describe('keyboard feedback', () => {
     ]) {
       expect(shouldUseHaptics(input)).toBe(false);
     }
+  });
+
+  it('classifies game-rule rejection without misclassifying transport or stale-version failures', () => {
+    expect(isGuessRuleRejection(new Error('Invalid guess: not an accepted word.'))).toBe(true);
+    expect(isGuessRuleRejection(new Error('Hard Mode: the guess must contain A.'))).toBe(true);
+    expect(isGuessRuleRejection(new Error('Use a 5-letter word.'))).toBe(true);
+    expect(isGuessRuleRejection(new Error('Network request failed.'))).toBe(false);
+    expect(isGuessRuleRejection(new Error('Expected version is stale.'))).toBe(false);
+    expect(isGuessRuleRejection(new Error('Authentication is required.'))).toBe(false);
   });
 });

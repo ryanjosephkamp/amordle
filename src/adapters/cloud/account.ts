@@ -13,7 +13,11 @@ import {
   progressSchema,
 } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
-import { keyboardSoundProfileSchema } from '@/domain/feedback';
+import {
+  defaultPlayerSettings,
+  normalizePlayerSettings,
+  type PlayerSettings,
+} from '@/domain/player-settings';
 import { getBrowserSupabase } from './browser';
 import { parseServiceResult, ServiceError, throwServiceError } from './shared';
 
@@ -39,11 +43,11 @@ const storedPlayerSettingsV1Schema = z
   .strict();
 
 export const playerSettingsSchema = storedPlayerSettingsV1Schema.extend({
-  keyboardSoundProfile: keyboardSoundProfileSchema,
+  keyboardSoundProfile: z.enum(['terminal', 'soft-tap', 'mechanical', 'glass', 'low-thock']),
   hapticsEnabled: z.boolean(),
 });
 
-export type PlayerSettings = z.infer<typeof playerSettingsSchema>;
+export type { PlayerSettings } from '@/domain/player-settings';
 
 export const ratingProfileSchema = z
   .object({
@@ -86,26 +90,22 @@ export async function purchaseConsumable(
 }
 
 export async function loadSettings(userId: string): Promise<PlayerSettings> {
+  return (await loadSettingsWithDiagnostics(userId)).settings;
+}
+
+export async function loadSettingsWithDiagnostics(
+  userId: string,
+): Promise<{ settings: PlayerSettings; recovered: boolean }> {
   const { data, error } = await client()
     .from('settings')
     .select('settings,keyboard_sound_profile,haptics_enabled')
     .eq('user_id', userId)
     .maybeSingle();
   if (error) throwServiceError(error);
-  const defaults: PlayerSettings = {
-    schemaVersion: 1,
-    sound: true,
-    reducedEffects: false,
-    notifications: true,
-    defaultHardMode: false,
-    keyboardSoundProfile: 'terminal',
-    hapticsEnabled: false,
-  };
-  if (!data) return defaults;
-  const stored = parseServiceResult(storedPlayerSettingsV1Schema, data.settings);
-  return playerSettingsSchema.parse({
-    ...stored,
-    keyboardSoundProfile: keyboardSoundProfileSchema.parse(data.keyboard_sound_profile),
+  if (!data) return { settings: { ...defaultPlayerSettings }, recovered: false };
+  return normalizePlayerSettings({
+    stored: data.settings,
+    keyboardSoundProfile: data.keyboard_sound_profile,
     hapticsEnabled: data.haptics_enabled,
   });
 }

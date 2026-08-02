@@ -4,13 +4,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { createContext, useContext } from 'react';
 import type { PropsWithChildren } from 'react';
 import { loadLocalPreferences, saveLocalFeedback } from '@/adapters/local-account';
-import { loadSettings, saveSettings } from '@/adapters/supabase/account';
+import { loadSettingsWithDiagnostics, saveSettings } from '@/adapters/supabase/account';
 import type { PlayerSettings } from '@/adapters/supabase/account';
 import { settingsQueryKey } from '@/application/query-keys';
 import { useAuth } from './providers';
 
 export interface FeedbackSettings extends PlayerSettings {
   accountBacked: boolean;
+  recovered: boolean;
 }
 
 interface FeedbackPreferencesValue {
@@ -32,6 +33,7 @@ const defaultFeedbackSettings: FeedbackSettings = {
   keyboardSoundProfile: 'terminal',
   hapticsEnabled: false,
   accountBacked: false,
+  recovered: false,
 };
 
 const FeedbackPreferencesContext = createContext<FeedbackPreferencesValue | null>(null);
@@ -42,7 +44,8 @@ async function loadFeedbackSettings(input: {
   userId: string;
 }): Promise<FeedbackSettings> {
   if (input.accountBacked) {
-    return { ...(await loadSettings(input.userId)), accountBacked: true };
+    const loaded = await loadSettingsWithDiagnostics(input.userId);
+    return { ...loaded.settings, accountBacked: true, recovered: loaded.recovered };
   }
   const local = await loadLocalPreferences(input.ownerNamespace);
   return {
@@ -78,7 +81,11 @@ export function FeedbackPreferencesProvider({ children }: PropsWithChildren) {
           keyboardSoundProfile: next.keyboardSoundProfile,
           hapticsEnabled: next.hapticsEnabled,
         };
-        return { ...(await saveSettings(userId, accountSettings)), accountBacked: true };
+        return {
+          ...(await saveSettings(userId, accountSettings)),
+          accountBacked: true,
+          recovered: false,
+        };
       }
       const local = await saveLocalFeedback(settingsOwner, {
         sound: next.sound,

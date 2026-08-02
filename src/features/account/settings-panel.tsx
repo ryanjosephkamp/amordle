@@ -80,6 +80,12 @@ export function SettingsPanel() {
           >
             PREVIEW
           </button>
+          <button
+            type="button"
+            onClick={() => void playKeyboardSound(value.keyboardSoundProfile, 'reject')}
+          >
+            INVALID GUESS
+          </button>
         </div>
       </div>
       <p className="settings-description">
@@ -124,6 +130,9 @@ export function SettingsPanel() {
         </p>
       )}
       <p aria-live="polite">
+        {value.recovered
+          ? 'Some older settings were restored with current defaults. Save any preference to update the account copy. '
+          : ''}
         {feedback.status === 'saving'
           ? 'Saving…'
           : feedback.saveError

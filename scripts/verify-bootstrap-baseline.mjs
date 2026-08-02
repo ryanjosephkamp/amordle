@@ -32,7 +32,12 @@ const authorizedAdditiveMigrations = new Map([
     '1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17',
   ],
 ]);
-const reviewedPendingMigrations = new Map([]);
+const reviewedPendingMigrations = new Map([
+  [
+    '20260802193000_amordle_account_lifecycle_v1.sql',
+    'caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3',
+  ],
+]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 
