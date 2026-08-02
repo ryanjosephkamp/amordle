@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.4-solo-continuity-final-protected-preview-candidate",
-  "status": "review-ready",
+  "currentCheckpoint": "stage-2-v6.4-owner-accepted-v6.5-intake",
+  "status": "plan-mode-alignment-required",
   "lastGreenCommit": "d41326b931d2fb8a4a354719f464fe21933842dd",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -86,6 +86,25 @@
     "cleanupAttempt": 1,
     "zeroResidue": true,
     "resumeCondition": "manual review; merge and Production release require separate authorization"
+  },
+  "v6_5Intake": {
+    "acceptedV6_4GoldenCommit": "8ac37bd32dfa6b45cdd7b2fd7c84f36ade57216a",
+    "acceptedV6_4GoldenTag": "amordle-stage2-v6.4-solo-continuity-golden-2026-08-01",
+    "intakeArtifact": "reports/stage-2-v6.5-solo-go-results-help-and-interactions-intake.md",
+    "requestedAreas": [
+      "encountered-only-solo-go-definitions",
+      "collapsed-avatar-upload-guidance",
+      "account-settings-shortcut-and-copy",
+      "global-touch-button-haptics",
+      "help-information-architecture-and-teaching-aids",
+      "focus-mode-authority-audit",
+      "stable-game-tool-controls"
+    ],
+    "implementationAuthorized": false,
+    "serviceMutationAuthorized": false,
+    "mergeAuthorized": false,
+    "productionReleaseAuthorized": false,
+    "resumeCondition": "read-only Plan-mode alignment followed by separate implementation authorization"
   },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
@@ -225,6 +244,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.4-solo-continuity-final-report-and-checklist-complete",
-  "updatedAt": "2026-08-01T22:45:00Z"
+  "reportStatus": "v6.4-owner-accepted-v6.5-intake-recorded",
+  "updatedAt": "2026-08-02T00:14:57Z"
 }
