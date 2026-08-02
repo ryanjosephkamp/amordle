@@ -180,6 +180,44 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     expect(frame).toEqual({ top: 'solid', bottom: 'solid' });
   });
 
+  test('renders the terminal menu above the game status row on mobile and desktop', async ({
+    page,
+  }) => {
+    for (const viewport of [
+      { width: 390, height: 844 },
+      { width: 1440, height: 900 },
+    ]) {
+      await page.setViewportSize(viewport);
+      await page.goto('/play/solo/practice/go?length=5&difficulty=standard&count=5&generation=41');
+      await page.getByRole('button', { name: /more navigation/i }).click();
+      await expect(page.getByRole('menu', { name: 'More navigation' })).toBeVisible();
+
+      const overlay = await page.evaluate(() => {
+        const menu = document.querySelector<HTMLElement>('#more-navigation');
+        const status = document.querySelector<HTMLElement>('.game-status');
+        if (!menu || !status) return null;
+        const menuBox = menu.getBoundingClientRect();
+        const statusBox = status.getBoundingClientRect();
+        const left = Math.max(menuBox.left, statusBox.left);
+        const right = Math.min(menuBox.right, statusBox.right);
+        const top = Math.max(menuBox.top, statusBox.top);
+        const bottom = Math.min(menuBox.bottom, statusBox.bottom);
+        if (right <= left || bottom <= top) return null;
+        const target = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+        return {
+          menuOwnsTopLayer: Boolean(target && menu.contains(target)),
+          targetClass: target instanceof HTMLElement ? target.className : null,
+        };
+      });
+
+      expect(overlay, `${viewport.width}px should contain a menu/status overlap`).not.toBeNull();
+      expect(
+        overlay?.menuOwnsTopLayer,
+        `${viewport.width}px top layer: ${overlay?.targetClass}`,
+      ).toBe(true);
+    }
+  });
+
   test('keeps game tools present while sound updates immediately', async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=37');

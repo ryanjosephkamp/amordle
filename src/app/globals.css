@@ -28,6 +28,7 @@
   --z-nav: 20;
   --z-dropdown: 30;
   --z-sticky: 40;
+  --z-chrome: 45;
   --z-backdrop: 50;
   --z-modal: 60;
   --z-toast: 70;
@@ -167,7 +168,7 @@ button:disabled,
 
 .global-chrome {
   position: sticky;
-  z-index: var(--z-nav);
+  z-index: var(--z-chrome);
   top: 0;
   border-bottom: var(--rule);
   background: var(--background);

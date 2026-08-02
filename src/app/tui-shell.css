@@ -347,7 +347,7 @@ button.primary:hover {
 
 .global-chrome {
   position: sticky;
-  z-index: var(--z-nav);
+  z-index: var(--z-chrome);
   top: 0;
   border-bottom: var(--terminal-rule);
   background: color-mix(in oklch, var(--terminal-glass) 92%, transparent);
@@ -1578,7 +1578,7 @@ body::before {
 
 .global-chrome {
   position: sticky;
-  z-index: var(--z-nav);
+  z-index: var(--z-chrome);
   top: 0;
   border-bottom: var(--terminal-rule);
   background: color-mix(in oklch, var(--background) 96%, transparent);
