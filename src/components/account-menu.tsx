@@ -105,7 +105,10 @@ export function AccountMenu() {
             {partialFailure && <small>Some account totals could not refresh.</small>}
           </div>
           <Link href="/profile" role="menuitem" onClick={() => setOpen(false)}>
-            <span aria-hidden="true">›</span> View profile
+            <span aria-hidden="true">›</span> View Profile
+          </Link>
+          <Link href="/settings" role="menuitem" onClick={() => setOpen(false)}>
+            <span aria-hidden="true">›</span> Open Settings
           </Link>
           <button
             type="button"
@@ -115,7 +118,7 @@ export function AccountMenu() {
               void auth.signOut();
             }}
           >
-            <span aria-hidden="true">›</span> Sign out
+            <span aria-hidden="true">›</span> Sign Out
           </button>
         </div>
       )}

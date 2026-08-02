@@ -13,17 +13,9 @@ import {
   consumeLocalConsumable,
   creditLocalCoins,
   getLocalEconomy,
-  loadLocalPreferences,
-  saveLocalSound,
   spendLocalCoins,
 } from '@/adapters/local-account';
-import {
-  consumeConsumable,
-  getEconomy,
-  loadSettings,
-  saveSettings,
-  spendCoins,
-} from '@/adapters/supabase/account';
+import { consumeConsumable, getEconomy, spendCoins } from '@/adapters/supabase/account';
 import {
   buildSoloHistoryRow,
   loadCloudSolo,
@@ -34,7 +26,9 @@ import { operationId } from '@/adapters/supabase/shared';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
 import { useAuth } from '@/components/providers';
+import { useFeedbackPreferences } from '@/components/feedback-preferences';
 import { WordDefinition } from '@/features/words/word-definition';
+import { selectEncounteredSoloGoAnswers } from '@/domain/solo-go-review';
 import {
   continuationCost,
   selectIncorrectLettersToRemove,
@@ -55,7 +49,8 @@ import { registerSoloSessionSummary, upsertSoloSessionSummary } from '@/adapters
 import { soloSessionsQueryKey } from '@/application/solo-query-keys';
 import { invalidateAccountProjections } from '@/application/account-query-freshness';
 import { playKeyboardSound } from '@/application/keyboard-feedback';
-import type { KeyboardFeedbackEvent, KeyboardSoundProfile } from '@/domain/feedback';
+import type { KeyboardFeedbackEvent } from '@/domain/feedback';
+import { EncounteredGoReview } from './encountered-go-review';
 
 interface SoloGameProps {
   sessionId: string;
@@ -184,6 +179,7 @@ export function SoloGame({
   resumeHref,
 }: SoloGameProps) {
   const auth = useAuth();
+  const feedback = useFeedbackPreferences();
   const queryClient = useQueryClient();
   const sanctionedWords = useMemo(() => new Set(validGuesses), [validGuesses]);
   const initial = useMemo(
@@ -201,10 +197,9 @@ export function SoloGame({
   const [hydrated, setHydrated] = useState(false);
   const [cloudBackupNeedsAttention, setCloudBackupNeedsAttention] = useState(false);
   const [actionState, setActionState] = useState('');
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [soundProfile, setSoundProfile] = useState<KeyboardSoundProfile>('terminal');
-  const [hapticsEnabled, setHapticsEnabled] = useState(false);
-  const [reducedEffects, setReducedEffects] = useState(false);
+  const [toolState, setToolState] = useState('');
+  const [pendingTool, setPendingTool] = useState<'reveal' | 'remove' | 'sound' | null>(null);
+  const [continuationPending, setContinuationPending] = useState(false);
   const [sessionRegistryError, setSessionRegistryError] = useState('');
   const [auxiliaryOpen, setAuxiliaryOpen] = useState(true);
   const revision = useRef(0);
@@ -212,7 +207,9 @@ export function SoloGame({
   const latestEnvelope = useRef<VersionedEnvelope<GameSession> | null>(null);
   const sessionRef = useRef(session);
   const finalized = useRef(false);
-  const pendingOperation = useRef<string | null>(null);
+  const revealOperation = useRef<string | null>(null);
+  const removalOperation = useRef<string | null>(null);
+  const continuationOperation = useRef<string | null>(null);
   const boardRegion = useRef<HTMLDivElement | null>(null);
   const resultPanel = useRef<HTMLElement | null>(null);
   const announcedTerminal = useRef(false);
@@ -227,11 +224,8 @@ export function SoloGame({
     queryFn: () => (signedInUserId ? getEconomy() : getLocalEconomy(ownerNamespace)),
     enabled: isPractice,
   });
-  const preferences = useQuery({
-    queryKey: ['solo-preferences', ownerNamespace],
-    queryFn: async () =>
-      signedInUserId ? loadSettings(signedInUserId) : loadLocalPreferences(ownerNamespace),
-  });
+  const soundEnabled = feedback.settings.sound;
+  const soundProfile = feedback.settings.keyboardSoundProfile;
 
   const syncRegistry = useCallback(
     async (next: GameSession, lifecycle?: 'reserved' | 'active' | 'terminal') => {
@@ -280,23 +274,6 @@ export function SoloGame({
     },
     [dailyDate, ownerNamespace, queryClient, resumeHref, signedInUserId],
   );
-
-  useEffect(() => {
-    if (preferences.data) {
-      queueMicrotask(() => {
-        setSoundEnabled(preferences.data.sound);
-        setSoundProfile(
-          'keyboardSoundProfile' in preferences.data
-            ? preferences.data.keyboardSoundProfile
-            : 'terminal',
-        );
-        setHapticsEnabled(
-          'hapticsEnabled' in preferences.data ? preferences.data.hapticsEnabled : false,
-        );
-        setReducedEffects(preferences.data.reducedEffects);
-      });
-    }
-  }, [preferences.data]);
 
   useEffect(() => {
     const compact = window.matchMedia('(max-width: 47.99rem), (max-height: 43.75rem)');
@@ -558,6 +535,13 @@ export function SoloGame({
   const keyboard = deriveKeyboardEvidence(currentRows, new Set(session.removedLetters));
   const isTerminal = session.status === 'won' || session.status === 'lost';
   const seededCount = session.rows.filter((row) => row.kind === 'seeded').length;
+  const encounteredGoReview = useMemo(
+    () =>
+      settings.mode === 'go'
+        ? selectEncounteredSoloGoAnswers(session, isPractice ? 'practice' : 'daily')
+        : null,
+    [isPractice, session, settings.mode],
+  );
 
   useEffect(() => {
     const root = document.documentElement;
@@ -595,12 +579,13 @@ export function SoloGame({
   ].join('\n');
 
   const applyReveal = async () => {
-    if (!economy.data) {
-      setActionState('Obtain a Reveal One Letter item first.');
+    if (pendingTool) return;
+    if ((economy.data?.reveal_one_letter ?? 0) < 1) {
+      setToolState('Obtain a Reveal One Letter item first.');
       return;
     }
-    const id = pendingOperation.current ?? operationId(`solo-reveal:${session.id}`);
-    pendingOperation.current = id;
+    const id = revealOperation.current ?? operationId(`solo-reveal:${session.id}`);
+    revealOperation.current = id;
     const known = new Set<number>(Object.keys(session.revealedPositions).map(Number));
     for (const row of currentRows) {
       row.tiles.forEach((tile, index) => {
@@ -613,36 +598,42 @@ export function SoloGame({
       operationId: id,
     });
     if (position === null) {
-      pendingOperation.current = null;
-      setActionState('Every position is already known.');
+      revealOperation.current = null;
+      setToolState('Every position is already known.');
       return;
     }
+    setPendingTool('reveal');
+    setToolState('Revealing one letter…');
     try {
       const nextEconomy = signedInUserId
         ? await consumeConsumable('reveal_one_letter', id)
         : await consumeLocalConsumable(ownerNamespace, 'reveal_one_letter', id);
-      await issue({
+      const applied = await issue({
         type: 'reveal-position',
         operationId: id,
         position,
         letter: session.answers[session.puzzleIndex]?.[position] ?? '',
         now: now(),
       });
+      if (!applied) throw new Error('The revealed position was not saved.');
       queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
-      pendingOperation.current = null;
-      setActionState(`Position ${position + 1} is now locked.`);
+      revealOperation.current = null;
+      setToolState(`Position ${position + 1} is now locked.`);
     } catch {
-      setActionState('Reveal was not applied. Retrying uses the same operation.');
+      setToolState('Reveal was not applied. Retry will use the same operation.');
+    } finally {
+      setPendingTool(null);
     }
   };
 
   const applyRemoval = async () => {
-    if (!economy.data) {
-      setActionState('Obtain a Remove Incorrect Letters item first.');
+    if (pendingTool) return;
+    if ((economy.data?.remove_incorrect_letters ?? 0) < 1) {
+      setToolState('Obtain a Remove Incorrect Letters item first.');
       return;
     }
-    const id = pendingOperation.current ?? operationId(`solo-remove:${session.id}`);
-    pendingOperation.current = id;
+    const id = removalOperation.current ?? operationId(`solo-remove:${session.id}`);
+    removalOperation.current = id;
     const letters = selectIncorrectLettersToRemove({
       answer: session.answers[session.puzzleIndex] ?? '',
       draft: session.draft,
@@ -653,38 +644,53 @@ export function SoloGame({
       ),
       operationId: id,
     });
+    if (letters.length === 0) {
+      removalOperation.current = null;
+      setToolState('No additional impossible letters can be removed right now.');
+      return;
+    }
+    setPendingTool('remove');
+    setToolState('Removing impossible letters…');
     try {
       const nextEconomy = signedInUserId
         ? await consumeConsumable('remove_incorrect_letters', id)
         : await consumeLocalConsumable(ownerNamespace, 'remove_incorrect_letters', id);
-      await issue({ type: 'remove-letters', operationId: id, letters, now: now() });
+      const applied = await issue({ type: 'remove-letters', operationId: id, letters, now: now() });
+      if (!applied) throw new Error('The removed letters were not saved.');
       queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
-      pendingOperation.current = null;
-      setActionState(`${letters.length} impossible letters were removed.`);
+      removalOperation.current = null;
+      setToolState(`${letters.length} impossible letters were removed.`);
     } catch {
-      setActionState('Letters were not removed. Retrying uses the same operation.');
+      setToolState('Letters were not removed. Retry will use the same operation.');
+    } finally {
+      setPendingTool(null);
     }
   };
 
   const continueGame = async () => {
-    const id = pendingOperation.current ?? operationId(`solo-continuation:${session.id}`);
-    pendingOperation.current = id;
+    if (continuationPending) return;
+    const id = continuationOperation.current ?? operationId(`solo-continuation:${session.id}`);
+    continuationOperation.current = id;
     const cost = continuationCost({
       wordLength: settings.length,
       completionPercentage: completionPercentage(session),
       continuationCount: session.continuationCount,
     });
+    setContinuationPending(true);
     try {
       const nextEconomy = signedInUserId
         ? await spendCoins(cost, id)
         : await spendLocalCoins(ownerNamespace, cost, id);
-      await issue({ type: 'continue', operationId: id, now: now() });
+      const applied = await issue({ type: 'continue', operationId: id, now: now() });
+      if (!applied) throw new Error('The continuation was not saved.');
       queryClient.setQueryData(economyQueryKey(economyNamespace), nextEconomy);
-      pendingOperation.current = null;
+      continuationOperation.current = null;
       finalized.current = false;
       setActionState(`One attempt added for ${cost} coins.`);
     } catch {
       setActionState(`Continuation was not applied. ${cost} coins are required.`);
+    } finally {
+      setContinuationPending(false);
     }
   };
 
@@ -820,48 +826,69 @@ export function SoloGame({
         </span>
       </div>
 
-      <details
-        className="game-auxiliary"
-        open={auxiliaryOpen}
-        onToggle={(event) => setAuxiliaryOpen(event.currentTarget.open)}
-      >
-        <summary>Evidence and game tools</summary>
-        <div className="game-auxiliary-content">
+      <section className="game-auxiliary" aria-labelledby="game-auxiliary-heading">
+        <button
+          id="game-auxiliary-heading"
+          type="button"
+          className="game-auxiliary-toggle"
+          aria-expanded={auxiliaryOpen}
+          aria-controls="game-auxiliary-content"
+          onClick={() => setAuxiliaryOpen((current) => !current)}
+        >
+          Evidence and game tools
+        </button>
+        <div id="game-auxiliary-content" className="game-auxiliary-content" hidden={!auxiliaryOpen}>
           <EvidenceLegend />
           {isPractice && session.status === 'active' && (
-            <div className="game-tools" aria-label="Solo Practice tools">
-              <button
-                type="button"
-                disabled={(economy.data?.reveal_one_letter ?? 0) < 1}
-                onClick={() => void applyReveal()}
+            <>
+              <div
+                className="game-tools"
+                aria-label="Solo Practice tools"
+                aria-busy={Boolean(pendingTool)}
               >
-                REVEAL LETTER · {economy.data?.reveal_one_letter ?? 0}
-              </button>
-              <button
-                type="button"
-                disabled={(economy.data?.remove_incorrect_letters ?? 0) < 1}
-                onClick={() => void applyRemoval()}
-              >
-                REMOVE LETTERS · {economy.data?.remove_incorrect_letters ?? 0}
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const next = !soundEnabled;
-                  setSoundEnabled(next);
-                  void (signedInUserId
-                    ? loadSettings(signedInUserId).then((current) =>
-                        saveSettings(signedInUserId, { ...current, sound: next }),
-                      )
-                    : saveLocalSound(ownerNamespace, next));
-                }}
-              >
-                SOUND {soundEnabled ? 'ON' : 'OFF'}
-              </button>
-            </div>
+                <button
+                  type="button"
+                  disabled={Boolean(pendingTool) || (economy.data?.reveal_one_letter ?? 0) < 1}
+                  onClick={() => void applyReveal()}
+                >
+                  {pendingTool === 'reveal' ? 'REVEALING' : 'REVEAL LETTER'} ·{' '}
+                  {economy.data?.reveal_one_letter ?? 0}
+                </button>
+                <button
+                  type="button"
+                  disabled={
+                    Boolean(pendingTool) || (economy.data?.remove_incorrect_letters ?? 0) < 1
+                  }
+                  onClick={() => void applyRemoval()}
+                >
+                  {pendingTool === 'remove' ? 'REMOVING' : 'REMOVE LETTERS'} ·{' '}
+                  {economy.data?.remove_incorrect_letters ?? 0}
+                </button>
+                <button
+                  type="button"
+                  disabled={pendingTool === 'sound' || feedback.status === 'saving'}
+                  onClick={() => {
+                    if (pendingTool) return;
+                    const next = !soundEnabled;
+                    setPendingTool('sound');
+                    setToolState(`Turning sound ${next ? 'on' : 'off'}…`);
+                    void feedback
+                      .update({ sound: next })
+                      .then(() => setToolState(`Sound is ${next ? 'on' : 'off'}.`))
+                      .catch(() => setToolState('Sound preference was not saved. Try again.'))
+                      .finally(() => setPendingTool(null));
+                  }}
+                >
+                  SOUND {soundEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              <p className="game-tool-status" aria-live="polite">
+                {toolState}
+              </p>
+            </>
           )}
         </div>
-      </details>
+      </section>
 
       {!isTerminal && (
         <GameKeyboard
@@ -876,8 +903,6 @@ export function SoloGame({
             })
           }
           onDelete={() => void issue({ type: 'delete', now: now() })}
-          hapticsEnabled={hapticsEnabled}
-          reducedEffects={reducedEffects}
         />
       )}
 
@@ -886,8 +911,12 @@ export function SoloGame({
           <h2 id="continue-heading">No attempts remain</h2>
           <p>Continue with one more attempt, or reveal the answer and keep this loss final.</p>
           <div className="action-row">
-            <button className="primary" onClick={() => void continueGame()}>
-              CONTINUE ·{' '}
+            <button
+              className="primary"
+              disabled={continuationPending}
+              onClick={() => void continueGame()}
+            >
+              {continuationPending ? 'CONTINUING' : 'CONTINUE'} ·{' '}
               {continuationCost({
                 wordLength: settings.length,
                 completionPercentage: completionPercentage(session),
@@ -895,7 +924,10 @@ export function SoloGame({
               })}{' '}
               coins
             </button>
-            <button onClick={() => void issue({ type: 'reveal-answer', now: now() })}>
+            <button
+              disabled={continuationPending}
+              onClick={() => void issue({ type: 'reveal-answer', now: now() })}
+            >
               REVEAL ANSWER
             </button>
           </div>
@@ -913,12 +945,32 @@ export function SoloGame({
           <h2 id="result-heading">
             {session.status === 'won' ? 'You solved it' : 'Game complete'}
           </h2>
-          <p>
-            The answer was{' '}
-            <strong className="mono">{session.answers[session.puzzleIndex]?.toUpperCase()}</strong>.
-          </p>
-          {session.answers[session.puzzleIndex] && (
-            <WordDefinition word={session.answers[session.puzzleIndex] ?? ''} />
+          {settings.mode === 'go' ? (
+            encounteredGoReview?.status === 'available' ? (
+              <>
+                <p>
+                  {session.status === 'won'
+                    ? `Completed all ${settings.goCount} puzzles.`
+                    : `Reached puzzle ${session.puzzleIndex + 1} of ${settings.goCount}.`}
+                </p>
+                <EncounteredGoReview entries={encounteredGoReview.entries} />
+              </>
+            ) : (
+              <p role="status">Encountered-word review is unavailable for this saved game.</p>
+            )
+          ) : (
+            <>
+              <p>
+                The answer was{' '}
+                <strong className="mono">
+                  {session.answers[session.puzzleIndex]?.toUpperCase()}
+                </strong>
+                .
+              </p>
+              {session.answers[session.puzzleIndex] && (
+                <WordDefinition word={session.answers[session.puzzleIndex] ?? ''} />
+              )}
+            </>
           )}
           <div className="action-row">
             <button

@@ -188,6 +188,65 @@ describe('canonical game rules', () => {
     expect(completionPercentage(session)).toBe(100);
   });
 
+  it('applies every tool operation identity at most once', () => {
+    const active = createGameSession({
+      id: 'tools',
+      ownerNamespace: 'guest',
+      settings: {
+        mode: 'og',
+        length: 5,
+        difficulty: 'standard',
+        hardMode: false,
+        goCount: 1,
+      },
+      answers: ['crane'],
+      now: time,
+    });
+    const revealed = reduceGame(active, {
+      type: 'reveal-position',
+      operationId: 'reveal-1',
+      position: 0,
+      letter: 'c',
+      now: time,
+    });
+    expect(
+      reduceGame(revealed, {
+        type: 'reveal-position',
+        operationId: 'reveal-1',
+        position: 1,
+        letter: 'r',
+        now: time,
+      }),
+    ).toBe(revealed);
+    const removed = reduceGame(revealed, {
+      type: 'remove-letters',
+      operationId: 'remove-1',
+      letters: ['b', 'x'],
+      now: time,
+    });
+    expect(
+      reduceGame(removed, {
+        type: 'remove-letters',
+        operationId: 'remove-1',
+        letters: ['d'],
+        now: time,
+      }),
+    ).toBe(removed);
+    const continued = reduceGame(
+      { ...removed, status: 'lost' },
+      { type: 'continue', operationId: 'continue-1', now: time },
+    );
+    const sameContinuation = { ...continued, status: 'lost' as const };
+    expect(
+      reduceGame(sameContinuation, {
+        type: 'continue',
+        operationId: 'continue-1',
+        now: time,
+      }),
+    ).toBe(sameContinuation);
+    expect(continued.appliedOperationIds).toEqual(['reveal-1', 'remove-1', 'continue-1']);
+  });
+
   it('persists a solved GO board for a two-second hold and seeds the next board', () => {
     let session = createGameSession({
       id: 'go',

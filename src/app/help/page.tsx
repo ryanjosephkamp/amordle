@@ -4,6 +4,14 @@ import {
   keyboardInteractionPatterns,
   keyboardShortcutRules,
 } from '@/application/keyboard-shortcuts';
+import {
+  AccessTeachingAid,
+  CoinsToolsTeachingAid,
+  GoChainTeachingAid,
+  HardModeTeachingAid,
+  PracticeDailyTeachingAid,
+  PrivacyTeachingAid,
+} from '@/features/support/help-teaching-aids';
 
 const sections = [
   [
@@ -32,7 +40,7 @@ const sections = [
   ],
   [
     'Access and navigation',
-    'Use Tab and Shift+Tab to move, Enter or Space to activate controls, and Escape to close menus or dialogs. Focus Mode keeps the same game and removes surrounding navigation. Tile meaning is announced and never relies on color alone.',
+    'Use Tab and Shift+Tab to move, Enter or Space to activate controls, and Escape to close menus or dialogs. During a game, Focus Mode removes surrounding navigation while retaining Account, alerts, and an explicit exit. Tile meaning is announced and never relies on color alone.',
   ],
   [
     'Privacy',
@@ -52,43 +60,53 @@ export default function HelpPage() {
             <h2>{title}</h2>
             <p>{content}</p>
             {title === 'OG and scoring' && <TileEvidenceExample />}
+            {title === 'GO chains' && <GoChainTeachingAid />}
+            {title === 'Practice and Daily' && <PracticeDailyTeachingAid />}
+            {title === 'Hard Mode' && <HardModeTeachingAid />}
             {title === 'COMBAT' && <CombatTurnExample />}
+            {title === 'Coins and tools' && <CoinsToolsTeachingAid />}
+            {title === 'Access and navigation' && <AccessTeachingAid />}
+            {title === 'Privacy' && <PrivacyTeachingAid />}
           </section>
         ))}
-        <section id="keyboard-navigation">
-          <h2>Mouse-free mode — for keyboard diehards</h2>
-          <p>
-            The entire interface remains clickable and touch-friendly. On desktop, these shortcuts
-            provide a faster optional route through the shell.
-          </p>
-          <div className="table-scroll">
-            <table className="responsive-table keyboard-shortcut-table">
-              <thead>
-                <tr>
-                  <th>Keys</th>
-                  <th>Action</th>
-                  <th>Behavior</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...directNavigationShortcuts, ...keyboardInteractionPatterns].map((shortcut) => (
-                  <tr key={shortcut.id}>
-                    <td data-label="Keys">
-                      <kbd>{shortcut.keys}</kbd>
-                    </td>
-                    <td data-label="Action">{shortcut.label}</td>
-                    <td data-label="Behavior">{shortcut.description}</td>
+        <details className="help-advanced" id="keyboard-navigation">
+          <summary>Mouse-free mode — for keyboard diehards</summary>
+          <div>
+            <p>
+              The entire interface remains clickable and touch-friendly. On desktop, these shortcuts
+              provide a faster optional route through the shell.
+            </p>
+            <div className="table-scroll">
+              <table className="responsive-table keyboard-shortcut-table">
+                <thead>
+                  <tr>
+                    <th>Keys</th>
+                    <th>Action</th>
+                    <th>Behavior</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {[...directNavigationShortcuts, ...keyboardInteractionPatterns].map(
+                    (shortcut) => (
+                      <tr key={shortcut.id}>
+                        <td data-label="Keys">
+                          <kbd>{shortcut.keys}</kbd>
+                        </td>
+                        <td data-label="Action">{shortcut.label}</td>
+                        <td data-label="Behavior">{shortcut.description}</td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+            <ul>
+              {keyboardShortcutRules.map((rule) => (
+                <li key={rule}>{rule}</li>
+              ))}
+            </ul>
           </div>
-          <ul>
-            {keyboardShortcutRules.map((rule) => (
-              <li key={rule}>{rule}</li>
-            ))}
-          </ul>
-        </section>
+        </details>
       </div>
     </div>
   );

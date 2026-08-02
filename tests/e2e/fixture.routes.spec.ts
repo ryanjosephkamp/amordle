@@ -195,4 +195,16 @@ test.describe('route and public boundary matrix', () => {
     await expect(page.getByText(/accepted guesses/i)).toBeVisible();
     await page.context().setOffline(false);
   });
+
+  test('Help separates core teaching aids from collapsed advanced shortcuts', async ({ page }) => {
+    await page.goto('/help');
+    await expect(page.getByText(/ONE ANSWER BECOMES THE NEXT PUZZLE/i)).toBeVisible();
+    await expect(page.getByText(/BUILD A COMPATIBLE HARD MODE GUESS/i)).toBeVisible();
+    const advanced = page.getByText(/Mouse-free mode — for keyboard diehards/i);
+    await expect(advanced).toBeVisible();
+    await expect(page.locator('#keyboard-navigation')).not.toHaveAttribute('open', '');
+    await advanced.click();
+    await expect(page.locator('#keyboard-navigation')).toHaveAttribute('open', '');
+    await expect(page.getByRole('columnheader', { name: 'Keys' })).toBeVisible();
+  });
 });

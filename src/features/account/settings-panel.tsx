@@ -1,91 +1,41 @@
 'use client';
 
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { loadSettings, saveSettings } from '@/adapters/supabase/account';
-import type { PlayerSettings } from '@/adapters/supabase/account';
-import { loadLocalPreferences, saveLocalFeedback } from '@/adapters/local-account';
+import { useState } from 'react';
 import { playKeyboardSound } from '@/application/keyboard-feedback';
-import { useAuth } from '@/components/providers';
+import { useFeedbackPreferences } from '@/components/feedback-preferences';
 import { SkeletonRows } from '@/components/route-states';
 import { keyboardSoundProfileSchema, keyboardSoundProfiles } from '@/domain/feedback';
 
-interface SettingsView extends PlayerSettings {
-  accountBacked: boolean;
-}
+export function SettingsPanel() {
+  const feedback = useFeedbackPreferences();
+  const [saveMessage, setSaveMessage] = useState('');
 
-function guestSettings(input: Awaited<ReturnType<typeof loadLocalPreferences>>): SettingsView {
-  return {
-    schemaVersion: 1,
-    sound: input.sound,
-    reducedEffects: input.reducedEffects,
-    notifications: true,
-    defaultHardMode: false,
-    keyboardSoundProfile: input.keyboardSoundProfile,
-    hapticsEnabled: input.hapticsEnabled,
-    accountBacked: false,
-  };
-}
-
-export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
-  const auth = useAuth();
-  const userId = auth.user?.id ?? '';
-  const accountBacked = auth.status === 'signed-in' && Boolean(userId);
-  const settingsOwner = accountBacked ? `account:${userId}` : ownerNamespace;
-  const queryClient = useQueryClient();
-  const settings = useQuery({
-    queryKey: ['settings', settingsOwner],
-    queryFn: async (): Promise<SettingsView> =>
-      accountBacked
-        ? { ...(await loadSettings(userId)), accountBacked: true }
-        : guestSettings(await loadLocalPreferences(ownerNamespace)),
-    enabled: auth.status !== 'loading',
-  });
-  const update = useMutation({
-    mutationFn: async (input: SettingsView): Promise<SettingsView> => {
-      if (input.accountBacked) {
-        const accountSettings: PlayerSettings = {
-          schemaVersion: 1,
-          sound: input.sound,
-          reducedEffects: input.reducedEffects,
-          notifications: input.notifications,
-          defaultHardMode: input.defaultHardMode,
-          keyboardSoundProfile: input.keyboardSoundProfile,
-          hapticsEnabled: input.hapticsEnabled,
-        };
-        return { ...(await saveSettings(userId, accountSettings)), accountBacked: true };
-      }
-      const local = await saveLocalFeedback(ownerNamespace, {
-        sound: input.sound,
-        reducedEffects: input.reducedEffects,
-        keyboardSoundProfile: input.keyboardSoundProfile,
-        hapticsEnabled: input.hapticsEnabled,
-      });
-      return guestSettings(local.state);
-    },
-    onSuccess: (data) => {
-      queryClient.setQueryData(['settings', settingsOwner], data);
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['solo-preferences'] }),
-        queryClient.invalidateQueries({ queryKey: ['combat-preferences'] }),
-        queryClient.invalidateQueries({ queryKey: ['notifications'] }),
-      ]);
-    },
-  });
-
-  if (auth.status === 'loading' || settings.isPending) {
+  if (feedback.status === 'loading') {
     return <SkeletonRows label="Loading settings…" rows={6} />;
   }
-  if (settings.isError || !settings.data) {
+  if (feedback.status === 'error') {
     return (
       <section className="status-panel">
         <h2>Settings unavailable</h2>
         <p>Your current preferences were not changed.</p>
-        <button onClick={() => void settings.refetch()}>Try again</button>
+        <button onClick={() => void feedback.retry()}>Try again</button>
       </section>
     );
   }
-  const value = settings.data;
-  const change = (next: SettingsView) => update.mutate(next);
+  const value = feedback.settings;
+  const change = (next: typeof value) => {
+    setSaveMessage('');
+    void feedback
+      .update(next)
+      .then((saved) =>
+        setSaveMessage(
+          saved.accountBacked
+            ? 'Settings saved to your account.'
+            : 'Settings saved on this device.',
+        ),
+      )
+      .catch(() => setSaveMessage('Settings could not be saved.'));
+  };
   const toggle = (
     key: 'sound' | 'reducedEffects' | 'notifications' | 'defaultHardMode' | 'hapticsEnabled',
   ) => change({ ...value, [key]: !value[key] });
@@ -96,7 +46,7 @@ export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
         label="Sound"
         description="Play restrained feedback for keyboard input and accepted actions."
         checked={value.sound}
-        disabled={update.isPending}
+        disabled={feedback.status === 'saving'}
         onChange={() => toggle('sound')}
       />
       <div className="data-row setting-row feedback-profile-row">
@@ -110,7 +60,7 @@ export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
           <select
             id="keyboard-sound-profile"
             value={value.keyboardSoundProfile}
-            disabled={update.isPending}
+            disabled={feedback.status === 'saving'}
             onChange={(event) =>
               change({
                 ...value,
@@ -138,16 +88,16 @@ export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
       </p>
       <SettingRow
         label="Touch haptics"
-        description="Use a short vibration for direct taps on the game keyboard when this browser supports it."
+        description="Use one short vibration for direct taps on buttons and button-like controls when this browser supports it."
         checked={value.hapticsEnabled}
-        disabled={update.isPending}
+        disabled={feedback.status === 'saving'}
         onChange={() => toggle('hapticsEnabled')}
       />
       <SettingRow
         label="Reduced effects"
         description="Use simpler transitions and suppress haptics in addition to system motion preferences."
         checked={value.reducedEffects}
-        disabled={update.isPending}
+        disabled={feedback.status === 'saving'}
         onChange={() => toggle('reducedEffects')}
       />
       {value.accountBacked ? (
@@ -156,14 +106,14 @@ export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
             label="Notifications"
             description="Show actionable match and request updates."
             checked={value.notifications}
-            disabled={update.isPending}
+            disabled={feedback.status === 'saving'}
             onChange={() => toggle('notifications')}
           />
           <SettingRow
             label="Default Hard Mode"
             description="Preselect Hard Mode for new Practice games."
             checked={value.defaultHardMode}
-            disabled={update.isPending}
+            disabled={feedback.status === 'saving'}
             onChange={() => toggle('defaultHardMode')}
           />
         </>
@@ -174,15 +124,11 @@ export function SettingsPanel({ ownerNamespace }: { ownerNamespace: string }) {
         </p>
       )}
       <p aria-live="polite">
-        {update.isPending
+        {feedback.status === 'saving'
           ? 'Saving…'
-          : update.isError
+          : feedback.saveError
             ? 'Settings could not be saved.'
-            : update.isSuccess
-              ? value.accountBacked
-                ? 'Settings saved to your account.'
-                : 'Settings saved on this device.'
-              : ''}
+            : saveMessage}
       </p>
     </div>
   );

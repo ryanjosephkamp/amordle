@@ -1,7 +1,5 @@
 'use client';
 
-import { playKeyboardHaptic } from '@/application/keyboard-feedback';
-
 type KeyState = 'unknown' | 'correct' | 'present' | 'absent' | 'removed';
 
 const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
@@ -14,8 +12,6 @@ export function GameKeyboard({
   onLetter,
   onSubmit,
   onDelete,
-  hapticsEnabled = false,
-  reducedEffects = false,
 }: {
   evidence?: Readonly<Record<string, KeyState>>;
   disabled?: boolean;
@@ -24,12 +20,7 @@ export function GameKeyboard({
   onLetter(letter: string): void;
   onSubmit(): void;
   onDelete(): void;
-  hapticsEnabled?: boolean;
-  reducedEffects?: boolean;
 }) {
-  const touchFeedback = (pointerType: string) => {
-    playKeyboardHaptic({ enabled: hapticsEnabled, pointerType, reducedEffects });
-  };
   return (
     <div className="keyboard" aria-label="On-screen keyboard">
       {keyboardRows.map((row, rowIndex) => (
@@ -39,7 +30,6 @@ export function GameKeyboard({
               type="button"
               className="key is-wide is-unknown"
               onClick={onSubmit}
-              onPointerDown={(event) => touchFeedback(event.pointerType)}
               aria-label="Submit guess"
               data-evidence="unknown"
               disabled={submitDisabled}
@@ -55,7 +45,6 @@ export function GameKeyboard({
                 className={`key is-${state}`}
                 key={letter}
                 onClick={() => onLetter(letter)}
-                onPointerDown={(event) => touchFeedback(event.pointerType)}
                 aria-label={`${letter.toUpperCase()}, ${state}`}
                 disabled={disabled || state === 'removed'}
                 data-evidence={state}
@@ -79,7 +68,6 @@ export function GameKeyboard({
               type="button"
               className="key is-wide is-unknown"
               onClick={onDelete}
-              onPointerDown={(event) => touchFeedback(event.pointerType)}
               aria-label="Delete letter"
               data-evidence="unknown"
               disabled={deleteDisabled}

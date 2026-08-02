@@ -1387,11 +1387,15 @@ test.describe.serial('protected Preview services', () => {
     await expect(accountMenu.getByText('Level')).toBeVisible();
     await expect(accountMenu.getByText('XP')).toBeVisible();
     await expect(accountMenu.getByText('Coins')).toBeVisible();
-    await expect(accountMenu.getByRole('menuitem', { name: /View profile/i })).toBeVisible();
-    await expect(accountMenu.getByRole('menuitem', { name: /Sign out/i })).toBeVisible();
-    await expect(
-      accountMenu.getByRole('menuitem', { name: /Stats|History|Marketplace|Settings/i }),
-    ).toHaveCount(0);
+    await expect(accountMenu.getByRole('menuitem')).toHaveText([
+      '› View Profile',
+      '› Open Settings',
+      '› Sign Out',
+    ]);
+    await accountMenu.getByRole('menuitem', { name: 'Open Settings', exact: true }).click();
+    await expect(firstPage).toHaveURL(`${baseURL}/settings`);
+    await firstPage.goto(`${baseURL}/`);
+    await firstPage.getByRole('button', { name: 'Account' }).click();
     await firstPage.keyboard.press('Escape');
 
     await firstPage.goto(`${baseURL}/combat/practice?length=5`);

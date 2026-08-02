@@ -29,6 +29,7 @@ import {
 } from '@/domain/profile';
 import type { AccentSelection, FlairName } from '@/domain/profile';
 import { ProfileAvatar } from '@/features/community/profile-avatar';
+import { ContextHelpPopover } from '@/components/context-help-popover';
 import { AccentPresetDialog, type AccentPresetDraft } from './accent-preset-dialog';
 import {
   flushAvatarCleanup,
@@ -376,7 +377,7 @@ function ProfileForm({
             maxLength={2048}
             placeholder="https://example.com/your-photo.jpg"
             value={avatarUrl}
-            aria-describedby="profile-avatar-help profile-avatar-error"
+            aria-describedby="profile-avatar-summary profile-avatar-error"
             aria-invalid={Boolean(avatarError)}
             onChange={(event) => {
               setAvatarUrl(event.target.value);
@@ -384,22 +385,28 @@ function ProfileForm({
             }}
           />
         </label>
-        <p id="profile-avatar-help" className="field-help">
-          Use a public HTTPS image URL, or upload a PNG, JPEG, WebP, or animated GIF up to 6 MiB and
-          4096 × 4096 pixels. Profile images are public; still-image metadata is removed during
-          processing, while GIF metadata may remain.
-        </p>
         <label>
           Upload profile image
           <input
             type="file"
             accept="image/png,image/jpeg,image/webp,image/gif"
+            aria-describedby="profile-avatar-summary profile-avatar-error"
             onChange={(event) => {
               setAvatarFile(event.target.files?.[0] ?? null);
               setAvatarError('');
             }}
           />
         </label>
+        <p id="profile-avatar-summary" className="field-help">
+          Profile images are public.
+        </p>
+        <ContextHelpPopover label="Image requirements">
+          <p>
+            Use a public HTTPS image URL, or upload a PNG, JPEG, WebP, or animated GIF up to 6 MiB
+            and 4096 × 4096 pixels.
+          </p>
+          <p>Still-image metadata is removed during processing. GIF metadata may remain.</p>
+        </ContextHelpPopover>
         {avatarFile && (
           <button
             type="button"

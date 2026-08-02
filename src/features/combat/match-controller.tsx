@@ -29,7 +29,6 @@ import type {
   RematchRequest,
 } from '@/adapters/supabase/combat';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
-import { loadSettings } from '@/adapters/supabase/account';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
 import { loadPublicWordSet } from '@/adapters/word-lists';
 import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
@@ -39,6 +38,7 @@ import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts'
 import { GameKeyboard } from '@/components/game-keyboard';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
+import { useFeedbackPreferences } from '@/components/feedback-preferences';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
 import type { EvidenceState } from '@/domain/game';
@@ -983,18 +983,9 @@ function CombatInput({
   submit(): void;
   disabled: boolean;
 }) {
-  const auth = useAuth();
-  const userId = auth.user?.id ?? '';
-  const preferences = useQuery({
-    queryKey: ['combat-preferences', userId],
-    queryFn: () => loadSettings(userId),
-    enabled: Boolean(userId),
-    staleTime: 5_000,
-  });
-  const soundEnabled = preferences.data?.sound ?? true;
-  const soundProfile = preferences.data?.keyboardSoundProfile ?? 'terminal';
-  const hapticsEnabled = preferences.data?.hapticsEnabled ?? false;
-  const reducedEffects = preferences.data?.reducedEffects ?? false;
+  const feedback = useFeedbackPreferences();
+  const soundEnabled = feedback.settings.sound;
+  const soundProfile = feedback.settings.keyboardSoundProfile;
   const playCue = useCallback(
     (event: KeyboardFeedbackEvent) => {
       if (soundEnabled) void playKeyboardSound(soundProfile, event);
@@ -1063,8 +1054,6 @@ function CombatInput({
           setDraft(draft.slice(0, -1));
           playCue('delete');
         }}
-        hapticsEnabled={hapticsEnabled}
-        reducedEffects={reducedEffects}
       />
     </div>
   );

@@ -46,11 +46,14 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
 
     await page.getByRole('button', { name: /^A, unknown$/i }).click();
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
-    await page.goto(`${page.url()}&focus=1`);
+    await page.getByRole('button', { name: /More navigation/i }).click();
+    await page.getByRole('menuitem', { name: /Enter Focus Mode/i }).click();
     await expect(page.locator('.global-chrome')).toHaveCount(0);
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
+    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
     await page.getByRole('link', { name: /Exit focus/i }).click();
     await expect(page.locator('.global-chrome')).toBeVisible();
+    await expect(page).toHaveURL(/generation=19$/);
   });
 
   test('service worker restores a visited Solo route offline without private caches', async ({
@@ -175,5 +178,19 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
       };
     });
     expect(frame).toEqual({ top: 'solid', bottom: 'solid' });
+  });
+
+  test('keeps game tools present while sound updates immediately', async ({ page }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/play/solo/practice/og?length=5&difficulty=standard&generation=37');
+    const disclosure = page.getByRole('button', { name: 'Evidence and game tools' });
+    if ((await disclosure.getAttribute('aria-expanded')) === 'false') await disclosure.click();
+    const sound = page.getByRole('button', { name: /SOUND (ON|OFF)/i });
+    const before = await sound.textContent();
+    await sound.click();
+    await expect(sound).toHaveText(before?.includes('ON') ? /SOUND OFF/i : /SOUND ON/i);
+    await expect(page.getByRole('button', { name: /REVEAL LETTER/i })).toBeVisible();
+    await expect(page.getByRole('button', { name: /REMOVE LETTERS/i })).toBeVisible();
+    await expect(disclosure).toHaveAttribute('aria-expanded', 'true');
   });
 });

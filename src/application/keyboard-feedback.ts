@@ -75,3 +75,20 @@ export function playKeyboardHaptic(input: {
     return false;
   }
 }
+
+export function eligibleHapticControl(target: EventTarget | null): HTMLElement | null {
+  if (!(target instanceof Element)) return null;
+  const control = target.closest<HTMLElement>(
+    'button, [role="button"], [role="menuitem"], summary, a',
+  );
+  if (!control || control.matches(':disabled, [aria-disabled="true"]')) return null;
+  if (control.matches('button, [role="button"], [role="menuitem"], summary')) return control;
+  if (
+    control.matches(
+      'nav a, .menu-popover a, a.primary, a.secondary, a.button, a[class*="button"], .action-row a',
+    )
+  ) {
+    return control;
+  }
+  return null;
+}

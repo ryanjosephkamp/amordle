@@ -4,7 +4,11 @@ import Link from 'next/link';
 import type { Route } from 'next';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
-import type { PropsWithChildren } from 'react';
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  PropsWithChildren,
+} from 'react';
 import {
   directNavigationShortcuts,
   hasActiveModal,
@@ -15,6 +19,8 @@ import { AccountMenu } from './account-menu';
 import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
 import { useAuth } from './providers';
+import { useFeedbackPreferences } from './feedback-preferences';
+import { eligibleHapticControl, playKeyboardHaptic } from '@/application/keyboard-feedback';
 
 const primary = directNavigationShortcuts.filter((shortcut) => shortcut.href !== null);
 const menuShortcut = directNavigationShortcuts.find((shortcut) => shortcut.id === 'menu');
@@ -47,6 +53,8 @@ export function AppShell({ children }: PropsWithChildren) {
   const router = useRouter();
   const search = useSearchParams();
   const auth = useAuth();
+  const feedback = useFeedbackPreferences();
+  const touchedControl = useRef<HTMLElement | null>(null);
   const [moreOpenedOn, setMoreOpenedOn] = useState<string | null>(null);
   const moreButton = useRef<HTMLButtonElement>(null);
   const mobileMoreButton = useRef<HTMLButtonElement>(null);
@@ -58,6 +66,45 @@ export function AppShell({ children }: PropsWithChildren) {
     (pathname.includes('/play/solo/') || pathname.includes('/combat/match/'));
   const gameSurface = pathname.includes('/play/solo/') || pathname.includes('/combat/match/');
   const moreOpen = moreOpenedOn === pathname;
+  const focusHref = (() => {
+    const parameters = new URLSearchParams(search.toString());
+    parameters.set('focus', '1');
+    const query = parameters.toString();
+    return `${pathname}${query ? `?${query}` : ''}` as Route;
+  })();
+  const exitFocusHref = (() => {
+    const parameters = new URLSearchParams(search.toString());
+    parameters.delete('focus');
+    const query = parameters.toString();
+    return `${pathname}${query ? `?${query}` : ''}` as Route;
+  })();
+
+  const rememberTouchControl = (event: ReactPointerEvent<HTMLDivElement>) => {
+    if (!event.nativeEvent.isTrusted || event.pointerType !== 'touch') {
+      touchedControl.current = null;
+      return;
+    }
+    const control = eligibleHapticControl(event.target);
+    touchedControl.current = control;
+  };
+
+  const confirmTouchControl = (event: ReactMouseEvent<HTMLDivElement>) => {
+    const remembered = touchedControl.current;
+    touchedControl.current = null;
+    if (
+      !remembered ||
+      !event.nativeEvent.isTrusted ||
+      event.defaultPrevented ||
+      eligibleHapticControl(event.target) !== remembered
+    ) {
+      return;
+    }
+    playKeyboardHaptic({
+      enabled: feedback.settings.hapticsEnabled,
+      pointerType: 'touch',
+      reducedEffects: feedback.settings.reducedEffects,
+    });
+  };
 
   useEffect(() => {
     const onShortcut = (event: KeyboardEvent) => {
@@ -126,6 +173,8 @@ export function AppShell({ children }: PropsWithChildren) {
       className={['app-shell', focus ? 'is-focus' : '', gameSurface ? 'is-game-surface' : '']
         .filter(Boolean)
         .join(' ')}
+      onPointerDownCapture={rememberTouchControl}
+      onClick={confirmTouchControl}
     >
       {!focus && (
         <header className="global-chrome">
@@ -180,6 +229,11 @@ export function AppShell({ children }: PropsWithChildren) {
                     <div className="menu-heading" aria-hidden="true">
                       <span>destinations</span>
                     </div>
+                    {gameSurface && (
+                      <Link href={focusHref} role="menuitem" onClick={() => setMoreOpenedOn(null)}>
+                        <span aria-hidden="true">›</span> Enter Focus Mode
+                      </Link>
+                    )}
                     {secondary.map((item) => (
                       <Link
                         key={item.href}
@@ -238,9 +292,13 @@ export function AppShell({ children }: PropsWithChildren) {
         {routeAnnouncement}
       </span>
       {focus && (
-        <Link className="focus-exit" href={pathname as Route}>
-          EXIT FOCUS
-        </Link>
+        <div className="focus-utility-rail" aria-label="Focus Mode controls">
+          <Link className="focus-exit" href={exitFocusHref}>
+            Exit Focus Mode
+          </Link>
+          <NotificationCenter />
+          <AccountMenu />
+        </div>
       )}
       <ConnectivityStatus />
     </div>

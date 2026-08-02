@@ -1,32 +1,52 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
-import { useId } from 'react';
+import { useEffect, useId, useRef } from 'react';
 import { lookupDefinition } from '@/adapters/definitions';
 import type { DefinitionLookupResult } from '@/domain/definitions';
 
 export function WordDefinition({
   word,
   lookupWord = lookupDefinition,
+  enabled = true,
+  headingLevel = 3,
+  onSettled,
 }: {
   word: string;
   lookupWord?: (word: string) => Promise<DefinitionLookupResult>;
+  enabled?: boolean;
+  headingLevel?: 3 | 4;
+  onSettled?: () => void;
 }) {
   const headingId = useId();
+  const settledWord = useRef('');
   const normalized = word.trim().toLocaleLowerCase('en-US');
   const lookup = useQuery({
     queryKey: ['definition', normalized],
     queryFn: () => lookupWord(normalized),
-    enabled: /^[a-z]{2,35}$/.test(normalized),
+    enabled: enabled && /^[a-z]{2,35}$/.test(normalized),
     staleTime: 60 * 60 * 1000,
     retry: false,
   });
   const searchUrl = `https://www.google.com/search?q=define+${encodeURIComponent(normalized)}`;
+  const Heading = headingLevel === 4 ? 'h4' : 'h3';
+
+  useEffect(() => {
+    if (
+      enabled &&
+      lookup.fetchStatus === 'idle' &&
+      (lookup.isSuccess || lookup.isError) &&
+      settledWord.current !== normalized
+    ) {
+      settledWord.current = normalized;
+      onSettled?.();
+    }
+  }, [enabled, lookup.fetchStatus, lookup.isError, lookup.isSuccess, normalized, onSettled]);
 
   return (
     <section className="word-definition" aria-labelledby={headingId}>
       <div className="definition-status">
-        <h3 id={headingId}>Definition</h3>
+        <Heading id={headingId}>Definition</Heading>
         {lookup.data?.source && (
           <span>
             {lookup.data.source === 'dictionary-api' ? 'Free Dictionary API' : 'Wiktionary'}
@@ -35,7 +55,9 @@ export function WordDefinition({
           </span>
         )}
       </div>
-      {lookup.isPending ? (
+      {!enabled ? (
+        <p role="status">Waiting to look up {normalized.toUpperCase()}…</p>
+      ) : lookup.isPending ? (
         <p role="status">Looking up {normalized.toUpperCase()}…</p>
       ) : lookup.data?.status === 'found' ? (
         <ol className="definition-list">

@@ -23,6 +23,7 @@ import {
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { getMyPublicProfile } from '@/adapters/supabase/public';
 import { accentCssVariableMap, defaultAccentName } from '@/domain/profile';
+import { FeedbackPreferencesProvider } from './feedback-preferences';
 
 interface AuthContextValue {
   status: 'loading' | 'signed-out' | 'signed-in' | 'unavailable' | 'error';
@@ -184,9 +185,11 @@ export function AppProviders({ children }: PropsWithChildren) {
   return (
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <ProfileAccentBridge />
-        <CompletionReconciler />
-        {children}
+        <FeedbackPreferencesProvider>
+          <ProfileAccentBridge />
+          <CompletionReconciler />
+          {children}
+        </FeedbackPreferencesProvider>
       </AuthProvider>
     </QueryClientProvider>
   );

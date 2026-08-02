@@ -474,6 +474,42 @@ button.key.is-removed {
   justify-content: flex-start;
 }
 
+.encountered-go-review {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.encountered-go-review > h3 {
+  margin: 0;
+  font-size: 0.82rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encountered-go-list {
+  display: grid;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encountered-go-entry {
+  border: var(--terminal-rule);
+}
+
+.encountered-go-entry > h3 {
+  margin: 0;
+  border-bottom: var(--terminal-rule);
+  padding: 0.65rem 0.75rem;
+  font-size: 0.75rem;
+}
+
+.encountered-go-entry .word-definition {
+  border: 0;
+}
+
 .game-loading {
   display: grid;
   min-height: 60dvh;
@@ -830,8 +866,9 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   margin-inline: auto;
 }
 
-.game-auxiliary > summary {
+.game-auxiliary-toggle {
   display: none;
+  width: 100%;
   min-height: 2.75rem;
   align-items: center;
   border: var(--terminal-rule);
@@ -839,6 +876,14 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   color: var(--muted);
   cursor: pointer;
   font-size: 0.66rem;
+}
+
+.game-tool-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.62rem;
+  text-align: center;
 }
 
 .game-auxiliary-content {
@@ -1109,7 +1154,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
     font-size: 0.62rem;
   }
 
-  .game-auxiliary > summary {
+  .game-auxiliary-toggle {
     display: flex;
   }
 
@@ -1290,7 +1335,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 }
 
 @media (max-height: 43.75rem) {
-  .game-auxiliary > summary {
+  .game-auxiliary-toggle {
     display: flex;
   }
 }
@@ -1383,7 +1428,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   .game-history-viewport,
   .combat-transcript-frame,
   .combat-transcript-header,
-  .game-auxiliary > summary {
+  .game-auxiliary-toggle {
     border-color: CanvasText;
     background: Canvas;
     color: CanvasText;

@@ -18,12 +18,16 @@ import {
 import { privateRequestBlockSchema } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
-import { playKeyboardHaptic } from '@/application/keyboard-feedback';
+import { eligibleHapticControl, playKeyboardHaptic } from '@/application/keyboard-feedback';
 import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/word-lists';
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
 import { AccentPresetDialog } from '@/features/account/accent-preset-dialog';
+import { ContextHelpPopover } from '@/components/context-help-popover';
+import { createGameSession, reduceGame } from '@/domain/game';
+import { selectEncounteredSoloGoAnswers } from '@/domain/solo-go-review';
+import { EncounteredGoReview } from '@/features/solo/encountered-go-review';
 
 describe('browser components', () => {
   it('rejects corrupt and structurally invalid cached word assets', async () => {
@@ -338,6 +342,45 @@ describe('browser components', () => {
     });
   });
 
+  it('limits broad haptic eligibility to genuine button surfaces', () => {
+    const root = document.createElement('div');
+    root.innerHTML = `
+      <button><span id="native">native</span></button>
+      <button disabled><span id="disabled">disabled</span></button>
+      <a id="plain" href="/help">ordinary prose link</a>
+      <nav><a id="nav" href="/help">navigation</a></nav>
+      <a id="styled" class="button" href="/help">styled action</a>
+      <span id="role" role="button" tabindex="0">role button</span>
+      <span id="aria-disabled" role="button" aria-disabled="true">disabled role</span>
+    `;
+    document.body.append(root);
+    expect(eligibleHapticControl(root.querySelector('#native'))?.tagName).toBe('BUTTON');
+    expect(eligibleHapticControl(root.querySelector('#disabled'))).toBeNull();
+    expect(eligibleHapticControl(root.querySelector('#plain'))).toBeNull();
+    expect(eligibleHapticControl(root.querySelector('#nav'))?.id).toBe('nav');
+    expect(eligibleHapticControl(root.querySelector('#styled'))?.id).toBe('styled');
+    expect(eligibleHapticControl(root.querySelector('#role'))?.id).toBe('role');
+    expect(eligibleHapticControl(root.querySelector('#aria-disabled'))).toBeNull();
+    root.remove();
+  });
+
+  it('keeps avatar requirements collapsed and dismisses them accessibly', async () => {
+    render(
+      <ContextHelpPopover label="Image requirements">
+        <p>PNG, JPEG, WebP, or animated GIF up to 6 MiB.</p>
+      </ContextHelpPopover>,
+    );
+    const trigger = page.getByRole('button', { name: 'Image requirements' });
+    await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(page.getByText(/PNG, JPEG/)).not.toBeInTheDocument();
+    await trigger.click();
+    await expect.element(trigger).toHaveAttribute('aria-expanded', 'true');
+    await expect.element(page.getByRole('note')).toBeVisible();
+    document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    await expect.element(trigger).toHaveAttribute('aria-expanded', 'false');
+    await expect.element(trigger).toHaveFocus();
+  });
+
   it('lets manual history scrolling pause following and exposes Latest row recovery', async () => {
     render(
       <>
@@ -465,6 +508,70 @@ describe('browser components', () => {
       .element(page.getByRole('link', { name: 'Search web' }))
       .toHaveAttribute('href', 'https://www.google.com/search?q=define+slate');
     expect(definitionLookup).toHaveBeenCalledWith('slate');
+  });
+
+  it('looks up only the encountered GO prefix even when future answers remain in session state', async () => {
+    let session = createGameSession({
+      id: 'encountered-browser-review',
+      ownerNamespace: 'guest',
+      settings: {
+        mode: 'go',
+        length: 2,
+        difficulty: 'standard',
+        hardMode: false,
+        goCount: 5,
+      },
+      answers: ['at', 'to', 'on', 'no', 'in'],
+      now: '2026-08-01T20:00:00.000Z',
+    });
+    for (const letter of 'at') {
+      session = reduceGame(session, {
+        type: 'insert',
+        letter,
+        now: '2026-08-01T20:00:00.000Z',
+      });
+    }
+    session = reduceGame(session, {
+      type: 'submit',
+      sanctionedWords: new Set(['at']),
+      now: '2026-08-01T20:00:00.000Z',
+    });
+    session = reduceGame(session, {
+      type: 'advance',
+      now: '2026-08-01T20:00:02.000Z',
+    });
+    const review = selectEncounteredSoloGoAnswers({ ...session, status: 'lost' }, 'daily');
+    expect(review.status).toBe('available');
+    if (review.status !== 'available') return;
+
+    const lookupWord = vi.fn(async (word: string) => ({
+      schemaVersion: 1 as const,
+      word,
+      status: 'found' as const,
+      source: 'dictionary-api' as const,
+      definitions: [{ definition: `${word} definition` }],
+      checkedAt: '2026-08-01T20:00:00.000Z',
+      expiresAt: '2026-09-01T20:00:00.000Z',
+      cached: false,
+      stale: false,
+    }));
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false } },
+    });
+    render(
+      <QueryClientProvider client={queryClient}>
+        <EncounteredGoReview entries={review.entries} lookupWord={lookupWord} />
+      </QueryClientProvider>,
+    );
+
+    await expect.element(page.getByRole('heading', { name: 'Puzzle 1 · AT' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: 'Puzzle 2 · TO' })).toBeVisible();
+    await expect.element(page.getByText('to definition')).toBeVisible();
+    expect(lookupWord.mock.calls.map(([word]) => word)).toEqual(['at', 'to']);
+    expect(queryClient.getQueryCache().find({ queryKey: ['definition', 'on'] })).toBeUndefined();
+    expect(document.body.textContent).not.toContain('ON');
+    expect(document.body.textContent).not.toContain('NO');
+    expect(document.body.textContent).not.toContain('IN');
   });
 
   it('creates a normalized custom accent through the keyboard-safe native dialog', async () => {
