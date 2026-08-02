@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.5-final-protected-preview-candidate",
+  "currentCheckpoint": "stage-2-v6.5.1-menu-layering-repair-protected-preview-candidate",
   "status": "owner-review-required",
-  "lastGreenCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
+  "lastGreenCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -128,6 +128,18 @@
     "zeroResidue": true,
     "resumeCondition": "owner manual review; merge and Production release require separate authorization"
   },
+  "v6_5_1Implementation": {
+    "v6_5GoldenBaseline": "68c28c1be51f3db75eb9facc8478e285bfd6c473",
+    "applicationCandidateCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
+    "evidenceCommit": "PENDING_EVIDENCE_COMMIT",
+    "deliveredArea": "global-menu-layering-over-game-status-and-page-content",
+    "authorityMutationRequired": false,
+    "hostedAcceptanceComplete": true,
+    "hostedRunId": "e2e_20260802T043218080Z_f4ba9de0_5eccd35b",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "resumeCondition": "owner manual review; merge and Production release require separate authorization"
+  },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
     "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
@@ -137,12 +149,12 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
+    "candidateCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
     "reviewedPendingRepairIncluded": false,
     "check": "green",
     "domainTests": 109,
     "browserComponentTests": 20,
-    "fixtureE2E": 19,
+    "fixtureE2E": 20,
     "visualE2E": 11,
     "parityRows": 237,
     "mpAuditRows": 73,
@@ -151,11 +163,11 @@
     "httpInterfaces": 3,
     "homeCompressedBytes": {
       "js": 191258,
-      "css": 23012
+      "css": 23026
     },
     "gameCompressedBytes": {
       "js": 197126,
-      "css": 27499
+      "css": 27513
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
@@ -245,17 +257,33 @@
     "zeroResidue": true,
     "status": "green"
   },
+  "v6_5_1HostedAcceptance": {
+    "candidateCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
+    "deploymentId": "dpl_4QniuMyXds5vjRSqtVJxewtJ8ti1",
+    "deploymentUrl": "https://amordle-77f8b403z-ryanjosephkamps-projects.vercel.app",
+    "fixtureE2E": 20,
+    "serviceE2E": 2,
+    "visualE2E": 11,
+    "parityRows": 237,
+    "mpAuditRows": 73,
+    "finalRunId": "e2e_20260802T043218080Z_f4ba9de0_5eccd35b",
+    "avatarObjectsCleaned": 1,
+    "accentPresetRowsCleaned": 25,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "status": "green"
+  },
   "preview": {
-    "deploymentId": "dpl_F98YqGocuoGPMM9KWYXqkMX4FybD",
-    "url": "https://amordle-h4q2k6xo0-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_4QniuMyXds5vjRSqtVJxewtJ8ti1",
+    "url": "https://amordle-77f8b403z-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "7716ba72afdbb54ba9152a69f3e90bf205e4b20d",
-    "evidenceCommit": "2cc32ba966102d31bd7f1357dd15f63824f9748e",
+    "applicationCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
+    "evidenceCommit": "PENDING_EVIDENCE_COMMIT",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
-    "lastRunId": "e2e_20260802T013849885Z_7716ba72_0d863be5",
+    "lastRunId": "e2e_20260802T043218080Z_f4ba9de0_5eccd35b",
     "attempt": 1,
     "zeroResidue": true,
     "authUsersRemoved": 3,
@@ -282,6 +310,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.5-protected-preview-acceptance-complete-owner-review-required",
-  "updatedAt": "2026-08-02T01:48:55Z"
+  "reportStatus": "v6.5.1-menu-layering-repair-protected-preview-acceptance-complete-owner-review-required",
+  "updatedAt": "2026-08-02T04:33:32Z"
 }

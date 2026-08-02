@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle v6.5.1 Menu Layering Repair</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 68rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .status {
+        border: 2px solid currentColor;
+        padding: 0.8rem 1rem;
+        font-weight: 700;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.55rem;
+        text-align: left;
+      }
+      td:last-child {
+        text-align: right;
+      }
+      li {
+        margin-block: 0.35rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Stage 2 v6.5.1</h1>
+      <p class="status">
+        The Menu now renders above game headers and all normal page content on mobile and desktop.
+      </p>
+      <section>
+        <h2>Protected candidate</h2>
+        <ul>
+          <li>Application: <code>f4ba9de031400eef3be7fa2ef134750e1d8e265c</code></li>
+          <li>Evidence: <code>PENDING_EVIDENCE_COMMIT</code></li>
+          <li>Deployment: <code>dpl_4QniuMyXds5vjRSqtVJxewtJ8ti1</code></li>
+          <li>
+            <a href="https://amordle-77f8b403z-ryanjosephkamps-projects.vercel.app"
+              >Open protected Preview</a
+            >
+          </li>
+          <li>Hosted run: <code>e2e_20260802T043218080Z_f4ba9de0_5eccd35b</code></li>
+        </ul>
+      </section>
+      <section>
+        <h2>Repair</h2>
+        <p>
+          The global chrome previously created a lower ancestor stacking context than the sticky
+          game-status row. The shared scale now places chrome and its popovers above sticky page
+          content but below modal backdrops and dialogs.
+        </p>
+        <table>
+          <thead>
+            <tr>
+              <th>Surface</th>
+              <th>Layer</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Dropdown inside chrome</td>
+              <td>30</td>
+            </tr>
+            <tr>
+              <td>Sticky page/game content</td>
+              <td>40</td>
+            </tr>
+            <tr>
+              <td>Global chrome and popovers</td>
+              <td>45</td>
+            </tr>
+            <tr>
+              <td>Modal backdrop</td>
+              <td>50</td>
+            </tr>
+            <tr>
+              <td>Modal dialog</td>
+              <td>60</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+      <section>
+        <h2>Acceptance</h2>
+        <ul>
+          <li>109 domain and 20 browser/component tests.</li>
+          <li>20 fixture, 2 serial service, and 11 visual journeys.</li>
+          <li>237/237 parity and 73/73 multiplayer audit clauses.</li>
+          <li>
+            107/107 bootstrap files, 51 synchronized migrations, and exactly 3 HTTP interfaces.
+          </li>
+          <li>New hit-testing proof at 390×844 and 1440×900.</li>
+          <li>
+            Hosted cleanup completed on attempt 1 with zero database, Storage, or Auth residue.
+          </li>
+        </ul>
+      </section>
+      <section>
+        <h2>Boundaries</h2>
+        <p>
+          Production remains <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>. No migration, provider
+          setting, data contract, dependency, HTTP interface, merge, or Production release occurred.
+        </p>
+      </section>
+    </main>
+  </body>
+</html>
