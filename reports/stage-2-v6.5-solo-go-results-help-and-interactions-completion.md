@@ -11,6 +11,7 @@ game tools update without disappearing or shifting the game.
 - Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
 - Intake checkpoint: `79f0e89dbfcd0c3b9c50e68e56c80bf2e260ffd0`
 - Application candidate: `7716ba72afdbb54ba9152a69f3e90bf205e4b20d`
+- Acceptance evidence checkpoint: `2cc32ba966102d31bd7f1357dd15f63824f9748e`
 - Deployment: `dpl_F98YqGocuoGPMM9KWYXqkMX4FybD`
 - Protected Preview: <https://amordle-h4q2k6xo0-ryanjosephkamps-projects.vercel.app>
 - Hosted run: `e2e_20260802T013849885Z_7716ba72_0d863be5`
