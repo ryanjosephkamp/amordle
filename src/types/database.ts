@@ -8,6 +8,48 @@ export type Database = {
   };
   brrrdle_private: {
     Tables: {
+      amordle_account_lifecycle_challenges: {
+        Row: {
+          action: string;
+          created_at: string;
+          expires_at: string;
+          id: string;
+          operation_id: string;
+          processing_at: string | null;
+          service_result: Json;
+          status: string;
+          token_hash: string;
+          used_at: string | null;
+          user_id: string;
+        };
+        Insert: {
+          action: string;
+          created_at?: string;
+          expires_at: string;
+          id?: string;
+          operation_id?: string;
+          processing_at?: string | null;
+          service_result?: Json;
+          status?: string;
+          token_hash: string;
+          used_at?: string | null;
+          user_id: string;
+        };
+        Update: {
+          action?: string;
+          created_at?: string;
+          expires_at?: string;
+          id?: string;
+          operation_id?: string;
+          processing_at?: string | null;
+          service_result?: Json;
+          status?: string;
+          token_hash?: string;
+          used_at?: string | null;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       amordle_combat_action_ledger: {
         Row: {
           action_id: string;
@@ -91,7 +133,7 @@ export type Database = {
           mode: string;
           move_count: number;
           player_one_time_remaining_ms: number | null;
-          player_one_user_id: string;
+          player_one_user_id: string | null;
           player_two_time_remaining_ms: number | null;
           player_two_user_id: string | null;
           ranked: boolean;
@@ -127,7 +169,7 @@ export type Database = {
           mode: string;
           move_count?: number;
           player_one_time_remaining_ms?: number | null;
-          player_one_user_id: string;
+          player_one_user_id?: string | null;
           player_two_time_remaining_ms?: number | null;
           player_two_user_id?: string | null;
           ranked: boolean;
@@ -163,7 +205,7 @@ export type Database = {
           mode?: string;
           move_count?: number;
           player_one_time_remaining_ms?: number | null;
-          player_one_user_id?: string;
+          player_one_user_id?: string | null;
           player_two_time_remaining_ms?: number | null;
           player_two_user_id?: string | null;
           ranked?: boolean;
@@ -181,6 +223,27 @@ export type Database = {
           visibility_kind?: string;
           winner_player_id?: string | null;
           word_length?: number;
+        };
+        Relationships: [];
+      };
+      amordle_competitive_generations: {
+        Row: {
+          generation: number;
+          started_at: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          generation?: number;
+          started_at?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          generation?: number;
+          started_at?: string;
+          updated_at?: string;
+          user_id?: string;
         };
         Relationships: [];
       };
@@ -660,7 +723,7 @@ export type Database = {
           difficulty: string;
           ended_at: string | null;
           go_puzzle_count: number | null;
-          host_user_id: string;
+          host_user_id: string | null;
           id: string;
           matchmaking_request_id: string | null;
           mode: string;
@@ -689,7 +752,7 @@ export type Database = {
           difficulty?: string;
           ended_at?: string | null;
           go_puzzle_count?: number | null;
-          host_user_id: string;
+          host_user_id?: string | null;
           id?: string;
           matchmaking_request_id?: string | null;
           mode: string;
@@ -718,7 +781,7 @@ export type Database = {
           difficulty?: string;
           ended_at?: string | null;
           go_puzzle_count?: number | null;
-          host_user_id?: string;
+          host_user_id?: string | null;
           id?: string;
           matchmaking_request_id?: string | null;
           mode?: string;
@@ -816,7 +879,7 @@ export type Database = {
           difficulty: string;
           go_puzzle_count: number | null;
           host_profile: Json | null;
-          host_user_id: string;
+          host_user_id: string | null;
           id: string;
           match_id: string | null;
           matchmaking_request_id: string | null;
@@ -834,7 +897,7 @@ export type Database = {
           difficulty?: string;
           go_puzzle_count?: number | null;
           host_profile?: Json | null;
-          host_user_id: string;
+          host_user_id?: string | null;
           id?: string;
           match_id?: string | null;
           matchmaking_request_id?: string | null;
@@ -852,7 +915,7 @@ export type Database = {
           difficulty?: string;
           go_puzzle_count?: number | null;
           host_profile?: Json | null;
-          host_user_id?: string;
+          host_user_id?: string | null;
           id?: string;
           match_id?: string | null;
           matchmaking_request_id?: string | null;
@@ -908,7 +971,7 @@ export type Database = {
           last_seen_at: string;
           match_id: string;
           player_id: string;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           connected?: boolean;
@@ -917,7 +980,7 @@ export type Database = {
           last_seen_at?: string;
           match_id: string;
           player_id: string;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           connected?: boolean;
@@ -926,7 +989,7 @@ export type Database = {
           last_seen_at?: string;
           match_id?: string;
           player_id?: string;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -1228,9 +1291,10 @@ export type Database = {
           match_result_id: string;
           outcome: string;
           player_id: string;
+          player_label: string;
           puzzles_solved: number;
           summary: string;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           attempts_used?: number;
@@ -1238,9 +1302,10 @@ export type Database = {
           match_result_id: string;
           outcome: string;
           player_id: string;
+          player_label?: string;
           puzzles_solved?: number;
           summary?: string;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           attempts_used?: number;
@@ -1248,9 +1313,10 @@ export type Database = {
           match_result_id?: string;
           outcome?: string;
           player_id?: string;
+          player_label?: string;
           puzzles_solved?: number;
           summary?: string;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -1527,11 +1593,13 @@ export type Database = {
           old_games_played: number | null;
           old_provisional: boolean | null;
           old_rating: number;
-          opponent_user_id: string;
+          opponent_label: string;
+          opponent_user_id: string | null;
           outcome: string;
+          player_label: string;
           rating_delta: number;
           settlement_version: string;
-          user_id: string;
+          user_id: string | null;
         };
         Insert: {
           bucket: string;
@@ -1547,11 +1615,13 @@ export type Database = {
           old_games_played?: number | null;
           old_provisional?: boolean | null;
           old_rating: number;
-          opponent_user_id: string;
+          opponent_label?: string;
+          opponent_user_id?: string | null;
           outcome: string;
+          player_label?: string;
           rating_delta: number;
           settlement_version?: string;
-          user_id: string;
+          user_id?: string | null;
         };
         Update: {
           bucket?: string;
@@ -1567,11 +1637,13 @@ export type Database = {
           old_games_played?: number | null;
           old_provisional?: boolean | null;
           old_rating?: number;
-          opponent_user_id?: string;
+          opponent_label?: string;
+          opponent_user_id?: string | null;
           outcome?: string;
+          player_label?: string;
           rating_delta?: number;
           settlement_version?: string;
-          user_id?: string;
+          user_id?: string | null;
         };
         Relationships: [
           {
@@ -3448,6 +3520,41 @@ export type Database = {
         Returns: {
           game_projection: Json;
         }[];
+      };
+      service_account_has_active_combat_v1: {
+        Args: { p_user_id: string };
+        Returns: boolean;
+      };
+      service_cancel_account_waiting_combat_v1: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      service_confirm_account_lifecycle_v1: {
+        Args: { p_action: string; p_token_hash: string; p_user_id: string };
+        Returns: Json;
+      };
+      service_delete_account_data_v1: {
+        Args: { p_user_id: string };
+        Returns: Json;
+      };
+      service_delete_solo_account_data_v1: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      service_detach_deleted_combat_player_v1: {
+        Args: { p_user_id: string };
+        Returns: undefined;
+      };
+      service_prepare_account_lifecycle_v1: {
+        Args: { p_action: string; p_token_hash: string; p_user_id: string };
+        Returns: {
+          expires_at: string;
+          operation_id: string;
+        }[];
+      };
+      service_restart_competitive_profile_v1: {
+        Args: { p_user_id: string };
+        Returns: number;
       };
       set_private_multiplayer_request_block: {
         Args: { p_blocked: boolean; p_target_public_profile_id: string };
