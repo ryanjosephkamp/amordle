@@ -45,6 +45,7 @@ const users: Account[] = [];
 const gameIds: string[] = [];
 const directCascadeGameIds: string[] = [];
 const queueRequestIds: string[] = [];
+const lifecycleQueueIds: string[] = [];
 const rankedDailyGameIds: string[] = [];
 const rankedDailyRequestIds: string[] = [];
 const privateRequestIds: string[] = [];
@@ -409,6 +410,14 @@ async function cleanup() {
           .in('preset_id', accentPresetIds);
         if (error) throw error;
       }
+      if (lifecycleQueueIds.length) {
+        const { error } = await admin
+          .from('multiplayer_matchmaking_queue')
+          .delete()
+          .in('id', lifecycleQueueIds)
+          .in('user_id', userIds);
+        if (error) throw error;
+      }
       if (lifecycleResultIds.length) {
         const { error: transactionError } = await admin
           .from('multiplayer_rating_transactions')
@@ -475,6 +484,7 @@ async function cleanup() {
       }
       for (const [name, table, ids] of [
         ['queueRequests', 'multiplayer_matchmaking_queue', queueRequestIds],
+        ['lifecycleQueueRequests', 'multiplayer_matchmaking_queue', lifecycleQueueIds],
         ['rankedDailyRequests', 'multiplayer_matchmaking_queue', rankedDailyRequestIds],
         ['privateRequests', 'multiplayer_private_match_requests', privateRequestIds],
         ['rematchRequests', 'multiplayer_practice_rematch_requests', rematchRequestIds],
@@ -524,7 +534,7 @@ async function cleanup() {
         {
           p_run_id: runId,
           p_game_ids: gameIds,
-          p_request_ids: [...queueRequestIds, ...rankedDailyRequestIds],
+          p_request_ids: [...queueRequestIds, ...lifecycleQueueIds, ...rankedDailyRequestIds],
           p_user_ids: userIds,
         },
       );
@@ -553,6 +563,7 @@ async function cleanup() {
           authUsers: users.length,
           games: gameIds.length,
           queueRequests: queueRequestIds.length,
+          lifecycleQueueRequests: lifecycleQueueIds.length,
           rankedDailyRequests: rankedDailyRequestIds.length,
           privateRequests: privateRequestIds.length,
           rematchRequests: rematchRequestIds.length,
@@ -2230,7 +2241,7 @@ test.describe.serial('protected Preview services', () => {
       .select('id')
       .single();
     if (waitingQueueError) throw waitingQueueError;
-    queueRequestIds.push(waitingQueue.id);
+    lifecycleQueueIds.push(waitingQueue.id);
     await appendJson(resourcesPath, {
       at: new Date().toISOString(),
       kind: 'matchmaking_queue_request',
@@ -2302,7 +2313,9 @@ test.describe.serial('protected Preview services', () => {
       buffer: avatarPng,
     });
     await deletionPage.getByRole('button', { name: 'UPLOAD AND USE' }).click();
-    const deletionAvatarUrl = await deletionPage.getByLabel('Profile image URL').inputValue();
+    const deletionAvatarInput = deletionPage.getByLabel('Profile image URL');
+    await expect(deletionAvatarInput).toHaveValue(/^https:\/\//, { timeout: 15_000 });
+    const deletionAvatarUrl = await deletionAvatarInput.inputValue();
     const deletionAvatarMarker = `/storage/v1/object/public/${avatarBucket}/`;
     const deletionAvatarPath = decodeURIComponent(
       new URL(deletionAvatarUrl).pathname.split(deletionAvatarMarker)[1] ?? '',
@@ -2342,14 +2355,14 @@ test.describe.serial('protected Preview services', () => {
         player_id: 'player-one',
         user_id: deletedAccount.id,
         player_label: 'Disposable Lifecycle Player',
-        outcome: 'lost',
+        outcome: 'loss',
       },
       {
         match_result_id: sharedResult.id,
         player_id: 'player-two',
         user_id: opponent.id,
         player_label: 'E2E Opponent',
-        outcome: 'won',
+        outcome: 'win',
       },
     ]);
     if (sharedPlayersError) throw sharedPlayersError;
@@ -2364,7 +2377,7 @@ test.describe.serial('protected Preview services', () => {
           new_rating: 1190,
           old_rating: 1200,
           opponent_user_id: opponent.id,
-          outcome: 'lost',
+          outcome: 'loss',
           player_label: 'Disposable Lifecycle Player',
           opponent_label: 'E2E Opponent',
           rating_delta: -10,
@@ -2378,7 +2391,7 @@ test.describe.serial('protected Preview services', () => {
           new_rating: 1210,
           old_rating: 1200,
           opponent_user_id: deletedAccount.id,
-          outcome: 'won',
+          outcome: 'win',
           player_label: 'E2E Opponent',
           opponent_label: 'Disposable Lifecycle Player',
           rating_delta: 10,

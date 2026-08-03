@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.5.1-menu-layering-repair-protected-preview-candidate",
+  "currentCheckpoint": "stage-2-v6.6-account-controls-combat-stats-responsive-protected-preview-candidate",
   "status": "owner-review-required",
-  "lastGreenCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
+  "lastGreenCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -140,6 +140,28 @@
     "zeroResidue": true,
     "resumeCondition": "owner manual review; merge and Production release require separate authorization"
   },
+  "v6_6Implementation": {
+    "goldenBaseline": "b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69",
+    "applicationCandidateCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "decisionPacket": "reports/stage-2-v6.6-account-lifecycle-authority-decision.md",
+    "applicationReceipt": "reports/stage-2-v6.6-account-lifecycle-application-receipt.md",
+    "authorizedMigration": "20260802193000_amordle_account_lifecycle_v1.sql",
+    "authorizedMigrationSha256": "caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3",
+    "migrationApplied": true,
+    "synchronizedMigrations": 52,
+    "typesRegenerated": true,
+    "functionName": "account-lifecycle-v1",
+    "functionId": "8e75a009-e375-4a6e-8de6-6ebb92e1e2c0",
+    "functionVersion": 1,
+    "functionIndexSha256": "fb961d9e60d39008c50492561a8fa2c04fde12e49264c0a534f3522709cb5dc1",
+    "functionDenoSha256": "fc9fc38c21441b7f67a91280ed28b8ca4ad67fc69d713db441f5c0fd9a6abf9f",
+    "functionBundleSha256": "02abfe93956535d9de1c26c227dba0245e25b7522eb61de0b6a2b609ca991031",
+    "hostedAcceptanceComplete": true,
+    "hostedRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "resumeCondition": "owner multiplayer review; merge and Production release require separate authorization"
+  },
   "visualReference": {
     "package": "design/references/stage2/v5.3-input-semantics-keyboard-navigation-2026-07-29",
     "packageCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad",
@@ -149,25 +171,25 @@
     "evidenceCommit": "fb2b2a5d120f8df4c06b5f6f11412ae6c675d4ad"
   },
   "localAcceptance": {
-    "candidateCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
+    "candidateCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
     "reviewedPendingRepairIncluded": false,
     "check": "green",
-    "domainTests": 109,
-    "browserComponentTests": 20,
+    "domainTests": 121,
+    "browserComponentTests": 21,
     "fixtureE2E": 20,
-    "visualE2E": 11,
+    "visualE2E": 13,
     "parityRows": 237,
     "mpAuditRows": 73,
     "bootstrapFiles": "107/107",
-    "migrations": "45 immutable plus 6 authorized additive",
+    "migrations": "45 immutable plus 7 authorized additive",
     "httpInterfaces": 3,
     "homeCompressedBytes": {
-      "js": 191258,
-      "css": 23026
+      "js": 192087,
+      "css": 23738
     },
     "gameCompressedBytes": {
-      "js": 197126,
-      "css": 27513
+      "js": 197945,
+      "css": 28225
     },
     "deploymentWordBytes": 6097886,
     "wordRevision": "6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703"
@@ -273,26 +295,50 @@
     "zeroResidue": true,
     "status": "green"
   },
+  "v6_6HostedAcceptance": {
+    "candidateCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "deploymentId": "dpl_526Pf8MBtD2GionGGuX7y5ViyuGf",
+    "deploymentUrl": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
+    "migrationVersion": "20260802193000",
+    "migrationSha256": "caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3",
+    "functionId": "8e75a009-e375-4a6e-8de6-6ebb92e1e2c0",
+    "functionVersion": 1,
+    "fixtureE2E": 20,
+    "serviceE2E": 3,
+    "visualE2E": 13,
+    "parityRows": 237,
+    "mpAuditRows": 73,
+    "finalRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
+    "authUsersCleaned": 6,
+    "gamesCleaned": 7,
+    "queueRowsCleaned": 7,
+    "avatarObjectsCleaned": 2,
+    "accentPresetRowsCleaned": 25,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "status": "green"
+  },
   "preview": {
-    "deploymentId": "dpl_4QniuMyXds5vjRSqtVJxewtJ8ti1",
-    "url": "https://amordle-77f8b403z-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_526Pf8MBtD2GionGGuX7y5ViyuGf",
+    "url": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "f4ba9de031400eef3be7fa2ef134750e1d8e265c",
-    "evidenceCommit": "d27081b7128e0c769716363357204297ed83ea8a",
+    "applicationCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
-    "lastRunId": "e2e_20260802T043218080Z_f4ba9de0_5eccd35b",
+    "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
     "attempt": 1,
     "zeroResidue": true,
-    "authUsersRemoved": 3,
+    "authUsersRemoved": 6,
     "gamesRemoved": 7,
-    "queueRecordsRemoved": 6,
+    "queueRecordsRemoved": 7,
     "privateRequestsRemoved": 1,
     "rematchRequestsRemoved": 1,
     "accentPresetsRemoved": 25,
-    "avatarObjectsRemoved": 1
+    "avatarObjectsRemoved": 2,
+    "lifecycleResultsRemoved": 1,
+    "functionTestResidue": 0
   },
   "wordAuthority": {
     "mode": "same-deployment-content-addressed-static-assets",
@@ -310,6 +356,6 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.5.1-menu-layering-repair-protected-preview-acceptance-complete-owner-review-required",
-  "updatedAt": "2026-08-02T04:33:32Z"
+  "reportStatus": "v6.6-account-controls-combat-stats-responsive-protected-preview-acceptance-complete-owner-review-required",
+  "updatedAt": "2026-08-03T01:07:27Z"
 }

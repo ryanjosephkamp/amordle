@@ -25,7 +25,7 @@ Supabase assigned function ID `8e75a009-e375-4a6e-8de6-6ebb92e1e2c0`. The deploy
 - Linked TypeScript types were regenerated from schemas `public,brrrdle_private`.
 - Bootstrap verification reports 45/45 immutable plus 7/7 authorized additive migrations and
   0/0 pending.
-- The full local acceptance stack passed with 120 domain, 21 browser, 20 fixture, and 13 visual
+- The full local acceptance stack passed with 121 domain, 21 browser, 20 fixture, and 13 visual
   tests.
 - Functional parity remains 237/237, multiplayer audit remains 73/73, and the Next.js application
   still exposes exactly three API routes.
@@ -36,5 +36,22 @@ The migration and function were applied only to linked project `squqdstdvbsvhagf
 the default branch, real accounts, the locked shell, word authority, and the previous protected
 Preview were not modified during this authority-application step.
 
-Protected Preview deployment, disposable-user lifecycle acceptance, exact cleanup, final evidence,
-and the private golden checkpoint remain in progress.
+## Protected acceptance and cleanup
+
+- Application candidate: `f0a3a10c116530641cb23bafce0aea22f8ba53e5`
+- Deployment: `dpl_526Pf8MBtD2GionGGuX7y5ViyuGf`
+- Protected Preview: <https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app>
+- Final hosted run: `e2e_20260803T010541643Z_f0a3a10c_110a3c24`
+
+The final hosted run passed 20 fixture journeys, 3 serial real-service journeys, 13 visual and
+responsive journeys, 237/237 functional clauses, and the 73/73 multiplayer audit. It exercised
+wrong-password rejection, Solo reset with economy preservation, competitive reset across all six
+rating buckets, queue cancellation, opponent-safe permanent deletion, avatar removal, public-profile
+removal, and deleted-player sanitization.
+
+Cleanup completed on attempt 1. Exact probes returned zero database, Storage, private COMBAT,
+function-test, and Auth residue after removing 6 disposable Auth users, 7 games, 7 queue rows,
+1 private request, 1 rematch request, 25 accent presets, 2 avatar objects, and 1 lifecycle result.
+
+Final evidence reconciliation and the private golden checkpoint are the only remaining repository
+steps. Merge and Production release remain unauthorized.
