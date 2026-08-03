@@ -28,6 +28,7 @@ const definitionScenarioId = 'V6.2-HOSTED-DEFINITION-SURFACES';
 const accentPresetScenarioId = 'V6.3-HOSTED-ACCENT-PRESETS';
 const feedbackScenarioId = 'V6.4-HOSTED-FEEDBACK-PREFERENCES';
 const avatarScenarioId = 'V6.4-HOSTED-PUBLIC-AVATAR';
+const accountLifecycleScenarioId = 'V6.6-HOSTED-ACCOUNT-LIFECYCLE';
 const avatarBucket = 'amordle-public-avatars-v1';
 
 interface Account {
@@ -50,6 +51,7 @@ const privateRequestIds: string[] = [];
 const rematchRequestIds: string[] = [];
 const accentPresetIds: string[] = [];
 const avatarPaths: string[] = [];
+const lifecycleResultIds: string[] = [];
 const contexts: BrowserContext[] = [];
 let cleanupComplete = false;
 
@@ -65,6 +67,15 @@ async function appendJson(file: string, value: unknown) {
 
 async function event(kind: string, detail: Record<string, unknown> = {}) {
   await appendJson(eventsPath, { at: new Date().toISOString(), kind, ...detail });
+}
+
+function cleanupErrorMessage(error: unknown): string {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object' && 'message' in error) {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === 'string' && message.trim()) return message;
+  }
+  return 'Unknown cleanup error.';
 }
 
 async function createAccount(index: number, role: 'admin' | 'player'): Promise<Account> {
@@ -398,6 +409,23 @@ async function cleanup() {
           .in('preset_id', accentPresetIds);
         if (error) throw error;
       }
+      if (lifecycleResultIds.length) {
+        const { error: transactionError } = await admin
+          .from('multiplayer_rating_transactions')
+          .delete()
+          .in('match_result_id', lifecycleResultIds);
+        if (transactionError) throw transactionError;
+        const { error: playerResultError } = await admin
+          .from('multiplayer_player_results')
+          .delete()
+          .in('match_result_id', lifecycleResultIds);
+        if (playerResultError) throw playerResultError;
+        const { error: resultError } = await admin
+          .from('multiplayer_match_results')
+          .delete()
+          .in('id', lifecycleResultIds);
+        if (resultError) throw resultError;
+      }
       const rpcCleanupGameIds = gameIds.filter(
         (id) => !directCascadeGameIds.includes(id) && !rankedDailyGameIds.includes(id),
       );
@@ -530,9 +558,14 @@ async function cleanup() {
           rematchRequests: rematchRequestIds.length,
           accentPresets: accentPresetIds.length,
           avatarObjects: avatarPaths.length,
+          lifecycleResults: lifecycleResultIds.length,
         },
         residue,
         authResidue: 0,
+        privateAuthCascadeAuthority: {
+          lifecycleChallenges: 'on delete cascade from verified-absent Auth users',
+          competitiveGenerations: 'on delete cascade from verified-absent Auth users',
+        },
         status: 'zero-residue',
       };
       await writeFile(cleanupPath, `${JSON.stringify(receipt, null, 2)}\n`, { mode: 0o600 });
@@ -543,7 +576,7 @@ async function cleanup() {
       lastError = error;
       await event('cleanup_retry', {
         attempt,
-        error: error instanceof Error ? error.message : 'unknown cleanup error',
+        error: cleanupErrorMessage(error),
       });
     }
   }
@@ -1205,7 +1238,7 @@ test.describe.serial('protected Preview services', () => {
 
     await firstPage.emulateMedia({ colorScheme: 'dark' });
     await firstPage.goto(`${baseURL}/settings`);
-    await expect(firstPage.getByRole('heading', { name: 'Settings' })).toBeVisible();
+    await expect(firstPage.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
     await expect(firstPage.locator('.skeleton-stack')).toHaveCount(0);
     await firstPage.screenshot({
       path: path.join(evidenceDir, 'account-settings-desktop-dark.png'),
@@ -2024,5 +2057,410 @@ test.describe.serial('protected Preview services', () => {
       requestId: cancelledRankedDailyGo.id,
       dailyDateKey: new Date().toISOString().slice(0, 10),
     });
+  });
+
+  test('proves password-gated account lifecycle actions and opponent-safe deletion', async ({
+    browser,
+  }) => {
+    test.setTimeout(360_000);
+    await event('hosted_scenario_started', { scenarioId: accountLifecycleScenarioId });
+
+    const soloAccount = await createAccount(4, 'player');
+    const competitiveAccount = await createAccount(5, 'player');
+    const deletedAccount = await createAccount(6, 'player');
+    const opponent = users[2]!;
+    const contextOptions = {
+      baseURL,
+      storageState: bypassStorageState,
+      serviceWorkers: 'allow' as const,
+    };
+    const soloContext = await browser.newContext(contextOptions);
+    const competitiveContext = await browser.newContext(contextOptions);
+    const deletionContext = await browser.newContext(contextOptions);
+    for (const context of [soloContext, competitiveContext, deletionContext]) {
+      await context.addInitScript((correlationId) => {
+        (
+          window as typeof window & {
+            __AMORDLE_E2E_RUN_ID__?: string;
+          }
+        ).__AMORDLE_E2E_RUN_ID__ = correlationId;
+      }, runId);
+    }
+    contexts.push(soloContext, competitiveContext, deletionContext);
+    const soloPage = await soloContext.newPage();
+    const competitivePage = await competitiveContext.newPage();
+    const deletionPage = await deletionContext.newPage();
+
+    const soloHistoryId = `${runId}:lifecycle:solo`;
+    const soloCombatHistoryId = `${runId}:lifecycle:solo-control`;
+    const soloStateId = `amordle-account-state-v1:${soloAccount.id}`;
+    const { error: soloFixtureError } = await admin.from('game_history').insert([
+      {
+        id: soloHistoryId,
+        user_id: soloAccount.id,
+        completed_at: new Date().toISOString(),
+        entry: { kind: 'solo-practice', result: 'won' },
+      },
+      {
+        id: soloCombatHistoryId,
+        user_id: soloAccount.id,
+        completed_at: new Date().toISOString(),
+        entry: { kind: 'combat-practice', result: 'won' },
+      },
+      {
+        id: soloStateId,
+        user_id: soloAccount.id,
+        completed_at: new Date().toISOString(),
+        entry: {
+          kind: 'amordle-account-state-v1',
+          progress: { dailyStreak: 4, revision: 7, solo: { games: 3 } },
+        },
+      },
+    ]);
+    if (soloFixtureError) throw soloFixtureError;
+    const { error: soloProgressError } = await admin.from('progress_snapshots').insert({
+      user_id: soloAccount.id,
+      progress: { dailyStreak: 4, history: [{ id: soloHistoryId }], solo: { games: 3 } },
+      updated_at: new Date().toISOString(),
+    });
+    if (soloProgressError) throw soloProgressError;
+    const { error: soloEconomyError } = await admin.from('player_economy_state').insert({
+      user_id: soloAccount.id,
+      coins: 77,
+      reveal_one_letter: 2,
+      remove_incorrect_letters: 3,
+      revision: 5,
+    });
+    if (soloEconomyError) throw soloEconomyError;
+
+    await signIn(soloPage, soloAccount);
+    await soloPage.goto(`${baseURL}/settings`);
+    await expect(soloPage.getByRole('heading', { name: 'Settings', exact: true })).toBeVisible();
+    const soloAction = soloPage
+      .locator('.danger-action-list article')
+      .filter({ hasText: 'Delete Solo history and progress' });
+    await soloAction.getByRole('button', { name: 'REVIEW ACTION' }).click();
+    const soloDialog = soloPage.getByRole('dialog', {
+      name: 'Delete Solo history and progress',
+    });
+    await soloDialog.getByLabel('Current password').fill('not-the-current-password');
+    await soloDialog.getByRole('button', { name: 'VERIFY PASSWORD' }).click();
+    await expect(soloDialog.getByRole('alert')).toContainText(/current password is incorrect/i);
+    await soloDialog.getByLabel('Current password').fill(soloAccount.password);
+    await soloDialog.getByRole('button', { name: 'VERIFY PASSWORD' }).click();
+    await expect(soloDialog.getByText(/Password verified/i)).toBeVisible();
+    await soloDialog.getByRole('button', { name: 'DELETE SOLO DATA PERMANENTLY' }).click();
+    await expect(soloPage.getByText('Solo history and progress were deleted.')).toBeVisible();
+
+    const [{ data: soloHistory }, { data: preservedCombat }, { data: soloEconomy }] =
+      await Promise.all([
+        admin.from('game_history').select('id').eq('id', soloHistoryId).maybeSingle(),
+        admin.from('game_history').select('id').eq('id', soloCombatHistoryId).single(),
+        admin
+          .from('player_economy_state')
+          .select('coins,reveal_one_letter,remove_incorrect_letters,revision')
+          .eq('user_id', soloAccount.id)
+          .single(),
+      ]);
+    expect(soloHistory).toBeNull();
+    expect(preservedCombat?.id).toBe(soloCombatHistoryId);
+    expect(soloEconomy).toMatchObject({
+      coins: 77,
+      reveal_one_letter: 2,
+      remove_incorrect_letters: 3,
+      revision: 5,
+    });
+    const { data: resetSnapshot, error: resetSnapshotError } = await admin
+      .from('progress_snapshots')
+      .select('progress')
+      .eq('user_id', soloAccount.id)
+      .single();
+    if (resetSnapshotError) throw resetSnapshotError;
+    expect(resetSnapshot.progress).toMatchObject({ dailyStreak: 0, history: [], solo: {} });
+    await event('solo_account_reset_hosted_verified', {
+      scenarioId: accountLifecycleScenarioId,
+      wrongPasswordRejected: true,
+      soloDeleted: true,
+      combatPreserved: true,
+      economyPreserved: true,
+    });
+
+    const ratingBuckets = [
+      'async:og:amordle:v2',
+      'async:go:amordle:v2',
+      'async:og:timed:amordle:v2',
+      'async:go:timed:amordle:v2',
+      'async:og:daily:v1',
+      'async:go:daily:v1',
+    ];
+    const { error: ratingFixtureError } = await admin.from('multiplayer_rating_profiles').insert(
+      ratingBuckets.map((bucket, index) => ({
+        user_id: competitiveAccount.id,
+        bucket,
+        rating: 1330 + index,
+        games_played: 9,
+        wins: 5,
+        losses: 3,
+        draws: 1,
+        provisional: false,
+      })),
+    );
+    if (ratingFixtureError) throw ratingFixtureError;
+    const competitiveHistoryId = `${runId}:lifecycle:competitive`;
+    const { error: competitiveHistoryError } = await admin.from('game_history').insert({
+      id: competitiveHistoryId,
+      user_id: competitiveAccount.id,
+      completed_at: new Date().toISOString(),
+      entry: { kind: 'combat-practice', result: 'won' },
+    });
+    if (competitiveHistoryError) throw competitiveHistoryError;
+    const { data: waitingQueue, error: waitingQueueError } = await admin
+      .from('multiplayer_matchmaking_queue')
+      .insert({
+        user_id: competitiveAccount.id,
+        idempotency_key: `${runId}:lifecycle:queue`,
+        mode: 'og',
+        ranked: true,
+        rating_bucket: 'async:og:amordle:v2',
+        scope: 'practice',
+        status: 'queued',
+        transport: 'async',
+        word_length: 5,
+      })
+      .select('id')
+      .single();
+    if (waitingQueueError) throw waitingQueueError;
+    queueRequestIds.push(waitingQueue.id);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'matchmaking_queue_request',
+      id: waitingQueue.id,
+      owner: runId,
+      userId: competitiveAccount.id,
+      disposable: true,
+    });
+
+    await signIn(competitivePage, competitiveAccount);
+    await competitivePage.goto(`${baseURL}/settings`);
+    const competitiveAction = competitivePage
+      .locator('.danger-action-list article')
+      .filter({ hasText: 'Restart competitive profile' });
+    await competitiveAction.getByRole('button', { name: 'REVIEW ACTION' }).click();
+    const competitiveDialog = competitivePage.getByRole('dialog', {
+      name: 'Restart competitive profile',
+    });
+    await competitiveDialog.getByLabel('Current password').fill(competitiveAccount.password);
+    await competitiveDialog.getByRole('button', { name: 'VERIFY PASSWORD' }).click();
+    await competitiveDialog.getByRole('button', { name: 'RESTART COMPETITIVE PROFILE' }).click();
+    await expect(competitivePage.getByText('Competitive profile restarted.')).toBeVisible();
+    const { data: resetRatings, error: resetRatingsError } = await admin
+      .from('multiplayer_rating_profiles')
+      .select('bucket,rating,games_played,wins,losses,draws,provisional')
+      .eq('user_id', competitiveAccount.id)
+      .order('bucket');
+    if (resetRatingsError) throw resetRatingsError;
+    expect(resetRatings).toHaveLength(6);
+    for (const rating of resetRatings) {
+      expect(rating).toMatchObject({
+        rating: 1200,
+        games_played: 0,
+        wins: 0,
+        losses: 0,
+        draws: 0,
+        provisional: true,
+      });
+    }
+    const [{ data: competitiveHistory }, { data: cancelledQueue }] = await Promise.all([
+      admin.from('game_history').select('id').eq('id', competitiveHistoryId).maybeSingle(),
+      admin
+        .from('multiplayer_matchmaking_queue')
+        .select('status')
+        .eq('id', waitingQueue.id)
+        .single(),
+    ]);
+    expect(competitiveHistory).toBeNull();
+    expect(cancelledQueue?.status).toBe('cancelled');
+    await event('competitive_account_reset_hosted_verified', {
+      scenarioId: accountLifecycleScenarioId,
+      firstResetGenerationExpected: 2,
+      generationAuthority: 'migration-backed first-reset contract',
+      bucketsReset: resetRatings.length,
+      queueCancelled: true,
+      historyHidden: true,
+    });
+
+    await signIn(deletionPage, deletedAccount);
+    await deletionPage.goto(`${baseURL}/profile`);
+    await deletionPage.getByLabel('Player name').fill('Disposable Lifecycle Player');
+    const avatarPng = Buffer.from(
+      'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
+      'base64',
+    );
+    await deletionPage.getByLabel('Upload profile image').setInputFiles({
+      name: 'lifecycle-avatar.png',
+      mimeType: 'image/png',
+      buffer: avatarPng,
+    });
+    await deletionPage.getByRole('button', { name: 'UPLOAD AND USE' }).click();
+    const deletionAvatarUrl = await deletionPage.getByLabel('Profile image URL').inputValue();
+    const deletionAvatarMarker = `/storage/v1/object/public/${avatarBucket}/`;
+    const deletionAvatarPath = decodeURIComponent(
+      new URL(deletionAvatarUrl).pathname.split(deletionAvatarMarker)[1] ?? '',
+    );
+    avatarPaths.push(deletionAvatarPath);
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'storage_object',
+      id: deletionAvatarPath,
+      owner: runId,
+      userId: deletedAccount.id,
+      disposable: true,
+    });
+    await deletionPage.getByRole('button', { name: 'SAVE PROFILE' }).click();
+    await expect(deletionPage.getByText('Profile saved.')).toBeVisible();
+
+    const sharedSourceId = `${runId}:lifecycle:shared-match`;
+    const { data: sharedResult, error: sharedResultError } = await admin
+      .from('multiplayer_match_results')
+      .insert({
+        idempotency_key: `${runId}:lifecycle:shared-result`,
+        mode: 'og',
+        ranked: true,
+        rating_bucket: 'async:og:amordle:v2',
+        scope: 'practice',
+        source_match_id: sharedSourceId,
+        source_transport: 'async',
+        terminal_status: 'completed',
+      })
+      .select('id')
+      .single();
+    if (sharedResultError) throw sharedResultError;
+    lifecycleResultIds.push(sharedResult.id);
+    const { error: sharedPlayersError } = await admin.from('multiplayer_player_results').insert([
+      {
+        match_result_id: sharedResult.id,
+        player_id: 'player-one',
+        user_id: deletedAccount.id,
+        player_label: 'Disposable Lifecycle Player',
+        outcome: 'lost',
+      },
+      {
+        match_result_id: sharedResult.id,
+        player_id: 'player-two',
+        user_id: opponent.id,
+        player_label: 'E2E Opponent',
+        outcome: 'won',
+      },
+    ]);
+    if (sharedPlayersError) throw sharedPlayersError;
+    const { error: sharedTransactionsError } = await admin
+      .from('multiplayer_rating_transactions')
+      .insert([
+        {
+          bucket: 'async:og:amordle:v2',
+          expected_score: 0.5,
+          idempotency_key: `${runId}:lifecycle:rating:one`,
+          match_result_id: sharedResult.id,
+          new_rating: 1190,
+          old_rating: 1200,
+          opponent_user_id: opponent.id,
+          outcome: 'lost',
+          player_label: 'Disposable Lifecycle Player',
+          opponent_label: 'E2E Opponent',
+          rating_delta: -10,
+          user_id: deletedAccount.id,
+        },
+        {
+          bucket: 'async:og:amordle:v2',
+          expected_score: 0.5,
+          idempotency_key: `${runId}:lifecycle:rating:two`,
+          match_result_id: sharedResult.id,
+          new_rating: 1210,
+          old_rating: 1200,
+          opponent_user_id: deletedAccount.id,
+          outcome: 'won',
+          player_label: 'E2E Opponent',
+          opponent_label: 'Disposable Lifecycle Player',
+          rating_delta: 10,
+          user_id: opponent.id,
+        },
+      ]);
+    if (sharedTransactionsError) throw sharedTransactionsError;
+    await appendJson(resourcesPath, {
+      at: new Date().toISOString(),
+      kind: 'shared_match_result',
+      id: sharedResult.id,
+      owner: runId,
+      participantIds: [deletedAccount.id, opponent.id],
+      disposable: true,
+    });
+
+    await deletionPage.goto(`${baseURL}/settings`);
+    const deleteAction = deletionPage
+      .locator('.danger-action-list article')
+      .filter({ hasText: 'Delete account permanently' });
+    await deleteAction.getByRole('button', { name: 'REVIEW ACTION' }).click();
+    const deleteDialog = deletionPage.getByRole('dialog', {
+      name: 'Delete account permanently',
+    });
+    await deleteDialog.getByLabel('Current password').fill(deletedAccount.password);
+    await deleteDialog.getByRole('button', { name: 'VERIFY PASSWORD' }).click();
+    await deleteDialog.getByRole('button', { name: 'DELETE ACCOUNT PERMANENTLY' }).click();
+    await expect(deletionPage.getByRole('link', { name: /sign in/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    const { data: deletedAuth } = await admin.auth.admin.getUserById(deletedAccount.id);
+    expect(deletedAuth.user).toBeNull();
+    const { data: deletedProfile, error: deletedProfileError } = await admin
+      .from('public_player_profiles')
+      .select('user_id')
+      .eq('user_id', deletedAccount.id)
+      .maybeSingle();
+    if (deletedProfileError) throw deletedProfileError;
+    expect(deletedProfile).toBeNull();
+    const { data: avatarListing, error: avatarListingError } = await admin.storage
+      .from(avatarBucket)
+      .list('avatars', { search: deletionAvatarPath.split('/').at(-1) ?? '' });
+    if (avatarListingError) throw avatarListingError;
+    expect(avatarListing).toHaveLength(0);
+    const { data: preservedPlayers, error: preservedPlayersError } = await admin
+      .from('multiplayer_player_results')
+      .select('player_id,user_id,player_label')
+      .eq('match_result_id', sharedResult.id)
+      .order('player_id');
+    if (preservedPlayersError) throw preservedPlayersError;
+    expect(preservedPlayers).toEqual([
+      { player_id: 'player-one', user_id: null, player_label: 'Deleted player' },
+      { player_id: 'player-two', user_id: opponent.id, player_label: 'E2E Opponent' },
+    ]);
+    const { data: preservedTransactions, error: preservedTransactionsError } = await admin
+      .from('multiplayer_rating_transactions')
+      .select('user_id,opponent_user_id,player_label,opponent_label')
+      .eq('match_result_id', sharedResult.id)
+      .order('rating_delta');
+    if (preservedTransactionsError) throw preservedTransactionsError;
+    expect(preservedTransactions).toEqual([
+      {
+        user_id: null,
+        opponent_user_id: opponent.id,
+        player_label: 'Deleted player',
+        opponent_label: 'E2E Opponent',
+      },
+      {
+        user_id: opponent.id,
+        opponent_user_id: null,
+        player_label: 'E2E Opponent',
+        opponent_label: 'Deleted player',
+      },
+    ]);
+    await event('permanent_account_deletion_hosted_verified', {
+      scenarioId: accountLifecycleScenarioId,
+      authDeleted: true,
+      avatarDeleted: true,
+      publicProfileDeleted: true,
+      opponentSharedFactsPreserved: true,
+      deletedIdentitySanitized: true,
+    });
+    await event('hosted_scenario_complete', { scenarioId: accountLifecycleScenarioId });
   });
 });

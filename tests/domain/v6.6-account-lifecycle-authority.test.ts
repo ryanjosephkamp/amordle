@@ -1,6 +1,10 @@
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import {
+  accountLifecycleReceiptSchema,
+  dangerChallengeSchema,
+} from '../../src/domain/account-lifecycle';
 
 const migration = readFileSync(
   'supabase/migrations/20260802193000_amordle_account_lifecycle_v1.sql',
@@ -14,6 +18,24 @@ const edgeFunctionConfig = readFileSync(
 const sha256 = (value: string) => createHash('sha256').update(value).digest('hex');
 
 describe('v6.6 account lifecycle authority packet', () => {
+  it('accepts the RFC 3339 UTC offsets emitted by PostgreSQL timestamptz values', () => {
+    expect(
+      dangerChallengeSchema.parse({
+        action: 'delete-solo-history',
+        confirmationToken: 'x'.repeat(32),
+        expiresAt: '2026-08-03T00:55:39.247033+00:00',
+      }).expiresAt,
+    ).toBe('2026-08-03T00:55:39.247033+00:00');
+    expect(
+      accountLifecycleReceiptSchema.parse({
+        action: 'restart-competitive-profile',
+        operationId: '2d5adb96-08e5-490f-b2e2-74d26332dd15',
+        completedAt: '2026-08-03T00:56:01.000001+00:00',
+        signedOut: false,
+      }).completedAt,
+    ).toBe('2026-08-03T00:56:01.000001+00:00');
+  });
+
   it('locks the reviewed migration and Edge Function artifacts to exact checksums', () => {
     expect(sha256(migration)).toBe(
       'caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3',

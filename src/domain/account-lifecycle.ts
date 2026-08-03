@@ -12,7 +12,7 @@ export const dangerChallengeSchema = z
   .object({
     action: accountDangerActionSchema,
     confirmationToken: z.string().min(32).max(512),
-    expiresAt: z.string().datetime(),
+    expiresAt: z.string().datetime({ offset: true }),
   })
   .strict();
 
@@ -21,7 +21,7 @@ export type DangerChallenge = z.infer<typeof dangerChallengeSchema>;
 export const accountLifecycleReceiptSchema = z
   .object({
     action: accountDangerActionSchema,
-    completedAt: z.string().datetime(),
+    completedAt: z.string().datetime({ offset: true }),
     operationId: z.string().uuid(),
     signedOut: z.boolean(),
   })
