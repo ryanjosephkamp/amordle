@@ -5,17 +5,57 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amordle v6.6 Completion Report</title>
     <style>
-      :root { color-scheme: light dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      body { max-width: 72rem; margin: 0 auto; padding: 1.25rem; line-height: 1.55; }
-      h1, h2, h3 { line-height: 1.2; }
-      section { border-top: 1px solid currentColor; padding-block: 1rem; }
-      code { overflow-wrap: anywhere; }
-      .status { border: 2px solid currentColor; padding: .8rem 1rem; font-weight: 700; }
-      table { border-collapse: collapse; width: 100%; }
-      th, td { border: 1px solid currentColor; padding: .55rem; text-align: left; vertical-align: top; }
-      li { margin-block: .35rem; }
-      a { color: inherit; text-decoration-thickness: .12em; }
-      @media (max-width: 42rem) { table { display: block; overflow-x: auto; } }
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.2;
+      }
+      section {
+        border-top: 1px solid currentColor;
+        padding-block: 1rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .status {
+        border: 2px solid currentColor;
+        padding: 0.8rem 1rem;
+        font-weight: 700;
+      }
+      table {
+        border-collapse: collapse;
+        width: 100%;
+      }
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.55rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      li {
+        margin-block: 0.35rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+      }
+      @media (max-width: 42rem) {
+        table {
+          display: block;
+          overflow-x: auto;
+        }
+      }
     </style>
   </head>
   <body>
@@ -23,45 +63,98 @@
       <h1>Amordle Stage 2 v6.6</h1>
       <p class="status">
         Account controls, COMBAT GO seed rows, Lobby, contrast, responsive layout, and Stats are
-        green on the protected Preview. Owner review is next; merge and Production are not authorized.
+        green on the protected Preview. Owner review is next; merge and Production are not
+        authorized.
       </p>
       <section>
         <h2>Protected candidate</h2>
         <ul>
           <li>Application: <code>f0a3a10c116530641cb23bafce0aea22f8ba53e5</code></li>
+          <li>Evidence: <code>2330dd6bd90fb0c8386f4b31508d1eaefdc5322b</code></li>
           <li>Deployment: <code>dpl_526Pf8MBtD2GionGGuX7y5ViyuGf</code></li>
-          <li><a href="https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app">Open protected Preview</a></li>
+          <li>
+            <a href="https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app"
+              >Open protected Preview</a
+            >
+          </li>
           <li>Hosted run: <code>e2e_20260803T010541643Z_f0a3a10c_110a3c24</code></li>
           <li>Rollback checkpoint: <code>b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69</code></li>
+          <li>
+            Golden tag:
+            <code
+              >amordle-stage2-v6.6-account-controls-combat-stats-responsive-golden-2026-08-02</code
+            >
+          </li>
         </ul>
       </section>
       <section>
         <h2>Delivered</h2>
         <h3>Account and Settings</h3>
         <ul>
-          <li>Tolerant per-property recovery for legacy, partial, nullable, extra-field, and malformed settings.</li>
+          <li>
+            Tolerant per-property recovery for legacy, partial, nullable, extra-field, and malformed
+            settings.
+          </li>
           <li>Current-password reauthentication for email and password changes.</li>
           <li>Two-stage Solo reset, competitive reset, and permanent account deletion.</li>
           <li>Five-minute, one-use, account/action-bound lifecycle confirmations.</li>
         </ul>
         <h3>COMBAT and presentation</h3>
         <ul>
-          <li>Validated prior GO answers now lead the shared chronological transcript as seed rows.</li>
-          <li>Distinct reject cue for genuine rule rejection, excluding transport and auth failures.</li>
+          <li>
+            Validated prior GO answers now lead the shared chronological transcript as seed rows.
+          </li>
+          <li>
+            Distinct reject cue for genuine rule rejection, excluding transport and auth failures.
+          </li>
           <li>Separate public/private Lobby regions with bounded, container-aware Join actions.</li>
-          <li>Contrast-safe light selections, early toolbar truncation, and collision-safe route grids.</li>
-          <li>Readable rating cards and truthful accessible Stats figures with textual equivalents.</li>
+          <li>
+            Contrast-safe light selections, early toolbar truncation, and collision-safe route
+            grids.
+          </li>
+          <li>
+            Readable rating cards and truthful accessible Stats figures with textual equivalents.
+          </li>
         </ul>
       </section>
       <section>
         <h2>Authorized authority</h2>
         <table>
-          <thead><tr><th>Artifact</th><th>Verified result</th></tr></thead>
+          <thead>
+            <tr>
+              <th>Artifact</th>
+              <th>Verified result</th>
+            </tr>
+          </thead>
           <tbody>
-            <tr><td>Migration <code>20260802193000_amordle_account_lifecycle_v1.sql</code></td><td>SHA-256 <code>caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3</code>; 52/52 synchronized</td></tr>
-            <tr><td>Function <code>index.ts</code></td><td>SHA-256 <code>fb961d9e60d39008c50492561a8fa2c04fde12e49264c0a534f3522709cb5dc1</code></td></tr>
-            <tr><td>Function <code>deno.json</code></td><td>SHA-256 <code>fc9fc38c21441b7f67a91280ed28b8ca4ad67fc69d713db441f5c0fd9a6abf9f</code></td></tr>
-            <tr><td>Deployed function</td><td>ID <code>8e75a009-e375-4a6e-8de6-6ebb92e1e2c0</code>; ACTIVE version 1; JWT verified</td></tr>
+            <tr>
+              <td>Migration <code>20260802193000_amordle_account_lifecycle_v1.sql</code></td>
+              <td>
+                SHA-256
+                <code>caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3</code>; 52/52
+                synchronized
+              </td>
+            </tr>
+            <tr>
+              <td>Function <code>index.ts</code></td>
+              <td>
+                SHA-256
+                <code>fb961d9e60d39008c50492561a8fa2c04fde12e49264c0a534f3522709cb5dc1</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Function <code>deno.json</code></td>
+              <td>
+                SHA-256
+                <code>fc9fc38c21441b7f67a91280ed28b8ca4ad67fc69d713db441f5c0fd9a6abf9f</code>
+              </td>
+            </tr>
+            <tr>
+              <td>Deployed function</td>
+              <td>
+                ID <code>8e75a009-e375-4a6e-8de6-6ebb92e1e2c0</code>; ACTIVE version 1; JWT verified
+              </td>
+            </tr>
           </tbody>
         </table>
       </section>
@@ -70,9 +163,18 @@
         <ul>
           <li>121 domain, 21 browser, 20 fixture, 3 service, and 13 visual journeys.</li>
           <li>237/237 parity and 73/73 multiplayer audit clauses.</li>
-          <li>107/107 bootstrap files, 52 synchronized migrations, and exactly 3 application API routes.</li>
-          <li>Chromium, Firefox, WebKit, forced colors, reduced motion, touch, keyboard, and 200% reflow.</li>
-          <li>No serious/critical axe finding, unexpected console/page/network failure, or horizontal overflow.</li>
+          <li>
+            107/107 bootstrap files, 52 synchronized migrations, and exactly 3 application API
+            routes.
+          </li>
+          <li>
+            Chromium, Firefox, WebKit, forced colors, reduced motion, touch, keyboard, and 200%
+            reflow.
+          </li>
+          <li>
+            No serious/critical axe finding, unexpected console/page/network failure, or horizontal
+            overflow.
+          </li>
         </ul>
       </section>
       <section>
@@ -80,15 +182,17 @@
         <p>
           Cleanup succeeded on attempt 1 after removing 6 disposable Auth users, 7 games, 7 queue
           rows, 1 private request, 1 rematch request, 25 presets, 2 avatar objects, and 1 lifecycle
-          result. Exact database, Storage, private COMBAT, function-test, and Auth probes all returned zero.
+          result. Exact database, Storage, private COMBAT, function-test, and Auth probes all
+          returned zero.
         </p>
       </section>
       <section>
         <h2>Boundaries</h2>
         <p>
           Production remains <code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>. The default branch, real
-          accounts, existing visible test profiles, word authority, provider settings, and locked shell
-          are unchanged. No merge, Production release, force push, paid capability, or down migration occurred.
+          accounts, existing visible test profiles, word authority, provider settings, and locked
+          shell are unchanged. No merge, Production release, force push, paid capability, or down
+          migration occurred.
         </p>
       </section>
     </main>

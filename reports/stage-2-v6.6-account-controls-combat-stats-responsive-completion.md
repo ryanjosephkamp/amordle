@@ -11,10 +11,11 @@ collisions, and expands Stats with accurate accessible visualizations.
 - Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
 - Owner-approved rollback checkpoint: `b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69`
 - Application candidate: `f0a3a10c116530641cb23bafce0aea22f8ba53e5`
-- Acceptance evidence checkpoint: recorded by the commit containing this report
+- Acceptance evidence checkpoint: `2330dd6bd90fb0c8386f4b31508d1eaefdc5322b`
 - Deployment: `dpl_526Pf8MBtD2GionGGuX7y5ViyuGf`
 - Protected Preview: <https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app>
 - Hosted run: `e2e_20260803T010541643Z_f0a3a10c_110a3c24`
+- Planned golden tag: `amordle-stage2-v6.6-account-controls-combat-stats-responsive-golden-2026-08-02`
 - Status: ready for owner review; not merged and not released to Production
 
 ## Delivered experience
@@ -122,19 +123,19 @@ weaken product authority or cleanup checks.
 
 ## Annotation and visual ledger
 
-| Owner annotation | Accepted v6.6 result | Evidence |
-| --- | --- | --- |
-| Account settings and Danger Zone | Security dialogs plus three scoped two-step destructive actions | domain authority tests; hosted lifecycle journey |
-| Gray on white | selected primary and muted text use contrast-safe foregrounds | selected-surface contrast test |
-| Lobby separation and Join width | distinct public/private regions; bounded responsive Join rail | container collision test |
-| COMBAT GO seed evidence | seed answers are chronological transcript rows | domain, component, fixture, and spectator privacy tests |
-| Invalid guess sound | distinct reject cue only for rule rejection | domain/browser rejection matrix |
-| Match code overlap, incorrect state | long context truncates before topbar actions | intermediate toolbar collision test |
-| Match code overlap, correct state | narrow-state ellipsis retained with accessible full label | responsive fidelity matrix |
-| Ranked Stats overlap | auto-fit cards and 2x2 detail grids | mobile/desktop rating containment tests |
-| Settings unavailable for some accounts | tolerant property-level normalization | legacy settings fixture and hosted account coverage |
-| Better Stats figures | truthful code-native accessible figures | Stats accuracy and accessibility tests |
-| Site-wide zoom overlap | container-aware stacking and pairwise collision assertions | 320-1920 and 200% reflow suites |
+| Owner annotation                       | Accepted v6.6 result                                            | Evidence                                                |
+| -------------------------------------- | --------------------------------------------------------------- | ------------------------------------------------------- |
+| Account settings and Danger Zone       | Security dialogs plus three scoped two-step destructive actions | domain authority tests; hosted lifecycle journey        |
+| Gray on white                          | selected primary and muted text use contrast-safe foregrounds   | selected-surface contrast test                          |
+| Lobby separation and Join width        | distinct public/private regions; bounded responsive Join rail   | container collision test                                |
+| COMBAT GO seed evidence                | seed answers are chronological transcript rows                  | domain, component, fixture, and spectator privacy tests |
+| Invalid guess sound                    | distinct reject cue only for rule rejection                     | domain/browser rejection matrix                         |
+| Match code overlap, incorrect state    | long context truncates before topbar actions                    | intermediate toolbar collision test                     |
+| Match code overlap, correct state      | narrow-state ellipsis retained with accessible full label       | responsive fidelity matrix                              |
+| Ranked Stats overlap                   | auto-fit cards and 2x2 detail grids                             | mobile/desktop rating containment tests                 |
+| Settings unavailable for some accounts | tolerant property-level normalization                           | legacy settings fixture and hosted account coverage     |
+| Better Stats figures                   | truthful code-native accessible figures                         | Stats accuracy and accessibility tests                  |
+| Site-wide zoom overlap                 | container-aware stacking and pairwise collision assertions      | 320-1920 and 200% reflow suites                         |
 
 Hosted screenshots are retained in the ignored evidence run for Profile, Settings, Stats, History,
 Leaderboard, active COMBAT, waiting/result/spectator COMBAT, participant recovery, sanitized

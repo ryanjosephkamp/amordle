@@ -4,7 +4,7 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.6-account-controls-combat-stats-responsive-protected-preview-candidate",
+  "currentCheckpoint": "stage-2-v6.6-account-controls-combat-stats-responsive-golden-owner-review",
   "status": "owner-review-required",
   "lastGreenCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
   "v6Implementation": {
@@ -143,6 +143,8 @@
   "v6_6Implementation": {
     "goldenBaseline": "b3901e39d41f55b09b5faf8fe69d9b2a6d4c7b69",
     "applicationCandidateCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "evidenceCommit": "2330dd6bd90fb0c8386f4b31508d1eaefdc5322b",
+    "goldenTag": "amordle-stage2-v6.6-account-controls-combat-stats-responsive-golden-2026-08-02",
     "decisionPacket": "reports/stage-2-v6.6-account-lifecycle-authority-decision.md",
     "applicationReceipt": "reports/stage-2-v6.6-account-lifecycle-application-receipt.md",
     "authorizedMigration": "20260802193000_amordle_account_lifecycle_v1.sql",
@@ -297,6 +299,7 @@
   },
   "v6_6HostedAcceptance": {
     "candidateCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "evidenceCommit": "2330dd6bd90fb0c8386f4b31508d1eaefdc5322b",
     "deploymentId": "dpl_526Pf8MBtD2GionGGuX7y5ViyuGf",
     "deploymentUrl": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
     "migrationVersion": "20260802193000",
@@ -323,6 +326,7 @@
     "url": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "applicationCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "evidenceCommit": "2330dd6bd90fb0c8386f4b31508d1eaefdc5322b",
     "projectSettingsRestoredLocally": true,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
@@ -357,5 +361,5 @@
     "oldBlobStoreDeleted": false
   },
   "reportStatus": "v6.6-account-controls-combat-stats-responsive-protected-preview-acceptance-complete-owner-review-required",
-  "updatedAt": "2026-08-03T01:07:27Z"
+  "updatedAt": "2026-08-03T01:16:23Z"
 }
