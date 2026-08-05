@@ -1,0 +1,556 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Amordle Post-v6.6 Owner Visual Feedback Intake</title>
+    <style>
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+        --measure: 76rem;
+        --line: color-mix(in srgb, CanvasText 30%, Canvas);
+        --soft: color-mix(in srgb, CanvasText 7%, Canvas);
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background: Canvas;
+        color: CanvasText;
+        line-height: 1.58;
+      }
+      main {
+        width: min(100% - 2rem, var(--measure));
+        margin-inline: auto;
+        padding-block: 1.5rem 4rem;
+      }
+      h1,
+      h2,
+      h3 {
+        line-height: 1.22;
+        text-wrap: balance;
+      }
+      h1 {
+        font-size: clamp(1.65rem, 5vw, 2.6rem);
+      }
+      h2 {
+        margin-top: 2.4rem;
+        border-bottom: 1px solid var(--line);
+        padding-bottom: 0.45rem;
+      }
+      h3 {
+        margin-top: 1.8rem;
+      }
+      a {
+        color: inherit;
+        text-decoration-thickness: 0.12em;
+        text-underline-offset: 0.18em;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      .status,
+      .note,
+      article {
+        border: 1px solid var(--line);
+        background: var(--soft);
+        padding: 1rem;
+      }
+      .status {
+        border-width: 2px;
+        font-weight: 700;
+      }
+      .meta {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 18rem), 1fr));
+        gap: 0.65rem;
+        padding: 0;
+        list-style: none;
+      }
+      .meta li {
+        border: 1px solid var(--line);
+        padding: 0.7rem;
+      }
+      .table-wrap {
+        overflow-x: auto;
+        border: 1px solid var(--line);
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 52rem;
+      }
+      th,
+      td {
+        padding: 0.65rem;
+        text-align: left;
+        vertical-align: top;
+        border: 1px solid var(--line);
+      }
+      blockquote {
+        margin-inline: 0;
+        border-left: 0.35rem solid currentColor;
+        padding: 0.3rem 1rem;
+        background: Canvas;
+        white-space: normal;
+      }
+      article > p:last-child,
+      article > ul:last-child {
+        margin-bottom: 0;
+      }
+      .tag {
+        display: inline-block;
+        border: 1px solid currentColor;
+        padding: 0.05rem 0.4rem;
+        font-size: 0.83em;
+        font-weight: 700;
+      }
+      li + li {
+        margin-top: 0.35rem;
+      }
+      @media (max-width: 42rem) {
+        main {
+          width: min(100% - 1rem, var(--measure));
+          padding-top: 0.75rem;
+        }
+        article,
+        .status,
+        .note {
+          padding: 0.8rem;
+        }
+      }
+      @media print {
+        :root {
+          color-scheme: light;
+        }
+        body {
+          background: white;
+          color: black;
+        }
+        main {
+          width: 100%;
+        }
+        article,
+        .status,
+        .note {
+          break-inside: avoid;
+          background: white;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Amordle Post-v6.6 Owner Visual Feedback Intake</h1>
+      <p class="status">
+        Evidence intake only. This document records the owner’s twelve annotated screenshots for the
+        next planning cycle. It does not authorize implementation, service mutation, a commit, or a
+        deployment.
+      </p>
+
+      <h2>Verified preparation state</h2>
+      <ul class="meta">
+        <li>
+          <strong>Branch</strong><br /><code
+            >codex/amordle-terminal-greenfield-implementation-2026-07-27</code
+          >
+        </li>
+        <li><strong>Head</strong><br /><code>16d7a510a15ab5eaf254bc2c163f77b9059854cc</code></li>
+        <li><strong>Tree</strong><br /><code>a4a3a5a130d21d72444e60e09de4d7c30e4f5152</code></li>
+        <li>
+          <strong>Golden tag</strong><br /><code
+            >amordle-stage2-v6.6-account-controls-combat-stats-responsive-golden-2026-08-02</code
+          >
+        </li>
+      </ul>
+      <p class="note">
+        These identities are drift-prone and must be revalidated. The canonical Markdown source is
+        <code>reports/stage-2-post-v6.6-owner-visual-feedback-intake-2026-08-04.md</code>.
+      </p>
+
+      <h2>Source ledger</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>File</th>
+              <th>SHA-256</th>
+              <th>Surface</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>SS-01</td>
+              <td>3.07.39 PM</td>
+              <td><code>c20730f117993bdb06b2e18deea87684fde285d2795b8a4285e887a14a4c7146</code></td>
+              <td>Notifications</td>
+            </tr>
+            <tr>
+              <td>SS-02</td>
+              <td>3.28.20 PM</td>
+              <td><code>a6e67c09715e272e0aa4a34d0206b47c858fba5c7a0ebc461565aff41dc0312f</code></td>
+              <td>Active Solo</td>
+            </tr>
+            <tr>
+              <td>SS-03</td>
+              <td>3.31.03 PM</td>
+              <td><code>7e245ad11f5d6d1f4d247eb3eda98b3d6c97f5b02a62fa3aacf0c7355ccaa355</code></td>
+              <td>Resume contrast</td>
+            </tr>
+            <tr>
+              <td>SS-04</td>
+              <td>3.33.00 PM</td>
+              <td><code>bfc8e73841770d0a1a95768fa2a64ecbb526d748e2f3af8a5cfafd58e5a51074</code></td>
+              <td>Choose how to play</td>
+            </tr>
+            <tr>
+              <td>SS-05</td>
+              <td>3.34.32 PM</td>
+              <td><code>07217441f1585932b2782df1b94622d8325eae2b8d39d29c21293dbd7ae9adc8</code></td>
+              <td>Players filters</td>
+            </tr>
+            <tr>
+              <td>SS-06</td>
+              <td>3.38.15 PM</td>
+              <td><code>946162a72911ee348c4bd59e359b0136c72249b35aad33179a0bb44c69fbea13</code></td>
+              <td>Stats</td>
+            </tr>
+            <tr>
+              <td>SS-07</td>
+              <td>3.43.24 PM</td>
+              <td><code>482f32300009b5985ce9d4a8ca9577aef296fe64416b0b2d127f41f4305168d9</code></td>
+              <td>Marketplace</td>
+            </tr>
+            <tr>
+              <td>SS-08</td>
+              <td>3.45.09 PM</td>
+              <td><code>db0bed3b0f5efec4522cd366e0ceb767def2297c86e6a8e0dda9991dbb0b3216</code></td>
+              <td>Settings dialogs</td>
+            </tr>
+            <tr>
+              <td>SS-09</td>
+              <td>3.50.53 PM</td>
+              <td><code>37d980fa3ec684c36bbd07684e184be82f7ed4db745fc36de68076dbf3646fd4</code></td>
+              <td>Profile control color</td>
+            </tr>
+            <tr>
+              <td>SS-10</td>
+              <td>3.55.42 PM</td>
+              <td><code>f52e44c2bc3e48a75e51d8d44af612da44a01b57a7d15a164419f905cc04cbb3</code></td>
+              <td>Sign-in redirect</td>
+            </tr>
+            <tr>
+              <td>SS-11</td>
+              <td>3.58.14 PM</td>
+              <td><code>12755b977277555278a477c19ae21c2db0a5ba0804281da870b82892a91febab</code></td>
+              <td>Account nav label</td>
+            </tr>
+            <tr>
+              <td>SS-12</td>
+              <td>4.09.36 PM</td>
+              <td><code>76f0f93aa21b3de201103cc623689842c1a35bd451f09b77209b76c6b6481aeb</code></td>
+              <td>Definition word</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Exact annotations and normalized requirements</h2>
+
+      <article>
+        <h3><span class="tag">ANNOT-01</span> Notifications desktop alignment</h3>
+        <blockquote>
+          <p>
+            Notifications text spacing issue on desktop view:<br />Please add a bit more
+            space/separation between match status (e.g., “Match ready”, “Your turn”, etc.) and the
+            date (e.g., “8/2/2026”).
+          </p>
+          <p>
+            We could even align these into a more tabular looking format, such that the statuses are
+            always aligned, the dates are always aligned, and the times are always aligned.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> separate and consistently align status, date, and time on
+          desktop while retaining responsive behavior, routing, read state, and Mark All Read.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-02</span> Active Solo desktop structure</h3>
+        <blockquote>
+          <p>
+            On desktop:<br />This looks too crowded and not quite polished enough.<br />This “active
+            solo” table content is poorly aligned or structured.<br />We absolutely need to fix it.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> create a clear, scannable desktop session layout with
+          predictably aligned identity, progress, Resume, and Abandon controls without regressing
+          mobile or session semantics.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-03</span> Active Solo light-button foreground</h3>
+        <blockquote>
+          <p>
+            Grey on white is still hard to read.<br />Please improve readability.<br />We can use a
+            darker grey or black or something.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> use the established high-contrast dark foreground on light
+          Resume buttons, including disabled state.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-04</span> Choose-how-to-play white-on-white</h3>
+        <blockquote>
+          <p>
+            wtf, this is literally white text on white background…<br />impossible to read!<br />please
+            fix this immediately
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> repair the Set Up Solo action as part of a systemic
+          light-surface contrast correction.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-05</span> Equal Players filter heights</h3>
+        <blockquote>
+          <p>
+            These rectangular boxes (“Player name”, “Rating lane”, “Minimum rating”, “Maximum
+            rating”, “Sort”) and buttons (“apply”) should all be the same height.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> normalize filter input/select/action heights and baselines
+          while preserving labels, touch targets, focus, and responsive wrapping.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-06</span> Serious Stats overhaul</h3>
+        <blockquote>
+          <p>We need to do a serious overhaul on the Stats page.</p>
+          <p>
+            First, I want better visualizations.<br />These bars/meters/etc. are insufficient. We
+            can keep some of them, but we need actual graphs, charts, and other relevant content to
+            truly visualize the stats in a cool way.
+          </p>
+          <p>
+            Second, I don’t really know why some content spans the full width of the page while
+            other content doesn’t here.<br />Specifically, the ranked ratings info has a bunch of
+            blank space to the right of it.
+          </p>
+          <p>
+            Also, the ranked ratings should show Elo and stats for all of the different ranked game
+            modes; I can’t currently tell from here whether the ranked ratings info is for ranked
+            OG, ranked GO, or whatever
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> map the actual durable data first; add truthful accessible
+          graphs/charts; normalize widths; show and unambiguously label every real ranked bucket;
+          never fabricate buckets or time series.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-07</span> Marketplace white-on-white</h3>
+        <blockquote>
+          <p>
+            There’s more white font on white background!<br />This is impossible to read!<br />Please
+            fix this everywhere in the site so that we never, ever, EVER have white on white like
+            that.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> include Marketplace in a complete sitewide light-surface
+          contrast audit.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-08</span> Centered and dismissible dialogs</h3>
+        <blockquote>
+          <p>Settings on desktop:</p>
+          <p>
+            The “change email”, “change password”, and danger zone popovers all appear in the upper
+            left corner of the page.
+          </p>
+          <p>
+            This is not consistent with the other Profile popovers (e.g., configuring accent colors,
+            etc.) that appear in the center of the page.
+          </p>
+          <p>All popovers like these should appear in the center of the page.</p>
+          <p>
+            Additionally, to close these popovers, the player should be able to click the “x” button
+            in the top right (like they currently can) OR they can simply click outside of the box.
+          </p>
+          <p>
+            I want all popovers across the entire site to have that same policy, where clicking
+            outside of the popover box will automatically close the popover.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> center true modal dialogs and standardize safe X, backdrop,
+          and Escape dismissal with focus restoration. Audit dialog/menu/tooltip distinctions and
+          destructive pending states.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-09</span> Canonical dark foreground</h3>
+        <blockquote>
+          <p>On the Profile page:</p>
+          <p>
+            Look at the dark/black font color that you’re using for these accent color (e.g.,
+            “Amber”) and “save profile” texts when the button background is light/white.
+          </p>
+          <p>
+            This is the PERFECT dark font color to use for button text where the background is
+            light/white like that.
+          </p>
+          <p>
+            So, please carefully inspect all site pages and then ensure that instead of a light grey
+            or some other color, we are always using this same exact dark/black font color for text
+            within buttons with light/white backgrounds.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> make the existing Profile dark foreground the central
+          design-token authority for every light/white control and descendant label.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-10</span> Successful sign-in goes Home</h3>
+        <blockquote>
+          <p>When I sign in to an account, this is the type of page that appears.</p>
+          <p>
+            I actually would prefer that we have the game automatically go to the home page, rather
+            than to this page, upon successful player sign in.
+          </p>
+          <p>
+            That way, the player doesn’t have to manually go to the home page or to some other site
+            page in order to do what they actually want immediately after sign-in.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> Home is the default ordinary sign-in destination; audit and
+          preserve only intentional safe return/deep-link/recovery behavior.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-11</span> Account navigation names the player</h3>
+        <blockquote>
+          <p>
+            I want to replace the “account” text in the account button at the top of the site with
+            the signed-in player’s player name. For this specific example account here, that would
+            replace “account” with “ragnar”.
+          </p>
+          <p>If a player is signed out, then this should say something like “guest”.</p>
+          <p>
+            This would make it very clear that the player is signed in at any time and on any page
+            of the site.
+          </p>
+          <p>
+            Perhaps if the player hasn’t configured their own player name yet, we can just show the
+            first several (you choose the exact number) characters of the account’s email address,
+            e.g., for a private address, this could be “player…” or something, so that
+            we don’t have spillover and so that the button doesn’t get ridiculously big.
+          </p>
+          <p>Please use your best judgment about this.</p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> show player name, then a bounded owner-only email-derived
+          fallback, or Guest; handle hydration, edits, account switching, truncation, accessibility,
+          and privacy.
+        </p>
+      </article>
+
+      <article>
+        <h3><span class="tag">ANNOT-12</span> Every definition names its word</h3>
+        <blockquote>
+          <p>
+            I forfeited this ranked COMBAT match.<br />Notice how the actual solution isn’t shown
+            below the gameplay area, but its definition is…<br />We need the actual solution to be
+            shown alongside all definitions that are shown, across the entire game—across all game
+            types, etc.
+          </p>
+          <p>
+            The rule should be that if a player is shown a definition of a word, then the word
+            itself must also always be shown in the same definition area.
+          </p>
+        </blockquote>
+        <p>
+          <strong>Normalized:</strong> whenever a definition is already authorized and rendered,
+          that region must visibly name its word. This must never widen answer authority or reveal a
+          word early.
+        </p>
+      </article>
+
+      <h2>Cross-cutting planning requirements</h2>
+      <ul>
+        <li>
+          <strong>Contrast:</strong> one canonical dark foreground for light controls; 4.5:1
+          ordinary text and 3:1 meaningful borders/icons/focus; readable disabled states;
+          forced-colors support; semantic evidence colors unchanged.
+        </li>
+        <li>
+          <strong>Responsive structure:</strong> Notifications, Active Solo, Players filters, Stats,
+          and Account labels must contain cleanly at 320–1920 widths and 200% zoom without document
+          overflow or collisions.
+        </li>
+        <li>
+          <strong>Stats integrity:</strong> every visualization must be sourced from durable or
+          explicitly pending data and have a textual equivalent. No invented bucket or time series.
+        </li>
+        <li>
+          <strong>Overlay semantics:</strong> modal dialogs are centered; anchored menus remain
+          anchored; destructive pending work cannot be dismissed ambiguously.
+        </li>
+        <li>
+          <strong>Identity safety:</strong> no stale label from another account, no public email
+          projection, no redirect loop or foreign open redirect.
+        </li>
+        <li>
+          <strong>Answer privacy:</strong> the definition-word invariant applies only after existing
+          reveal authority permits the definition.
+        </li>
+      </ul>
+
+      <h2>Boundaries</h2>
+      <ul>
+        <li>
+          No implementation, commit, push, deployment, service mutation, or data creation is
+          authorized by this intake.
+        </li>
+        <li>
+          No game-rule, scoring, answer, evidence, rating-algorithm, economy, matchmaking,
+          persistence, settlement, or word-list change is requested.
+        </li>
+        <li>No migration, API, paid capability, vendor, or chart dependency is presumed.</li>
+        <li>
+          Production, the default branch, real accounts, existing E2E profiles, immutable
+          migrations, and the locked shell remain untouched.
+        </li>
+      </ul>
+
+      <h2>Next artifact</h2>
+      <p>
+        Use the copy-ready Plan-mode package at
+        <code>reports/stage-2-post-v6.6-owner-visual-feedback-plan-mode-prompt-2026-08-04.md</code>.
+      </p>
+    </main>
+  </body>
+</html>

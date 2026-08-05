@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "preparedAt": "2026-08-05T20:28:59Z",
+  "workspace": "/Users/noir/Documents/amordle-final",
+  "repository": {
+    "github": "ryanjosephkamp/amordle",
+    "private": true,
+    "remote": "https://github.com/ryanjosephkamp/amordle.git",
+    "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
+    "acceptedGoldenCommit": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
+    "acceptedGoldenTree": "a4a3a5a130d21d72444e60e09de4d7c30e4f5152",
+    "acceptedGoldenTag": "amordle-stage2-v6.6-account-controls-combat-stats-responsive-golden-2026-08-02",
+    "handoffTag": "amordle-claude-code-handoff-v6.7-planning-2026-08-05",
+    "defaultBranch": "bootstrap/greenfield-2026-07-20"
+  },
+  "preview": {
+    "url": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_526Pf8MBtD2GionGGuX7y5ViyuGf",
+    "status": "READY",
+    "applicationCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+    "evidenceCommit": "2330dd6bd90fb0c8386f4b31508d1eaefdc5322b"
+  },
+  "production": {
+    "deploymentId": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "status": "READY",
+    "mutationAuthorized": false
+  },
+  "supabase": {
+    "projectRef": "squqdstdvbsvhagfuzgj",
+    "status": "ACTIVE_HEALTHY",
+    "synchronizedMigrations": 52,
+    "immutableMigrations": 45,
+    "authorizedAdditiveMigrations": 7,
+    "edgeFunction": {
+      "slug": "account-lifecycle-v1",
+      "id": "8e75a009-e375-4a6e-8de6-6ebb92e1e2c0",
+      "status": "ACTIVE",
+      "version": 1,
+      "verifyJwt": true
+    }
+  },
+  "acceptance": {
+    "bootstrapFiles": "107/107",
+    "functionalClauses": "237/237",
+    "multiplayerClauses": "73/73",
+    "applicationHttpInterfaces": 3
+  },
+  "nextScope": {
+    "mandatoryRequirements": "ANNOT-01 through ANNOT-12",
+    "planningOnlyAtActivation": true,
+    "implementationAuthorized": false,
+    "mergeAuthorized": false,
+    "productionReleaseAuthorized": false
+  }
+}
