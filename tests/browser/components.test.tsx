@@ -18,6 +18,7 @@ import {
 import { privateRequestBlockSchema } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
+import { dismissOnBackdrop, isOutsideDialogClick } from '@/application/modal-dialog';
 import { eligibleHapticControl, playKeyboardHaptic } from '@/application/keyboard-feedback';
 import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/word-lists';
 import { MoveBoards } from '@/features/combat/combat-transcript';
@@ -608,6 +609,62 @@ describe('browser components', () => {
     expect(document.body.textContent).not.toContain('ON');
     expect(document.body.textContent).not.toContain('NO');
     expect(document.body.textContent).not.toContain('IN');
+  });
+
+  // ANNOT-08: every true modal dialog opts into the one shared geometry class, so a
+  // dialog can never again miss the `margin: auto` that the preflight reset cancels.
+  // The rendered centering itself is asserted in the visual suite, which is the only
+  // layer that loads the application stylesheets.
+  it('marks every modal dialog with the shared geometry class', async () => {
+    render(
+      <AccentPresetDialog
+        preset={null}
+        busy={false}
+        error=""
+        onClose={vi.fn()}
+        onSave={vi.fn(async () => true)}
+        onDelete={vi.fn(async () => true)}
+      />,
+    );
+    await expect.element(page.getByRole('heading', { name: 'Create custom accent' })).toBeVisible();
+    const dialog = document.querySelector('dialog')!;
+    expect(dialog.classList.contains('app-modal')).toBe(true);
+    expect(dialog.open).toBe(true);
+  });
+
+  it('dismisses a modal on an outside click but never while an operation is pending', () => {
+    let closed = false;
+    // `target` and `currentTarget` are the same node for a backdrop click; a click on
+    // inner content reports the inner node as `target`.
+    const dialogStub = {
+      getBoundingClientRect: () => ({
+        left: 100,
+        right: 300,
+        top: 100,
+        bottom: 300,
+        width: 200,
+        height: 200,
+      }),
+      close: () => {
+        closed = true;
+      },
+    };
+    const clickAt = (clientX: number, clientY: number, detail = 1, target: unknown = dialogStub) =>
+      ({ target, currentTarget: dialogStub, detail, clientX, clientY }) as never;
+
+    expect(isOutsideDialogClick(clickAt(10, 10))).toBe(true);
+    // Inside the dialog box is never an outside click, even once a dialog has padding.
+    expect(isOutsideDialogClick(clickAt(150, 150))).toBe(false);
+    // A click on inner content is not a backdrop click.
+    expect(isOutsideDialogClick(clickAt(10, 10, 1, { inner: true }))).toBe(false);
+    // Keyboard-synthesized clicks (Enter on an inner control) report detail 0.
+    expect(isOutsideDialogClick(clickAt(0, 0, 0))).toBe(false);
+
+    // A submitted operation must not be lost to a stray backdrop click.
+    dismissOnBackdrop(clickAt(10, 10), { pending: true });
+    expect(closed).toBe(false);
+    dismissOnBackdrop(clickAt(10, 10), { pending: false });
+    expect(closed).toBe(true);
   });
 
   it('creates a normalized custom accent through the keyboard-safe native dialog', async () => {

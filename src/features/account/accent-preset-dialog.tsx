@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { dismissOnBackdrop, useModalScrollLock } from '@/application/modal-dialog';
 import type { CSSProperties } from 'react';
 import type { AccentPreset } from '@/adapters/supabase/public';
 import { accentCssVariableMap, accentHexSchema, normalizeAccentHex } from '@/domain/profile';
@@ -40,6 +41,7 @@ export function AccentPresetDialog({
     }
     if (!dialogRef.current?.open) dialogRef.current?.showModal();
   }, [preset]);
+  useModalScrollLock(preset !== undefined);
 
   const parsedHex = accentHexSchema.safeParse(accentHex);
   const previewVariables = accentCssVariableMap(parsedHex.success ? parsedHex.data : '#32BFA2');
@@ -63,11 +65,12 @@ export function AccentPresetDialog({
   return (
     <dialog
       ref={dialogRef}
-      className="accent-preset-dialog"
+      className="app-modal accent-preset-dialog"
       aria-labelledby="accent-preset-title"
       onCancel={(event) => {
         if (busy) event.preventDefault();
       }}
+      onClick={(event) => dismissOnBackdrop(event, { pending: busy })}
       onClose={onClose}
     >
       <form

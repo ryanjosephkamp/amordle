@@ -1,11 +1,13 @@
 'use client';
 
 import { useRef, useState } from 'react';
+import { dismissOnBackdrop, useModalScrollLock } from '@/application/modal-dialog';
 import { WordDefinition } from './word-definition';
 
 export function HistoryDefinitions({ words }: { words: string[] }) {
   const [open, setOpen] = useState(false);
   const dialog = useRef<HTMLDialogElement>(null);
+  useModalScrollLock(open);
   if (!words.length) return null;
   return (
     <>
@@ -22,12 +24,10 @@ export function HistoryDefinitions({ words }: { words: string[] }) {
       {open && (
         <dialog
           ref={dialog}
-          className="word-detail-dialog history-definition-dialog"
+          className="app-modal word-detail-dialog history-definition-dialog"
           aria-label="Completed game definitions"
           onClose={() => setOpen(false)}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) event.currentTarget.close();
-          }}
+          onClick={(event) => dismissOnBackdrop(event)}
         >
           <div className="word-detail-dialog-content">
             <header>

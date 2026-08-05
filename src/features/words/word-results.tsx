@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { dismissOnBackdrop, useModalScrollLock } from '@/application/modal-dialog';
 import type { DefinitionLookupResult } from '@/domain/definitions';
 import { WordDefinition } from './word-definition';
 
@@ -24,17 +25,21 @@ export function WordResults({
   const [selected, setSelected] = useState(initialWord ?? words[0] ?? '');
   const dialog = useRef<HTMLDialogElement>(null);
   const returnFocus = useRef<HTMLButtonElement | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
+  useModalScrollLock(detailsOpen);
   const answerSet = new Set(answerEligible);
   const openDetails = (word: string, trigger?: HTMLButtonElement | null) => {
     setSelected(word);
     returnFocus.current = trigger ?? null;
     if (!dialog.current?.open) dialog.current?.showModal();
+    setDetailsOpen(true);
   };
 
   useEffect(() => {
     if (initialWord) {
       queueMicrotask(() => {
         if (!dialog.current?.open) dialog.current?.showModal();
+        setDetailsOpen(true);
       });
     }
     // Direct word links intentionally open once on mount.
@@ -68,12 +73,13 @@ export function WordResults({
       {selected && (
         <dialog
           ref={dialog}
-          className="word-detail-dialog"
+          className="app-modal word-detail-dialog"
           aria-labelledby="word-detail-heading"
-          onClose={() => returnFocus.current?.focus()}
-          onClick={(event) => {
-            if (event.target === event.currentTarget) event.currentTarget.close();
+          onClose={() => {
+            setDetailsOpen(false);
+            returnFocus.current?.focus();
           }}
+          onClick={(event) => dismissOnBackdrop(event)}
         >
           <div className="word-detail-dialog-content">
             <header>

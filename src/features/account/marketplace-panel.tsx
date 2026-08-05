@@ -102,11 +102,15 @@ export function MarketplacePanel() {
           );
         })}
       </div>
+      {/*
+        W-7: this is an inline confirmation, not a modal. It announced itself as a
+        dialog but never received focus, so assistive technology was told to expect a
+        dialog that never arrived. `role="group"` describes what it actually is.
+      */}
       {confirming && (
         <section
           className="confirmation-panel"
-          role="dialog"
-          aria-modal="false"
+          role="group"
           aria-labelledby="purchase-confirmation-title"
         >
           <div>

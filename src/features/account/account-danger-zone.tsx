@@ -7,6 +7,7 @@ import {
   confirmAccountDangerAction,
   prepareAccountDangerAction,
 } from '@/adapters/cloud/account-management';
+import { dismissOnBackdrop, useModalScrollLock } from '@/application/modal-dialog';
 import {
   clearCompetitiveAccountLocalState,
   clearDeletedAccountLocalState,
@@ -111,6 +112,7 @@ function DangerActionDialog({
     if (action && !dialog.current?.open) dialog.current?.showModal();
     if (!action && dialog.current?.open) dialog.current.close();
   }, [action]);
+  useModalScrollLock(action !== null);
 
   function clearAndClose() {
     setPassword('');
@@ -163,11 +165,12 @@ function DangerActionDialog({
   return (
     <dialog
       ref={dialog}
-      className="account-action-dialog danger-dialog"
+      className="app-modal account-action-dialog danger-dialog"
       aria-labelledby="danger-dialog-title"
       onCancel={(event) => {
         if (pending) event.preventDefault();
       }}
+      onClick={(event) => dismissOnBackdrop(event, { pending })}
       onClose={clearAndClose}
     >
       <form

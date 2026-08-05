@@ -1096,18 +1096,33 @@ button.primary:hover {
   font-weight: 800;
 }
 
-.account-action-dialog {
-  width: min(42rem, calc(100vw - 2rem));
+/*
+ * ANNOT-08. Tailwind's preflight applies `margin: 0` to `*` and `::backdrop`, which
+ * cancels the `margin: auto` the UA `dialog:modal` rule relies on for centring. With
+ * `inset: 0` still in force the dialog then pins to the top-left corner — exactly what
+ * SS-08 shows. `.accent-preset-dialog` and `.word-detail-dialog` happened to restore
+ * `margin: auto` individually; `.account-action-dialog` did not.
+ *
+ * `.app-modal` is now the single geometry authority for every true modal dialog, so a
+ * future dialog cannot silently inherit the preflight reset again.
+ */
+.app-modal {
+  margin: auto;
   max-height: calc(100dvh - 2rem);
   overflow: auto;
   border: var(--terminal-rule);
+  border-radius: 0;
   padding: 0;
   color: var(--ink);
-  background: var(--surface-strong);
 }
 
-.account-action-dialog::backdrop {
+.app-modal::backdrop {
   background: rgb(0 0 0 / 76%);
+}
+
+.account-action-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  background: var(--surface-strong);
 }
 
 .account-action-form {
@@ -2322,18 +2337,8 @@ button.calendar-day:disabled {
 .word-detail-dialog {
   width: min(34rem, calc(100vw - 1.5rem));
   max-height: min(32rem, calc(100dvh - 2rem));
-  margin: auto;
-  overflow: auto;
-  border: var(--terminal-rule);
-  border-radius: 0;
   background: var(--surface-inset);
-  padding: 0;
-  color: var(--ink);
   box-shadow: 0 1rem 3rem oklch(0.04 0.015 230 / 0.48);
-}
-
-.word-detail-dialog::backdrop {
-  background: oklch(0.04 0.01 220 / 0.68);
 }
 
 .word-detail-dialog-content {
@@ -3024,19 +3029,8 @@ html[data-game-presentation='review'] .game-route {
 
 .accent-preset-dialog {
   width: min(42rem, calc(100vw - 1.5rem));
-  max-height: calc(100dvh - 2rem);
-  margin: auto;
-  overflow: auto;
-  border: var(--terminal-rule);
-  border-radius: 0;
   background: var(--surface-inset);
-  padding: 0;
-  color: var(--ink);
   box-shadow: 0 1rem 3rem oklch(0.04 0.015 230 / 0.48);
-}
-
-.accent-preset-dialog::backdrop {
-  background: oklch(0.04 0.01 220 / 0.68);
 }
 
 .accent-preset-form {

@@ -301,11 +301,11 @@ export function CalendarView() {
           </p>
         </div>
       </details>
+      {/* W-7: inline confirmation, not a modal — see marketplace-panel. */}
       {confirmingUnlock && !playable && !isFuture && (
         <section
           className="confirmation-panel"
-          role="dialog"
-          aria-modal="false"
+          role="group"
           aria-labelledby="unlock-confirmation-title"
         >
           <div>

@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { changeAccountEmail, changeAccountPassword } from '@/adapters/cloud/account-management';
+import { dismissOnBackdrop, useModalScrollLock } from '@/application/modal-dialog';
 import { useAuth } from '@/components/providers';
 
 type SecurityAction = 'email' | 'password';
@@ -73,6 +74,7 @@ function SecurityActionDialog({
     if (action && !dialog.current?.open) dialog.current?.showModal();
     if (!action && dialog.current?.open) dialog.current.close();
   }, [action]);
+  useModalScrollLock(action !== null);
 
   function clearAndClose() {
     setCurrentPassword('');
@@ -130,11 +132,12 @@ function SecurityActionDialog({
   return (
     <dialog
       ref={dialog}
-      className="account-action-dialog"
+      className="app-modal account-action-dialog"
       aria-labelledby="account-security-dialog-title"
       onCancel={(event) => {
         if (pending) event.preventDefault();
       }}
+      onClick={(event) => dismissOnBackdrop(event, { pending })}
       onClose={clearAndClose}
     >
       <form

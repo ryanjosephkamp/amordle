@@ -630,6 +630,55 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  // ANNOT-08: modal dialogs are centered and dismissible from the backdrop. Tailwind's
+  // preflight zeroes `margin` on `*`, cancelling the `margin: auto` the UA
+  // `dialog:modal` rule relies on, which is why the account dialogs pinned to the
+  // top-left corner in SS-08. `.app-modal` is the single geometry authority now.
+  test('modal dialogs are centered and dismiss from the backdrop', async ({ page }) => {
+    for (const width of [1440, 768, 390] as const) {
+      await page.setViewportSize({ width, height: 900 });
+      await page.goto('/words?length=5&q=cr&sort=az');
+      await page.locator('.word-list button').first().click();
+      const dialog = page.locator('dialog.app-modal');
+      await expect(dialog).toBeVisible();
+      const box = await dialog.evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return {
+          left: rect.left,
+          right: rect.right,
+          top: rect.top,
+          bottom: rect.bottom,
+          viewportWidth: window.innerWidth,
+          viewportHeight: window.innerHeight,
+        };
+      });
+      expect(box.left, `${width}px left gutter`).toBeGreaterThan(0);
+      expect(box.top, `${width}px top gutter`).toBeGreaterThan(0);
+      expect(
+        Math.abs(box.left - (box.viewportWidth - box.right)),
+        `${width}px horizontal centering`,
+      ).toBeLessThanOrEqual(2);
+      expect(
+        Math.abs(box.top - (box.viewportHeight - box.bottom)),
+        `${width}px vertical centering`,
+      ).toBeLessThanOrEqual(2);
+
+      // Background scroll is locked while a modal is open. The lock is applied and
+      // released by a React effect, so poll instead of sampling a single frame.
+      await expect
+        .poll(() => page.evaluate(() => getComputedStyle(document.body).overflow))
+        .toBe('hidden');
+
+      // Click the vertical gutter above the dialog — the widest backdrop region at
+      // every tested width, so the target never becomes marginal on narrow viewports.
+      await page.mouse.click(box.viewportWidth / 2, Math.max(2, box.top / 2));
+      await expect(dialog).toBeHidden();
+      await expect
+        .poll(() => page.evaluate(() => getComputedStyle(document.body).overflow))
+        .not.toBe('hidden');
+    }
+  });
+
   // ANNOT-02: the desktop Active Solo collection must expose each session field as its
   // own aligned column instead of one concatenated inline run, and must still collapse
   // to labelled rows on mobile.
