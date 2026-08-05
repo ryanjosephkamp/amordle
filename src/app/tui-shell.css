@@ -42,6 +42,18 @@
   --terminal-selected: oklch(0.24 0.025 225);
   --terminal-selected-ink: oklch(0.98 0.004 220);
   --terminal-selected-muted: oklch(0.86 0.01 220);
+  /*
+   * The canonical foreground for any control painting the `--terminal-selected`
+   * surface, in either scheme. In dark scheme that surface is a near-white and this
+   * resolves to the near-black the owner identified on Profile (ANNOT-09).
+   */
+  --control-ink-on-selected: var(--terminal-selected-ink);
+  /*
+   * Disabled controls must clear 3:1 while staying unmistakably disabled. State is
+   * never carried by this alone — disabled controls also keep `cursor: not-allowed`
+   * and, where it matters, an explicit textual label (APP-06.d). See W-8.
+   */
+  --control-disabled-opacity: 0.74;
   --field-surface: oklch(0.925 0.01 220);
   --field-surface-hover: oklch(0.895 0.014 220);
   --field-border: oklch(0.56 0.025 220);
@@ -296,7 +308,7 @@ button:hover,
 .button:hover {
   border-color: var(--ink);
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 button:hover :is(p, small, span),
@@ -317,7 +329,7 @@ button:active,
 button.primary {
   border-color: var(--terminal-selected);
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
   text-transform: lowercase;
 }
 
@@ -504,7 +516,7 @@ button.primary:hover {
 .desktop-nav a[aria-current='page'],
 .desktop-nav a:hover {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
   box-shadow: none;
 }
 
@@ -617,7 +629,7 @@ button.primary:hover {
 .menu-popover a:hover,
 .menu-popover a:focus-visible {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .badge {
@@ -826,7 +838,7 @@ button.primary:hover {
 .command-row:hover,
 .command-row:focus-visible {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .command-code,
@@ -900,11 +912,6 @@ button.primary:hover {
 
 .data-row > :last-child {
   text-align: left;
-}
-
-.data-row > :last-child:is(button, .button),
-.data-row > :last-child > :is(button, .button) {
-  color: inherit;
 }
 
 .data-row a,
@@ -1219,11 +1226,18 @@ button.primary:hover {
   background: transparent;
 }
 
+/*
+ * Controls that opt out of the `--terminal-selected` hover surface must also opt out
+ * of its ink, or `button:hover` leaves `--control-ink-on-selected` painted on a
+ * transparent background — the mirror of ANNOT-04. Surface and ink always travel
+ * together; the control-contrast sweep enforces it.
+ */
 .segmented button {
   border: 0;
   border-inline-end: var(--terminal-rule);
   border-radius: 0;
   background: transparent;
+  color: var(--ink);
 }
 
 .segmented button:last-child {
@@ -1232,7 +1246,7 @@ button.primary:hover {
 
 .segmented button[aria-pressed='true'] {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .section-heading {
@@ -1312,7 +1326,7 @@ tbody tr:hover {
 .route-link:focus-visible {
   border-color: var(--border);
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .route-link:hover span,
@@ -1338,7 +1352,7 @@ tbody tr:hover {
   border: var(--terminal-rule);
   border-radius: 0;
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .calendar-strip {
@@ -1355,7 +1369,7 @@ button.calendar-day {
 
 button.calendar-day.is-selected {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .word-list {
@@ -1368,12 +1382,13 @@ button.calendar-day.is-selected {
   border-bottom: var(--terminal-rule);
   border-radius: 0;
   background: transparent;
+  color: var(--ink);
   text-transform: none;
 }
 
 .word-list button[aria-selected='true'] {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .word-list button[aria-selected='true'] span:last-child {
@@ -1620,7 +1635,7 @@ button.calendar-day.is-selected {
 
   .mobile-nav a[aria-current='page'] {
     background: var(--terminal-selected);
-    color: var(--terminal-selected-ink);
+    color: var(--control-ink-on-selected);
   }
 
   .terminal-statusbar {
@@ -1898,7 +1913,7 @@ body::before {
 .account-menu > a:hover,
 .account-menu > button[aria-expanded='true'] {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .account-popover {
@@ -1982,7 +1997,7 @@ body::before {
 .account-popover > button[role='menuitem']:hover,
 .account-popover > button[role='menuitem']:focus-visible {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 #main-content {
@@ -2094,6 +2109,7 @@ body::before {
   border-radius: 0;
   background: transparent;
   padding: 0;
+  color: var(--ink);
 }
 
 .calendar-month-header button:first-child {
@@ -2145,12 +2161,13 @@ button.calendar-day {
   align-items: flex-start;
   justify-content: space-between;
   background: transparent;
+  color: var(--ink);
   text-align: left;
 }
 
 button.calendar-day.is-selected {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
   box-shadow: none;
 }
 
@@ -2159,7 +2176,7 @@ button.calendar-day.is-selected strong {
 }
 
 button.calendar-day:disabled {
-  opacity: 0.42;
+  opacity: var(--control-disabled-opacity);
   cursor: not-allowed;
 }
 
@@ -2437,7 +2454,7 @@ button.calendar-day:disabled {
 }
 
 .help-advanced {
-  border: 1px solid var(--line-strong);
+  border: var(--terminal-rule);
 }
 
 .help-advanced > summary {
@@ -2600,7 +2617,7 @@ button.calendar-day:disabled {
 
   .mobile-route-rail a[aria-current='page'] {
     background: var(--terminal-selected);
-    color: var(--terminal-selected-ink);
+    color: var(--control-ink-on-selected);
   }
 
   .menu-popover {
@@ -2755,7 +2772,7 @@ html[data-game-presentation='review'] .game-route {
 
 :where(input, textarea, select):disabled {
   cursor: not-allowed;
-  opacity: 0.6;
+  opacity: var(--control-disabled-opacity);
 }
 
 :where(input, textarea, select):user-invalid {
@@ -2836,7 +2853,7 @@ html[data-game-presentation='review'] .game-route {
 
 .accent-option:has(input:checked) {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .accent-option:has(input:focus-visible) {
@@ -2902,7 +2919,7 @@ html[data-game-presentation='review'] .game-route {
 
 .custom-accent-option:has(input:checked) {
   background: var(--terminal-selected);
-  color: var(--terminal-selected-ink);
+  color: var(--control-ink-on-selected);
 }
 
 .custom-accent-option:has(input:focus-visible) {
@@ -3096,10 +3113,49 @@ html[data-game-presentation='review'] .game-route {
   gap: 1rem;
 }
 
+/*
+ * Shared degraded-state banner. Only the `--warning` modifier existed before, so its
+ * `justify-content` was inert (no flex context) and its `border-color` invisible
+ * (preflight zeroes border-width). Used on Stats, History, Profile, and public
+ * profiles, on both `<div>` and `<p>`, so this stays element-agnostic. See W-2.
+ */
+.status-line {
+  display: flex;
+  min-height: 2.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  border: 1px solid var(--border);
+  padding: 0.55rem 0.7rem;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: 0.7rem;
+}
+
 .status-line--warning {
   justify-content: space-between;
   border-color: var(--present);
   color: var(--present-text);
+}
+
+/* W-3: the notification refresh notice reuses the same degraded-state vocabulary. */
+.notification-source-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  margin-block-end: 0.5rem;
+  border: 1px solid var(--present);
+  padding: 0.5rem 0.6rem;
+  color: var(--present-text);
+  font-family: var(--tui-font);
+  font-size: 0.66rem;
+}
+
+.notification-source-warning button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
 }
 
 .text-action {

@@ -79,6 +79,159 @@ const overflowSurfaces = [
   '/admin',
 ] as const;
 
+// --- ANNOT-03/04/07/09 + W-8 control contrast sweep -------------------------------
+const contrastSchemes = ['light', 'dark'] as const;
+// Every accent the token system can resolve. `custom` is driven by JS-injected
+// variables that only exist for a signed-in account with an active preset, so the
+// named set is the complete signed-out matrix.
+const contrastAccents = ['aurora', 'ice', 'cyan', 'violet', 'rose', 'amber'] as const;
+// `:active` carries no colour semantics in this design (`button:active` only sets
+// `translate`), so forcing it duplicates `rest` and doubles runtime for no signal.
+const contrastStates = ['rest', 'hover', 'focus-visible'] as const;
+const contrastSurfaces = overflowSurfaces;
+const controlSelector = [
+  'button',
+  '.button',
+  '[role="menuitem"]',
+  '[aria-pressed]',
+  '[aria-current="page"]',
+  '.command-row',
+  '.route-link',
+  '.accent-option',
+].join(', ');
+
+interface ControlContrastResult {
+  ok: boolean;
+  label: string;
+  ratio: number;
+  required: number;
+  color: string;
+  background: string;
+}
+
+// Runs in the page. Composites alpha and inherited `opacity` (so a disabled control at
+// opacity .52 is judged on what a player actually sees) and walks ancestors for the
+// first opaque backdrop.
+function measureControlContrast(selector: string): ControlContrastResult[] {
+  // Computed colours serialize in whatever space the author used (this project is
+  // almost entirely `oklch()`), so rasterize through a canvas instead of scraping
+  // numbers out of the string.
+  const canvas = document.createElement('canvas');
+  canvas.width = 1;
+  canvas.height = 1;
+  const context = canvas.getContext('2d', { willReadFrequently: true })!;
+  const parseCache = new Map<string, [number, number, number, number]>();
+  const parse = (value: string): [number, number, number, number] => {
+    const cached = parseCache.get(value);
+    if (cached) return cached;
+    context.clearRect(0, 0, 1, 1);
+    context.fillStyle = '#000';
+    context.fillStyle = value;
+    context.fillRect(0, 0, 1, 1);
+    const [red = 0, green = 0, blue = 0, alpha = 255] = context.getImageData(0, 0, 1, 1).data;
+    const parsed: [number, number, number, number] = [red, green, blue, alpha / 255];
+    parseCache.set(value, parsed);
+    return parsed;
+  };
+  const over = (
+    top: [number, number, number, number],
+    bottom: [number, number, number, number],
+  ): [number, number, number, number] => {
+    const alpha = top[3] + bottom[3] * (1 - top[3]);
+    if (alpha === 0) return [0, 0, 0, 0];
+    return [
+      (top[0] * top[3] + bottom[0] * bottom[3] * (1 - top[3])) / alpha,
+      (top[1] * top[3] + bottom[1] * bottom[3] * (1 - top[3])) / alpha,
+      (top[2] * top[3] + bottom[2] * bottom[3] * (1 - top[3])) / alpha,
+      alpha,
+    ];
+  };
+  const luminance = ([red, green, blue]: [number, number, number, number]) =>
+    [red, green, blue]
+      .map((channel) => {
+        const normalized = channel / 255;
+        return normalized <= 0.04045 ? normalized / 12.92 : ((normalized + 0.055) / 1.055) ** 2.4;
+      })
+      .reduce((total, channel, index) => total + channel * [0.2126, 0.7152, 0.0722][index]!, 0);
+
+  const backdropOf = (element: Element): [number, number, number, number] => {
+    const layers: [number, number, number, number][] = [];
+    let node: Element | null = element;
+    while (node) {
+      const colour = parse(getComputedStyle(node).backgroundColor);
+      if (colour[3] > 0) layers.push(colour);
+      if (colour[3] >= 1) break;
+      node = node.parentElement;
+    }
+    layers.push([255, 255, 255, 1]);
+    return layers.reduceRight((bottom, top) => over(top, bottom));
+  };
+
+  // Measure the elements that actually paint text — a control plus any descendant that
+  // owns a text node — rather than the control box alone. A container with no direct
+  // text has no foreground of its own, and ANNOT-09 is specifically about descendant
+  // labels re-inheriting the wrong colour.
+  const textRuns: Element[] = [];
+  for (const control of Array.from(document.querySelectorAll(selector))) {
+    const candidates = [control, ...Array.from(control.querySelectorAll('*'))];
+    for (const candidate of candidates) {
+      const ownsText = Array.from(candidate.childNodes).some(
+        (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim().length > 0,
+      );
+      if (ownsText && !textRuns.includes(candidate)) textRuns.push(candidate);
+    }
+  }
+
+  const results: ControlContrastResult[] = [];
+  for (const element of textRuns) {
+    const rect = element.getBoundingClientRect();
+    if (rect.width === 0 || rect.height === 0) continue;
+    const style = getComputedStyle(element);
+    if (style.visibility === 'hidden' || style.display === 'none') continue;
+
+    // Cumulative opacity: a control faded by an ancestor is judged as rendered.
+    let opacity = 1;
+    for (let node: Element | null = element; node; node = node.parentElement) {
+      opacity *= Number(getComputedStyle(node).opacity || '1');
+    }
+
+    const backdrop = backdropOf(element);
+    const raw = parse(style.color);
+    const foreground = over([raw[0], raw[1], raw[2], raw[3] * opacity], backdrop);
+
+    const first = luminance(foreground);
+    const second = luminance(backdrop);
+    const ratio = (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
+
+    const size = Number.parseFloat(style.fontSize);
+    const weight = Number(style.fontWeight) || 400;
+    const large = size >= 24 || (size >= 18.66 && weight >= 700);
+    // Disabled controls must stay readable and unmistakably disabled, so they are held
+    // to the 3:1 non-text/large-text floor rather than the 4.5:1 body-text floor.
+    const disabled =
+      (element as HTMLButtonElement).disabled === true ||
+      element.getAttribute('aria-disabled') === 'true' ||
+      element.closest('[disabled], [aria-disabled="true"]') !== null;
+    const required = large || disabled ? 3 : 4.5;
+
+    const label = `${element.tagName.toLowerCase()}${
+      element.className && typeof element.className === 'string'
+        ? `.${element.className.trim().split(/\s+/).join('.')}`
+        : ''
+    } "${(element.textContent ?? '').trim().slice(0, 32)}"`;
+
+    results.push({
+      ok: ratio >= required,
+      label,
+      ratio,
+      required,
+      color: `rgb(${foreground.slice(0, 3).map(Math.round).join(' ')})`,
+      background: `rgb(${backdrop.slice(0, 3).map(Math.round).join(' ')})`,
+    });
+  }
+  return results;
+}
+
 const professionalVariants = [
   {
     id: '1440x1024-light',
@@ -608,57 +761,69 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
-  test('light selected surfaces keep primary and muted descendant text readable', async ({
-    page,
-  }) => {
-    await page.setViewportSize({ width: 1440, height: 1024 });
-    await page.emulateMedia({ colorScheme: 'dark' });
-    await page.goto('/combat');
-    const command = page.locator('.route-link').first();
-    await expect(command).toBeVisible();
-    await command.hover();
-    const contrast = await command.evaluate((row) => {
-      const muted = row.querySelector('span');
-      const primary = row.querySelector('strong');
-      if (!muted || !primary) return null;
-      const sample = (css: string): readonly [number, number, number] => {
-        const canvas = document.createElement('canvas');
-        canvas.width = 1;
-        canvas.height = 1;
-        const context = canvas.getContext('2d');
-        if (!context) return [0, 0, 0];
-        context.fillStyle = css;
-        context.fillRect(0, 0, 1, 1);
-        const [red = 0, green = 0, blue = 0] = context.getImageData(0, 0, 1, 1).data;
-        return [red, green, blue];
-      };
-      const luminance = ([red, green, blue]: readonly [number, number, number]) =>
-        [red, green, blue]
-          .map((value) => {
-            const normalized = value / 255;
-            return normalized <= 0.04045
-              ? normalized / 12.92
-              : ((normalized + 0.055) / 1.055) ** 2.4;
-          })
-          .reduce(
-            (total, channel, index) => total + channel * ([0.2126, 0.7152, 0.0722][index] ?? 0),
-            0,
-          );
-      const ratio = (foreground: string, background: string) => {
-        const first = luminance(sample(foreground));
-        const second = luminance(sample(background));
-        return (Math.max(first, second) + 0.05) / (Math.min(first, second) + 0.05);
-      };
-      const background = getComputedStyle(row).backgroundColor;
-      return {
-        primary: ratio(getComputedStyle(primary).color, background),
-        muted: ratio(getComputedStyle(muted).color, background),
-      };
+  // ANNOT-03/04/07/09 + W-8. The previous version of this test sampled a single hovered
+  // `.route-link` on /combat, which is not inside a `.data-row` and therefore could not
+  // observe the white-on-white and grey-on-white defects the owner reported. This sweep
+  // walks every control on every route, in both schemes, across every accent, in every
+  // interaction state. Pseudo-states are forced through CDP rather than by moving the
+  // mouse so the whole matrix stays fast and deterministic.
+  for (const scheme of contrastSchemes) {
+    test(`every control keeps a readable foreground in every state (${scheme})`, async ({
+      page,
+    }, testInfo) => {
+      testInfo.setTimeout(300_000);
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await page.emulateMedia({ colorScheme: scheme });
+      const client = await page.context().newCDPSession(page);
+      await client.send('DOM.enable');
+      await client.send('CSS.enable');
+
+      const failures: string[] = [];
+      for (const route of contrastSurfaces) {
+        for (const accent of contrastAccents) {
+          await page.goto(route);
+          await page.evaluate((name) => {
+            document.documentElement.dataset.accent = name;
+          }, accent);
+          // Controls transition `background-color`/`color` over 160ms. Forcing a
+          // pseudo-state and reading immediately samples the animation mid-flight and
+          // reports a colour no player ever sees, so settle to end-state values.
+          await page.addStyleTag({
+            content:
+              '*, *::before, *::after { transition: none !important; animation: none !important; }',
+          });
+          // Resolve node ids exactly once per page state. Re-running DOM.getDocument
+          // reassigns ids and orphans previously forced pseudo-states, which silently
+          // accumulates (every later pass then measures a stuck `:hover`).
+          const { root } = await client.send('DOM.getDocument', { depth: -1 });
+          const { nodeIds } = await client.send('DOM.querySelectorAll', {
+            nodeId: root.nodeId,
+            selector: controlSelector,
+          });
+          for (const state of contrastStates) {
+            for (const nodeId of nodeIds) {
+              await client
+                .send('CSS.forcePseudoState', {
+                  nodeId,
+                  forcedPseudoClasses: state === 'rest' ? [] : [state],
+                })
+                .catch(() => undefined);
+            }
+            const results = await page.evaluate(measureControlContrast, controlSelector);
+            for (const result of results) {
+              if (result.ok) continue;
+              failures.push(
+                `${route} · ${scheme} · ${accent} · ${state} · ${result.label} — ` +
+                  `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
+                  `fg ${result.color} on bg ${result.background}`,
+              );
+            }
+          }
+        }
+      }
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
     });
-    expect(contrast).not.toBeNull();
-    expect(contrast!.primary).toBeGreaterThanOrEqual(4.5);
-    expect(contrast!.muted).toBeGreaterThanOrEqual(4.5);
-  });
+  }
 
   test('200 percent reflow, reduced motion, and forced colors preserve operation', async ({
     page,
