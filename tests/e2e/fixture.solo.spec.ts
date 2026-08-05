@@ -144,10 +144,12 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     }
 
     await page.goto('/play/solo');
-    const activeSessions = page.locator('[aria-label="Active Solo games"]');
-    await expect(activeSessions.locator('.data-row')).toHaveCount(6);
-    const resumeTargets = await page
-      .locator('[aria-label="Active Solo games"]')
+    // ANNOT-02 replaced the generic `.data-row` presentation with the shared
+    // `.responsive-table` primitive, so sessions are addressed as table rows and each
+    // field lives in its own cell instead of one concatenated inline run.
+    const activeSessions = page.locator('.solo-session-table');
+    await expect(activeSessions.locator('tbody tr')).toHaveCount(6);
+    const resumeTargets = await activeSessions
       .getByRole('link', { name: 'RESUME' })
       .evaluateAll((links) => links.map((link) => (link as HTMLAnchorElement).href));
     expect(new Set(resumeTargets)).toHaveProperty('size', 6);
@@ -156,7 +158,9 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await expect(page.getByRole('button', { name: 'START NEW PRACTICE' })).toBeDisabled();
     await expect(page.getByText(/three active OG Practice games/i)).toBeVisible();
     await activeSessions
-      .locator('.data-row', { hasText: 'Practice · OG' })
+      .locator('tbody tr')
+      .filter({ has: page.locator('td[data-label="Lane"]', { hasText: 'Practice' }) })
+      .filter({ has: page.locator('td[data-label="Mode"]', { hasText: 'OG' }) })
       .first()
       .getByRole('button', { name: 'ABANDON' })
       .click();

@@ -630,6 +630,107 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  // ANNOT-02: the desktop Active Solo collection must expose each session field as its
+  // own aligned column instead of one concatenated inline run, and must still collapse
+  // to labelled rows on mobile.
+  test('Active Solo presents aligned session fields on desktop and collapses on mobile', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    // Two sessions so column alignment is actually observable across rows.
+    for (const mode of ['og', 'go'] as const) {
+      await page.goto('/play/solo');
+      await page.getByLabel('Mode', { exact: true }).selectOption(mode);
+      await page.getByRole('button', { name: 'START NEW PRACTICE' }).click();
+      await expect(
+        page.getByRole('heading', { name: new RegExp(`${mode} (puzzle|run)`, 'i') }),
+      ).toBeVisible();
+    }
+    await page.goto('/play/solo');
+    const table = page.locator('.solo-session-table');
+    await expect(table).toBeVisible();
+    // `th` is `text-transform: lowercase`, and innerText reflects the rendered casing.
+    const headers = await table.locator('thead th').allInnerTexts();
+    expect(headers.map((header) => header.trim().toLowerCase())).toEqual([
+      'lane',
+      'mode',
+      'setup',
+      'progress',
+      'actions',
+    ]);
+
+    // Every body cell carries the label its mobile presentation needs.
+    const labels = await table
+      .locator('tbody td')
+      .evaluateAll((cells) => cells.map((cell) => cell.getAttribute('data-label')));
+    expect(labels.every((label) => label && label.length > 0)).toBe(true);
+
+    // Desktop: cells in a column share a left edge, which the old inline run could not do.
+    const columnLefts = await table
+      .locator('tbody tr')
+      .evaluateAll((rows) =>
+        rows.map((row) =>
+          Array.from(row.querySelectorAll('td')).map((cell) =>
+            Math.round(cell.getBoundingClientRect().left),
+          ),
+        ),
+      );
+    if (columnLefts.length > 1) {
+      for (let column = 0; column < columnLefts[0]!.length; column += 1) {
+        const edges = columnLefts.map((row) => row[column]!);
+        expect(new Set(edges).size, `column ${column} left edges ${edges.join(',')}`).toBe(1);
+      }
+    }
+
+    await page.setViewportSize({ width: 390, height: 844 });
+    const collapsed = await table
+      .locator('tbody td')
+      .first()
+      .evaluate((cell) => getComputedStyle(cell).display);
+    expect(collapsed).toBe('grid');
+  });
+
+  // ANNOT-01: status, date, and time must be separable and aligned, never concatenated.
+  test('Notification rows separate status, date, and time', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.goto('/');
+    const layout = await page.evaluate(() => {
+      const anchor = document.createElement('a');
+      anchor.className = 'is-unread';
+      anchor.innerHTML =
+        '<strong class="notification-status">Match ready</strong>' +
+        '<time class="notification-date">8/2/2026</time>' +
+        '<time class="notification-time">4:40:46 PM</time>';
+      const list = document.createElement('div');
+      list.className = 'notification-list';
+      const popover = document.createElement('div');
+      popover.className = 'menu-popover notification-popover';
+      popover.append(list);
+      list.append(anchor);
+      document.body.append(popover);
+      const style = getComputedStyle(anchor);
+      const status = anchor.querySelector('.notification-status')!.getBoundingClientRect();
+      const date = anchor.querySelector('.notification-date')!.getBoundingClientRect();
+      const time = anchor.querySelector('.notification-time')!.getBoundingClientRect();
+      const result = {
+        display: style.display,
+        columns: style.gridTemplateColumns.split(' ').length,
+        statusBeforeDate: status.right <= date.left + 1,
+        dateBeforeTime: date.right <= time.left + 1,
+        tabularTime: getComputedStyle(
+          anchor.querySelector('.notification-time')!,
+        ).fontVariantNumeric.includes('tabular-nums'),
+      };
+      popover.remove();
+      return result;
+    });
+    expect(layout.display).toBe('grid');
+    expect(layout.columns).toBe(3);
+    expect(layout.statusBeforeDate).toBe(true);
+    expect(layout.dateBeforeTime).toBe(true);
+    expect(layout.tabularTime).toBe(true);
+  });
+
   // ANNOT-05: the Players filter inputs, selects, and Apply action must share one
   // control block-size and one baseline at every width that keeps them on a row.
   test('Players filter controls share one height and baseline', async ({ page }) => {

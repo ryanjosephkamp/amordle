@@ -209,17 +209,25 @@ export function NotificationCenter() {
                 />
               )}
               <div className="notification-list">
-                {notifications.map((item) => (
-                  <Link
-                    key={`${item.id}:${item.durableRevision}`}
-                    href={item.route as Route}
-                    className={item.read ? '' : 'is-unread'}
-                    onClick={() => markRead(item.id)}
-                  >
-                    <strong>{labelFor(item.kind)}</strong>
-                    <span>{new Date(item.createdAt).toLocaleString()}</span>
-                  </Link>
-                ))}
+                {notifications.map((item) => {
+                  const occurredAt = new Date(item.createdAt);
+                  return (
+                    <Link
+                      key={`${item.id}:${item.durableRevision}`}
+                      href={item.route as Route}
+                      className={item.read ? '' : 'is-unread'}
+                      onClick={() => markRead(item.id)}
+                    >
+                      <strong className="notification-status">{labelFor(item.kind)}</strong>
+                      <time className="notification-date" dateTime={item.createdAt}>
+                        {occurredAt.toLocaleDateString()}
+                      </time>
+                      <time className="notification-time" dateTime={item.createdAt}>
+                        {occurredAt.toLocaleTimeString()}
+                      </time>
+                    </Link>
+                  );
+                })}
               </div>
             </>
           ) : (

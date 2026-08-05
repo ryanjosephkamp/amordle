@@ -652,13 +652,60 @@ button.primary:hover {
   padding: 0.65rem;
 }
 
+/*
+ * ANNOT-01. `.menu-popover a { display: block }` above has the same specificity as
+ * globals' `.notification-list a { display: grid }` and loses only on source order, so
+ * the status and timestamp collapsed into one inline run with no separator at all
+ * ("Match ready8/2/2026, 4:40:46 PM"). This rule restores the grid after it and gives
+ * status, date, and time their own aligned columns.
+ */
 .notification-list a {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.1rem 0.85rem;
+  align-items: baseline;
   border-block-start: var(--terminal-rule);
 }
 
-.notification-list a.is-unread::before {
+.notification-status {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-date,
+.notification-time {
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/*
+ * The unread marker rides the status cell, not the link. On a grid container a
+ * `::before` becomes its own grid item and would shift every column by one.
+ */
+.notification-list a.is-unread .notification-status::before {
   color: var(--accent-text);
   content: '● ';
+}
+
+@media (max-width: 47.99rem) {
+  .notification-list a {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+
+  .notification-status {
+    grid-column: 1 / -1;
+    white-space: normal;
+  }
+
+  .notification-date {
+    text-align: left;
+  }
 }
 
 .terminal-statusbar {
@@ -868,6 +915,36 @@ button.primary:hover {
 
 .data-list {
   border: 0;
+}
+
+/*
+ * ANNOT-02. The desktop list used the generic `.data-row`, which put lane, mode,
+ * length, difficulty, Hard Mode, accepted count, and GO progress in one inline run
+ * ("Practice · OG5 letters · standard · 3 accepted") with no column alignment. It now
+ * reuses the accepted `.responsive-table` primitive already used by History, Help, and
+ * Leaderboards, so each field is its own aligned column on desktop and collapses to
+ * labelled rows below 47.99rem with no extra CSS.
+ */
+.solo-session-table td .action-row {
+  flex-wrap: nowrap;
+  gap: 0.4rem;
+  justify-content: flex-end;
+}
+
+.solo-session-table td .action-row > * {
+  flex: 0 0 auto;
+}
+
+.solo-session-note {
+  display: block;
+  color: var(--muted);
+  font-size: 0.62rem;
+}
+
+@media (max-width: 47.99rem) {
+  .solo-session-table td .action-row {
+    justify-content: flex-start;
+  }
 }
 
 .active-solo-compact {
