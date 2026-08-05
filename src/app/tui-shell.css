@@ -1187,7 +1187,9 @@ button.primary:hover {
 .inline-form input,
 .explorer-controls input,
 .explorer-controls select,
-.calendar-controls input {
+.calendar-controls input,
+.directory-controls input,
+.directory-controls select {
   min-height: var(--control-height);
   border: 1px solid var(--field-border);
   border-radius: 0;
@@ -3568,11 +3570,26 @@ html[data-game-presentation='review'] .game-route {
   gap: 0.65rem;
 }
 
+/*
+ * ANNOT-05. `align-items: end` bottom-aligned controls of unequal intrinsic height,
+ * and `.directory-controls` was missing from the shared control-geometry rule, so the
+ * search/number inputs kept their UA height while selects and Apply sat at 2.75rem.
+ * Stretching the tracks makes every label column the same height and lets each
+ * control fill it, so heights and baselines line up without fixed positioning.
+ */
 .directory-controls {
   grid-template-columns: minmax(10rem, 1.5fr) repeat(4, minmax(8rem, 1fr)) auto;
-  align-items: end;
+  align-items: stretch;
   border-block: var(--terminal-rule);
   padding-block: 0.7rem;
+}
+
+.directory-controls label {
+  align-content: end;
+}
+
+.directory-controls > .primary {
+  align-self: end;
 }
 
 .directory-controls label,

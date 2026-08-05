@@ -630,6 +630,52 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  // ANNOT-05: the Players filter inputs, selects, and Apply action must share one
+  // control block-size and one baseline at every width that keeps them on a row.
+  test('Players filter controls share one height and baseline', async ({ page }) => {
+    await page.emulateMedia({ colorScheme: 'dark' });
+    for (const width of [1440, 1920, 960] as const) {
+      await page.setViewportSize({ width, height: 1024 });
+      await page.goto('/players');
+      await expect(page.locator('.directory-controls')).toBeVisible();
+      const geometry = await page.locator('.directory-controls').evaluate((form) => {
+        const controls = Array.from(
+          form.querySelectorAll<HTMLElement>('input, select, button, .button'),
+        );
+        return controls.map((control) => {
+          const rect = control.getBoundingClientRect();
+          return {
+            tag: control.tagName.toLowerCase(),
+            height: rect.height,
+            top: rect.top,
+            bottom: rect.bottom,
+          };
+        });
+      });
+      expect(geometry.length).toBe(6);
+      const heights = geometry.map((item) => item.height);
+      // Sub-pixel layout rounding is acceptable; a different control size is not.
+      expect(
+        Math.max(...heights) - Math.min(...heights),
+        `${width}px heights ${JSON.stringify(geometry)}`,
+      ).toBeLessThanOrEqual(1);
+      expect(Math.min(...heights)).toBeGreaterThanOrEqual(44);
+      // Below 63.99rem the filter grid deliberately wraps to two columns, so compare
+      // baselines within each rendered row rather than across the whole form.
+      const rows = new Map<number, number[]>();
+      for (const item of geometry) {
+        const key = Math.round(item.top);
+        rows.set(key, [...(rows.get(key) ?? []), item.bottom]);
+      }
+      for (const [top, bottoms] of rows) {
+        expect(
+          Math.max(...bottoms) - Math.min(...bottoms),
+          `${width}px row ${top} baselines ${JSON.stringify(geometry)}`,
+        ).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
   test('shared form fields remain visibly identifiable without relying on placeholders', async ({
     page,
   }) => {
