@@ -195,6 +195,16 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     ]) {
       await page.setViewportSize(viewport);
       await page.goto('/play/solo/practice/go?length=5&difficulty=standard&count=5&generation=41');
+      /*
+       * Wait for the play surface before touching anything. `solo-game.tsx` is a client
+       * component that renders "Restoring your game…" until it has hydrated and restored
+       * the session, so `.game-status` does not exist on first paint. The shell — and
+       * therefore the menu — is available immediately, so without this the probe below
+       * could open the menu and measure while the route was still restoring, and read a
+       * missing status row as a layering failure. Locally that race is always won; on a
+       * hosted Preview it is not. Establish both participants before measuring either.
+       */
+      await expect(page.locator('.game-status')).toBeVisible();
       await page.getByRole('button', { name: /more navigation/i }).click();
       await expect(page.getByRole('menu', { name: 'More navigation' })).toBeVisible();
 
