@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import { getPublicPlayerDirectory } from '@/adapters/supabase/public';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
+import { SkeletonRows } from '@/components/workbench';
 import {
   profileAccentCss,
   publicRatingBucketLabels,
@@ -187,7 +188,8 @@ export function PlayerDirectory() {
       ) : !directory.isPending ? (
         <p className="empty-copy">No public players match these filters.</p>
       ) : (
-        <p role="status">Loading players…</p>
+        // V7-11. A list is loading, so the placeholder is list-shaped.
+        <SkeletonRows label="Loading players…" rows={4} />
       )}
       <nav className="pagination" aria-label="Player directory pages">
         <button disabled={page === 0} onClick={() => setPage((value) => value - 1)}>

@@ -3,6 +3,7 @@ import { GeistMono, GeistSans } from 'geist/font';
 import { Suspense } from 'react';
 import { AppProviders } from '@/components/providers';
 import { AppShell } from '@/components/app-shell';
+import { SkeletonRows } from '@/components/workbench';
 import { PwaController } from '@/components/pwa-controller';
 import { LegacyRouteBridge } from '@/components/legacy-route-bridge';
 import './globals.css';
@@ -41,7 +42,20 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           Skip to content
         </a>
         <AppProviders>
-          <Suspense fallback={<main className="route-frame">Loading…</main>}>
+          {/*
+            V7-11. This fallback covers the shell itself suspending, before `AppShell`
+            and therefore before the main landmark exists — so unlike `loading.tsx` it
+            does render its own `<main>`. It was the bare string "Loading…"; it now uses
+            the same skeleton primitive, so the first paint of a cold load is a
+            placeholder for the app rather than unstyled text.
+          */}
+          <Suspense
+            fallback={
+              <main className="route-frame" aria-busy="true">
+                <SkeletonRows label="Loading Amordle…" rows={4} />
+              </main>
+            }
+          >
             <AppShell>{children}</AppShell>
           </Suspense>
           <PwaController />

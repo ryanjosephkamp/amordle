@@ -25,6 +25,26 @@ import { eligibleHapticControl, playKeyboardHaptic } from '@/application/keyboar
 const primary = directNavigationShortcuts.filter((shortcut) => shortcut.href !== null);
 const menuShortcut = directNavigationShortcuts.find((shortcut) => shortcut.id === 'menu');
 
+/*
+ * V7-09. The shell footer's hint is derived from the same shortcut registry the
+ * toolbar, the Help table and the generated keyboard manuals read, so it cannot drift
+ * out of step with the keys that actually work. It restates existing shortcuts and
+ * adds no destinations: the footer is a bottom edge for the page, not a second
+ * navigation surface.
+ */
+const firstPrimaryShortcut = primary.at(0);
+const lastPrimaryShortcut = primary.at(-1);
+const lastPrimaryKey = lastPrimaryShortcut?.keys.split(' ').at(-1);
+
+const footerHint = [
+  firstPrimaryShortcut && lastPrimaryKey && primary.length > 1
+    ? `${firstPrimaryShortcut.keys}…${lastPrimaryKey} navigates`
+    : null,
+  menuShortcut ? `${menuShortcut.keys} opens the menu` : null,
+]
+  .filter(Boolean)
+  .join('  ·  ');
+
 const secondary = [
   { href: '/play', label: 'All game modes' },
   { href: '/leaderboards', label: 'Leaderboards' },
@@ -299,6 +319,19 @@ export function AppShell({ children }: PropsWithChildren) {
           <NotificationCenter />
           <AccountMenu />
         </div>
+      )}
+      {/*
+        V7-09. Short routes previously ran out of content and left several hundred
+        pixels of empty page with no closing edge, which reads as an unfinished
+        screen rather than a quiet one. This closes the composition. It is omitted
+        during play and in Focus Mode, where the shell is deliberately contained to
+        the dynamic viewport and a third row would break that contract.
+      */}
+      {!focus && !gameSurface && (
+        <footer className="app-footer">
+          <span aria-hidden="true">❯ amordle</span>
+          <span className="app-footer-hint">{footerHint}</span>
+        </footer>
       )}
       <ConnectivityStatus />
     </div>

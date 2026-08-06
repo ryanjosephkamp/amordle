@@ -90,7 +90,13 @@ export function HomeAttention({ ownerNamespace }: { ownerNamespace: string }) {
       <div className="data-list">
         <div className="data-row">
           <strong>Guest Solo</strong>
-          <div>
+          {/*
+            V7-03. These are two separate statements. The wrapper was an unstyled
+            `div`, so when there are no active games `ActiveSoloSessions` returns a
+            bare `span` and the two ran together as "device.No active Solo games" on
+            the first screen a new player sees. The wrapper now stacks its children.
+          */}
+          <div className="attention-detail">
             <span>Games save on this device.</span>
             <ActiveSoloSessions ownerNamespace={ownerNamespace} compact />
           </div>
