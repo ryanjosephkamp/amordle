@@ -25,6 +25,7 @@ import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
 import { WordDefinition } from '@/features/words/word-definition';
+import type { DefinitionLookupResult } from '@/domain/definitions';
 import { AccentPresetDialog } from '@/features/account/accent-preset-dialog';
 import { ContextHelpPopover } from '@/components/context-help-popover';
 import { createGameSession, reduceGame } from '@/domain/game';
@@ -667,7 +668,7 @@ describe('browser components', () => {
     const queryClient = new QueryClient({
       defaultOptions: { queries: { retry: false, gcTime: 0 } },
     });
-    const lookupWord = vi.fn(async (_word: string) => ({
+    const lookupWord = vi.fn<(word: string) => Promise<DefinitionLookupResult>>(async () => ({
       schemaVersion: 1 as const,
       word: 'ideas',
       status: 'found' as const,
