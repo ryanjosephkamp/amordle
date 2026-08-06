@@ -52,8 +52,10 @@ Phasing the owner expects:
 - Acceptance: 107/107 bootstrap baseline · 237/237 functional clauses · 73/73 multiplayer
   audit · exactly 3 HTTP interfaces
 
-The default branch `bootstrap/greenfield-2026-07-20` is an **unrelated history** by design
-(`D-002`). Do not attempt a merge. See `CONTINUITY-LOG.md` for the full reasoning.
+**The implementation branch is now the repository default branch** (promoted by the owner
+on 2026-08-06). No merge was performed: the former default `bootstrap/greenfield-2026-07-20`
+is an unrelated history by design (`D-002`) and is retained untouched at `6a1df42` as a
+recovery reference. Do not attempt to merge the two lineages. See `CONTINUITY-LOG.md`.
 
 ## Absolutely must not change
 

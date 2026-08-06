@@ -180,3 +180,26 @@ owner's stated conditions — are already satisfied by the pushed branch and the
 Escalated to the owner with two clean alternatives instead: promote this branch to default
 (no merge, no conflicts), or leave the lineages separate and keep branching from the
 golden tag. Awaiting that decision; nothing was changed in the meantime.
+
+### 2026-08-06T03:35:00Z — repository default branch promoted
+
+- Owner authorized promoting the implementation branch to default, as the clean
+  alternative to the unrelated-history merge declined in the previous entry.
+- Changed `default_branch` from `bootstrap/greenfield-2026-07-20` to
+  `codex/amordle-terminal-greenfield-implementation-2026-07-27` through the GitHub
+  repository setting. **No merge was performed and no history was rewritten.**
+- The former default branch is retained untouched at
+  `6a1df4204a9ef092e6e82b6e0adde8dce34d0d08` as a recovery reference, so the change is
+  reversible by setting `default_branch` back.
+- Repository remains **private**. Vercel git deployments are disabled
+  (`vercel.json` → `git.deploymentEnabled: false`), so promoting the default branch
+  cannot trigger a deployment. Production `dpl_739mtwiXc9pZPef3pxsKumwC9DfG` is
+  unchanged.
+- The branch was deliberately **not renamed**. `run_state.json`, the reports, the
+  acceptance checklist, and the v7 package all reference the current branch name; a
+  rename would invalidate those references for no functional gain.
+- Ledger note: `G-003` listed default-branch change as prohibited pending authorization.
+  That authorization was given by the owner on 2026-08-06. `bootstrap/DECISION-LEDGER.md`
+  is inside the 107-file immutable baseline and therefore records this here instead.
+- Merge authorized: not applicable — no merge performed
+- Production release authorized: no

@@ -417,6 +417,17 @@
     "openItemsAcceptedAsKnown": [
       "W-11 has no end-to-end settled proof for the untimed ranked Practice lane.",
       "verify:budgets reports 0B JS/0B CSS for both routes (pre-existing)."
-    ]
+    ],
+    "defaultBranchPromotion": {
+      "promotedAt": "2026-08-06T03:35:00Z",
+      "from": "bootstrap/greenfield-2026-07-20",
+      "to": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
+      "authorizedBy": "owner, 2026-08-06",
+      "method": "GitHub repository default_branch setting; no merge performed",
+      "priorDefaultBranchRetained": "bootstrap/greenfield-2026-07-20 @ 6a1df4204a9ef092e6e82b6e0adde8dce34d0d08",
+      "repositoryStillPrivate": true,
+      "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+      "reversible": "Set default_branch back to bootstrap/greenfield-2026-07-20; nothing was deleted or rewritten."
+    }
   }
 }
