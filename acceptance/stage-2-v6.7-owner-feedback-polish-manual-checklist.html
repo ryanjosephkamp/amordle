@@ -5,67 +5,256 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amordle v6.7 Owner Manual Checklist</title>
     <style>
-      :root { color-scheme: light dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      body { max-width: 72rem; margin: 0 auto; padding: 1.25rem; line-height: 1.55; }
-      h1, h2, h3, h4 { line-height: 1.2; }
-      h2 { border-top: 1px solid currentColor; padding-top: 1rem; margin-top: 2rem; }
-      code { overflow-wrap: anywhere; }
-      table { width: 100%; border-collapse: collapse; margin-block: 1rem; }
-      th, td { border: 1px solid currentColor; padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
-      pre { overflow-x: auto; border: 1px solid currentColor; padding: 0.75rem; }
-      ul { padding-inline-start: 1.35rem; }
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        line-height: 1.2;
+      }
+      h2 {
+        border-top: 1px solid currentColor;
+        padding-top: 1rem;
+        margin-top: 2rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-block: 1rem;
+      }
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      pre {
+        overflow-x: auto;
+        border: 1px solid currentColor;
+        padding: 0.75rem;
+      }
+      ul {
+        padding-inline-start: 1.35rem;
+      }
     </style>
   </head>
   <body>
-<h1>Amordle Stage 2 v6.7 — Owner Manual Checklist</h1>
-<p>Protected Preview: <a href="https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app">https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app</a></p>
-<p>Deployment: <code>dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR</code> · Commit: <code>0fbcb4d83532901c32d8db12850f4679f3582500</code></p>
-<p>Sign in with your Vercel account first — the Preview is protected and redirects</p>
-<p>unauthenticated visitors to SSO.</p>
-<p><strong>Please check in your dark system colour scheme</strong>, since that is where the reported</p>
-<p>contrast defects appeared.</p>
-<h2>The twelve annotated items</h2>
-<table><thead><tr><th>#</th><th>Where</th><th>What to confirm</th></tr></thead><tbody>
-<tr><td>ANNOT-01</td><td>Alerts popover (signed in)</td><td>Status, date, and time sit in three aligned columns. Dates line up under dates, times under times. No run-together text like <code>Match ready8/2/2026</code>.</td></tr>
-<tr><td>ANNOT-02</td><td><code>/play/solo</code> with 2+ saved games</td><td>Active Solo is a table with Lane / Mode / Setup / Progress / Actions headers. Fields line up down each column. Resume and Abandon still work. Narrow the window: it collapses to labelled rows.</td></tr>
-<tr><td>ANNOT-03</td><td><code>/play/solo</code></td><td>&quot;resume&quot; text is dark on the light button and clearly readable.</td></tr>
-<tr><td>ANNOT-04</td><td><code>/play</code></td><td>&quot;Set up Solo&quot; is readable. This was invisible white-on-white.</td></tr>
-<tr><td>ANNOT-05</td><td><code>/players</code></td><td>Player name, Rating lane, Minimum rating, Maximum rating, Sort, and apply are all the same height and sit on one baseline.</td></tr>
-<tr><td>ANNOT-06</td><td><code>/stats</code></td><td>Ranked ratings spans the full page width with no blank area to the right. Each lane names itself (e.g. &quot;Ranked Practice · OG&quot;) instead of every row reading &quot;Ranked COMBAT&quot;. Lane, mode, and clock appear as separate facts. A rating trajectory appears once you have two or more settled ranked results.</td></tr>
-<tr><td>ANNOT-07</td><td><code>/marketplace</code></td><td>Hover a buy button — the label stays readable.</td></tr>
-<tr><td>ANNOT-08</td><td><code>/settings</code></td><td>Change Email, Change Password, and each Danger Zone action open <strong>centred</strong>. Close each three ways: the × button, Escape, and a click outside the box. While a change is submitting, an outside click must <strong>not</strong> dismiss it. Background must not scroll while a dialog is open.</td></tr>
-<tr><td>ANNOT-09</td><td>Any light button, all accents</td><td>Every light/white button uses the same dark text as Profile&#x27;s accent chips and Save Profile. Try each accent under Profile.</td></tr>
-<tr><td>ANNOT-10</td><td><code>/auth</code></td><td>Signing in lands on Home. A wrong password stays on the page and shows the error rather than redirecting.</td></tr>
-<tr><td>ANNOT-11</td><td>Toolbar, every page</td><td>Signed out reads <code>guest</code>. Signed in reads your player name. Without a player name it shows a short email prefix like <code>ragnargran…</code>. Never overflows or collides, including at 320px and 200% zoom.</td></tr>
-<tr><td>ANNOT-12</td><td>Any finished game with a definition</td><td>The word appears inside the definition area itself. Check a ranked COMBAT forfeit specifically — that was the reported case.</td></tr>
-</tbody></table>
-<h2>Findings register spot-checks</h2>
-<table><thead><tr><th>#</th><th>Where</th><th>What to confirm</th></tr></thead><tbody>
-<tr><td>W-1</td><td><code>/help</code></td><td>The collapsed advanced shortcuts section has a visible border.</td></tr>
-<tr><td>W-2</td><td><code>/stats</code>, <code>/history</code>, <code>/profile</code></td><td>If a data source fails to refresh, the warning banner is a bordered box, not bare text.</td></tr>
-<tr><td>W-3</td><td>Alerts popover</td><td>A failed notification refresh shows a contained warning with a Retry button.</td></tr>
-<tr><td>W-5</td><td><code>/leaderboards</code></td><td>Four tabs: Practice OG, Practice GO, Daily OG, Daily GO.</td></tr>
-<tr><td>W-7</td><td><code>/marketplace</code>, <code>/calendar</code></td><td>Confirmation panels move focus to the confirm action.</td></tr>
-<tr><td>W-8</td><td><code>/calendar</code></td><td>Future/locked days are readable and still obviously disabled.</td></tr>
-<tr><td>W-9</td><td><code>/auth</code></td><td>The Sign in button reads &quot;Working…&quot; only while you are submitting, not on page load.</td></tr>
-</tbody></table>
-<h2>Known open items — please read before signing off</h2>
-<p>1. <strong>Leaderboards OG and GO will look empty of recent ratings.</strong> The server-side repair</p>
-<p>   (W-11) is written and committed but <strong>not applied to the database</strong>, because its</p>
-<p>   authorization requires a local replay that cannot run here — Docker image pulls hang</p>
-<p>   behind Docker Desktop&#x27;s proxy setting. Daily OG and Daily GO lanes work. This is the</p>
-<p>   pre-existing defect, not a regression.</p>
-<p>2. <strong>W-11 has no end-to-end settled proof</strong> in the hosted suite. Closing that needs a new</p>
-<p>   untimed ranked Practice two-player flow.</p>
-<p>3. <strong><code>verify:budgets</code> reports 0B for both routes</strong>, so the bundle-size gate is not</p>
-<p>   actually measuring. Pre-existing and untouched.</p>
-<h2>Sign-off</h2>
-<ul>
-<li>[ ] All twelve annotated items confirmed</li>
-<li>[ ] Findings register spot-checks confirmed</li>
-<li>[ ] Open items understood and accepted</li>
-<li>[ ] Approve golden tag</li>
-<li>[ ] Merge and Production release remain <strong>separate</strong> later decisions</li>
-</ul>
+    <h1>Amordle Stage 2 v6.7 — Owner Manual Checklist</h1>
+    <p>
+      Protected Preview:
+      <a href="https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app"
+        >https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app</a
+      >
+    </p>
+    <p>
+      Deployment: <code>dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR</code> · Commit:
+      <code>0fbcb4d83532901c32d8db12850f4679f3582500</code>
+    </p>
+    <p>Sign in with your Vercel account first — the Preview is protected and redirects</p>
+    <p>unauthenticated visitors to SSO.</p>
+    <p>
+      <strong>Please check in your dark system colour scheme</strong>, since that is where the
+      reported
+    </p>
+    <p>contrast defects appeared.</p>
+    <h2>The twelve annotated items</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Where</th>
+          <th>What to confirm</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>ANNOT-01</td>
+          <td>Alerts popover (signed in)</td>
+          <td>
+            Status, date, and time sit in three aligned columns. Dates line up under dates, times
+            under times. No run-together text like <code>Match ready8/2/2026</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-02</td>
+          <td><code>/play/solo</code> with 2+ saved games</td>
+          <td>
+            Active Solo is a table with Lane / Mode / Setup / Progress / Actions headers. Fields
+            line up down each column. Resume and Abandon still work. Narrow the window: it collapses
+            to labelled rows.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-03</td>
+          <td><code>/play/solo</code></td>
+          <td>&quot;resume&quot; text is dark on the light button and clearly readable.</td>
+        </tr>
+        <tr>
+          <td>ANNOT-04</td>
+          <td><code>/play</code></td>
+          <td>&quot;Set up Solo&quot; is readable. This was invisible white-on-white.</td>
+        </tr>
+        <tr>
+          <td>ANNOT-05</td>
+          <td><code>/players</code></td>
+          <td>
+            Player name, Rating lane, Minimum rating, Maximum rating, Sort, and apply are all the
+            same height and sit on one baseline.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-06</td>
+          <td><code>/stats</code></td>
+          <td>
+            Ranked ratings spans the full page width with no blank area to the right. Each lane
+            names itself (e.g. &quot;Ranked Practice · OG&quot;) instead of every row reading
+            &quot;Ranked COMBAT&quot;. Lane, mode, and clock appear as separate facts. A rating
+            trajectory appears once you have two or more settled ranked results.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-07</td>
+          <td><code>/marketplace</code></td>
+          <td>Hover a buy button — the label stays readable.</td>
+        </tr>
+        <tr>
+          <td>ANNOT-08</td>
+          <td><code>/settings</code></td>
+          <td>
+            Change Email, Change Password, and each Danger Zone action open
+            <strong>centred</strong>. Close each three ways: the × button, Escape, and a click
+            outside the box. While a change is submitting, an outside click must
+            <strong>not</strong> dismiss it. Background must not scroll while a dialog is open.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-09</td>
+          <td>Any light button, all accents</td>
+          <td>
+            Every light/white button uses the same dark text as Profile&#x27;s accent chips and Save
+            Profile. Try each accent under Profile.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-10</td>
+          <td><code>/auth</code></td>
+          <td>
+            Signing in lands on Home. A wrong password stays on the page and shows the error rather
+            than redirecting.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-11</td>
+          <td>Toolbar, every page</td>
+          <td>
+            Signed out reads <code>guest</code>. Signed in reads your player name. Without a player
+            name it shows a short email prefix like <code>ragnargran…</code>. Never overflows or
+            collides, including at 320px and 200% zoom.
+          </td>
+        </tr>
+        <tr>
+          <td>ANNOT-12</td>
+          <td>Any finished game with a definition</td>
+          <td>
+            The word appears inside the definition area itself. Check a ranked COMBAT forfeit
+            specifically — that was the reported case.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Findings register spot-checks</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Where</th>
+          <th>What to confirm</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>W-1</td>
+          <td><code>/help</code></td>
+          <td>The collapsed advanced shortcuts section has a visible border.</td>
+        </tr>
+        <tr>
+          <td>W-2</td>
+          <td><code>/stats</code>, <code>/history</code>, <code>/profile</code></td>
+          <td>
+            If a data source fails to refresh, the warning banner is a bordered box, not bare text.
+          </td>
+        </tr>
+        <tr>
+          <td>W-3</td>
+          <td>Alerts popover</td>
+          <td>A failed notification refresh shows a contained warning with a Retry button.</td>
+        </tr>
+        <tr>
+          <td>W-5</td>
+          <td><code>/leaderboards</code></td>
+          <td>Four tabs: Practice OG, Practice GO, Daily OG, Daily GO.</td>
+        </tr>
+        <tr>
+          <td>W-7</td>
+          <td><code>/marketplace</code>, <code>/calendar</code></td>
+          <td>Confirmation panels move focus to the confirm action.</td>
+        </tr>
+        <tr>
+          <td>W-8</td>
+          <td><code>/calendar</code></td>
+          <td>Future/locked days are readable and still obviously disabled.</td>
+        </tr>
+        <tr>
+          <td>W-9</td>
+          <td><code>/auth</code></td>
+          <td>
+            The Sign in button reads &quot;Working…&quot; only while you are submitting, not on page
+            load.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Known open items — please read before signing off</h2>
+    <p>
+      1. <strong>Leaderboards OG and GO will look empty of recent ratings.</strong> The server-side
+      repair
+    </p>
+    <p>
+      (W-11) is written and committed but <strong>not applied to the database</strong>, because its
+    </p>
+    <p>authorization requires a local replay that cannot run here — Docker image pulls hang</p>
+    <p>behind Docker Desktop&#x27;s proxy setting. Daily OG and Daily GO lanes work. This is the</p>
+    <p>pre-existing defect, not a regression.</p>
+    <p>
+      2. <strong>W-11 has no end-to-end settled proof</strong> in the hosted suite. Closing that
+      needs a new
+    </p>
+    <p>untimed ranked Practice two-player flow.</p>
+    <p>
+      3. <strong><code>verify:budgets</code> reports 0B for both routes</strong>, so the bundle-size
+      gate is not
+    </p>
+    <p>actually measuring. Pre-existing and untouched.</p>
+    <h2>Sign-off</h2>
+    <ul>
+      <li>[ ] All twelve annotated items confirmed</li>
+      <li>[ ] Findings register spot-checks confirmed</li>
+      <li>[ ] Open items understood and accepted</li>
+      <li>[ ] Approve golden tag</li>
+      <li>[ ] Merge and Production release remain <strong>separate</strong> later decisions</li>
+    </ul>
   </body>
 </html>
