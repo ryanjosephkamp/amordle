@@ -6,7 +6,7 @@
   "currentStage": "stage-2",
   "currentCheckpoint": "stage-2-v7-design-elevation-owner-accepted",
   "status": "owner-accepted",
-  "lastGreenCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+  "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -322,12 +322,14 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR",
-    "url": "https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_B866n6v8k1GV6iJ7Zdgtx5TFgovt",
+    "url": "https://amordle-mdyng2rcv-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+    "target": "preview",
+    "applicationCommit": "1d918cf7290ead42ff83b0b9a9b9b4a59960ce4a",
     "evidenceCommit": null,
-    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "supersededPreview": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR"
   },
   "cleanup": {
     "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
@@ -359,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7-frontend-design-elevation-phases-0-3-complete-owner-accepted-uncommitted-awaiting-commit-authorization",
-  "updatedAt": "2026-08-06T19:54:35Z",
+  "reportStatus": "v7-frontend-design-elevation-hosted-acceptance-green-owner-review-required",
+  "updatedAt": "2026-08-06T20:48:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -518,9 +520,18 @@
       "parityRows": 237,
       "mpAuditRows": 73,
       "contrastSweep": "zero failures across 24 routes x 6 accents x 3 interaction states x 2 schemes",
-      "homeCompressedBytes": { "js": 193014, "css": 22126 },
-      "gameCompressedBytes": { "js": 198728, "css": 26485 },
-      "cssChangeVsBaseline": { "home": -2075, "game": -2203 }
+      "homeCompressedBytes": {
+        "js": 193014,
+        "css": 22126
+      },
+      "gameCompressedBytes": {
+        "js": 198728,
+        "css": 26485
+      },
+      "cssChangeVsBaseline": {
+        "home": -2075,
+        "game": -2203
+      }
     },
     "hostedAcceptance": null,
     "openItems": [
@@ -540,5 +551,33 @@
     "serviceMutationAuthorized": false,
     "warning": "This acceptance covers an UNCOMMITTED working tree. Nine modified files, two new source files and four report directories exist only on disk. Committing is the recommended immediate next action; until then the cycle is one accidental checkout away from being lost.",
     "resumeCondition": "owner to authorize a commit; merge, Preview deployment and Production release each require separate authorization"
+  },
+  "v7HostedAcceptance": {
+    "status": "green",
+    "completedAt": "2026-08-06T20:47:05Z",
+    "runId": "e2e_20260806T204520098Z_89f86211_1cdf81df",
+    "applicationCommit": "1d918cf7290ead42ff83b0b9a9b9b4a59960ce4a",
+    "testCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
+    "commitDelta": "test-only: the Preview was built from the application commit; the test commit adds a wait to fixture.solo.spec.ts and changes nothing the deployment serves",
+    "tag": "amordle-stage2-v7-frontend-design-elevation-golden-2026-08-06",
+    "deploymentId": "dpl_B866n6v8k1GV6iJ7Zdgtx5TFgovt",
+    "preview": "https://amordle-mdyng2rcv-ryanjosephkamps-projects.vercel.app",
+    "previewProtected": true,
+    "deployMethod": "vercel build + vercel deploy --prebuilt",
+    "deployMethodNote": "a plain `vercel deploy` fails on this project: the remote build runs with VERCEL=1 and writes .next, while the project infers an output directory of dist from next.config.ts. Use the prebuilt flow.",
+    "fixtureE2E": 20,
+    "serviceE2E": 3,
+    "visualE2E": 20,
+    "verifiedParityRows": 237,
+    "authUsersCleaned": 6,
+    "gamesCleaned": 7,
+    "queueRequestsCleaned": 7,
+    "accentPresetsCleaned": 25,
+    "avatarObjectsCleaned": 2,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "authResidue": 0,
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "supersededAttempt": "an earlier run on this same Preview aborted at the fixture suite on a pre-existing timing race in fixture.solo.spec.ts:189; no service mutation occurred in that attempt"
   }
 }
