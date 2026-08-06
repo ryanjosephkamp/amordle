@@ -70,4 +70,47 @@ date, and explicit execution authorization message here.
 
 ## Checkpoint entries
 
-None yet.
+### 2026-08-06T01:45:00Z — v6.7 owner-feedback polish, hosted-green candidate
+
+- Harness/model: Claude Code / Opus 5
+- Workspace: `/Users/noir/Documents/amordle-final`
+- Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
+- Head/tree before: `16d7a510a15ab5eaf254bc2c163f77b9059854cc` / `a4a3a5a130d21d72444e60e09de4d7c30e4f5152`
+- Head/tree after: `0fbcb4d83532901c32d8db12850f4679f3582500` / `8f6b48b4100c15eca1c3435926d7cb87224a3006`
+- Scope completed: `ANNOT-01` through `ANNOT-12`, plus findings register `W-1` through
+  `W-10`. `W-11` is implemented in source but its migration is unapplied (below).
+- Decisions:
+  - The four contrast annotations shared one cascade bug; contextual muting moved into a
+    `context` layer so control-state rules always win, rather than patching each site.
+  - The contrast sweep then exposed a second mirror-image class (transparent hover
+    surfaces keeping selected ink). Current appearance was preserved by correcting the
+    ink, not by letting hover paint new fills.
+  - Active Solo reuses the existing `.responsive-table` primitive instead of new CSS.
+  - Stats plots cumulative rating _change_, since History records deltas and not absolute
+    ratings; inventing a baseline would be fabricated history.
+  - `W-5` needed no server change — the RPC always accepted all four public lanes.
+- Validation: `pnpm check` green (107/107 baseline, 45/45 + 8/8 migrations, MP audit
+  73/73, parity 237/237, three HTTP interfaces, CSS tokens, budgets); 137 domain, 27
+  browser, 20 fixture E2E, 20 visual local; hosted acceptance PASS.
+- Preview: `dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR` —
+  <https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app>
+- Supabase/Vercel/Storage/Auth mutations: one Preview deployment. **No database
+  migration was applied.** No Production, Storage, or Auth configuration change.
+- Disposable resources: hosted run `e2e_20260806T013802070Z_0fbcb4d8_fae940c4` — 6 Auth
+  users, 7 games, 7 queue requests, 25 accent presets, 2 storage objects.
+- Cleanup: attempt 1, status `zero-residue`; 25 residue probes plus Auth residue all zero.
+- Known failures/risks:
+  1. `20260805200000_amordle_ranked_leaderboard_bucket_repair.sql` is written, registered,
+     and committed but **not pushed**. Its authorization requires a local replay, and
+     Docker image pulls hang behind Docker Desktop's proxy
+     (`http.docker.internal:3128`). Registries answer from the shell, so this is a Docker
+     Desktop setting. Until applied, Leaderboards OG/GO cannot show ratings settled under
+     the current v3 ranked Practice authority — the pre-existing defect, not a regression.
+  2. `W-11` has no end-to-end settled proof: the hosted suite settles only a timed
+     Practice match (excluded from leaderboards) and a Daily match (mapping already
+     correct). Closing it needs an untimed ranked Practice two-player flow.
+  3. `verify:budgets` reports 0B JS/0B CSS for both routes, so the bundle gate is not
+     measuring. Pre-existing; untouched and reported.
+- Next exact action: owner reviews the Preview and decides on the unapplied migration.
+- Merge authorized: no
+- Production release authorized: no

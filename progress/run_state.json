@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.6-account-controls-combat-stats-responsive-golden-owner-review",
+  "currentCheckpoint": "stage-2-v6.7-owner-feedback-polish-and-leaderboard-repair",
   "status": "owner-review-required",
-  "lastGreenCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
+  "lastGreenCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -322,12 +322,11 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_526Pf8MBtD2GionGGuX7y5ViyuGf",
-    "url": "https://amordle-j0a0ycuc0-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR",
+    "url": "https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app",
     "protected": true,
-    "applicationCommit": "f0a3a10c116530641cb23bafce0aea22f8ba53e5",
-    "evidenceCommit": "2330dd6bd90fb0c8386f4b31508d1eaefdc5322b",
-    "projectSettingsRestoredLocally": true,
+    "applicationCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+    "evidenceCommit": null,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG"
   },
   "cleanup": {
@@ -361,5 +360,45 @@
     "oldBlobStoreDeleted": false
   },
   "reportStatus": "v6.6-account-controls-combat-stats-responsive-protected-preview-acceptance-complete-owner-review-required",
-  "updatedAt": "2026-08-03T01:16:23Z"
+  "updatedAt": "2026-08-03T01:16:23Z",
+  "v6_7Implementation": {
+    "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
+    "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+    "scope": "ANNOT-01..ANNOT-12 plus findings register W-1..W-11",
+    "authorizedMigration": "20260805200000_amordle_ranked_leaderboard_bucket_repair.sql",
+    "authorizedMigrationSha256": "5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b",
+    "migrationApplied": false,
+    "migrationBlockedBy": "Docker image pulls hang behind Docker Desktop's configured proxy (http.docker.internal:3128), so the required local shadow-database replay cannot run. Dry-run confirms exactly one pending migration and zero remote drift.",
+    "synchronizedMigrations": 52,
+    "immutableMigrations": 45,
+    "authorizedAdditiveMigrationsRegistered": 8,
+    "openItems": [
+      "W-11 server repair not applied: Leaderboards OG/GO cannot show ratings settled under the current v3 ranked Practice authority.",
+      "Untimed ranked Practice settlement is not covered by the hosted suite, so W-11 has no end-to-end settled proof.",
+      "verify:budgets reports 0B JS/0B CSS for both routes, so the bundle gate is not measuring route output (pre-existing)."
+    ]
+  },
+  "v6_7HostedAcceptance": {
+    "runId": "e2e_20260806T013802070Z_0fbcb4d8_fae940c4",
+    "preview": "https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR",
+    "commit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+    "fixtureE2E": 20,
+    "serviceE2E": 3,
+    "visualE2E": 20,
+    "verifiedParityRows": 237,
+    "mpAuditRows": 73,
+    "authUsersCleaned": 6,
+    "gamesCleaned": 7,
+    "accentPresetsCleaned": 25,
+    "avatarObjectsCleaned": 2,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "leaderboardLanesVerified": [
+      "multiplayer:og",
+      "multiplayer:go",
+      "multiplayer:og:daily:v1",
+      "multiplayer:go:daily:v1"
+    ]
+  }
 }

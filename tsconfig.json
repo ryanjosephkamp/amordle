@@ -1,7 +1,11 @@
 {
   "compilerOptions": {
     "target": "ES2024",
-    "lib": ["dom", "dom.iterable", "es2024"],
+    "lib": [
+      "dom",
+      "dom.iterable",
+      "es2024"
+    ],
     "allowJs": false,
     "skipLibCheck": true,
     "strict": true,
@@ -21,8 +25,12 @@
       }
     ],
     "paths": {
-      "@/adapters/supabase/*": ["./src/adapters/cloud/*"],
-      "@/*": ["./src/*"]
+      "@/adapters/supabase/*": [
+        "./src/adapters/cloud/*"
+      ],
+      "@/*": [
+        "./src/*"
+      ]
     }
   },
   "include": [
@@ -32,7 +40,12 @@
     "**/*.ts",
     "**/*.tsx",
     "**/*.mts",
-    "dist/dev/types/**/*.ts"
+    "dist/dev/types/**/*.ts",
+    ".next/dev/types/**/*.ts"
   ],
-  "exclude": ["node_modules", "bootstrap/source-data", "supabase/functions"]
+  "exclude": [
+    "node_modules",
+    "bootstrap/source-data",
+    "supabase/functions"
+  ]
 }
