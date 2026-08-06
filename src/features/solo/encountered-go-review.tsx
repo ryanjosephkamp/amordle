@@ -29,10 +29,11 @@ export function EncounteredGoReview({
         {entries.map((entry, index) => (
           <li key={`${entry.puzzleNumber}:${entry.word}`}>
             <article className="encountered-go-entry">
-              <h3>
-                Puzzle {entry.puzzleNumber} ·{' '}
-                <span className="mono">{entry.word.toUpperCase()}</span>
-              </h3>
+              {/*
+                ANNOT-12: the definition region below names the word itself now, so the
+                entry heading carries only the chain position it uniquely contributes.
+              */}
+              <h3>Puzzle {entry.puzzleNumber}</h3>
               <WordDefinition
                 word={entry.word}
                 {...(lookupWord ? { lookupWord } : {})}

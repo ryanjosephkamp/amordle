@@ -43,11 +43,9 @@ export function HistoryDefinitions({ words }: { words: string[] }) {
                 ×
               </button>
             </header>
+            {/* ANNOT-12: WordDefinition names its own word, so no outer duplicate. */}
             {words.map((word) => (
-              <div key={word}>
-                <h3 className="mono">{word.toUpperCase()}</h3>
-                <WordDefinition word={word} />
-              </div>
+              <WordDefinition key={word} word={word} />
             ))}
           </div>
         </dialog>

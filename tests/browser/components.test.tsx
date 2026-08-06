@@ -24,6 +24,7 @@ import { prunePublicWordAssetCache, validatePublicWordAsset } from '@/adapters/w
 import { MoveBoards } from '@/features/combat/combat-transcript';
 import { FeedbackBuilder } from '@/features/support/feedback-builder';
 import { WordResults } from '@/features/words/word-results';
+import { WordDefinition } from '@/features/words/word-definition';
 import { AccentPresetDialog } from '@/features/account/accent-preset-dialog';
 import { ContextHelpPopover } from '@/components/context-help-popover';
 import { createGameSession, reduceGame } from '@/domain/game';
@@ -539,7 +540,10 @@ describe('browser components', () => {
       .element(page.getByRole('option', { name: /crane/i }))
       .toHaveAttribute('aria-selected', 'true');
     await page.getByRole('option', { name: /slate/i }).click();
-    await expect.element(page.getByRole('heading', { name: 'slate' })).toBeVisible();
+    // Anchored: accessible-name matching is substring by default, and ANNOT-12 adds a
+    // "Definition · SLATE" heading inside the dialog that would otherwise also match.
+    await expect.element(page.getByRole('heading', { name: /^slate$/i })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: /^Definition · SLATE$/ })).toBeVisible();
     await expect.element(page.getByText('A word used in a browser test.')).toBeVisible();
     await expect
       .element(page.getByRole('link', { name: 'Search web' }))
@@ -601,14 +605,95 @@ describe('browser components', () => {
       </QueryClientProvider>,
     );
 
-    await expect.element(page.getByRole('heading', { name: 'Puzzle 1 · AT' })).toBeVisible();
-    await expect.element(page.getByRole('heading', { name: 'Puzzle 2 · TO' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: 'Puzzle 1' })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: 'Puzzle 2' })).toBeVisible();
+    // ANNOT-12: the word is named inside the definition region itself, not only in the
+    // surrounding entry heading, so it survives once the lookup settles.
+    await expect.element(page.getByRole('heading', { name: /Definition · AT/ })).toBeVisible();
+    await expect.element(page.getByRole('heading', { name: /Definition · TO/ })).toBeVisible();
     await expect.element(page.getByText('to definition')).toBeVisible();
     expect(lookupWord.mock.calls.map(([word]) => word)).toEqual(['at', 'to']);
     expect(queryClient.getQueryCache().find({ queryKey: ['definition', 'on'] })).toBeUndefined();
     expect(document.body.textContent).not.toContain('ON');
     expect(document.body.textContent).not.toContain('NO');
     expect(document.body.textContent).not.toContain('IN');
+  });
+
+  // ANNOT-12: whenever a definition region renders, it names its word — in every
+  // branch, not only while the lookup is pending. One test per state, so each gets a
+  // clean DOM instead of several definition regions competing for the same query.
+  const definitionRecord = (status: 'found' | 'not-found') => ({
+    schemaVersion: 1 as const,
+    word: 'ideas',
+    status,
+    source: 'wiktionary' as const,
+    definitions: status === 'found' ? [{ partOfSpeech: 'noun', definition: 'plural of idea' }] : [],
+    checkedAt: '2026-08-05T00:00:00.000Z',
+    expiresAt: '2026-09-05T00:00:00.000Z',
+    cached: false,
+    stale: false,
+  });
+  const definitionStates = [
+    { label: 'found', lookup: async () => definitionRecord('found') },
+    { label: 'not-found', lookup: async () => definitionRecord('not-found') },
+    {
+      label: 'error',
+      lookup: async () => {
+        throw new Error('offline');
+      },
+    },
+  ];
+
+  for (const state of definitionStates) {
+    it(`names the word inside the definition region (${state.label})`, async () => {
+      const queryClient = new QueryClient({
+        defaultOptions: { queries: { retry: false, gcTime: 0 } },
+      });
+      render(
+        <QueryClientProvider client={queryClient}>
+          <WordDefinition word="ideas" lookupWord={state.lookup} />
+        </QueryClientProvider>,
+      );
+      // The SS-12 defect: a settled definition rendered its gloss with no word.
+      await expect.element(page.getByRole('heading', { name: /Definition · IDEAS/ })).toBeVisible();
+      expect(document.querySelector('.word-definition .definition-word')?.textContent).toBe(
+        'IDEAS',
+      );
+      queryClient.clear();
+    });
+  }
+
+  it('renders only the word it was given, never another answer', async () => {
+    const queryClient = new QueryClient({
+      defaultOptions: { queries: { retry: false, gcTime: 0 } },
+    });
+    const lookupWord = vi.fn(async (_word: string) => ({
+      schemaVersion: 1 as const,
+      word: 'ideas',
+      status: 'found' as const,
+      source: 'wiktionary' as const,
+      definitions: [{ partOfSpeech: 'noun', definition: 'a shared example' }],
+      checkedAt: '2026-08-05T00:00:00.000Z',
+      expiresAt: '2026-09-05T00:00:00.000Z',
+      cached: false,
+      stale: false,
+    }));
+    render(
+      <QueryClientProvider client={queryClient}>
+        <WordDefinition word="ideas" lookupWord={lookupWord} />
+      </QueryClientProvider>,
+    );
+    await expect.element(page.getByText('a shared example')).toBeVisible();
+    // The component receives one already-authorized word and looks up only that word,
+    // so naming it in the region cannot widen answer disclosure.
+    expect(lookupWord.mock.calls.map((call) => call[0])).toEqual(['ideas']);
+    expect(
+      queryClient
+        .getQueryCache()
+        .getAll()
+        .map((query) => query.queryKey),
+    ).toEqual([['definition', 'ideas']]);
+    queryClient.clear();
   });
 
   // ANNOT-08: every true modal dialog opts into the one shared geometry class, so a

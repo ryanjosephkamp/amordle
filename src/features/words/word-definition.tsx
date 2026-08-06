@@ -46,7 +46,20 @@ export function WordDefinition({
   return (
     <section className="word-definition" aria-labelledby={headingId}>
       <div className="definition-status">
-        <Heading id={headingId}>Definition</Heading>
+        {/*
+          ANNOT-12. The word is named inside the definition region itself, in every
+          branch — it previously appeared only while a lookup was pending, so a settled
+          definition showed a gloss with no word ("Noun · plural of idea" in SS-12).
+          Fixing it here rather than at the five call sites makes the invariant global,
+          including the ranked COMBAT forfeit path the owner hit.
+
+          This cannot widen answer disclosure: `word` is already the authorized value
+          passed in by a caller that has cleared its own reveal guard, and it is
+          already used for the lookup itself. No new data reaches the browser.
+        */}
+        <Heading id={headingId}>
+          Definition · <span className="definition-word mono">{normalized.toUpperCase()}</span>
+        </Heading>
         {lookup.data?.source && (
           <span>
             {lookup.data.source === 'dictionary-api' ? 'Free Dictionary API' : 'Wiktionary'}
