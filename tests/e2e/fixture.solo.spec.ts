@@ -198,6 +198,20 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
       await page.getByRole('button', { name: /more navigation/i }).click();
       await expect(page.getByRole('menu', { name: 'More navigation' })).toBeVisible();
 
+      /*
+       * V7-07. The guarantee under test is that the open menu is never occluded by the
+       * play surface. This previously probed the geometric intersection of the menu and
+       * the status row and failed outright when there was none, which made it depend on
+       * the play column happening to reach the menu's edge of the viewport. Since the
+       * play surface became one 44rem column, that intersection no longer exists at
+       * desktop widths — the menu opens over empty margin, so there is nothing to
+       * occlude it.
+       *
+       * The probe now always samples the menu's own centre, so the layering assertion
+       * holds at every viewport rather than only where the two boxes happen to meet,
+       * and the intersection itself is still required at mobile widths, which is where
+       * the play surface genuinely does run underneath the menu.
+       */
       const overlay = await page.evaluate(() => {
         const menu = document.querySelector<HTMLElement>('#more-navigation');
         const status = document.querySelector<HTMLElement>('.game-status');
@@ -208,19 +222,31 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
         const right = Math.min(menuBox.right, statusBox.right);
         const top = Math.max(menuBox.top, statusBox.top);
         const bottom = Math.min(menuBox.bottom, statusBox.bottom);
-        if (right <= left || bottom <= top) return null;
-        const target = document.elementFromPoint((left + right) / 2, (top + bottom) / 2);
+        const intersects = right > left && bottom > top;
+        const target = document.elementFromPoint(
+          menuBox.left + menuBox.width / 2,
+          menuBox.top + menuBox.height / 2,
+        );
         return {
+          intersects,
           menuOwnsTopLayer: Boolean(target && menu.contains(target)),
           targetClass: target instanceof HTMLElement ? target.className : null,
         };
       });
 
-      expect(overlay, `${viewport.width}px should contain a menu/status overlap`).not.toBeNull();
+      expect(
+        overlay,
+        `${viewport.width}px should render both the menu and the status row`,
+      ).not.toBeNull();
       expect(
         overlay?.menuOwnsTopLayer,
         `${viewport.width}px top layer: ${overlay?.targetClass}`,
       ).toBe(true);
+      if (viewport.width < 768) {
+        expect(overlay?.intersects, `${viewport.width}px should still overlap the status row`).toBe(
+          true,
+        );
+      }
     }
   });
 
