@@ -1,11 +1,28 @@
+/*
+ * V7-07. One play column.
+ *
+ * The play screen previously stacked four different measures: the status bar, board
+ * frame and message line at min(76rem) = 1216px, the keyboard, tools and evidence at
+ * min(44rem) = 704px, and the board itself at its own content width — 358px for a
+ * five-letter word, floating with roughly 400px of dead space on either side. Nothing
+ * shared a vertical edge with anything above or below it.
+ *
+ * The column is now the keyboard's own 44rem. That width is fixed, accepted, and
+ * asserted by the keyboard-fit matrix, so making it the shared measure rather than
+ * inventing a new one means every band lines up exactly and the keyboard is untouched.
+ * The 44rem children clamp to 100% and therefore fill the column automatically. The
+ * board stays centred, but now inside something close to its own size, so the space
+ * around it reads as breathing room rather than a missing feature. Long words still
+ * scroll inside the board region exactly as before.
+ */
 .game-layout {
   display: grid;
-  width: min(76rem, 100%);
+  width: min(44rem, 100%);
   min-height: calc(100dvh - 10rem);
   margin-inline: auto;
   grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-  gap: 0.65rem;
-  padding: 0.85rem max(0.75rem, env(safe-area-inset-left)) 1rem;
+  gap: var(--space-4);
+  padding: var(--space-4) max(0.75rem, env(safe-area-inset-left)) var(--space-5);
   font-family: var(--tui-font);
 }
 
@@ -32,25 +49,31 @@
   min-width: 15rem;
   flex-direction: row;
   align-items: center;
-  gap: 0.65rem;
+  gap: var(--space-4);
   border-inline-end: var(--terminal-rule);
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-3) var(--space-4);
 }
 
 .game-context {
   color: var(--muted);
   font-family: var(--tui-font);
-  font-size: 0.65rem;
+  font-size: var(--text-1);
   font-weight: 550;
   letter-spacing: 0;
   text-transform: lowercase;
 }
 
+/*
+ * V7-04. Set one step below a route title rather than by nearest-value mapping. This
+ * is the play screen's heading and was previously 12.16px — smaller than the body text
+ * on every other route, so the most-looked-at screen had the least legible title. The
+ * status bar's 2.75rem minimum already accommodates it, so it costs no play height.
+ */
 .game-status h1 {
   margin: 0;
   color: var(--ink);
   font-family: var(--tui-font);
-  font-size: 0.76rem;
+  font-size: var(--text-4);
   font-weight: 650;
   letter-spacing: 0;
   text-transform: lowercase;
@@ -75,12 +98,12 @@
   display: inline-flex;
   min-height: 100%;
   align-items: center;
-  gap: 0.25rem;
+  gap: var(--space-2);
   border-inline-start: var(--terminal-rule);
-  padding: 0.5rem 0.65rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--muted);
   font-family: var(--tui-font);
-  font-size: 0.64rem;
+  font-size: var(--text-1);
   letter-spacing: 0;
   text-transform: lowercase;
   white-space: nowrap;
@@ -110,13 +133,13 @@
   min-height: 1.8rem;
   grid-template-columns: auto minmax(2rem, 1fr) auto;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-3);
   border-bottom: var(--terminal-rule);
   background: var(--surface);
-  padding: 0.35rem 0.65rem;
+  padding: var(--space-2) var(--space-4);
   color: var(--muted);
   font-family: var(--tui-font);
-  font-size: 0.64rem;
+  font-size: var(--text-1);
   font-weight: 550;
   letter-spacing: 0;
   text-transform: lowercase;
@@ -139,15 +162,15 @@
   min-width: min-content;
   margin-inline: auto;
   flex-direction: column;
-  gap: 0.3rem;
-  padding: 1rem 1rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-4);
 }
 
 .board-entry {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 0.65rem;
+  gap: var(--space-4);
 }
 
 .board-entry::after {
@@ -268,13 +291,13 @@
   max-width: 44rem;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 0.4rem 1.15rem;
+  gap: var(--space-3) var(--space-5);
   margin: 0 auto;
   border-top: var(--terminal-rule);
-  padding: 0.55rem 1rem;
+  padding: var(--space-3) var(--space-5);
   color: var(--muted);
   font-family: var(--tui-font);
-  font-size: 0.62rem;
+  font-size: var(--text-1);
 }
 
 .evidence-legend::before {
@@ -285,7 +308,7 @@
 .evidence-legend span {
   display: inline-flex;
   align-items: center;
-  gap: 0.28rem;
+  gap: var(--space-2);
 }
 
 .evidence-legend b {
@@ -298,16 +321,40 @@
   min-height: 2.4rem;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-3);
   margin: 0;
   border: var(--terminal-rule);
   border-radius: 0;
   background: transparent;
-  padding: 0.5rem 0.7rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--muted);
   font-family: var(--tui-font);
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   text-align: left;
+}
+
+/*
+ * V7-03. `actionState` is empty most of the time, but `.game-message` forces a fixed
+ * height and a border, so every Solo and COMBAT screen carried a permanently empty
+ * bordered rectangle beneath the keyboard.
+ *
+ * The element cannot simply be dropped from the markup or hidden with `display: none`:
+ * it is the `aria-live` region that announces action results, and a live region is
+ * only announced reliably if it is already present and exposed when its content
+ * changes. So when it has no content it takes the visually-hidden treatment instead —
+ * still in the accessibility tree, still announced, but out of the layout entirely
+ * rather than merely collapsed, which would otherwise leave a stray grid gap.
+ */
+.game-message:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
 .game-message-copy {
@@ -323,9 +370,9 @@
   display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 0.4rem;
+  gap: var(--space-3);
   color: var(--present-text);
-  font-size: 0.58rem;
+  font-size: var(--text-1);
   white-space: nowrap;
 }
 
@@ -335,8 +382,8 @@
 
 .game-backup-warning button {
   min-height: 1.7rem;
-  padding: 0.15rem 0.4rem;
-  font-size: 0.55rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-1);
 }
 
 .keyboard {
@@ -368,7 +415,7 @@
   border-inline-end: var(--terminal-rule);
   border-radius: 0;
   background: transparent;
-  font-size: 0.64rem;
+  font-size: var(--text-1);
 }
 
 .game-tools button::before {
@@ -450,18 +497,18 @@ button.key.is-removed {
 
 .result-panel {
   width: min(44rem, 100%);
-  margin: 0 auto 0.75rem;
+  margin: 0 auto var(--space-4);
   border: var(--terminal-rule);
   border-radius: 0;
   background: transparent;
-  padding: 0.8rem;
+  padding: var(--space-4);
   text-align: left;
 }
 
 .result-panel h2 {
   margin: 0;
   font-family: var(--tui-font);
-  font-size: 0.82rem;
+  font-size: var(--text-3);
   font-weight: 650;
 }
 
@@ -476,20 +523,20 @@ button.key.is-removed {
 
 .encountered-go-review {
   display: grid;
-  gap: 0.75rem;
-  margin-top: 1rem;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
 }
 
 .encountered-go-review > h3 {
   margin: 0;
-  font-size: 0.82rem;
+  font-size: var(--text-3);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
 .encountered-go-list {
   display: grid;
-  gap: 0.75rem;
+  gap: var(--space-4);
   margin: 0;
   padding: 0;
   list-style: none;
@@ -502,8 +549,8 @@ button.key.is-removed {
 .encountered-go-entry > h3 {
   margin: 0;
   border-bottom: var(--terminal-rule);
-  padding: 0.65rem 0.75rem;
-  font-size: 0.75rem;
+  padding: var(--space-4) var(--space-4);
+  font-size: var(--text-2);
 }
 
 .encountered-go-entry .word-definition {
@@ -522,19 +569,8 @@ button.key.is-removed {
   font-family: var(--tui-font);
 }
 
-.combat-score,
-.dual-board {
+.combat-score {
   border-radius: 0;
-}
-
-.dual-board > section {
-  border: var(--terminal-rule);
-  border-radius: 0;
-  background: transparent;
-}
-
-.dual-board > section.is-viewer {
-  border-color: var(--accent);
 }
 
 .combat-wait-state {
@@ -559,8 +595,8 @@ button.key.is-removed {
   .game-layout {
     min-height: calc(100dvh - 11.8rem);
     grid-template-rows: auto auto auto auto auto;
-    gap: 0.48rem;
-    padding: 0.55rem 0.35rem max(2rem, env(safe-area-inset-bottom));
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2) max(2rem, env(safe-area-inset-bottom));
   }
 
   .game-layout > *,
@@ -582,7 +618,7 @@ button.key.is-removed {
     min-width: 0;
     border-inline-end: 0;
     border-bottom: var(--terminal-rule);
-    padding: 0.42rem 0.55rem;
+    padding: var(--space-3) var(--space-3);
   }
 
   .game-status-facts {
@@ -595,27 +631,22 @@ button.key.is-removed {
     min-height: 1.8rem;
     border-inline-start: 0;
     border-inline-end: var(--terminal-rule);
-    padding: 0.35rem 0.48rem;
-    font-size: 0.58rem;
-  }
-
-  .game-status-facts .save-state {
-    flex: 0 0 auto;
-    border-inline-end: 0;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .game-region-header {
     min-height: 1.65rem;
-    padding: 0.28rem 0.45rem;
-    font-size: 0.58rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .game-board {
-    padding: 0.6rem 0.3rem 0.45rem;
+    padding: var(--space-3) var(--space-2) var(--space-3);
   }
 
   .board-entry {
-    gap: 0.4rem;
+    gap: var(--space-3);
   }
 
   .board-row-number {
@@ -636,17 +667,17 @@ button.key.is-removed {
   .evidence-legend {
     flex-wrap: nowrap;
     justify-content: flex-start;
-    gap: 0.75rem;
+    gap: var(--space-4);
     overflow-x: auto;
-    padding: 0.42rem 0.5rem;
+    padding: var(--space-3) var(--space-3);
     white-space: nowrap;
   }
 
   .game-message {
     height: 2.2rem;
     min-height: 2.2rem;
-    padding: 0.42rem 0.55rem;
-    font-size: 0.66rem;
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .game-backup-warning > span {
@@ -660,22 +691,18 @@ button.key.is-removed {
   .game-tools button {
     min-width: 0;
     flex-basis: 0;
-    padding-inline: 0.15rem;
-    font-size: 0.55rem;
+    padding-inline: var(--space-1);
+    font-size: var(--text-1);
   }
 
   button.key {
     min-height: 2.75rem;
   }
-
-  .dual-board {
-    grid-template-columns: minmax(0, 1fr);
-  }
 }
 
 @media (max-width: 23rem) {
   .game-layout {
-    padding-inline: 0.2rem;
+    padding-inline: var(--space-2);
   }
 
   .keyboard-row {
@@ -701,7 +728,6 @@ button.key.is-removed {
   .game-board-region,
   .game-tools,
   .result-panel,
-  .dual-board > section,
   .combat-wait-state,
   .combat-input {
     border-color: CanvasText;
@@ -729,15 +755,16 @@ button.key.is-removed {
  */
 
 .game-layout {
-  width: min(76rem, 100%);
+  width: min(44rem, 100%);
   min-width: 0;
   max-width: 100%;
   height: 100%;
   min-height: 0;
   grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-  gap: 0.4rem;
+  gap: var(--space-3);
   overflow: hidden;
-  padding: 0.5rem max(0.5rem, env(safe-area-inset-left)) max(0.5rem, env(safe-area-inset-bottom));
+  padding: var(--space-3) max(0.5rem, env(safe-area-inset-left))
+    max(0.5rem, env(safe-area-inset-bottom));
 }
 
 .game-status,
@@ -750,7 +777,7 @@ button.key.is-removed {
 
 .game-mode-lockup {
   min-width: 13rem;
-  padding: 0.4rem 0.6rem;
+  padding: var(--space-3) var(--space-3);
 }
 
 .game-board-region {
@@ -842,12 +869,12 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   min-height: 2.75rem;
   border-color: var(--accent);
   background: var(--surface-inset);
-  box-shadow: 0 2px 5px oklch(0.05 0.01 220 / 0.22);
+  box-shadow: var(--elevation-2);
 }
 
 .game-board {
-  gap: 0.22rem;
-  padding: 0.55rem 0.75rem;
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
 }
 
 .tile {
@@ -857,7 +884,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 .game-message {
   min-height: 2.1rem;
-  padding: 0.38rem 0.6rem;
+  padding: var(--space-3) var(--space-3);
 }
 
 .game-auxiliary {
@@ -872,23 +899,23 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   min-height: 2.75rem;
   align-items: center;
   border: var(--terminal-rule);
-  padding: 0.55rem 0.65rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--muted);
   cursor: pointer;
-  font-size: 0.66rem;
+  font-size: var(--text-1);
 }
 
 .game-tool-status {
   min-height: 1.25rem;
   margin: 0;
   color: var(--muted);
-  font-size: 0.62rem;
+  font-size: var(--text-1);
   text-align: center;
 }
 
 .game-auxiliary-content {
   display: grid;
-  gap: 0.35rem;
+  gap: var(--space-2);
 }
 
 .game-auxiliary .evidence-legend {
@@ -908,7 +935,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   min-height: 0;
   margin-inline: auto;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-3);
   overflow: hidden;
 }
 
@@ -923,11 +950,10 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 .combat-score > div {
   min-height: 2.75rem;
-  padding-block: 0.4rem;
+  padding-block: var(--space-3);
 }
 
-.combat-wait-state,
-.seeded-evidence {
+.combat-wait-state {
   margin: 0;
 }
 
@@ -948,7 +974,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   border-bottom: var(--terminal-rule);
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.62rem;
+  font-size: var(--text-1);
   text-align: center;
 }
 
@@ -961,8 +987,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   width: 100%;
   min-width: 0;
   flex-direction: column;
-  gap: 0.22rem;
-  padding: 0.45rem;
+  gap: var(--space-2);
+  padding: var(--space-3);
   container-type: inline-size;
 }
 
@@ -972,7 +998,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   min-width: 0;
   grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
   align-items: center;
-  gap: 0.35rem;
+  gap: var(--space-2);
 }
 
 .combat-transcript-meta {
@@ -982,8 +1008,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   grid-template-columns: 2rem 0.5rem minmax(0, 1fr);
   align-items: center;
   justify-self: end;
-  gap: 0.35rem;
-  padding-inline-end: 0.35rem;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-2);
 }
 
 .combat-transcript-header .combat-transcript-meta {
@@ -999,7 +1025,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   align-self: center;
   overflow: hidden;
   color: var(--muted);
-  font-size: 0.58rem;
+  font-size: var(--text-1);
   line-height: 1;
   text-overflow: ellipsis;
   text-transform: uppercase;
@@ -1030,8 +1056,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   display: grid;
   width: min(44rem, 100%);
   margin: 0 auto;
-  gap: 0.35rem;
-  padding: 0.35rem;
+  gap: var(--space-2);
+  padding: var(--space-2);
 }
 
 .game-layout .tile,
@@ -1094,7 +1120,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
     height: 100%;
     min-height: 0;
     grid-template-rows: auto minmax(0, 1fr) auto auto auto;
-    gap: 0.32rem;
+    gap: var(--space-2);
     padding: 0.35rem max(0.28rem, env(safe-area-inset-left))
       max(0.35rem, env(safe-area-inset-bottom));
   }
@@ -1110,11 +1136,22 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
     min-width: 0;
     border-inline-end: var(--terminal-rule);
     border-bottom: 0;
-    padding: 0.32rem 0.45rem;
+    padding: var(--space-2) var(--space-3);
   }
 
   .game-context {
     display: none;
+  }
+
+  /*
+   * V7-04. The play title steps down one scale step below its desktop size. At the
+   * narrowest supported width the status bar is a single row shared with the fact
+   * chips; a 17px title consumes enough of it to push those chips onto a second line,
+   * which costs the board the vertical room it needs to show six rows inside its own
+   * region at 320x568. 14px keeps a clear rank over the 11px chips and keeps one row.
+   */
+  .game-status h1 {
+    font-size: var(--text-3);
   }
 
   .game-status-facts {
@@ -1125,18 +1162,18 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
   .game-status-facts > span {
     min-height: 2.35rem;
-    padding: 0.3rem 0.42rem;
-    font-size: 0.56rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .game-region-header {
     min-height: 1.5rem;
-    padding: 0.22rem 0.4rem;
+    padding: var(--space-2) var(--space-3);
   }
 
   .game-board {
-    gap: 0.16rem;
-    padding: 0.35rem 0.25rem;
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2);
   }
 
   .tile {
@@ -1144,14 +1181,14 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .board-entry {
-    gap: 0.3rem;
+    gap: var(--space-2);
   }
 
   .game-message {
     height: 1.95rem;
     min-height: 1.95rem;
-    padding: 0.32rem 0.45rem;
-    font-size: 0.62rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .game-auxiliary-toggle {
@@ -1159,7 +1196,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .game-auxiliary-content {
-    padding-top: 0.3rem;
+    padding-top: var(--space-2);
   }
 
   .evidence-legend {
@@ -1198,7 +1235,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .combat-game {
-    gap: 0.3rem;
+    gap: var(--space-2);
   }
 
   .combat-game .game-status {
@@ -1224,8 +1261,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   .combat-status-facts > .combat-turn-state {
     min-height: 2.35rem;
     border-inline-start: var(--terminal-rule);
-    padding: 0.3rem 0.42rem;
-    font-size: 0.56rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .combat-score {
@@ -1234,8 +1271,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
   .combat-score > div {
     min-height: 2.4rem;
-    padding: 0.28rem 0.4rem;
-    font-size: 0.62rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
   }
 
   .combat-transcript-header {
@@ -1243,19 +1280,19 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .combat-transcript {
-    padding: 0.3rem;
+    padding: var(--space-2);
   }
 
   .combat-transcript-entry {
     grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
-    gap: 0.2rem;
+    gap: var(--space-2);
   }
 
   .combat-transcript-meta {
     width: min(5.5rem, 100%);
     grid-template-columns: 1.45rem 0.4rem minmax(0, 1fr);
-    gap: 0.2rem;
-    padding-inline-end: 0.2rem;
+    gap: var(--space-2);
+    padding-inline-end: var(--space-2);
   }
 
   .combat-transcript-header .combat-transcript-meta {
@@ -1276,8 +1313,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .combat-input {
-    gap: 0.25rem;
-    padding: 0.25rem;
+    gap: var(--space-2);
+    padding: var(--space-2);
   }
 
   .combat-input > .board-row .tile {
@@ -1286,7 +1323,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
   .combat-secondary-action {
     min-height: 2.75rem;
-    font-size: 0.6rem;
+    font-size: var(--text-1);
   }
 }
 
@@ -1314,8 +1351,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 @media (max-width: 35.49rem) and (max-height: 40rem) {
   .game-board {
-    gap: 0.04rem;
-    padding-block: 0.04rem;
+    gap: var(--space-1);
+    padding-block: var(--space-1);
   }
 
   .game-board .tile {
@@ -1325,8 +1362,8 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 @media (max-width: 35.49rem) and (min-height: 40.01rem) and (max-height: 43.75rem) {
   .game-board {
-    gap: 0.08rem;
-    padding-block: 0.1rem;
+    gap: var(--space-1);
+    padding-block: var(--space-1);
   }
 
   .game-board .tile {
@@ -1344,7 +1381,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   .game-layout {
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
     grid-template-rows: auto minmax(0, 1fr) auto;
-    column-gap: 0.55rem;
+    column-gap: var(--space-3);
   }
 
   .game-layout > .game-status {
@@ -1378,15 +1415,15 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .game-board {
-    gap: 0.08rem;
-    padding-block: 0.15rem;
+    gap: var(--space-1);
+    padding-block: var(--space-1);
   }
 
   .combat-game {
     display: grid;
     grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
     grid-template-rows: auto minmax(0, 1fr) auto auto;
-    column-gap: 0.55rem;
+    column-gap: var(--space-3);
   }
 
   .combat-game > .game-status {
@@ -1395,8 +1432,7 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
   }
 
   .combat-game > .combat-score,
-  .combat-game > .combat-wait-state,
-  .combat-game > .seeded-evidence {
+  .combat-game > .combat-wait-state {
     grid-column: 1;
   }
 

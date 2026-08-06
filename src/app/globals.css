@@ -1,61 +1,102 @@
 @import 'tailwindcss';
 
+/*
+ * V7-01. Design tokens.
+ *
+ * One vocabulary for type, rhythm, focus and motion, so a value is chosen from a
+ * scale rather than typed by hand. Colour is deliberately absent: this file used to
+ * declare a full palette here, but every one of those 22 light names and all 18 dark
+ * names was redeclared by `tui-shell.css`, which loads second and owns the light,
+ * dark and per-accent variants. Those copies never reached the page and are gone.
+ * `--rule` and the `--z-*` scale stay because nothing downstream redeclares them.
+ */
 :root {
   color-scheme: light dark;
-  --background: oklch(0.985 0.004 200);
-  --surface: oklch(0.955 0.008 205);
-  --surface-strong: oklch(0.915 0.012 205);
-  --ink: oklch(0.205 0.018 220);
-  --muted: oklch(0.45 0.018 220);
-  --border: oklch(0.84 0.012 210);
-  --accent: oklch(0.65 0.1 200);
-  --accent-text: oklch(0.42 0.1 200);
-  --accent-ink: oklch(0.16 0.04 210);
-  --correct: oklch(0.63 0.15 145);
-  --correct-text: oklch(0.39 0.13 145);
-  --present: oklch(0.72 0.14 85);
-  --present-text: oklch(0.4 0.11 85);
-  --absent: oklch(0.58 0.018 220);
-  --removed: oklch(0.52 0.06 25);
-  --danger: oklch(0.58 0.2 28);
-  --focus: oklch(0.65 0.1 200);
-  --surface-inset: oklch(0.972 0.006 202);
-  --accent-soft: oklch(0.92 0.035 200);
-  --radius-control: 0.25rem;
-  --radius-panel: 0.25rem;
-  --control-height: 2.75rem;
+
+  /*
+   * Type: six steps. Body is `--text-3` at 14px, which is what v6.7 already shipped,
+   * so running text does not reflow. The scale replaces 34 fixed sizes and 11 one-off
+   * `clamp()` ramps, 19 of which sat inside a single 4.5px band and carried no
+   * hierarchy. Micro-labels take `--text-1` with `--tracking-label` and uppercase
+   * rather than shrinking below it.
+   */
+  --text-1: 0.6875rem;
+  --text-2: 0.75rem;
+  --text-3: 0.875rem;
+  --text-4: 1.0625rem;
+  --text-5: 1.3125rem;
+  --text-6: 1.6875rem;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.4;
+  --leading-body: 1.55;
+
+  --weight-regular: 450;
+  --weight-medium: 550;
+  --weight-bold: 650;
+
+  --tracking-label: 0.08em;
+
+  /* Rhythm: seven steps on a 4px grid, plus 2px for hairline nudges. */
+  --space-1: 0.125rem;
+  --space-2: 0.25rem;
+  --space-3: 0.5rem;
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.5rem;
+  --space-7: 2.5rem;
+
+  /*
+   * The hanging gutter a prompt glyph or row marker occupies. Headings, prose,
+   * region labels and row content all share the single text column to its right.
+   */
+  --marker-gutter: 1.25rem;
+
+  /*
+   * Focus: one width and one colour everywhere. The offset is outset by default and
+   * inset only where an outset ring would collide with a neighbour — the accent
+   * swatch grids. Before v7 there were four unrelated geometries (3px/3px, 2px/2px,
+   * 2px/-3px, 1px dashed/-4px), so tabbing a page changed the ring's shape.
+   */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --focus-offset-inset: -3px;
+
+  /*
+   * Elevation. Levels 0 and 1 — the page, boards, table rows, panels and form groups —
+   * carry no shadow at all; a terminal surface separates with a hairline, and 67 of the
+   * app's 80 radius declarations resolve to zero by design. Only things that genuinely
+   * float get a shadow, and there are exactly three of those tiers. This replaces four
+   * unrelated recipes that expressed the same intent: `0 6px 8px` at three different
+   * alphas, `0 1rem 3rem`, `0 0.9rem 2.3rem` written in a different colour space, and
+   * `0 2px 5px`. The colour is a token so the dark scheme can deepen it in one place
+   * rather than each recipe guessing.
+   */
+  --shadow-color: oklch(0.15 0.02 230 / 0.14);
+  --shadow-color-strong: oklch(0.15 0.02 230 / 0.26);
+  --elevation-2: 0 1px 2px var(--shadow-color);
+  --elevation-3: 0 2px 4px var(--shadow-color), 0 8px 20px -8px var(--shadow-color-strong);
+  --elevation-4: 0 4px 8px var(--shadow-color), 0 18px 40px -14px var(--shadow-color-strong);
+
+  /* Motion: declared here, applied in the v7 motion pass. */
+  --duration-feedback: 90ms;
+  --duration-surface: 160ms;
+  --ease-standard: ease-out;
+
   --rule: 1px solid var(--border);
   --z-nav: 20;
   --z-dropdown: 30;
   --z-sticky: 40;
   --z-chrome: 45;
-  --z-backdrop: 50;
-  --z-modal: 60;
+  /*
+   * V7-05. `--z-backdrop: 50` and `--z-modal: 60` were declared but never referenced,
+   * while raw `z-index: 24` and `40` sat in that band instead. They are not needed:
+   * every dialog in the app uses native `<dialog>` with `showModal()`, which promotes
+   * it to the browser's top layer above all z-index. The raw literals now use the
+   * tokens that actually describe them — a help popover and a sticky utility rail.
+   */
   --z-toast: 70;
   --z-tooltip: 80;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: oklch(0.145 0.012 220);
-    --surface: oklch(0.205 0.014 220);
-    --surface-strong: oklch(0.26 0.018 220);
-    --ink: oklch(0.94 0.008 205);
-    --muted: oklch(0.72 0.014 210);
-    --border: oklch(0.34 0.016 220);
-    --accent: oklch(0.74 0.105 200);
-    --accent-text: oklch(0.78 0.1 200);
-    --accent-ink: oklch(0.15 0.035 215);
-    --correct: oklch(0.7 0.15 145);
-    --correct-text: oklch(0.79 0.13 145);
-    --present: oklch(0.78 0.14 85);
-    --present-text: oklch(0.82 0.11 85);
-    --absent: oklch(0.46 0.018 220);
-    --removed: oklch(0.66 0.07 25);
-    --danger: oklch(0.7 0.18 28);
-    --surface-inset: oklch(0.175 0.012 220);
-    --accent-soft: oklch(0.27 0.045 205);
-  }
 }
 
 * {
@@ -75,7 +116,7 @@ body {
   background: var(--background);
   color: var(--ink);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  font-size: 0.9375rem;
+  font-size: var(--text-3);
   line-height: 1.5;
   text-rendering: optimizeLegibility;
 }
@@ -105,22 +146,23 @@ button,
   min-height: var(--control-height);
   align-items: center;
   justify-content: center;
-  gap: 0.5rem;
+  gap: var(--space-3);
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface);
-  padding: 0.6rem 0.9rem;
+  padding: var(--space-3) var(--space-5);
   color: var(--ink);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8rem;
+  font-size: var(--text-2);
   font-weight: 700;
   letter-spacing: 0.015em;
   text-decoration: none;
   cursor: pointer;
   transition:
-    background-color 160ms ease-out,
-    border-color 160ms ease-out,
-    color 160ms ease-out;
+    background-color var(--duration-feedback) var(--ease-standard),
+    border-color var(--duration-feedback) var(--ease-standard),
+    box-shadow var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
 }
 
 button:hover,
@@ -137,7 +179,8 @@ button:active,
 button:disabled,
 .button[aria-disabled='true'] {
   cursor: not-allowed;
-  opacity: var(--control-disabled-opacity, 0.52);
+  /* V7-03. The fallback disagreed with the token's real value (0.74, tui-shell.css). */
+  opacity: var(--control-disabled-opacity, 0.74);
 }
 
 ::placeholder {
@@ -146,8 +189,8 @@ button:disabled,
 }
 
 :focus-visible {
-  outline: 3px solid var(--focus);
-  outline-offset: 3px;
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
 }
 
 .skip-link {
@@ -158,7 +201,7 @@ button:disabled,
   translate: 0 -200%;
   border-radius: var(--radius-control);
   background: var(--ink);
-  padding: 0.75rem 1rem;
+  padding: var(--space-4) var(--space-5);
   color: var(--background);
 }
 
@@ -174,21 +217,13 @@ button:disabled,
   background: var(--background);
 }
 
-.topbar {
-  display: flex;
-  min-height: 3rem;
-  align-items: center;
-  gap: 1rem;
-  padding: 0 max(1rem, env(safe-area-inset-left));
-}
-
 .wordmark {
   display: inline-flex;
   align-items: center;
-  gap: 0.45rem;
+  gap: var(--space-3);
   color: var(--ink);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.82rem;
+  font-size: var(--text-3);
   font-weight: 800;
   letter-spacing: 0.04em;
   text-decoration: none;
@@ -215,10 +250,10 @@ button:disabled,
   border-inline-start: var(--rule);
   border-radius: 0;
   background: transparent;
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   font-weight: 700;
   letter-spacing: 0.035em;
   text-decoration: none;
@@ -260,16 +295,16 @@ button:disabled,
   border-radius: var(--radius-panel);
   background: var(--background);
   padding: 0;
-  box-shadow: 0 6px 0 color-mix(in oklch, var(--border) 45%, transparent);
+  box-shadow: var(--elevation-2);
 }
 
 .menu-heading {
   border-bottom: var(--rule);
   background: var(--surface);
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.68rem;
+  font-size: var(--text-1);
   font-weight: 700;
   letter-spacing: 0.04em;
 }
@@ -278,31 +313,14 @@ button:disabled,
   min-height: 2.75rem;
   border-bottom: var(--rule);
   border-radius: 0;
-  padding: 0.75rem;
+  padding: var(--space-4);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.8rem;
+  font-size: var(--text-2);
   text-decoration: none;
 }
 
 .menu-popover a:hover {
   background: var(--accent-soft);
-}
-
-.context-rail {
-  display: flex;
-  min-height: 2rem;
-  align-items: center;
-  justify-content: space-between;
-  gap: 1rem;
-  border-top: var(--rule);
-  background: var(--surface-inset);
-  padding: 0.35rem max(1rem, env(safe-area-inset-left));
-  color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.68rem;
-  font-weight: 650;
-  letter-spacing: 0.025em;
-  white-space: nowrap;
 }
 
 .context-ready {
@@ -311,19 +329,19 @@ button:disabled,
 
 .notification-popover {
   width: min(24rem, calc(100vw - 2rem));
-  gap: 0.5rem;
+  gap: var(--space-3);
 }
 
 .notification-list {
   display: grid;
   max-height: min(30rem, calc(100vh - 8rem));
-  gap: 0.25rem;
+  gap: var(--space-2);
   overflow: auto;
 }
 
 .notification-list a {
   display: grid;
-  gap: 0.15rem;
+  gap: var(--space-1);
 }
 
 .notification-list a.is-unread {
@@ -334,7 +352,7 @@ button:disabled,
 .notification-list span {
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-2);
 }
 
 .attention-badge {
@@ -342,29 +360,34 @@ button:disabled,
   min-width: 1.35rem;
   min-height: 1.35rem;
   place-items: center;
-  margin-inline-start: 0.35rem;
+  margin-inline-start: var(--space-2);
   border: 1px solid currentColor;
   border-radius: 999px;
   background: var(--accent);
   color: var(--accent-ink);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   font-weight: 800;
 }
 
 .route-frame {
   width: min(80rem, 100%);
   margin-inline: auto;
-  padding: 2rem max(1rem, env(safe-area-inset-left));
+  padding: var(--space-6) max(1rem, env(safe-area-inset-left));
   padding-bottom: max(6rem, calc(2rem + env(safe-area-inset-bottom)));
 }
 
+/*
+ * V7-02. `max-width: 70ch` was removed. It dated from an earlier design where the
+ * route header was a block of text; `tui-shell.css` later redefined the header as a
+ * full-width ruled line but never reset the cap, so at 1440px the heading rule died
+ * at 613px while every region rule beneath it ran to 1416px — on every route.
+ */
 .route-header {
   display: flex;
-  max-width: 70ch;
   flex-direction: column;
-  gap: 0.65rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
 }
 
 .route-header h1,
@@ -375,7 +398,7 @@ button:disabled,
 .route-title-line {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: var(--space-5);
 }
 
 .route-title-line > span {
@@ -386,7 +409,7 @@ button:disabled,
 
 .route-header h1 {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 2rem;
+  font-size: var(--text-6);
   line-height: 1.15;
   letter-spacing: -0.025em;
   text-wrap: balance;
@@ -403,7 +426,7 @@ button:disabled,
 .action-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.75rem;
+  gap: var(--space-4);
 }
 
 .button.primary,
@@ -432,16 +455,16 @@ button.primary:hover {
   min-height: 2.25rem;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-5);
   border-bottom: var(--rule);
   background: var(--surface);
-  padding: 0.45rem 0.7rem;
+  padding: var(--space-3) var(--space-4);
 }
 
 .workbench-region-header h2 {
   margin: 0;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   font-weight: 750;
   letter-spacing: 0.045em;
 }
@@ -449,7 +472,7 @@ button.primary:hover {
 .workbench-region-status {
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.67rem;
+  font-size: var(--text-1);
   font-weight: 650;
   letter-spacing: 0.03em;
   text-align: right;
@@ -457,13 +480,13 @@ button.primary:hover {
 
 .workbench-region-body {
   min-width: 0;
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .home-layout {
   display: grid;
   grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
-  gap: 1rem;
+  gap: var(--space-5);
   align-items: start;
 }
 
@@ -480,14 +503,14 @@ button.primary:hover {
   display: grid;
   min-height: 5.25rem;
   grid-template-columns: minmax(10rem, 0.7fr) minmax(13rem, 1fr) auto;
-  gap: 1.25rem;
+  gap: var(--space-5);
   align-items: center;
   border-bottom: var(--rule);
-  padding: 1rem;
+  padding: var(--space-5);
   text-decoration: none;
   transition:
-    background-color 160ms ease-out,
-    color 160ms ease-out;
+    background-color var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
 }
 
 .command-row:last-child {
@@ -505,7 +528,7 @@ button.primary:hover {
 .command-code,
 .command-row strong {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-2);
   letter-spacing: 0.025em;
 }
 
@@ -533,9 +556,9 @@ button.primary:hover {
   min-height: 3.5rem;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-5);
   border-bottom: var(--rule);
-  padding: 0.8rem 0.25rem;
+  padding: var(--space-4) var(--space-2);
 }
 
 /*
@@ -560,7 +583,7 @@ button.primary:hover {
 .setting-row p,
 .product-row p,
 .request-row p {
-  margin: 0.25rem 0;
+  margin: var(--space-2) 0;
   color: var(--muted);
   line-height: 1.5;
 }
@@ -599,8 +622,8 @@ button.primary:hover {
   margin: 0;
   border-bottom: var(--rule);
   background: var(--surface);
-  padding: 0.6rem 0.75rem;
-  font-size: 0.78rem;
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-2);
   letter-spacing: 0.035em;
   text-transform: uppercase;
 }
@@ -609,13 +632,13 @@ button.primary:hover {
 .form-panel > .field-stack,
 .form-panel > .data-row,
 .form-panel > p {
-  margin: 1rem;
+  margin: var(--space-5);
 }
 
 .form-panel > .segmented,
 .form-panel > .action-row,
 .form-panel > details {
-  margin: 0.75rem 1rem;
+  margin: var(--space-4) var(--space-5);
 }
 
 .form-intro,
@@ -624,19 +647,19 @@ button.primary:hover {
 }
 
 form.form-panel.field-stack {
-  padding-bottom: 1rem;
+  padding-bottom: var(--space-5);
 }
 
 form.form-panel.field-stack > :not(h2) {
-  margin-inline: 1rem;
+  margin-inline: var(--space-5);
 }
 
 form.form-panel.field-stack > h2 + * {
-  margin-top: 1rem;
+  margin-top: var(--space-5);
 }
 
 .status-panel .action-row {
-  margin-top: 1rem;
+  margin-top: var(--space-5);
 }
 
 .status-panel .workbench-region-body {
@@ -647,13 +670,13 @@ form.form-panel.field-stack > h2 + * {
   border: var(--rule);
   border-radius: var(--radius-panel);
   background: var(--surface-inset);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .status-panel:not(.workbench-region) h2 {
   margin-top: 0;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 1rem;
+  font-size: var(--text-4);
 }
 
 .skeleton-stack {
@@ -666,10 +689,10 @@ form.form-panel.field-stack > h2 + * {
   display: grid;
   min-height: 3.25rem;
   grid-template-columns: minmax(7rem, 0.35fr) minmax(10rem, 0.65fr);
-  gap: 1rem;
+  gap: var(--space-5);
   align-items: center;
   border-bottom: var(--rule);
-  padding: 0.75rem;
+  padding: var(--space-4);
 }
 
 .skeleton-row i {
@@ -699,12 +722,12 @@ form.form-panel.field-stack > h2 + * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1.5rem;
-  margin-top: 1rem;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
   border: 1px solid var(--accent);
   border-radius: var(--radius-panel);
   background: var(--accent-soft);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .confirmation-panel h2,
@@ -714,24 +737,24 @@ form.form-panel.field-stack > h2 + * {
 
 .confirmation-panel h2 {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 1rem;
+  font-size: var(--text-4);
 }
 
 .confirmation-panel p {
-  margin-top: 0.35rem;
+  margin-top: var(--space-2);
   color: var(--muted);
 }
 
 .field-stack {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: var(--space-5);
 }
 
 .field-stack label {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-3);
   font-weight: 650;
 }
 
@@ -744,7 +767,7 @@ form.form-panel.field-stack > h2 + * {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface-inset);
-  padding: 0.65rem 0.75rem;
+  padding: var(--space-4) var(--space-4);
 }
 
 .field-stack input:hover,
@@ -773,8 +796,8 @@ form.form-panel.field-stack > h2 + * {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
-  margin-top: 0.75rem;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
 }
 
 .form-message {
@@ -808,7 +831,7 @@ form.form-panel.field-stack > h2 + * {
 .split-layout {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
-  gap: 1rem;
+  gap: var(--space-5);
   align-items: start;
 }
 
@@ -824,19 +847,19 @@ form.form-panel.field-stack > h2 + * {
   min-width: 0;
   border: var(--rule);
   border-radius: var(--radius-panel);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .split-layout > section:not(.form-panel, .workbench-region) > .section-heading:first-child {
-  margin: -1rem -1rem 1rem;
+  margin: -1rem -1rem var(--space-5);
   border-bottom: var(--rule);
   background: var(--surface);
-  padding: 0.4rem 0.75rem;
+  padding: var(--space-3) var(--space-4);
 }
 
 .split-layout > section:not(.form-panel, .workbench-region) > .section-heading:first-child h2 {
   margin: 0;
-  font-size: 0.78rem;
+  font-size: var(--text-2);
   letter-spacing: 0.035em;
   text-transform: uppercase;
 }
@@ -845,8 +868,8 @@ form.form-panel.field-stack > h2 + * {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
 }
 
 .section-heading h2,
@@ -858,18 +881,18 @@ form.form-panel.field-stack > h2 + * {
 .account-summary {
   display: flex;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-4);
 }
 
 .balance-line {
   justify-content: space-between;
   border-bottom: var(--rule);
-  padding: 1rem 0;
+  padding: var(--space-5) 0;
 }
 
 .account-summary {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.68rem;
+  font-size: var(--text-1);
   white-space: nowrap;
 }
 
@@ -881,7 +904,7 @@ form.form-panel.field-stack > h2 + * {
 .switch-control {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-3);
   font-family: var(--font-geist-mono), monospace;
 }
 
@@ -902,14 +925,14 @@ table {
   width: 100%;
   border-collapse: collapse;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.86rem;
+  font-size: var(--text-3);
 }
 
 th,
 td {
   min-width: 7rem;
   border-bottom: var(--rule);
-  padding: 0.8rem;
+  padding: var(--space-4);
   text-align: left;
 }
 
@@ -919,7 +942,7 @@ th {
   top: 0;
   background: var(--surface);
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   letter-spacing: 0.025em;
 }
 
@@ -940,7 +963,7 @@ th {
   border-right: var(--rule);
   border-bottom: var(--rule);
   background: var(--background);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .metric span {
@@ -948,7 +971,7 @@ th {
 }
 
 .metric strong {
-  font-size: 1.7rem;
+  font-size: var(--text-6);
 }
 
 .route-link {
@@ -960,7 +983,7 @@ th {
   border-bottom: var(--rule);
   border-radius: 0;
   background: var(--background);
-  padding: 1rem;
+  padding: var(--space-5);
   text-decoration: none;
 }
 
@@ -971,7 +994,7 @@ th {
 
 .route-link strong {
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.9rem;
+  font-size: var(--text-3);
   letter-spacing: 0.02em;
 }
 
@@ -983,7 +1006,7 @@ th {
 .public-profile {
   display: grid;
   grid-template-columns: auto minmax(0, 1fr);
-  gap: 1.5rem;
+  gap: var(--space-6);
   align-items: start;
 }
 
@@ -1006,9 +1029,9 @@ th {
   border: 1px solid var(--border);
   border-radius: 999px;
   background: var(--surface);
-  padding: 0.2rem 0.55rem;
+  padding: var(--space-2) var(--space-3);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
+  font-size: var(--text-2);
   white-space: nowrap;
 }
 
@@ -1016,9 +1039,9 @@ th {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-5);
   border-bottom: var(--rule);
-  padding-block: 1rem;
+  padding-block: var(--space-5);
 }
 
 .combat-game {
@@ -1026,15 +1049,14 @@ th {
   margin-inline: auto;
 }
 
-.combat-score,
-.dual-board {
+.combat-score {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 0;
 }
 
 .combat-score {
-  margin-block: 0.75rem;
+  margin-block: var(--space-4);
   border-top: var(--rule);
   border-inline-start: var(--rule);
 }
@@ -1045,12 +1067,12 @@ th {
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
-  gap: 0.5rem;
+  gap: var(--space-3);
   border-right: var(--rule);
   border-bottom: var(--rule);
-  padding: 0.65rem 0.75rem;
+  padding: var(--space-4) var(--space-4);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.74rem;
+  font-size: var(--text-2);
 }
 
 .combat-turn-state {
@@ -1058,10 +1080,10 @@ th {
   min-height: 100%;
   align-items: center;
   border-inline-start: var(--rule);
-  padding: 0.55rem 0.75rem;
+  padding: var(--space-3) var(--space-4);
   color: var(--accent-text);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.7rem;
+  font-size: var(--text-1);
   letter-spacing: 0.035em;
   white-space: nowrap;
 }
@@ -1070,12 +1092,12 @@ th {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 1rem;
-  margin-block: 0.75rem;
+  gap: var(--space-5);
+  margin-block: var(--space-4);
   border: var(--rule);
   border-radius: var(--radius-panel);
   background: var(--accent-soft);
-  padding: 0.75rem;
+  padding: var(--space-4);
 }
 
 .combat-wait-state strong {
@@ -1086,113 +1108,35 @@ th {
   color: var(--muted);
 }
 
-.dual-board {
-  align-items: start;
-  margin-block: 0.75rem;
-  border-top: var(--rule);
-  border-inline-start: var(--rule);
-}
-
-.dual-board > section {
-  min-width: 0;
-  border-right: var(--rule);
-  border-bottom: var(--rule);
-}
-
-.dual-board > section > h2,
-.dual-board > section > h3 {
-  min-height: 2rem;
-  margin: 0;
-  border-bottom: var(--rule);
-  background: var(--surface);
-  padding: 0.45rem 0.65rem;
-  color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.68rem;
-  letter-spacing: 0.035em;
-}
-
-.dual-board > section.is-viewer > h2 {
-  color: var(--ink);
-  box-shadow: inset 0 -2px var(--accent);
-}
-
-.dual-board h2,
-.dual-board h3,
-.seeded-evidence h2 {
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.85rem;
-}
-
-.compact-board {
-  display: flex;
-  min-height: 8rem;
-  max-height: 22rem;
-  flex-direction: column;
-  gap: 0.3rem;
-  align-items: center;
-  justify-content: flex-start;
-  overflow: auto;
-  padding: 1rem 0.65rem;
-}
-
-.compact-board .tile,
-.seeded-evidence .tile {
-  width: clamp(1.2rem, 5vw, 2.35rem);
-  font-size: clamp(0.6rem, 2vw, 1rem);
-}
-
 .combat-input {
   display: flex;
   flex-direction: column;
-  gap: 1rem;
-  margin-top: 0.75rem;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
   border: var(--rule);
   border-radius: var(--radius-panel);
   background: var(--surface-inset);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .combat-input > .action-row {
   justify-content: center;
 }
 
-.seeded-evidence {
-  margin-block: 0.75rem;
-  border: var(--rule);
-  border-radius: var(--radius-panel);
-  padding: 0.75rem;
-}
-
-.seeded-evidence h2 {
-  margin-top: 0;
-  color: var(--muted);
-  letter-spacing: 0.04em;
-}
-
 .spectator-list {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-6);
 }
 
 .spectator-game {
   border: var(--rule);
   border-radius: var(--radius-panel);
-  padding: 1rem;
+  padding: var(--space-5);
 }
 
 .spectator-game footer {
   color: var(--muted);
-}
-
-.calendar-strip {
-  display: grid;
-  max-width: 100%;
-  grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 0;
-  border-top: var(--rule);
-  border-inline-start: var(--rule);
 }
 
 button.calendar-day {
@@ -1206,8 +1150,8 @@ button.calendar-day {
   border-bottom: var(--rule);
   border-radius: 0;
   background: var(--background);
-  padding: 0.55rem;
-  font-size: 0.72rem;
+  padding: var(--space-3);
+  font-size: var(--text-2);
 }
 
 button.calendar-day.is-selected {
@@ -1218,7 +1162,7 @@ button.calendar-day.is-selected {
 .calendar-day strong {
   color: var(--muted);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.75rem;
+  font-size: var(--text-2);
 }
 
 .calendar-controls,
@@ -1226,14 +1170,14 @@ button.calendar-day.is-selected {
   display: flex;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 1rem;
-  margin-top: 1.25rem;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
 }
 
 .calendar-controls label {
   display: flex;
   flex-direction: column;
-  gap: 0.4rem;
+  gap: var(--space-3);
   font-weight: 650;
 }
 
@@ -1242,13 +1186,13 @@ button.calendar-day.is-selected {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface);
-  padding: 0.5rem;
+  padding: var(--space-3);
 }
 
 .calendar-selection {
   align-items: center;
   border-block: var(--rule);
-  padding-block: 1.25rem;
+  padding-block: var(--space-5);
 }
 
 .calendar-selection h2,
@@ -1260,14 +1204,14 @@ button.calendar-day.is-selected {
   display: flex;
   flex-wrap: wrap;
   align-items: flex-end;
-  gap: 0.75rem;
+  gap: var(--space-4);
 }
 
 .explorer-controls label {
   display: flex;
   min-width: min(100%, 9rem);
   flex-direction: column;
-  gap: 0.35rem;
+  gap: var(--space-2);
   font-weight: 650;
 }
 
@@ -1277,7 +1221,7 @@ button.calendar-day.is-selected {
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
   background: var(--surface);
-  padding: 0.55rem;
+  padding: var(--space-3);
 }
 
 .word-list {
@@ -1304,30 +1248,30 @@ button.calendar-day.is-selected {
 
 .word-list button span:last-child {
   color: var(--muted);
-  font-size: 0.75rem;
+  font-size: var(--text-2);
 }
 
 .pagination {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
 }
 
 .prose-sections {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .prose-sections section {
   border-top: var(--rule);
-  padding-top: 1rem;
+  padding-top: var(--space-5);
 }
 
 .prose-sections h2 {
   margin: 0;
   font-family: var(--font-geist-mono), monospace;
-  font-size: 1.05rem;
+  font-size: var(--text-4);
 }
 
 .prose-sections p {
@@ -1341,48 +1285,13 @@ button.calendar-day.is-selected {
   border: 1px solid var(--border);
   border-radius: var(--radius-panel);
   background: var(--surface-inset);
-  padding: 1rem;
+  padding: var(--space-5);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
 }
 
 .admin-refresh {
-  margin-top: 2rem;
-}
-
-.mobile-nav {
-  position: fixed;
-  z-index: var(--z-nav);
-  right: 0;
-  bottom: 0;
-  left: 0;
-  display: none;
-  grid-template-columns: repeat(5, 1fr);
-  border-top: var(--rule);
-  background: var(--background);
-  padding: 0 max(0.25rem, env(safe-area-inset-right)) max(0.25rem, env(safe-area-inset-bottom));
-}
-
-.mobile-nav a,
-.mobile-nav button {
-  display: grid;
-  min-height: 2.75rem;
-  place-items: center;
-  border: 0;
-  border-inline-end: var(--rule);
-  border-radius: 0;
-  background: transparent;
-  color: var(--muted);
-  font-family: var(--font-geist-mono), monospace;
-  font-size: 0.76rem;
-  font-weight: 650;
-  text-decoration: none;
-}
-
-.mobile-nav a[aria-current='page'] {
-  background: var(--accent-soft);
-  color: var(--ink);
-  box-shadow: inset 0 2px var(--accent);
+  margin-top: var(--space-6);
 }
 
 .update-toast {
@@ -1394,11 +1303,11 @@ button.calendar-day.is-selected {
   max-width: calc(100vw - 2rem);
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.75rem;
+  gap: var(--space-4);
   border: 1px solid var(--border);
   border-radius: var(--radius-panel);
   background: var(--background);
-  padding: 0.75rem;
+  padding: var(--space-4);
 }
 
 .connectivity-status {
@@ -1408,14 +1317,14 @@ button.calendar-day.is-selected {
   bottom: 1rem;
   display: flex;
   max-width: min(30rem, calc(100vw - 2rem));
-  gap: 0.75rem;
+  gap: var(--space-4);
   align-items: center;
   border: var(--rule);
   border-radius: var(--radius-panel);
   background: var(--background);
-  padding: 0.65rem 0.75rem;
+  padding: var(--space-4) var(--space-4);
   font-family: var(--font-geist-mono), monospace;
-  font-size: 0.72rem;
+  font-size: var(--text-2);
 }
 
 .connectivity-status strong {
@@ -1433,8 +1342,8 @@ button.calendar-day.is-selected {
   right: max(0.75rem, env(safe-area-inset-right));
   border-radius: var(--radius-control);
   background: var(--surface);
-  padding: 0.7rem 0.9rem;
-  font-size: 0.86rem;
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-3);
   font-weight: 700;
   text-decoration: none;
 }
@@ -1442,10 +1351,6 @@ button.calendar-day.is-selected {
 @media (max-width: 47.99rem) {
   .desktop-nav {
     display: none;
-  }
-
-  .topbar {
-    justify-content: space-between;
   }
 
   .topbar-tools {
@@ -1456,21 +1361,6 @@ button.calendar-day.is-selected {
     display: none;
   }
 
-  .context-rail {
-    min-height: 1.8rem;
-    padding-inline: 0.75rem;
-    overflow: hidden;
-  }
-
-  .context-rail span:first-child {
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .mobile-nav {
-    display: grid;
-  }
-
   .connectivity-status {
     right: 0.5rem;
     bottom: calc(3.5rem + env(safe-area-inset-bottom));
@@ -1479,15 +1369,15 @@ button.calendar-day.is-selected {
   }
 
   .route-frame {
-    padding: 1.25rem 0.75rem max(5.25rem, calc(1rem + env(safe-area-inset-bottom)));
+    padding: var(--space-5) var(--space-4) max(5.25rem, calc(1rem + env(safe-area-inset-bottom)));
   }
 
   .route-header {
-    margin-bottom: 1rem;
+    margin-bottom: var(--space-5);
   }
 
   .route-header h1 {
-    font-size: 1.5rem;
+    font-size: var(--text-5);
   }
 
   .home-layout {
@@ -1497,7 +1387,7 @@ button.calendar-day.is-selected {
   .command-row {
     min-height: 6.25rem;
     grid-template-columns: 1fr auto;
-    gap: 0.5rem 1rem;
+    gap: var(--space-3) var(--space-5);
   }
 
   .command-row > span:nth-child(2) {
@@ -1523,17 +1413,8 @@ button.calendar-day.is-selected {
     display: none;
   }
 
-  .split-layout,
-  .dual-board {
+  .split-layout {
     grid-template-columns: 1fr;
-  }
-
-  .dual-board > .is-opponent {
-    order: 0;
-  }
-
-  .dual-board > .is-viewer {
-    order: 1;
   }
 
   .request-row {
@@ -1554,19 +1435,19 @@ button.calendar-day.is-selected {
 
   button.calendar-day {
     min-height: 3.5rem;
-    padding: 0.35rem;
-    font-size: 0.65rem;
+    padding: var(--space-2);
+    font-size: var(--text-1);
   }
 
   .calendar-day strong {
     max-width: 100%;
     overflow: hidden;
-    font-size: 0.58rem;
+    font-size: var(--text-1);
     text-overflow: ellipsis;
   }
 
   .workbench-region-body {
-    padding: 0.75rem;
+    padding: var(--space-4);
   }
 
   .responsive-table,
@@ -1587,29 +1468,103 @@ button.calendar-day.is-selected {
 
   .responsive-table tr {
     border-bottom: var(--rule);
-    padding-block: 0.4rem;
+    padding-block: var(--space-3);
   }
 
   .responsive-table td {
     display: grid;
     min-width: 0;
     grid-template-columns: 7rem minmax(0, 1fr);
-    gap: 0.75rem;
+    gap: var(--space-4);
     border-bottom: 0;
-    padding: 0.45rem 0.65rem;
+    padding: var(--space-3) var(--space-4);
     overflow-wrap: anywhere;
   }
 
   .responsive-table td::before {
     content: attr(data-label);
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: var(--text-1);
     font-weight: 700;
     letter-spacing: 0.025em;
     text-transform: uppercase;
   }
 }
 
+/*
+ * V7-10. Motion.
+ *
+ * Before v7 the app had two transition declarations in total, against roughly a hundred
+ * hover, focus, active, disabled, pressed and current-page state rules — so every state
+ * change except two snapped, which is a large part of why a finished app read as a
+ * static mockup. Two durations and one curve now cover all of them.
+ *
+ * What is deliberately excluded: tiles, and anything on the path between a keypress and
+ * the board. Key-to-tile response is held under 100ms at p95 by an existing test and
+ * nothing here goes near it. The keyboard keeps the colour transition it already had —
+ * only its duration moves onto the scale, so evidence still resolves the way it did.
+ */
+:is(
+  .desktop-nav a,
+  .menu-popover a,
+  .account-menu > button,
+  .account-menu > a,
+  .more-menu > button,
+  .notification-menu > button,
+  .segmented button,
+  .word-list button,
+  .accent-option,
+  .route-link,
+  .data-row,
+  .request-row
+) {
+  transition:
+    background-color var(--duration-feedback) var(--ease-standard),
+    border-color var(--duration-feedback) var(--ease-standard),
+    box-shadow var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
+}
+
+/*
+ * Surfaces that mount rather than toggle — popovers, toasts, dialogs — fade in. Menus
+ * and dialogs get opacity only: they appear directly under a pointer that is about to
+ * click them, and moving a target as it arrives is worse than not moving it. Toasts
+ * enter from the page edge, where a short rise reads as arrival rather than drift.
+ */
+@keyframes surface-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes surface-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+.menu-popover,
+.context-help-panel,
+dialog.app-modal[open] {
+  animation: surface-fade-in var(--duration-surface) var(--ease-standard);
+}
+
+dialog.app-modal[open]::backdrop {
+  animation: surface-fade-in var(--duration-surface) var(--ease-standard);
+}
+
+.update-toast,
+.connectivity-status {
+  animation: surface-rise-in var(--duration-surface) var(--ease-standard);
+}
+
+/*
+ * The single authoritative reduced-motion block. `tui-shell.css` previously carried a
+ * partial copy that set the transition properties but omitted both animation ones, so
+ * which rules actually stopped depended on which file won — the kind of near-duplicate
+ * this cycle exists to remove.
+ */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
