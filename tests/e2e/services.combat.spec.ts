@@ -2039,11 +2039,19 @@ test.describe.serial('protected Preview services', () => {
         return data.length;
       })
       .toBe(1);
-    // W-11. `get_public_ranked_leaderboard` resolved `multiplayer:og`/`multiplayer:go`
-    // to the pre-v2 storage buckets `async:og`/`async:go`, which the current v3 combat
-    // authority never writes, so no rating settled today could reach the leaderboard.
-    // This is the assertion that would have caught it: a rating that just settled must
-    // be reachable through the public projection, and every accepted lane must resolve.
+    // W-11 partial coverage — read this before trusting it.
+    //
+    // The defect was in the `multiplayer:og`/`multiplayer:go` -> storage mapping, which
+    // pointed at the pre-v2 `async:og`/`async:go` buckets that the v3 combat authority
+    // never writes. Proving that end-to-end needs a settled *untimed* ranked Practice
+    // match, and this suite settles only a timed Practice match (a lane deliberately
+    // excluded from the leaderboard) and a ranked Daily match (whose mapping was
+    // already correct). So these assertions do NOT by themselves prove W-11 fixed.
+    //
+    // What they do prove: every accepted lane resolves without error, and a rating
+    // that just settled is reachable through the public projection with a non-null
+    // bucket. Full W-11 coverage needs an untimed ranked Practice settlement, which is
+    // recorded as an open evidence gap rather than implied here.
     {
       const leaderboardClient = createClient<Database>(supabaseUrl, anonKey, {
         auth: { autoRefreshToken: false, persistSession: false },
