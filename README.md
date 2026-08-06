@@ -29,3 +29,15 @@ or build system.
 
 Do not implement from the golden recovery branch. Its only supported purpose is
 rollback and historical inspection.
+
+## Tooling notes
+
+The Supabase CLI is a project devDependency, not a global install, so invoke it
+through the workspace:
+
+```sh
+pnpm exec supabase migration list --linked
+```
+
+A bare `which supabase` reports "not found" and has already misled one audit into
+believing the CLI was unavailable.

@@ -35,6 +35,12 @@ const authorizedAdditiveMigrations = new Map([
     '20260802193000_amordle_account_lifecycle_v1.sql',
     'caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3',
   ],
+  // W-11: repairs get_public_ranked_leaderboard to the current Amordle v2 rating
+  // buckets. Separately authorized by the owner on 2026-08-05. See D-005.
+  [
+    '20260805200000_amordle_ranked_leaderboard_bucket_repair.sql',
+    '5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b',
+  ],
 ]);
 const reviewedPendingMigrations = new Map([]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');

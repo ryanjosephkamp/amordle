@@ -7,9 +7,16 @@ import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { SkeletonRows } from '@/components/route-states';
 import { profileAccentCss } from '@/domain/profile';
 
+/*
+ * W-5. The RPC has always accepted all four public ranked lanes; only two were ever
+ * offered. Timed lanes are deliberately absent: the public player-stats projection
+ * withholds them (20260801051509), and the leaderboard keeps that boundary.
+ */
 const buckets = [
-  { id: 'multiplayer:og', label: 'OG' },
-  { id: 'multiplayer:go', label: 'GO' },
+  { id: 'multiplayer:og', label: 'Practice · OG' },
+  { id: 'multiplayer:go', label: 'Practice · GO' },
+  { id: 'multiplayer:og:daily:v1', label: 'Daily · OG' },
+  { id: 'multiplayer:go:daily:v1', label: 'Daily · GO' },
 ] as const;
 
 export function LeaderboardTable() {
