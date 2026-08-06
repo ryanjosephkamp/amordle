@@ -1,0 +1,9 @@
+Use `/Users/noir/Documents/amordle-final/docs/prompts/claude-code-amordle-v7-design-2026-08-06/PLAN-MODE-PACKAGE.md` as the controlling prompt. Work in Claude Code Plan mode only.
+
+Read it and the real application source completely, then audit the current frontend design and return one decision-complete, phased plan for elevating it.
+
+I have very little frontend experience, so explain your critique in plain language, and show me visual concepts I can actually look at rather than only describing them in prose. I want to see what you are proposing before I approve it.
+
+Keep the terminal aesthetic and the existing layout, page order, and routes. Do not change game mechanics, the keyboard, or the tile evidence colours — those are accepted and I like them. Do not break anything. Recommend a frontend stack decision only after you have looked at what is actually there; changing nothing is an acceptable recommendation if that is your honest read.
+
+Do not edit files, mutate Git or services, deploy, merge, or begin implementation. Stop after the plan for my review and separate authorization.
