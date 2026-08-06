@@ -3613,8 +3613,16 @@ html[data-game-presentation='review'] .game-route {
 }
 
 .public-rating-list,
+/*
+ * ANNOT-06. `.rating-bucket-grid` is a direct child of `.stats-metrics`, which is a
+ * four-column grid. Unlike every other full-bleed child (`.distribution-row`,
+ * `.stats-activity`, `.empty-copy`, `.stats-visual`) it never claimed the full row, so
+ * it rendered at a quarter width and stranded three columns of empty space — exactly
+ * the blank area the owner marked in SS-06.
+ */
 .rating-bucket-grid {
   display: grid;
+  grid-column: 1 / -1;
   grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
   border: var(--terminal-rule);
 }
@@ -3877,6 +3885,66 @@ html[data-game-presentation='review'] .game-route {
 .comparison-track > span {
   display: block;
   background: var(--accent);
+}
+
+/* ANNOT-06: code-native ranked rating trajectory. No chart dependency. */
+.trajectory-chart {
+  width: 100%;
+  height: 4rem;
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+}
+
+.trajectory-baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.trajectory-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+.trajectory-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  gap: 0.15rem 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: 0.62rem;
+}
+
+.trajectory-values li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 0.5rem;
+  border-bottom: var(--terminal-rule);
+  padding-block: 0.2rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.trajectory-values span {
+  color: var(--muted);
+}
+
+@media (forced-colors: active) {
+  .trajectory-line {
+    stroke: CanvasText;
+  }
+
+  .trajectory-baseline {
+    stroke: GrayText;
+  }
+}
+
+@media print {
+  .trajectory-chart {
+    display: none;
+  }
 }
 
 .word-definition {

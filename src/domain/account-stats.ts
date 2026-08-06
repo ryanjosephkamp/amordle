@@ -96,6 +96,59 @@ export function buildPlayerStats(
   };
 }
 
+export interface RatingTrajectoryPoint {
+  completedAt: string;
+  /** Cumulative rating change since the first recorded ranked result. */
+  cumulativeDelta: number;
+  delta: number;
+}
+
+/**
+ * ANNOT-06: a truthful ranked-rating trajectory built only from durable History rows
+ * that actually carry a rating delta.
+ *
+ * Deliberately cumulative *change* rather than absolute Elo: History records the delta
+ * a result produced, not the rating it produced, so plotting absolute values would
+ * require inventing a starting point. Nothing is interpolated, back-filled, or
+ * smoothed — a lane with one result yields one point, and the caller renders a number
+ * instead of a line.
+ */
+export function buildRatingTrajectory(
+  history: readonly AccountHistoryRow[],
+): RatingTrajectoryPoint[] {
+  const ranked = history
+    .filter((row) => row.entry.schemaVersion === 2 && typeof row.entry.ratingDelta === 'number')
+    .sort((left, right) => left.completed_at.localeCompare(right.completed_at));
+
+  let cumulative = 0;
+  return ranked.map((row) => {
+    const delta = row.entry.schemaVersion === 2 ? (row.entry.ratingDelta ?? 0) : 0;
+    cumulative += delta;
+    return { completedAt: row.completed_at, cumulativeDelta: cumulative, delta };
+  });
+}
+
+/**
+ * Completed games grouped by ISO week, for an honest results-over-time view. Weeks with
+ * no completed game are omitted rather than drawn as zero, so the shape never implies
+ * activity that did not happen.
+ */
+export function buildResultTimeline(
+  history: readonly AccountHistoryRow[],
+): Array<{ week: string; wins: number; losses: number; draws: number }> {
+  const weeks = new Map<string, { week: string; wins: number; losses: number; draws: number }>();
+  for (const row of history) {
+    if (row.entry.result === 'cancelled') continue;
+    const week = row.completed_at.slice(0, 10);
+    const bucket = weeks.get(week) ?? { week, wins: 0, losses: 0, draws: 0 };
+    if (row.entry.result === 'won') bucket.wins += 1;
+    else if (row.entry.result === 'lost') bucket.losses += 1;
+    else if (row.entry.result === 'draw') bucket.draws += 1;
+    weeks.set(week, bucket);
+  }
+  return [...weeks.values()].sort((left, right) => left.week.localeCompare(right.week));
+}
+
 export function nextLevelProgress(progress: AccountProgress): {
   current: number;
   next: number;

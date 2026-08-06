@@ -238,7 +238,87 @@ export const publicRatingBucketLabels: Record<PublicRatingBucket, string> = {
   'multiplayer:go:daily:v1': 'Ranked Daily · GO',
 };
 
+/**
+ * ANNOT-06.
+ *
+ * `multiplayer_rating_profiles.bucket` stores *storage* buckets (`async:*`), while the
+ * application projection speaks *app* buckets (`multiplayer:*`). Private Stats reads
+ * the table directly, so before this map every real lane fell through to the generic
+ * "Ranked COMBAT" — SS-06 shows two distinct lanes both labelled that way.
+ *
+ * The mapping mirrors the database authority exactly:
+ *   - `brrrdle_private.amordle_app_bucket`      (amordle_combat_authority_v3)
+ *   - `public.phase55_ranked_app_bucket`        (phase55_ranked_daily_multiplayer)
+ *   - `public.phase33_ranked_practice_app_bucket_for_storage_bucket`
+ *
+ * Legacy pre-v2 keys are retained because historical rating rows still carry them.
+ */
+export const ratingStorageBucketToAppBucket: Record<string, string> = {
+  'async:og:amordle:v2': 'multiplayer:og',
+  'async:go:amordle:v2': 'multiplayer:go',
+  'async:og:timed:amordle:v2': 'multiplayer:og:timed:v1',
+  'async:go:timed:amordle:v2': 'multiplayer:go:timed:v1',
+  'async:og:daily:v1': 'multiplayer:og:daily:v1',
+  'async:go:daily:v1': 'multiplayer:go:daily:v1',
+  // Pre-v2 authority. Same lanes, earlier storage keys.
+  'async:og': 'multiplayer:og',
+  'async:go': 'multiplayer:go',
+  'async:og:timed:v1': 'multiplayer:og:timed:v1',
+  'async:go:timed:v1': 'multiplayer:go:timed:v1',
+};
+
+/** Timed lanes exist in the rating authority but are not part of any public projection. */
+export const timedRatingBucketLabels: Record<string, string> = {
+  'multiplayer:og:timed:v1': 'Ranked Practice · OG · 5-minute',
+  'multiplayer:go:timed:v1': 'Ranked Practice · GO · 5-minute',
+};
+
+export interface RatingLane {
+  /** App bucket key, or null when the storage key is not recognized. */
+  appBucket: string | null;
+  scope: 'practice' | 'daily' | 'unknown';
+  mode: 'og' | 'go' | 'unknown';
+  clock: 'untimed' | '5-minute' | 'unknown';
+  label: string;
+}
+
+/**
+ * Resolves a storage *or* app bucket into a labelled lane. An unrecognized key is
+ * reported as such rather than collapsed into a plausible-looking label — a truthful
+ * gap beats a confident wrong answer.
+ */
+export function resolveRatingLane(bucket: string): RatingLane {
+  const appBucket = ratingStorageBucketToAppBucket[bucket] ?? bucket;
+  const publicMatch = publicRatingBucketSchema.safeParse(appBucket);
+  if (publicMatch.success) {
+    const daily = appBucket.includes(':daily:');
+    return {
+      appBucket,
+      scope: daily ? 'daily' : 'practice',
+      mode: appBucket.includes(':go') ? 'go' : 'og',
+      clock: 'untimed',
+      label: publicRatingBucketLabels[publicMatch.data],
+    };
+  }
+  const timedLabel = timedRatingBucketLabels[appBucket];
+  if (timedLabel) {
+    return {
+      appBucket,
+      scope: 'practice',
+      mode: appBucket.includes(':go') ? 'go' : 'og',
+      clock: '5-minute',
+      label: timedLabel,
+    };
+  }
+  return {
+    appBucket: null,
+    scope: 'unknown',
+    mode: 'unknown',
+    clock: 'unknown',
+    label: `Ranked COMBAT · unrecognized lane (${bucket})`,
+  };
+}
+
 export function ratingBucketLabel(bucket: string): string {
-  const parsed = publicRatingBucketSchema.safeParse(bucket);
-  return parsed.success ? publicRatingBucketLabels[parsed.data] : 'Ranked COMBAT';
+  return resolveRatingLane(bucket).label;
 }

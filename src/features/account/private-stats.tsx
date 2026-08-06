@@ -13,8 +13,9 @@ import { accountEconomyNamespace, economyQueryKey } from '@/application/query-ke
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 import { defaultAccountProgress } from '@/domain/account-continuity';
-import { buildPlayerStats, nextLevelProgress } from '@/domain/account-stats';
-import { ratingBucketLabel } from '@/domain/profile';
+import { buildPlayerStats, buildRatingTrajectory, nextLevelProgress } from '@/domain/account-stats';
+import type { AccountHistoryRow } from '@/domain/account-continuity';
+import { ratingBucketLabel, resolveRatingLane } from '@/domain/profile';
 
 export function PrivateStats() {
   return (
@@ -182,42 +183,63 @@ function PrivateStatsInner() {
         )}
       </StatsSection>
 
-      <StatsSection title="ranked ratings" note="service-confirmed buckets">
+      <StatsSection title="ranked ratings" note="service-confirmed lanes">
         {ratings.data?.length ? (
           <div className="rating-bucket-grid">
-            {ratings.data.map((rating) => (
-              <article className="rating-bucket" key={rating.bucket}>
-                <header>
-                  <span>{ratingBucketLabel(rating.bucket)}</span>
-                  <strong>{Math.round(rating.rating)}</strong>
-                </header>
-                <dl>
-                  <div>
-                    <dt>games</dt>
-                    <dd>{rating.games_played}</dd>
-                  </div>
-                  <div>
-                    <dt>w–l–d</dt>
-                    <dd>
-                      {rating.wins}–{rating.losses}–{rating.draws}
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>status</dt>
-                    <dd>{rating.provisional ? 'provisional' : 'established'}</dd>
-                  </div>
-                  <div>
-                    <dt>updated</dt>
-                    <dd>{new Date(rating.updated_at).toLocaleDateString()}</dd>
-                  </div>
-                </dl>
-              </article>
-            ))}
+            {ratings.data.map((rating) => {
+              const lane = resolveRatingLane(rating.bucket);
+              return (
+                <article className="rating-bucket" key={rating.bucket}>
+                  <header>
+                    <span>{lane.label}</span>
+                    <strong>{Math.round(rating.rating)}</strong>
+                  </header>
+                  <dl>
+                    {/*
+                      ANNOT-06: scope, mode, and clock are separate labelled facts, so
+                      "which ranked lane is this?" is answerable at a glance instead of
+                      every lane reading "Ranked COMBAT".
+                    */}
+                    <div>
+                      <dt>lane</dt>
+                      <dd>{lane.scope === 'unknown' ? '—' : lane.scope}</dd>
+                    </div>
+                    <div>
+                      <dt>mode</dt>
+                      <dd>{lane.mode === 'unknown' ? '—' : lane.mode.toUpperCase()}</dd>
+                    </div>
+                    <div>
+                      <dt>clock</dt>
+                      <dd>{lane.clock === 'unknown' ? '—' : lane.clock}</dd>
+                    </div>
+                    <div>
+                      <dt>games</dt>
+                      <dd>{rating.games_played}</dd>
+                    </div>
+                    <div>
+                      <dt>w–l–d</dt>
+                      <dd>
+                        {rating.wins}–{rating.losses}–{rating.draws}
+                      </dd>
+                    </div>
+                    <div>
+                      <dt>status</dt>
+                      <dd>{rating.provisional ? 'provisional' : 'established'}</dd>
+                    </div>
+                    <div>
+                      <dt>updated</dt>
+                      <dd>{new Date(rating.updated_at).toLocaleDateString()}</dd>
+                    </div>
+                  </dl>
+                </article>
+              );
+            })}
           </div>
         ) : (
           <p className="empty-copy">No ranked rating has been established yet.</p>
         )}
         {ratings.data?.length ? <RatingComparison ratings={ratings.data} /> : null}
+        <RatingTrajectory rows={[...byId.values()]} />
       </StatsSection>
 
       <StatsSection title="recent activity" note="latest five completions">
@@ -379,6 +401,83 @@ function LevelProgress({
       >
         <span style={{ width: `${rounded}%` }} />
       </div>
+    </figure>
+  );
+}
+
+/**
+ * ANNOT-06. Ranked rating movement over time, derived entirely from durable History
+ * rows already loaded by this route — no new request, no fabricated series.
+ *
+ * History stores the delta a result produced, not the rating it produced, so this
+ * plots cumulative *change* rather than absolute Elo. Fewer than two points renders
+ * the number instead of a line, because a single result is not a trend.
+ */
+function RatingTrajectory({ rows }: { rows: AccountHistoryRow[] }) {
+  const points = buildRatingTrajectory(rows);
+  if (points.length === 0) return null;
+
+  if (points.length < 2) {
+    const only = points[0]!;
+    return (
+      <figure className="stats-visual stats-rating-trajectory">
+        <figcaption>
+          Ranked rating movement · one settled result so far ({only.delta >= 0 ? '+' : ''}
+          {only.delta})
+        </figcaption>
+        <p className="empty-copy">A trend appears once a second ranked result settles.</p>
+      </figure>
+    );
+  }
+
+  const values = points.map((point) => point.cumulativeDelta);
+  const minimum = Math.min(0, ...values);
+  const maximum = Math.max(0, ...values);
+  const span = maximum - minimum || 1;
+  const width = 100;
+  const height = 32;
+  const coordinates = points.map((point, index) => {
+    const x = (index / (points.length - 1)) * width;
+    const y = height - ((point.cumulativeDelta - minimum) / span) * height;
+    return `${x.toFixed(2)},${y.toFixed(2)}`;
+  });
+  const baselineY = height - ((0 - minimum) / span) * height;
+  const net = values[values.length - 1]!;
+
+  return (
+    <figure className="stats-visual stats-rating-trajectory">
+      <figcaption>
+        Ranked rating movement · {points.length} settled results · net {net >= 0 ? '+' : ''}
+        {net}
+      </figcaption>
+      <svg
+        className="trajectory-chart"
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`Cumulative ranked rating change across ${points.length} settled results, ending at ${net >= 0 ? 'plus ' : 'minus '}${Math.abs(net)}`}
+      >
+        <line className="trajectory-baseline" x1="0" y1={baselineY} x2={width} y2={baselineY} />
+        <polyline className="trajectory-line" points={coordinates.join(' ')} />
+      </svg>
+      {/* Exact textual equivalent: the chart never carries information on its own. */}
+      <ol className="trajectory-values">
+        {points.map((point) => (
+          <li key={`${point.completedAt}:${point.cumulativeDelta}`}>
+            <time dateTime={point.completedAt}>
+              {new Date(point.completedAt).toLocaleDateString()}
+            </time>
+            <span>
+              {point.delta >= 0 ? '+' : ''}
+              {point.delta}
+            </span>
+            <strong>
+              {point.cumulativeDelta >= 0 ? '+' : ''}
+              {point.cumulativeDelta}
+            </strong>
+          </li>
+        ))}
+      </ol>
     </figure>
   );
 }

@@ -630,6 +630,50 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  // ANNOT-06: no Stats section may strand unexplained width. `.rating-bucket-grid` sat
+  // in one of four `.stats-metrics` columns, leaving three empty — the blank area the
+  // owner marked in SS-06.
+  test('Stats sections claim their full row width', async ({ page }) => {
+    await page.setViewportSize({ width: 1440, height: 1024 });
+    await page.goto('/stats');
+    const stranded = await page.evaluate(() => {
+      const findings: string[] = [];
+      for (const section of Array.from(document.querySelectorAll('.stats-metrics'))) {
+        const row = section.getBoundingClientRect();
+        for (const child of Array.from(section.children)) {
+          const style = getComputedStyle(child);
+          // A full-bleed child must span every column; a metric tile legitimately does
+          // not, so only elements that already declare `grid-column: 1 / -1` are held
+          // to full width.
+          if (!style.gridColumnStart.includes('1') || !style.gridColumnEnd.includes('-1')) continue;
+          const box = child.getBoundingClientRect();
+          if (box.width === 0) continue;
+          if (row.width - box.width > 2) {
+            findings.push(
+              `${child.className || child.tagName} spans ${Math.round(box.width)} of ${Math.round(row.width)}`,
+            );
+          }
+        }
+      }
+      return findings;
+    });
+    expect(stranded, `\n${stranded.join('\n')}\n`).toEqual([]);
+
+    // The section exists and is full-bleed even when signed out shows a gate.
+    const ratingGridColumn = await page.evaluate(() => {
+      const probe = document.createElement('div');
+      probe.className = 'rating-bucket-grid';
+      const host = document.createElement('div');
+      host.className = 'stats-metrics';
+      host.append(probe);
+      document.body.append(host);
+      const value = getComputedStyle(probe).gridColumn;
+      host.remove();
+      return value;
+    });
+    expect(ratingGridColumn).toContain('1 / -1');
+  });
+
   // ANNOT-11: the account trigger carries identity while staying bounded, so the
   // toolbar cannot grow, collide, or overflow at any supported width or zoom.
   test('Account trigger shows guest and stays bounded in the toolbar', async ({ page }) => {
