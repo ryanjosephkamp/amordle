@@ -2039,6 +2039,59 @@ test.describe.serial('protected Preview services', () => {
         return data.length;
       })
       .toBe(1);
+    // W-11. `get_public_ranked_leaderboard` resolved `multiplayer:og`/`multiplayer:go`
+    // to the pre-v2 storage buckets `async:og`/`async:go`, which the current v3 combat
+    // authority never writes, so no rating settled today could reach the leaderboard.
+    // This is the assertion that would have caught it: a rating that just settled must
+    // be reachable through the public projection, and every accepted lane must resolve.
+    {
+      const leaderboardClient = createClient<Database>(supabaseUrl, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${playerOne!.accessToken}` } },
+      });
+      const lanes = [
+        'multiplayer:og',
+        'multiplayer:go',
+        'multiplayer:og:daily:v1',
+        'multiplayer:go:daily:v1',
+      ] as const;
+      for (const lane of lanes) {
+        const { error: laneError } = await leaderboardClient.rpc(
+          'get_public_ranked_leaderboard_v2',
+          { p_bucket: lane, p_limit: 50, p_offset: 0 },
+        );
+        if (laneError)
+          throw new Error(`Leaderboard lane ${lane} was rejected: ${laneError.message}`);
+      }
+
+      // The settled ranked Daily OG rating must actually surface in its lane.
+      const { data: settledProfiles, error: settledProfilesError } = await admin
+        .from('multiplayer_rating_profiles')
+        .select('user_id,bucket,games_played')
+        .eq('user_id', playerOne!.id)
+        .eq('bucket', 'async:og:daily:v1');
+      if (settledProfilesError) throw settledProfilesError;
+      expect(settledProfiles, 'ranked Daily OG rating profile exists').toHaveLength(1);
+
+      const { data: dailyBoard, error: dailyBoardError } = await leaderboardClient.rpc(
+        'get_public_ranked_leaderboard_v2',
+        { p_bucket: 'multiplayer:og:daily:v1', p_limit: 100, p_offset: 0 },
+      );
+      if (dailyBoardError) throw dailyBoardError;
+      // Every returned row resolves to the requested lane rather than a null bucket,
+      // which is precisely what the pre-v2 mapping produced.
+      expect(dailyBoard ?? []).not.toHaveLength(0);
+      for (const row of dailyBoard ?? []) {
+        expect(row.bucket, 'leaderboard row resolves to the requested lane').toBe(
+          'multiplayer:og:daily:v1',
+        );
+      }
+      await event('ranked_leaderboard_bucket_repair_verified', {
+        lanes: [...lanes],
+        dailyOgRows: (dailyBoard ?? []).length,
+      });
+    }
+
     await event('ranked_daily_og_hosted_verified', {
       gameId: rankedDailyGameId,
       requestIds: [rankedDailyOne.id, rankedDailyTwo.id],
