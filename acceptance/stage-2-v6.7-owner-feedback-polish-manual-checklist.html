@@ -208,6 +208,14 @@
           <td>Four tabs: Practice OG, Practice GO, Daily OG, Daily GO.</td>
         </tr>
         <tr>
+          <td>W-11</td>
+          <td><code>/leaderboards</code></td>
+          <td>
+            Practice OG and Practice GO now show ratings settled under the current ranked authority,
+            rather than appearing empty.
+          </td>
+        </tr>
+        <tr>
           <td>W-7</td>
           <td><code>/marketplace</code>, <code>/calendar</code></td>
           <td>Confirmation panels move focus to the confirm action.</td>
@@ -229,22 +237,14 @@
     </table>
     <h2>Known open items — please read before signing off</h2>
     <p>
-      1. <strong>Leaderboards OG and GO will look empty of recent ratings.</strong> The server-side
-      repair
+      1. <strong>W-11 has no end-to-end settled proof</strong> in the hosted suite. The repair is
+      applied and
     </p>
-    <p>
-      (W-11) is written and committed but <strong>not applied to the database</strong>, because its
-    </p>
-    <p>authorization requires a local replay that cannot run here — Docker image pulls hang</p>
-    <p>behind Docker Desktop&#x27;s proxy setting. Daily OG and Daily GO lanes work. This is the</p>
-    <p>pre-existing defect, not a regression.</p>
-    <p>
-      2. <strong>W-11 has no end-to-end settled proof</strong> in the hosted suite. Closing that
-      needs a new
-    </p>
+    <p>verified against the remote schema, but the suite settles only a timed Practice match</p>
+    <p>(excluded from leaderboards by design) and a Daily match. Closing it needs a new</p>
     <p>untimed ranked Practice two-player flow.</p>
     <p>
-      3. <strong><code>verify:budgets</code> reports 0B for both routes</strong>, so the bundle-size
+      2. <strong><code>verify:budgets</code> reports 0B for both routes</strong>, so the bundle-size
       gate is not
     </p>
     <p>actually measuring. Pre-existing and untouched.</p>

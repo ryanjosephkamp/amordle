@@ -28,26 +28,24 @@ contrast defects appeared.
 
 ## Findings register spot-checks
 
-| #   | Where                            | What to confirm                                                                         |
-| --- | -------------------------------- | --------------------------------------------------------------------------------------- |
-| W-1 | `/help`                          | The collapsed advanced shortcuts section has a visible border.                          |
-| W-2 | `/stats`, `/history`, `/profile` | If a data source fails to refresh, the warning banner is a bordered box, not bare text. |
-| W-3 | Alerts popover                   | A failed notification refresh shows a contained warning with a Retry button.            |
-| W-5 | `/leaderboards`                  | Four tabs: Practice OG, Practice GO, Daily OG, Daily GO.                                |
-| W-7 | `/marketplace`, `/calendar`      | Confirmation panels move focus to the confirm action.                                   |
-| W-8 | `/calendar`                      | Future/locked days are readable and still obviously disabled.                           |
-| W-9 | `/auth`                          | The Sign in button reads "Working…" only while you are submitting, not on page load.    |
+| #    | Where                            | What to confirm                                                                                                       |
+| ---- | -------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| W-1  | `/help`                          | The collapsed advanced shortcuts section has a visible border.                                                        |
+| W-2  | `/stats`, `/history`, `/profile` | If a data source fails to refresh, the warning banner is a bordered box, not bare text.                               |
+| W-3  | Alerts popover                   | A failed notification refresh shows a contained warning with a Retry button.                                          |
+| W-5  | `/leaderboards`                  | Four tabs: Practice OG, Practice GO, Daily OG, Daily GO.                                                              |
+| W-11 | `/leaderboards`                  | Practice OG and Practice GO now show ratings settled under the current ranked authority, rather than appearing empty. |
+| W-7  | `/marketplace`, `/calendar`      | Confirmation panels move focus to the confirm action.                                                                 |
+| W-8  | `/calendar`                      | Future/locked days are readable and still obviously disabled.                                                         |
+| W-9  | `/auth`                          | The Sign in button reads "Working…" only while you are submitting, not on page load.                                  |
 
 ## Known open items — please read before signing off
 
-1. **Leaderboards OG and GO will look empty of recent ratings.** The server-side repair
-   (W-11) is written and committed but **not applied to the database**, because its
-   authorization requires a local replay that cannot run here — Docker image pulls hang
-   behind Docker Desktop's proxy setting. Daily OG and Daily GO lanes work. This is the
-   pre-existing defect, not a regression.
-2. **W-11 has no end-to-end settled proof** in the hosted suite. Closing that needs a new
+1. **W-11 has no end-to-end settled proof** in the hosted suite. The repair is applied and
+   verified against the remote schema, but the suite settles only a timed Practice match
+   (excluded from leaderboards by design) and a Daily match. Closing it needs a new
    untimed ranked Practice two-player flow.
-3. **`verify:budgets` reports 0B for both routes**, so the bundle-size gate is not
+2. **`verify:budgets` reports 0B for both routes**, so the bundle-size gate is not
    actually measuring. Pre-existing and untouched.
 
 ## Sign-off

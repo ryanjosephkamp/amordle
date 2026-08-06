@@ -5,193 +5,476 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Amordle v6.7 Completion Report</title>
     <style>
-      :root { color-scheme: light dark; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; }
-      body { max-width: 72rem; margin: 0 auto; padding: 1.25rem; line-height: 1.55; }
-      h1, h2, h3, h4 { line-height: 1.2; }
-      h2 { border-top: 1px solid currentColor; padding-top: 1rem; margin-top: 2rem; }
-      code { overflow-wrap: anywhere; }
-      table { width: 100%; border-collapse: collapse; margin-block: 1rem; }
-      th, td { border: 1px solid currentColor; padding: 0.45rem 0.6rem; text-align: left; vertical-align: top; }
-      pre { overflow-x: auto; border: 1px solid currentColor; padding: 0.75rem; }
-      ul { padding-inline-start: 1.35rem; }
+      :root {
+        color-scheme: light dark;
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      body {
+        max-width: 72rem;
+        margin: 0 auto;
+        padding: 1.25rem;
+        line-height: 1.55;
+      }
+      h1,
+      h2,
+      h3,
+      h4 {
+        line-height: 1.2;
+      }
+      h2 {
+        border-top: 1px solid currentColor;
+        padding-top: 1rem;
+        margin-top: 2rem;
+      }
+      code {
+        overflow-wrap: anywhere;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-block: 1rem;
+      }
+      th,
+      td {
+        border: 1px solid currentColor;
+        padding: 0.45rem 0.6rem;
+        text-align: left;
+        vertical-align: top;
+      }
+      pre {
+        overflow-x: auto;
+        border: 1px solid currentColor;
+        padding: 0.75rem;
+      }
+      ul {
+        padding-inline-start: 1.35rem;
+      }
     </style>
   </head>
   <body>
-<h1>Amordle Stage 2 v6.7 — Owner Feedback Polish and Ranked Leaderboard Repair</h1>
-<h2>Outcome</h2>
-<p>v6.7 resolves all twelve annotated owner-feedback requirements from the 2026-08-04 review</p>
-<p>and the complete eleven-item whole-product findings register. It is green on a protected</p>
-<p>Preview with zero service residue.</p>
-<ul>
-<li>Branch: <code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code></li>
-<li>Owner-approved rollback checkpoint: <code>16d7a510a15ab5eaf254bc2c163f77b9059854cc</code></li>
-<li>Application candidate: <code>0fbcb4d83532901c32d8db12850f4679f3582500</code></li>
-<li>Deployment: <code>dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR</code></li>
-<li>Protected Preview: <a href="https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app">https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app</a></li>
-<li>Hosted run: <code>e2e_20260806T013802070Z_0fbcb4d8_fae940c4</code></li>
-<li>Status: ready for owner review; <strong>not merged, not released to Production</strong></li>
-</ul>
-<p><strong>Two items are incomplete and are stated in full under Open items.</strong> The authorized</p>
-<p>ranked-leaderboard migration is written, registered, and committed but **not applied to</p>
-<p>the database**, because the local replay its authorization requires cannot run on this</p>
-<p>machine.</p>
-<h2>Mandatory owner requirements</h2>
-<h3>ANNOT-03, ANNOT-04, ANNOT-07, ANNOT-09 — one light-surface foreground authority</h3>
-<p>Root cause was a single cascade bug, not four defects.</p>
-<p><code>.data-row &gt; :last-child:is(button, .button) { color: inherit }</code> in <code>tui-shell.css</code></p>
-<p>carried specificity (0,3,0) and therefore outranked <code>.button.primary</code> (0,2,0) and</p>
-<p><code>button:hover</code> (0,1,1). Every control in a data-row value cell kept painting the</p>
-<p><code>--terminal-selected</code> surface while discarding its ink. In the dark scheme that surface</p>
-<p>is a near-white, which is why <code>/play</code> &quot;Set up Solo&quot; rendered white-on-white — measured</p>
-<p><strong>1.03:1</strong> — and Active Solo &quot;resume&quot; rendered grey-on-white.</p>
-<p>Contextual value-cell muting now lives in a <code>context</code> cascade layer, so unlayered</p>
-<p>control-state rules win regardless of specificity, and the two <code>color: inherit</code> patches</p>
-<p>are deleted. The selected-surface foreground is centralized as</p>
-<p><code>--control-ink-on-selected</code> across all 17 sites, which is the token the owner identified</p>
-<p>on Profile.</p>
-<p>The replacement contrast sweep then exposed a <strong>second, mirror-image class</strong> the plan had</p>
-<p>not predicted: four rules reset the hover surface to transparent without resetting its</p>
-<p>ink, leaving dark ink on a dark background across <code>/auth</code>, <code>/calendar</code>, <code>/words</code>, and</p>
-<p><code>/leaderboards</code> — <code>/auth</code> &quot;CREATE ACCOUNT&quot; measured <strong>1.01:1</strong> — across 1212 state</p>
-<p>combinations. Surface and ink are now always paired. Current appearance was preserved</p>
-<p>(the ink was corrected) rather than letting hover paint new surface fills.</p>
-<p>Sweep result: <strong>753 → 1212 → 0</strong> failures.</p>
-<h3>ANNOT-01 — Notifications</h3>
-<p><code>.menu-popover a { display: block }</code> shares specificity with globals&#x27;</p>
-<p><code>.notification-list a { display: grid }</code> and won only on source order, so status and</p>
-<p>timestamp collapsed into one inline run with no separator at all —</p>
-<p><code>Match ready8/2/2026, 4:40:46 PM</code>. Status, local date, and local time are now three</p>
-<p>aligned grid columns with tabular figures and machine-readable <code>&lt;time dateTime&gt;</code>,</p>
-<p>collapsing to two rows below 47.99rem. The unread marker moved onto the status cell,</p>
-<p>since a <code>::before</code> on a grid container becomes its own grid item.</p>
-<h3>ANNOT-02 — Active Solo</h3>
-<p>The desktop collection used the generic <code>.data-row</code>, so lane, mode, length, difficulty,</p>
-<p>Hard Mode, accepted count, and GO progress rendered as one concatenated inline run. It</p>
-<p>now reuses the accepted <code>.responsive-table</code> primitive already used by History, Help, and</p>
-<p>Leaderboards — Lane / Mode / Setup / Progress / Actions — collapsing to labelled rows on</p>
-<p>mobile with no new CSS. Session semantics, resume targets, abandon, and the conflict</p>
-<p>notice are unchanged.</p>
-<h3>ANNOT-05 — Players filters</h3>
-<p><code>.directory-controls</code> was absent from the shared control-geometry rule, so selects and</p>
-<p>Apply took 2.75rem while <code>input[type=search]</code> and <code>input[type=number]</code> kept their UA</p>
-<p>intrinsic height: <strong>16.375px versus 44px</strong>. All six controls now share one block-size and</p>
-<p>one baseline per rendered row.</p>
-<h3>ANNOT-06 — Ranked lane identity and Stats</h3>
-<p>Two independent defects.</p>
-<p>*Lane identity.* Private Stats reads <code>multiplayer_rating_profiles</code> directly, which stores</p>
-<p><strong>storage</strong> buckets (<code>async:og:amordle:v2</code>), while <code>ratingBucketLabel</code> only knew <strong>app</strong></p>
-<p>buckets (<code>multiplayer:og</code>) and fell through to a generic &quot;Ranked COMBAT&quot; for everything</p>
-<p>else. <code>resolveRatingLane</code> now mirrors the database authority exactly, including pre-v2</p>
-<p>keys and the two timed lanes the public label set never had. Scope, mode, and clock render</p>
-<p>as separate labelled facts. An unrecognized key reports itself as unrecognized and</p>
-<p>surfaces the raw bucket rather than collapsing into a plausible-looking label. Vectors</p>
-<p>read the storage buckets straight out of the migration&#x27;s own check constraint.</p>
-<p>*Stranded width.* <code>.rating-bucket-grid</code> was the only full-bleed child of the four-column</p>
-<p><code>.stats-metrics</code> that never claimed <code>grid-column: 1 / -1</code>, so it rendered at a quarter</p>
-<p>width and left three empty columns.</p>
-<p>*Visualization.* A ranked rating trajectory built only from durable History rows that</p>
-<p>already carry a rating delta — no new request, no fabricated series. It plots cumulative</p>
-<p>change rather than absolute Elo, because History records the delta a result produced and</p>
-<p>not the rating it produced; inventing a baseline would be fiction. Nothing is interpolated</p>
-<p>or smoothed, fewer than two points renders the number instead of a line, and the chart</p>
-<p>carries a complete textual equivalent plus forced-colors and print handling. Code-native</p>
-<p>SVG; no chart dependency was added.</p>
-<h3>ANNOT-08 — One dialog contract</h3>
-<p>Tailwind v4 preflight applies <code>margin: 0</code> to <code>*</code> and <code>::backdrop</code>, cancelling the</p>
-<p><code>margin: auto</code> the UA <code>dialog:modal</code> rule relies on for centring. With <code>inset: 0</code> still in</p>
-<p>force the dialog pins to the top-left corner. <code>.accent-preset-dialog</code> and</p>
-<p><code>.word-detail-dialog</code> happened to restore <code>margin: auto</code> individually;</p>
-<p><code>.account-action-dialog</code> did not, which is exactly why only Change Email, Change Password,</p>
-<p>and Danger Zone were mispositioned.</p>
-<p><code>.app-modal</code> is now the single geometry authority. <code>src/application/modal-dialog.ts</code> is</p>
-<p>the single dismissal policy: outside-click detection compares the pointer against the</p>
-<p>dialog&#x27;s own box rather than relying on <code>target === currentTarget</code> alone; keyboard</p>
-<p>clicks (detail 0) are never outside clicks; dismissal is suppressed while an operation is</p>
-<p>pending so a submitted change cannot be lost; and a reference-counted body scroll lock</p>
-<p>compensates for browsers not locking background scroll on <code>dialog:modal</code>.</p>
-<p>Anchored menus, tooltips, disclosures, and the inline confirmation panels are unchanged —</p>
-<p>they already satisfied outside-click and Escape and are not dialogs.</p>
-<h3>ANNOT-10 — Sign-in destination</h3>
-<p>No auth path navigated after sign-in, and no <code>returnTo</code> mechanism existed anywhere, so</p>
-<p>there was no deliberate destination to preserve. <code>signIn</code>/<code>register</code> now report whether a</p>
-<p>session was actually established, because they resolve normally on a rejected credential;</p>
-<p>without that the redirect would fire on failure and hide the error. Registration awaiting</p>
-<p>email confirmation and the recovery flow are deliberately not redirected.</p>
-<p><code>/auth/callback</code> keeps an explicit action, now pointing Home.</p>
-<h3>ANNOT-11 — Account trigger label</h3>
-<p>Resolved through pure, vector-covered logic: player name, then a bounded 10-character</p>
-<p>email local part once the profile lookup has settled, then <code>guest</code> when signed out, and a</p>
-<p>neutral <code>account</code> while a transition is in flight so switching accounts cannot flash the</p>
-<p>previous identity. The email fallback is owner-only and strictly narrower than the full</p>
-<p>address the account popover already showed. It reuses the root profile query key and</p>
-<p>staleTime, so it adds no request and cannot read another account&#x27;s cache. Width-bounded</p>
-<p>and ellipsized; toolbar containment and zero document overflow asserted 320–1920.</p>
-<h3>ANNOT-12 — Definition names its word</h3>
-<p><code>WordDefinition</code> showed the word only while a lookup was pending, so a settled definition</p>
-<p>rendered a gloss with no word. Fixed at the single choke point rather than at the five</p>
-<p>call sites, making the invariant global — including the ranked COMBAT forfeit path.</p>
-<p>This cannot widen answer disclosure: <code>word</code> is already the authorized value passed by a</p>
-<p>caller that has cleared its own reveal guard, and it was already used for the lookup</p>
-<p>request itself. A counter-test asserts the component looks up and caches only the single</p>
-<p>word it was given.</p>
-<h2>Findings register</h2>
-<table><thead><tr><th>#</th><th>Finding</th><th>Disposition</th></tr></thead><tbody>
-<tr><td>W-1</td><td><code>--line-strong</code> undefined; <code>/help</code> disclosure lost its border</td><td>Fixed; <code>verify:css-tokens</code> added to <code>pnpm check</code> so a fallback-less undefined <code>var()</code> cannot ship again</td></tr>
-<tr><td>W-2</td><td><code>.status-line</code> base class undefined; degraded banners unstyled on 4 routes</td><td>Fixed</td></tr>
-<tr><td>W-3</td><td><code>.notification-source-warning</code> had no CSS</td><td>Fixed</td></tr>
-<tr><td>W-4</td><td>Contrast guard sampled one element and could not see the defect</td><td>Replaced with the exhaustive sweep</td></tr>
-<tr><td>W-5</td><td>Leaderboards exposed 2 of 4 public lanes</td><td>Fixed — frontend only; the RPC always accepted all four</td></tr>
-<tr><td>W-6</td><td>Public profile projection withholds timed lanes</td><td>Honoured; leaderboard keeps that boundary</td></tr>
-<tr><td>W-7</td><td>Inline confirmations announced <code>role=&quot;dialog&quot;</code> without focus</td><td>Fixed to <code>role=&quot;group&quot;</code></td></tr>
-<tr><td>W-8</td><td>Disabled controls below the 3:1 floor</td><td>Fixed via <code>--control-disabled-opacity</code></td></tr>
-<tr><td>W-9</td><td><code>auth.status === &#x27;loading&#x27;</code> conflated hydration with submission</td><td>Fixed with local form state; shared coordinator untouched</td></tr>
-<tr><td>W-10</td><td>Supabase CLI is a devDependency; <code>which supabase</code> misleads</td><td>Recorded in <code>CONTINUITY-LOG.md</code></td></tr>
-<tr><td><strong>W-11</strong></td><td><strong>Leaderboard queried dead pre-v2 rating buckets</strong></td><td><strong>Migration written and registered; NOT applied — see Open items</strong></td></tr>
-</tbody></table>
-<h2>Evidence</h2>
-<p>Local: <code>pnpm check</code> (107/107 bootstrap baseline, 45/45 immutable and 8/8 authorized</p>
-<p>additive migrations, word authority, keyboard manuals, boundaries, MP audit 73/73, parity</p>
-<p>237/237, three HTTP interfaces, CSS tokens, bundle budgets), 137 domain, 27 browser, 20</p>
-<p>fixture E2E, 20 visual.</p>
-<p>Hosted (<code>e2e_20260806T013802070Z_0fbcb4d8_fae940c4</code>): 20 fixture, 3 service, 20 visual,</p>
-<p>parity 237/237 acceptance-verified, 12 screenshots.</p>
-<p>Cleanup: attempt 1, status <code>zero-residue</code>. 6 Auth users, 7 games, 7 queue requests, 25</p>
-<p>accent presets, 2 storage objects removed; 25 residue probes plus Auth residue all zero.</p>
-<p>Leaderboard lanes verified hosted: all four accepted lanes resolved; the Daily OG lane</p>
-<p>returned 2 rows, each resolving to the requested bucket rather than the null bucket the</p>
-<p>stale mapping produced.</p>
-<h2>Open items</h2>
-<p><strong>1. The W-11 migration is not applied.</strong> <code>20260805200000_amordle_ranked_leaderboard_bucket_repair.sql</code></p>
-<p>(SHA-256 <code>5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b</code>) is authored,</p>
-<p>registered in <code>verify-bootstrap-baseline.mjs</code>, and committed. It is <strong>not pushed</strong>,</p>
-<p>because the authorization requires a local replay and dry-run first, and Docker image</p>
-<p>pulls hang behind Docker Desktop&#x27;s configured proxy (<code>http.docker.internal:3128</code>) so the</p>
-<p>shadow database cannot be created. Registries are reachable from the shell, so this is a</p>
-<p>Docker Desktop proxy setting rather than a network outage.</p>
-<p>Substitute evidence gathered: <code>migration list --linked</code> confirms exactly one pending</p>
-<p>migration and zero remote-only drift; <code>db lint --linked</code> runs without Docker and confirms</p>
-<p>remote connectivity; and a direct diff of the new function against the deployed one shows</p>
-<p><strong>three hunks, all rating-bucket string literals, in a 165-line body</strong> with nothing else</p>
-<p>changed.</p>
-<p>Consequence while unapplied: the Leaderboards OG and GO lanes cannot show ratings settled</p>
-<p>under the current v3 ranked Practice authority. This is the pre-existing defect, unchanged</p>
-<p>by this release — not a regression.</p>
-<p><strong>2. W-11 has no end-to-end settled proof.</strong> The hosted suite settles a *timed* ranked</p>
-<p>Practice match (a lane deliberately excluded from leaderboards) and a ranked Daily match</p>
-<p>(whose mapping was already correct). Proving the untimed ranked Practice mapping needs a</p>
-<p>new untimed two-player settlement flow. The hosted assertions therefore prove lane</p>
-<p>resolution and non-null bucket resolution, not the repair itself, and say so explicitly in</p>
-<p>the test.</p>
-<p><strong>3. <code>verify:budgets</code> is not measuring.</strong> It passes while reporting `home 0B JS/0B CSS;</p>
-<p>game 0B JS/0B CSS`, so the route-bundle gate is effectively vacuous. Pre-existing and</p>
-<p>outside this cycle&#x27;s authorized scope; left untouched and reported rather than silently</p>
-<p>widened.</p>
-<h2>Boundaries preserved</h2>
-<p>The 45 immutable migrations, the 107-file bootstrap baseline, exactly three HTTP</p>
-<p>interfaces, the locked BRRRDLE-DEV shell, the default branch, and Production</p>
-<p>(<code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>) are all unchanged. No new vendor, dependency, paid</p>
-<p>capability, or chart library was added. No real player or Auth data was deleted. No</p>
-<p>secret, raw Auth identifier, unsolved answer, or private player datum entered source,</p>
-<p>logs, reports, or evidence.</p>
+    <h1>Amordle Stage 2 v6.7 — Owner Feedback Polish and Ranked Leaderboard Repair</h1>
+    <h2>Outcome</h2>
+    <p>v6.7 resolves all twelve annotated owner-feedback requirements from the 2026-08-04 review</p>
+    <p>and the complete eleven-item whole-product findings register. It is green on a protected</p>
+    <p>Preview with zero service residue.</p>
+    <ul>
+      <li>Branch: <code>codex/amordle-terminal-greenfield-implementation-2026-07-27</code></li>
+      <li>
+        Owner-approved rollback checkpoint: <code>16d7a510a15ab5eaf254bc2c163f77b9059854cc</code>
+      </li>
+      <li>Application candidate: <code>0fbcb4d83532901c32d8db12850f4679f3582500</code></li>
+      <li>Deployment: <code>dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR</code></li>
+      <li>
+        Protected Preview:
+        <a href="https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app"
+          >https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app</a
+        >
+      </li>
+      <li>
+        Hosted run: <code>e2e_20260806T024758627Z_2c6980ca_30d0b6d8</code> (after the W-11
+        migration)
+      </li>
+      <li>
+        Status: ready for owner review; <strong>not merged, not released to Production</strong>
+      </li>
+    </ul>
+    <p>
+      The authorized ranked-leaderboard migration (<code>W-11</code>) has been replayed locally,
+      applied
+    </p>
+    <p>to the database, and verified against the remote schema. **Two items remain open and are</p>
+    <p>stated in full under Open items.**</p>
+    <h2>Mandatory owner requirements</h2>
+    <h3>ANNOT-03, ANNOT-04, ANNOT-07, ANNOT-09 — one light-surface foreground authority</h3>
+    <p>Root cause was a single cascade bug, not four defects.</p>
+    <p>
+      <code>.data-row &gt; :last-child:is(button, .button) { color: inherit }</code> in
+      <code>tui-shell.css</code>
+    </p>
+    <p>
+      carried specificity (0,3,0) and therefore outranked <code>.button.primary</code> (0,2,0) and
+    </p>
+    <p>
+      <code>button:hover</code> (0,1,1). Every control in a data-row value cell kept painting the
+    </p>
+    <p>
+      <code>--terminal-selected</code> surface while discarding its ink. In the dark scheme that
+      surface
+    </p>
+    <p>
+      is a near-white, which is why <code>/play</code> &quot;Set up Solo&quot; rendered
+      white-on-white — measured
+    </p>
+    <p><strong>1.03:1</strong> — and Active Solo &quot;resume&quot; rendered grey-on-white.</p>
+    <p>
+      Contextual value-cell muting now lives in a <code>context</code> cascade layer, so unlayered
+    </p>
+    <p>
+      control-state rules win regardless of specificity, and the two
+      <code>color: inherit</code> patches
+    </p>
+    <p>are deleted. The selected-surface foreground is centralized as</p>
+    <p>
+      <code>--control-ink-on-selected</code> across all 17 sites, which is the token the owner
+      identified
+    </p>
+    <p>on Profile.</p>
+    <p>
+      The replacement contrast sweep then exposed a <strong>second, mirror-image class</strong> the
+      plan had
+    </p>
+    <p>not predicted: four rules reset the hover surface to transparent without resetting its</p>
+    <p>
+      ink, leaving dark ink on a dark background across <code>/auth</code>, <code>/calendar</code>,
+      <code>/words</code>, and
+    </p>
+    <p>
+      <code>/leaderboards</code> — <code>/auth</code> &quot;CREATE ACCOUNT&quot; measured
+      <strong>1.01:1</strong> — across 1212 state
+    </p>
+    <p>combinations. Surface and ink are now always paired. Current appearance was preserved</p>
+    <p>(the ink was corrected) rather than letting hover paint new surface fills.</p>
+    <p>Sweep result: <strong>753 → 1212 → 0</strong> failures.</p>
+    <h3>ANNOT-01 — Notifications</h3>
+    <p><code>.menu-popover a { display: block }</code> shares specificity with globals&#x27;</p>
+    <p>
+      <code>.notification-list a { display: grid }</code> and won only on source order, so status
+      and
+    </p>
+    <p>timestamp collapsed into one inline run with no separator at all —</p>
+    <p>
+      <code>Match ready8/2/2026, 4:40:46 PM</code>. Status, local date, and local time are now three
+    </p>
+    <p>
+      aligned grid columns with tabular figures and machine-readable
+      <code>&lt;time dateTime&gt;</code>,
+    </p>
+    <p>collapsing to two rows below 47.99rem. The unread marker moved onto the status cell,</p>
+    <p>since a <code>::before</code> on a grid container becomes its own grid item.</p>
+    <h3>ANNOT-02 — Active Solo</h3>
+    <p>
+      The desktop collection used the generic <code>.data-row</code>, so lane, mode, length,
+      difficulty,
+    </p>
+    <p>Hard Mode, accepted count, and GO progress rendered as one concatenated inline run. It</p>
+    <p>
+      now reuses the accepted <code>.responsive-table</code> primitive already used by History,
+      Help, and
+    </p>
+    <p>Leaderboards — Lane / Mode / Setup / Progress / Actions — collapsing to labelled rows on</p>
+    <p>mobile with no new CSS. Session semantics, resume targets, abandon, and the conflict</p>
+    <p>notice are unchanged.</p>
+    <h3>ANNOT-05 — Players filters</h3>
+    <p>
+      <code>.directory-controls</code> was absent from the shared control-geometry rule, so selects
+      and
+    </p>
+    <p>
+      Apply took 2.75rem while <code>input[type=search]</code> and
+      <code>input[type=number]</code> kept their UA
+    </p>
+    <p>
+      intrinsic height: <strong>16.375px versus 44px</strong>. All six controls now share one
+      block-size and
+    </p>
+    <p>one baseline per rendered row.</p>
+    <h3>ANNOT-06 — Ranked lane identity and Stats</h3>
+    <p>Two independent defects.</p>
+    <p>
+      _Lane identity._ Private Stats reads <code>multiplayer_rating_profiles</code> directly, which
+      stores
+    </p>
+    <p>
+      <strong>storage</strong> buckets (<code>async:og:amordle:v2</code>), while
+      <code>ratingBucketLabel</code> only knew <strong>app</strong>
+    </p>
+    <p>
+      buckets (<code>multiplayer:og</code>) and fell through to a generic &quot;Ranked COMBAT&quot;
+      for everything
+    </p>
+    <p>
+      else. <code>resolveRatingLane</code> now mirrors the database authority exactly, including
+      pre-v2
+    </p>
+    <p>
+      keys and the two timed lanes the public label set never had. Scope, mode, and clock render
+    </p>
+    <p>as separate labelled facts. An unrecognized key reports itself as unrecognized and</p>
+    <p>surfaces the raw bucket rather than collapsing into a plausible-looking label. Vectors</p>
+    <p>read the storage buckets straight out of the migration&#x27;s own check constraint.</p>
+    <p>
+      _Stranded width._ <code>.rating-bucket-grid</code> was the only full-bleed child of the
+      four-column
+    </p>
+    <p>
+      <code>.stats-metrics</code> that never claimed <code>grid-column: 1 / -1</code>, so it
+      rendered at a quarter
+    </p>
+    <p>width and left three empty columns.</p>
+    <p>_Visualization._ A ranked rating trajectory built only from durable History rows that</p>
+    <p>already carry a rating delta — no new request, no fabricated series. It plots cumulative</p>
+    <p>change rather than absolute Elo, because History records the delta a result produced and</p>
+    <p>
+      not the rating it produced; inventing a baseline would be fiction. Nothing is interpolated
+    </p>
+    <p>or smoothed, fewer than two points renders the number instead of a line, and the chart</p>
+    <p>carries a complete textual equivalent plus forced-colors and print handling. Code-native</p>
+    <p>SVG; no chart dependency was added.</p>
+    <h3>ANNOT-08 — One dialog contract</h3>
+    <p>
+      Tailwind v4 preflight applies <code>margin: 0</code> to <code>*</code> and
+      <code>::backdrop</code>, cancelling the
+    </p>
+    <p>
+      <code>margin: auto</code> the UA <code>dialog:modal</code> rule relies on for centring. With
+      <code>inset: 0</code> still in
+    </p>
+    <p>force the dialog pins to the top-left corner. <code>.accent-preset-dialog</code> and</p>
+    <p>
+      <code>.word-detail-dialog</code> happened to restore <code>margin: auto</code> individually;
+    </p>
+    <p>
+      <code>.account-action-dialog</code> did not, which is exactly why only Change Email, Change
+      Password,
+    </p>
+    <p>and Danger Zone were mispositioned.</p>
+    <p>
+      <code>.app-modal</code> is now the single geometry authority.
+      <code>src/application/modal-dialog.ts</code> is
+    </p>
+    <p>the single dismissal policy: outside-click detection compares the pointer against the</p>
+    <p>
+      dialog&#x27;s own box rather than relying on <code>target === currentTarget</code> alone;
+      keyboard
+    </p>
+    <p>clicks (detail 0) are never outside clicks; dismissal is suppressed while an operation is</p>
+    <p>pending so a submitted change cannot be lost; and a reference-counted body scroll lock</p>
+    <p>compensates for browsers not locking background scroll on <code>dialog:modal</code>.</p>
+    <p>Anchored menus, tooltips, disclosures, and the inline confirmation panels are unchanged —</p>
+    <p>they already satisfied outside-click and Escape and are not dialogs.</p>
+    <h3>ANNOT-10 — Sign-in destination</h3>
+    <p>
+      No auth path navigated after sign-in, and no <code>returnTo</code> mechanism existed anywhere,
+      so
+    </p>
+    <p>
+      there was no deliberate destination to preserve. <code>signIn</code>/<code>register</code> now
+      report whether a
+    </p>
+    <p>session was actually established, because they resolve normally on a rejected credential;</p>
+    <p>without that the redirect would fire on failure and hide the error. Registration awaiting</p>
+    <p>email confirmation and the recovery flow are deliberately not redirected.</p>
+    <p><code>/auth/callback</code> keeps an explicit action, now pointing Home.</p>
+    <h3>ANNOT-11 — Account trigger label</h3>
+    <p>Resolved through pure, vector-covered logic: player name, then a bounded 10-character</p>
+    <p>
+      email local part once the profile lookup has settled, then <code>guest</code> when signed out,
+      and a
+    </p>
+    <p>
+      neutral <code>account</code> while a transition is in flight so switching accounts cannot
+      flash the
+    </p>
+    <p>previous identity. The email fallback is owner-only and strictly narrower than the full</p>
+    <p>address the account popover already showed. It reuses the root profile query key and</p>
+    <p>
+      staleTime, so it adds no request and cannot read another account&#x27;s cache. Width-bounded
+    </p>
+    <p>and ellipsized; toolbar containment and zero document overflow asserted 320–1920.</p>
+    <h3>ANNOT-12 — Definition names its word</h3>
+    <p>
+      <code>WordDefinition</code> showed the word only while a lookup was pending, so a settled
+      definition
+    </p>
+    <p>rendered a gloss with no word. Fixed at the single choke point rather than at the five</p>
+    <p>call sites, making the invariant global — including the ranked COMBAT forfeit path.</p>
+    <p>
+      This cannot widen answer disclosure: <code>word</code> is already the authorized value passed
+      by a
+    </p>
+    <p>caller that has cleared its own reveal guard, and it was already used for the lookup</p>
+    <p>request itself. A counter-test asserts the component looks up and caches only the single</p>
+    <p>word it was given.</p>
+    <h2>Findings register</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Finding</th>
+          <th>Disposition</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>W-1</td>
+          <td>
+            <code>--line-strong</code> undefined; <code>/help</code> disclosure lost its border
+          </td>
+          <td>
+            Fixed; <code>verify:css-tokens</code> added to <code>pnpm check</code> so a
+            fallback-less undefined <code>var()</code> cannot ship again
+          </td>
+        </tr>
+        <tr>
+          <td>W-2</td>
+          <td>
+            <code>.status-line</code> base class undefined; degraded banners unstyled on 4 routes
+          </td>
+          <td>Fixed</td>
+        </tr>
+        <tr>
+          <td>W-3</td>
+          <td><code>.notification-source-warning</code> had no CSS</td>
+          <td>Fixed</td>
+        </tr>
+        <tr>
+          <td>W-4</td>
+          <td>Contrast guard sampled one element and could not see the defect</td>
+          <td>Replaced with the exhaustive sweep</td>
+        </tr>
+        <tr>
+          <td>W-5</td>
+          <td>Leaderboards exposed 2 of 4 public lanes</td>
+          <td>Fixed — frontend only; the RPC always accepted all four</td>
+        </tr>
+        <tr>
+          <td>W-6</td>
+          <td>Public profile projection withholds timed lanes</td>
+          <td>Honoured; leaderboard keeps that boundary</td>
+        </tr>
+        <tr>
+          <td>W-7</td>
+          <td>Inline confirmations announced <code>role=&quot;dialog&quot;</code> without focus</td>
+          <td>Fixed to <code>role=&quot;group&quot;</code></td>
+        </tr>
+        <tr>
+          <td>W-8</td>
+          <td>Disabled controls below the 3:1 floor</td>
+          <td>Fixed via <code>--control-disabled-opacity</code></td>
+        </tr>
+        <tr>
+          <td>W-9</td>
+          <td>
+            <code>auth.status === &#x27;loading&#x27;</code> conflated hydration with submission
+          </td>
+          <td>Fixed with local form state; shared coordinator untouched</td>
+        </tr>
+        <tr>
+          <td>W-10</td>
+          <td>Supabase CLI is a devDependency; <code>which supabase</code> misleads</td>
+          <td>Recorded in <code>CONTINUITY-LOG.md</code></td>
+        </tr>
+        <tr>
+          <td><strong>W-11</strong></td>
+          <td><strong>Leaderboard queried dead pre-v2 rating buckets</strong></td>
+          <td><strong>Migration written and registered; NOT applied — see Open items</strong></td>
+        </tr>
+      </tbody>
+    </table>
+    <h2>Evidence</h2>
+    <p>
+      Local: <code>pnpm check</code> (107/107 bootstrap baseline, 45/45 immutable and 8/8 authorized
+    </p>
+    <p>additive migrations, word authority, keyboard manuals, boundaries, MP audit 73/73, parity</p>
+    <p>237/237, three HTTP interfaces, CSS tokens, bundle budgets), 137 domain, 27 browser, 20</p>
+    <p>fixture E2E, 20 visual.</p>
+    <p>Hosted (<code>e2e_20260806T024758627Z_2c6980ca_30d0b6d8</code>, run against the repaired</p>
+    <p>leaderboard function): 20 fixture, 3 service, 20 visual, parity 237/237</p>
+    <p>
+      acceptance-verified. An earlier run <code>e2e_20260806T013802070Z_0fbcb4d8_fae940c4</code> was
+      green
+    </p>
+    <p>against the unrepaired function and is superseded by this one.</p>
+    <p>
+      Cleanup: attempt 1, status <code>zero-residue</code>. 6 Auth users, 7 games, 7 queue requests,
+      25
+    </p>
+    <p>accent presets, 2 storage objects removed; 25 residue probes plus Auth residue all zero.</p>
+    <p>Leaderboard lanes verified hosted: all four accepted lanes resolved; the Daily OG lane</p>
+    <p>returned 2 rows, each resolving to the requested bucket rather than the null bucket the</p>
+    <p>stale mapping produced.</p>
+    <h2>Ranked leaderboard repair (W-11)</h2>
+    <p><code>20260805200000_amordle_ranked_leaderboard_bucket_repair.sql</code></p>
+    <p>
+      (SHA-256 <code>5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b</code>) is
+      applied.
+    </p>
+    <ul>
+      <li>
+        <strong>Replay:</strong> <code>supabase db diff --linked</code> provisioned a fresh shadow
+        database and applied
+      </li>
+    </ul>
+    <p>all 53 migrations in order without error, including this one.</p>
+    <ul>
+      <li>
+        <strong>Dry-run scope:</strong> <code>migration list --linked</code> showed exactly one
+        pending migration and
+      </li>
+    </ul>
+    <p>zero remote-only drift, before and after.</p>
+    <ul>
+      <li>
+        <strong>Applied:</strong> <code>supabase db push --linked</code> applied exactly that one
+        file. Migrations are
+      </li>
+    </ul>
+    <p>now <strong>53 synchronized</strong>, comprising 45 immutable and 8 authorized additive.</p>
+    <ul>
+      <li>
+        <strong>Verified on remote:</strong> a schema dump confirms the deployed function maps
+      </li>
+    </ul>
+    <p>
+      <code>multiplayer:og -&gt; async:og:amordle:v2</code> and
+      <code>multiplayer:go -&gt; async:go:amordle:v2</code>,
+    </p>
+    <p>
+      with the reverse map and the row filter updated and no remaining
+      <code>&#x27;async:og&#x27;</code> /
+    </p>
+    <p><code>&#x27;async:go&#x27;</code> literals.</p>
+    <ul>
+      <li>
+        <strong>Unchanged:</strong> function signature, grants, and the <code>_v2</code> wrapper; no
+        column, table,
+      </li>
+    </ul>
+    <p>
+      role, or RLS policy was touched. Edge Function <code>account-lifecycle-v1</code> remains
+      ACTIVE at
+    </p>
+    <p>version 1 with JWT verification.</p>
+    <h2>Open items</h2>
+    <p>
+      <strong>1. W-11 has no end-to-end settled proof.</strong> The hosted suite settles a _timed_
+      ranked
+    </p>
+    <p>Practice match (a lane deliberately excluded from leaderboards) and a ranked Daily match</p>
+    <p>(whose mapping was already correct). Proving the untimed ranked Practice mapping needs a</p>
+    <p>new untimed two-player settlement flow. The hosted assertions therefore prove lane</p>
+    <p>
+      resolution and non-null bucket resolution, not the repair itself, and say so explicitly in
+    </p>
+    <p>the test.</p>
+    <p>
+      <strong>2. <code>verify:budgets</code> is not measuring.</strong> It passes while reporting
+      `home 0B JS/0B CSS;
+    </p>
+    <p>game 0B JS/0B CSS`, so the route-bundle gate is effectively vacuous. Pre-existing and</p>
+    <p>
+      outside this cycle&#x27;s authorized scope; left untouched and reported rather than silently
+    </p>
+    <p>widened.</p>
+    <h2>Boundaries preserved</h2>
+    <p>The 45 immutable migrations, the 107-file bootstrap baseline, exactly three HTTP</p>
+    <p>interfaces, the locked BRRRDLE-DEV shell, the default branch, and Production</p>
+    <p>
+      (<code>dpl_739mtwiXc9pZPef3pxsKumwC9DfG</code>) are all unchanged. No new vendor, dependency,
+      paid
+    </p>
+    <p>capability, or chart library was added. No real player or Auth data was deleted. No</p>
+    <p>secret, raw Auth identifier, unsolved answer, or private player datum entered source,</p>
+    <p>logs, reports, or evidence.</p>
   </body>
 </html>

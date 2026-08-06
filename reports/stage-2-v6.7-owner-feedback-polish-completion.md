@@ -11,13 +11,12 @@ Preview with zero service residue.
 - Application candidate: `0fbcb4d83532901c32d8db12850f4679f3582500`
 - Deployment: `dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR`
 - Protected Preview: <https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app>
-- Hosted run: `e2e_20260806T013802070Z_0fbcb4d8_fae940c4`
+- Hosted run: `e2e_20260806T024758627Z_2c6980ca_30d0b6d8` (after the W-11 migration)
 - Status: ready for owner review; **not merged, not released to Production**
 
-**Two items are incomplete and are stated in full under Open items.** The authorized
-ranked-leaderboard migration is written, registered, and committed but **not applied to
-the database**, because the local replay its authorization requires cannot run on this
-machine.
+The authorized ranked-leaderboard migration (`W-11`) has been replayed locally, applied
+to the database, and verified against the remote schema. **Two items remain open and are
+stated in full under Open items.**
 
 ## Mandatory owner requirements
 
@@ -169,8 +168,10 @@ additive migrations, word authority, keyboard manuals, boundaries, MP audit 73/7
 237/237, three HTTP interfaces, CSS tokens, bundle budgets), 137 domain, 27 browser, 20
 fixture E2E, 20 visual.
 
-Hosted (`e2e_20260806T013802070Z_0fbcb4d8_fae940c4`): 20 fixture, 3 service, 20 visual,
-parity 237/237 acceptance-verified, 12 screenshots.
+Hosted (`e2e_20260806T024758627Z_2c6980ca_30d0b6d8`, run against the repaired
+leaderboard function): 20 fixture, 3 service, 20 visual, parity 237/237
+acceptance-verified. An earlier run `e2e_20260806T013802070Z_0fbcb4d8_fae940c4` was green
+against the unrepaired function and is superseded by this one.
 
 Cleanup: attempt 1, status `zero-residue`. 6 Auth users, 7 games, 7 queue requests, 25
 accent presets, 2 storage objects removed; 25 residue probes plus Auth residue all zero.
@@ -179,34 +180,35 @@ Leaderboard lanes verified hosted: all four accepted lanes resolved; the Daily O
 returned 2 rows, each resolving to the requested bucket rather than the null bucket the
 stale mapping produced.
 
+## Ranked leaderboard repair (W-11)
+
+`20260805200000_amordle_ranked_leaderboard_bucket_repair.sql`
+(SHA-256 `5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b`) is applied.
+
+- **Replay:** `supabase db diff --linked` provisioned a fresh shadow database and applied
+  all 53 migrations in order without error, including this one.
+- **Dry-run scope:** `migration list --linked` showed exactly one pending migration and
+  zero remote-only drift, before and after.
+- **Applied:** `supabase db push --linked` applied exactly that one file. Migrations are
+  now **53 synchronized**, comprising 45 immutable and 8 authorized additive.
+- **Verified on remote:** a schema dump confirms the deployed function maps
+  `multiplayer:og -> async:og:amordle:v2` and `multiplayer:go -> async:go:amordle:v2`,
+  with the reverse map and the row filter updated and no remaining `'async:og'` /
+  `'async:go'` literals.
+- **Unchanged:** function signature, grants, and the `_v2` wrapper; no column, table,
+  role, or RLS policy was touched. Edge Function `account-lifecycle-v1` remains ACTIVE at
+  version 1 with JWT verification.
+
 ## Open items
 
-**1. The W-11 migration is not applied.** `20260805200000_amordle_ranked_leaderboard_bucket_repair.sql`
-(SHA-256 `5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b`) is authored,
-registered in `verify-bootstrap-baseline.mjs`, and committed. It is **not pushed**,
-because the authorization requires a local replay and dry-run first, and Docker image
-pulls hang behind Docker Desktop's configured proxy (`http.docker.internal:3128`) so the
-shadow database cannot be created. Registries are reachable from the shell, so this is a
-Docker Desktop proxy setting rather than a network outage.
-
-Substitute evidence gathered: `migration list --linked` confirms exactly one pending
-migration and zero remote-only drift; `db lint --linked` runs without Docker and confirms
-remote connectivity; and a direct diff of the new function against the deployed one shows
-**three hunks, all rating-bucket string literals, in a 165-line body** with nothing else
-changed.
-
-Consequence while unapplied: the Leaderboards OG and GO lanes cannot show ratings settled
-under the current v3 ranked Practice authority. This is the pre-existing defect, unchanged
-by this release — not a regression.
-
-**2. W-11 has no end-to-end settled proof.** The hosted suite settles a _timed_ ranked
+**1. W-11 has no end-to-end settled proof.** The hosted suite settles a _timed_ ranked
 Practice match (a lane deliberately excluded from leaderboards) and a ranked Daily match
 (whose mapping was already correct). Proving the untimed ranked Practice mapping needs a
 new untimed two-player settlement flow. The hosted assertions therefore prove lane
 resolution and non-null bucket resolution, not the repair itself, and say so explicitly in
 the test.
 
-**3. `verify:budgets` is not measuring.** It passes while reporting `home 0B JS/0B CSS;
+**2. `verify:budgets` is not measuring.** It passes while reporting `home 0B JS/0B CSS;
 game 0B JS/0B CSS`, so the route-bundle gate is effectively vacuous. Pre-existing and
 outside this cycle's authorized scope; left untouched and reported rather than silently
 widened.

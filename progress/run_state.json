@@ -367,22 +367,24 @@
     "scope": "ANNOT-01..ANNOT-12 plus findings register W-1..W-11",
     "authorizedMigration": "20260805200000_amordle_ranked_leaderboard_bucket_repair.sql",
     "authorizedMigrationSha256": "5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b",
-    "migrationApplied": false,
-    "migrationBlockedBy": "Docker image pulls hang behind Docker Desktop's configured proxy (http.docker.internal:3128), so the required local shadow-database replay cannot run. Dry-run confirms exactly one pending migration and zero remote drift.",
-    "synchronizedMigrations": 52,
+    "migrationApplied": true,
+    "synchronizedMigrations": 53,
     "immutableMigrations": 45,
     "authorizedAdditiveMigrationsRegistered": 8,
     "openItems": [
-      "W-11 server repair not applied: Leaderboards OG/GO cannot show ratings settled under the current v3 ranked Practice authority.",
-      "Untimed ranked Practice settlement is not covered by the hosted suite, so W-11 has no end-to-end settled proof.",
-      "verify:budgets reports 0B JS/0B CSS for both routes, so the bundle gate is not measuring route output (pre-existing)."
-    ]
+      "W-11 has no end-to-end settled proof for the untimed ranked Practice lane: the hosted suite settles only a timed Practice match (excluded from leaderboards by design) and a ranked Daily match. Closing it needs a new untimed ranked Practice two-player flow.",
+      "verify:budgets reports 0B JS/0B CSS for both routes, so the bundle gate is not measuring route output (pre-existing, outside this cycle's scope)."
+    ],
+    "migrationAppliedAt": "2026-08-06T02:20:00Z",
+    "migrationReplay": "supabase db diff --linked: all 53 migrations applied cleanly in a fresh shadow database; dry-run showed exactly one pending file and zero remote-only drift",
+    "migrationVerifiedOnRemote": "remote schema dump confirms get_public_ranked_leaderboard maps multiplayer:og -> async:og:amordle:v2 and multiplayer:go -> async:go:amordle:v2, with the reverse map and row filter updated and no remaining 'async:og'/'async:go' literals"
   },
   "v6_7HostedAcceptance": {
-    "runId": "e2e_20260806T013802070Z_0fbcb4d8_fae940c4",
+    "runId": "e2e_20260806T024758627Z_2c6980ca_30d0b6d8",
+    "note": "Re-run after the W-11 migration was applied. Supersedes e2e_20260806T013802070Z_0fbcb4d8_fae940c4, which ran against the unrepaired function.",
     "preview": "https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app",
     "deploymentId": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR",
-    "commit": "0fbcb4d83532901c32d8db12850f4679f3582500",
+    "commit": "2c6980caee793ef189a0ec629435cfd6527bc42a",
     "fixtureE2E": 20,
     "serviceE2E": 3,
     "visualE2E": 20,
@@ -399,6 +401,7 @@
       "multiplayer:go",
       "multiplayer:og:daily:v1",
       "multiplayer:go:daily:v1"
-    ]
+    ],
+    "dailyOgLeaderboardRows": 2
   }
 }

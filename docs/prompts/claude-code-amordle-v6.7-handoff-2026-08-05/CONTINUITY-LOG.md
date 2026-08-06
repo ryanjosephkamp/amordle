@@ -114,3 +114,37 @@ date, and explicit execution authorization message here.
 - Next exact action: owner reviews the Preview and decides on the unapplied migration.
 - Merge authorized: no
 - Production release authorized: no
+
+### 2026-08-06T02:55:00Z — W-11 migration replayed, applied, and re-verified
+
+- Harness/model: Claude Code / Opus 5
+- Branch: `codex/amordle-terminal-greenfield-implementation-2026-07-27`
+- Scope completed: `W-11` closed. The blocker recorded in the previous entry is resolved.
+- Unblocking: the owner disabled Docker Desktop's manual proxy, after which image pulls
+  succeed. The daemon had been reachable all along; only registry access was blocked.
+- Replay: `supabase db diff --linked` provisioned a fresh shadow database and applied all
+  53 migrations in order without error, including
+  `20260805200000_amordle_ranked_leaderboard_bucket_repair.sql`.
+- Dry-run: `migration list --linked` showed exactly one pending migration and zero
+  remote-only drift, before and after.
+- Applied: `supabase db push --linked` applied exactly that one file. Migrations are now
+  53 synchronized — 45 immutable plus 8 authorized additive.
+- Verified on remote: a `db dump` of the public schema confirms the deployed
+  `get_public_ranked_leaderboard` maps `multiplayer:og -> async:og:amordle:v2` and
+  `multiplayer:go -> async:go:amordle:v2`, with the reverse map and row filter updated
+  and no remaining `'async:og'` / `'async:go'` literals. Signature, grants, and the `_v2`
+  wrapper are unchanged.
+- Hosted re-run: `e2e_20260806T024758627Z_2c6980ca_30d0b6d8` — 20 fixture, 3 service, 20
+  visual, parity 237/237. All four leaderboard lanes resolved; Daily OG returned 2 rows.
+- Cleanup: attempt 1, `zero-residue`; 6 Auth users, 7 games, 25 accent presets, 2 storage
+  objects removed; every residue probe and Auth residue zero.
+- Supabase/Vercel mutations: one authorized migration applied. Edge Function
+  `account-lifecycle-v1` still ACTIVE v1 with JWT verification. No Production change.
+- Shadow-database containers and volumes removed after the replay.
+- Known failures/risks:
+  1. `W-11` still has no end-to-end _settled_ proof for the untimed ranked Practice lane;
+     the hosted suite settles only a timed Practice match and a Daily match.
+  2. `verify:budgets` reports 0B JS/0B CSS for both routes (pre-existing).
+- Next exact action: owner reviews the Preview and decides on merge and Production.
+- Merge authorized: no
+- Production release authorized: no
