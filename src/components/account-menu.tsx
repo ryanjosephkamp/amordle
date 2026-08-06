@@ -4,7 +4,13 @@ import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useRef, useState } from 'react';
 import { getEconomy, loadProgress } from '@/adapters/supabase/account';
-import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
+import { getMyPublicProfile } from '@/adapters/supabase/public';
+import {
+  accountEconomyNamespace,
+  economyQueryKey,
+  myProfileQueryKey,
+} from '@/application/query-keys';
+import { resolveAccountLabel } from '@/domain/account-label';
 import { useAuth } from './providers';
 
 export function AccountMenu() {
@@ -22,6 +28,21 @@ export function AccountMenu() {
     queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
     enabled: auth.status === 'signed-in' && Boolean(userId),
+  });
+  // ANNOT-11. Same key and staleTime as the root ProfileAccentBridge, so the trigger
+  // label reuses that cached read instead of issuing another request. The key includes
+  // the user id, so another account's cached name can never be read here.
+  const profile = useQuery({
+    queryKey: myProfileQueryKey(userId),
+    queryFn: getMyPublicProfile,
+    enabled: auth.status === 'signed-in' && Boolean(userId),
+    staleTime: 30_000,
+  });
+  const label = resolveAccountLabel({
+    status: auth.status,
+    displayName: profile.data?.display_name,
+    email: auth.user?.email,
+    profileResolved: profile.isSuccess || profile.isError,
   });
 
   useEffect(() => {
@@ -54,7 +75,9 @@ export function AccountMenu() {
   if (auth.status !== 'signed-in') {
     return (
       <div className="account-menu">
-        <Link href="/auth">Sign in</Link>
+        <Link href="/auth" aria-label={label.accessibleName} title={label.text}>
+          <span className="account-label">{label.text}</span>
+        </Link>
       </div>
     );
   }
@@ -74,9 +97,11 @@ export function AccountMenu() {
         aria-haspopup="menu"
         aria-expanded={open}
         aria-controls="account-navigation"
+        aria-label={label.accessibleName}
+        title={label.text}
         onClick={() => setOpen((value) => !value)}
       >
-        Account
+        <span className="account-label">{label.text}</span>
       </button>
       {open && (
         <div

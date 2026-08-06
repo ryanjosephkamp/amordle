@@ -30,8 +30,10 @@ interface AuthContextValue {
   user: User | null;
   session: Session | null;
   message: string | null;
-  signIn(email: string, password: string): Promise<void>;
-  register(email: string, password: string): Promise<void>;
+  /** Resolves true only when a session was established (ANNOT-10 redirect gate). */
+  signIn(email: string, password: string): Promise<boolean>;
+  /** Resolves true only when registration produced an immediate session. */
+  register(email: string, password: string): Promise<boolean>;
   signOut(): Promise<void>;
   requestRecovery(email: string): Promise<void>;
   retry(): Promise<void>;
@@ -110,10 +112,11 @@ function AuthProvider({ children }: PropsWithChildren) {
         if (error) {
           setStatus('signed-out');
           setMessage('We could not sign you in. Check your email and password.');
-          return;
+          return false;
         }
         const epoch = coordinator.current.begin(data.user.id);
         settleSession(data.session, epoch);
+        return Boolean(data.session);
       },
       async register(email, password) {
         if (!supabase) throw new Error('Account services are unavailable.');
@@ -128,13 +131,14 @@ function AuthProvider({ children }: PropsWithChildren) {
         if (error) {
           setStatus('signed-out');
           setMessage('We could not create that account.');
-          return;
+          return false;
         }
         const epoch = coordinator.current.begin(data.user?.id ?? null);
         settleSession(data.session, epoch);
         if (!data.session) {
           setMessage('Check your email to finish creating your account.');
         }
+        return Boolean(data.session);
       },
       async signOut() {
         if (!supabase) return;

@@ -35,8 +35,11 @@ export function AuthCallback() {
             : 'This sign-in link could not be used'}
       </h2>
       {state !== 'working' && (
-        <Link className="button primary" href={state === 'done' ? '/profile' : '/auth'}>
-          {state === 'done' ? 'Open profile' : 'Return to sign in'}
+        // ANNOT-10: a completed verification is a successful sign-in, so its primary
+        // action agrees with the new default destination. The action stays explicit
+        // rather than auto-navigating, which keeps the verification result readable.
+        <Link className="button primary" href={state === 'done' ? '/' : '/auth'}>
+          {state === 'done' ? 'Go to Home' : 'Return to sign in'}
         </Link>
       )}
     </section>

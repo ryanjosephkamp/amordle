@@ -50,7 +50,9 @@ test.describe('Solo persistence, input, Focus, and offline behavior', () => {
     await page.getByRole('menuitem', { name: /Enter Focus Mode/i }).click();
     await expect(page.locator('.global-chrome')).toHaveCount(0);
     await expect(page.locator('.board-row.is-draft')).toContainText('A');
-    await expect(page.getByRole('link', { name: 'Sign in' })).toBeVisible();
+    // ANNOT-11: the signed-out account trigger reads "guest" but keeps an explicit
+    // sign-in affordance in its accessible name.
+    await expect(page.getByRole('link', { name: /sign in.*guest/i })).toBeVisible();
     await page.getByRole('link', { name: /Exit focus/i }).click();
     await expect(page.locator('.global-chrome')).toBeVisible();
     await expect(page).toHaveURL(/generation=19$/);

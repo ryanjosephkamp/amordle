@@ -174,7 +174,10 @@ async function signIn(page: Page, account: Account) {
   await page.getByLabel('Email').fill(account.email);
   await page.getByLabel('Password').fill(account.password);
   await page.getByRole('button', { name: 'Sign in', exact: true }).last().click();
-  await expect(page.getByRole('heading', { name: /account status/i })).toBeVisible();
+  // ANNOT-10: ordinary interactive sign-in now lands on Home rather than leaving the
+  // player on the account page, so this is the hosted proof of that destination.
+  await expect(page).toHaveURL(new RegExp(`^${baseURL.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}/?$`));
+  await expect(page.getByRole('heading', { name: /choose your next game/i })).toBeVisible();
 }
 
 async function waitForGameMoveCount(gameId: string, count: number) {

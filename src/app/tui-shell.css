@@ -2010,6 +2010,25 @@ body::before {
   color: var(--control-ink-on-selected);
 }
 
+/*
+ * ANNOT-11. The trigger now carries account identity, so it must stay bounded: the
+ * toolbar cannot grow, collide, or overflow at any supported width. The full name
+ * stays available through `title` and the accessible name.
+ */
+.account-label {
+  display: block;
+  max-width: 10ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 47.99rem) {
+  .account-label {
+    max-width: 8ch;
+  }
+}
+
 .account-popover {
   right: 0.4rem;
   width: min(18rem, calc(100vw - 1rem));

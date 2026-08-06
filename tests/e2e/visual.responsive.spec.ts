@@ -630,6 +630,50 @@ test.describe('responsive and alternate presentation evidence', () => {
     }
   });
 
+  // ANNOT-11: the account trigger carries identity while staying bounded, so the
+  // toolbar cannot grow, collide, or overflow at any supported width or zoom.
+  test('Account trigger shows guest and stays bounded in the toolbar', async ({ page }) => {
+    for (const width of [320, 360, 412, 768, 1440, 1920] as const) {
+      await page.setViewportSize({ width, height: 844 });
+      await page.goto('/');
+      const trigger = page.locator('.account-menu > a, .account-menu > button').first();
+      await expect(trigger).toBeVisible();
+      expect((await trigger.innerText()).trim().toLowerCase()).toBe('guest');
+      expect(await trigger.getAttribute('aria-label')).toMatch(/sign in/i);
+
+      const containment = await page.evaluate(() => {
+        const toolbar = document.querySelector('.app-toolbar')!.getBoundingClientRect();
+        const account = document
+          .querySelector('.account-menu > a, .account-menu > button')!
+          .getBoundingClientRect();
+        return {
+          overflowsToolbar: account.right > toolbar.right + 1,
+          documentOverflow:
+            document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+      });
+      expect(containment.overflowsToolbar, `${width}px toolbar containment`).toBe(false);
+      expect(containment.documentOverflow, `${width}px document overflow`).toBeLessThanOrEqual(1);
+    }
+
+    // A long label must ellipsize rather than push the toolbar wider.
+    await page.setViewportSize({ width: 320, height: 844 });
+    const bounded = await page.evaluate(() => {
+      const label = document.querySelector<HTMLElement>('.account-label')!;
+      label.textContent = 'anextremelylongplayername';
+      const style = getComputedStyle(label);
+      return {
+        clipped: label.scrollWidth > label.clientWidth,
+        textOverflow: style.textOverflow,
+        documentOverflow:
+          document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+    });
+    expect(bounded.clipped).toBe(true);
+    expect(bounded.textOverflow).toBe('ellipsis');
+    expect(bounded.documentOverflow).toBeLessThanOrEqual(1);
+  });
+
   // ANNOT-08: modal dialogs are centered and dismissible from the backdrop. Tailwind's
   // preflight zeroes `margin` on `*`, cancelling the `margin: auto` the UA
   // `dialog:modal` rule relies on, which is why the account dialogs pinned to the
