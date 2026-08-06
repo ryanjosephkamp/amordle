@@ -13,26 +13,62 @@ function readRouteManifest(path) {
   return JSON.parse(source.slice(start + marker.length).replace(/;\s*$/, ''));
 }
 
+/*
+ * Turbopack prefixes every manifest key with `[project]`, which it resolves to the
+ * inferred project root — the directory of the nearest lockfile walking up, not the
+ * repository root. A stray lockfile in a parent directory therefore shifts every key
+ * (`[project]/src/app/page` becomes `[project]/amordle-final/src/app/page`). Matching
+ * the module suffix instead of the whole key keeps the lookup correct under either
+ * root, and an unresolvable or ambiguous key is a hard failure rather than a silent
+ * `?? []` that would report a vacuous 0B and pass every budget.
+ */
+function resolveEntryKey(manifest, moduleSuffix) {
+  const keys = Object.keys(manifest.entryJSFiles ?? {}).filter((key) =>
+    key.endsWith(`/${moduleSuffix}`),
+  );
+  if (keys.length !== 1) {
+    throw new Error(
+      `Expected exactly one manifest entry ending in ${moduleSuffix}; found ${keys.length}`,
+    );
+  }
+  return keys[0];
+}
+
 function routeBytes(manifestPath, routeModule) {
   const manifest = readRouteManifest(manifestPath);
-  const entry = manifest.entryJSFiles?.[routeModule] ?? [];
-  const css = manifest.entryCSSFiles?.[routeModule]?.map((item) => item.path) ?? [];
+  // First load is the root layout plus the route segment. Next currently propagates the
+  // layout's assets into the page entry, so the union is a no-op today; taking it anyway
+  // keeps the measurement meaning "what the browser downloads for this route" if that
+  // propagation ever changes.
+  const keys = [
+    resolveEntryKey(manifest, 'src/app/layout'),
+    resolveEntryKey(manifest, routeModule),
+  ];
+  const collect = (field) =>
+    keys.flatMap((key) => (manifest[field]?.[key] ?? []).map((item) => item.path ?? item));
   const gzipBytes = (files) =>
     [...new Set(files)].reduce((total, file) => {
       const path = resolve(dist, file.replace(/^\/?_next\//, ''));
       if (!existsSync(path)) throw new Error(`Missing emitted asset ${file}`);
       return total + gzipSync(readFileSync(path)).byteLength;
     }, 0);
-  return { js: gzipBytes(entry), css: gzipBytes(css) };
+  const js = gzipBytes(collect('entryJSFiles'));
+  const css = gzipBytes(collect('entryCSSFiles'));
+  if (js === 0 || css === 0) {
+    throw new Error(
+      `Measured 0B for ${routeModule}; the manifest lookup is not measuring anything`,
+    );
+  }
+  return { js, css };
 }
 
 const home = routeBytes(
   resolve(dist, 'server/app/page_client-reference-manifest.js'),
-  '[project]/src/app/page',
+  'src/app/page',
 );
 const game = routeBytes(
   resolve(dist, 'server/app/play/solo/practice/[mode]/page_client-reference-manifest.js'),
-  '[project]/src/app/play/solo/practice/[mode]/page',
+  'src/app/play/solo/practice/[mode]/page',
 );
 const limits = {
   home: { js: 220 * 1024, css: 50 * 1024 },
