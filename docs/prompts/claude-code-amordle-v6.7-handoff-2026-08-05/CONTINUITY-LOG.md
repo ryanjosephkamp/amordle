@@ -2,7 +2,7 @@
 
 ## Status
 
-- Handoff state: v6.7 implementation in progress
+- Handoff state: v6.7 complete and OWNER-ACCEPTED (2026-08-06)
 - Current authority: owner execution authorization, 2026-08-05
 - Last accepted application golden commit:
   `16d7a510a15ab5eaf254bc2c163f77b9059854cc`
@@ -148,3 +148,35 @@ date, and explicit execution authorization message here.
 - Next exact action: owner reviews the Preview and decides on merge and Production.
 - Merge authorized: no
 - Production release authorized: no
+
+### 2026-08-06T03:10:00Z — owner acceptance recorded
+
+- Owner reviewed the protected Preview and accepted the work: "the game runs very
+  smoothly... no significant bugs or problems". Recorded in `progress/run_state.json`
+  (`status: owner-accepted`) and `progress/events.jsonl`
+  (`stage-2-v6.7-owner-accepted`).
+- Accepted commit: `afd48b6ce209767bc58ddeb9930f0fb9192edd17`
+- Accepted tag: `amordle-stage2-v6.7-owner-feedback-polish-golden-2026-08-05`
+- Accepted Preview: `dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR`
+- Scope accepted: `ANNOT-01`..`ANNOT-12` and findings register `W-1`..`W-11`, with the
+  two open items acknowledged as known.
+- Merge: owner authorized, but **not performed**. See below.
+- Production release: still NOT authorized.
+
+#### Why the merge was not performed
+
+The owner authorized merging. On inspection the default branch
+`bootstrap/greenfield-2026-07-20` is an **unrelated history** — decision `D-002`
+deliberately made the implementation lineage an orphan branch so that "review uses exact
+commits/manifests rather than an unrelated-history PR". The default branch holds 119
+bootstrap-only files; this branch holds 598. Eleven paths exist on both sides and **all
+eleven differ**, including seven files inside the 107-file immutable bootstrap baseline.
+
+A merge would therefore require `--allow-unrelated-histories` and eleven manual conflict
+resolutions on governance-critical files, while delivering no functional benefit: the
+default branch would simply become a copy of this one. Backup and revertability — the
+owner's stated conditions — are already satisfied by the pushed branch and the golden tag.
+
+Escalated to the owner with two clean alternatives instead: promote this branch to default
+(no merge, no conflicts), or leave the lineages separate and keep branching from the
+golden tag. Awaiting that decision; nothing was changed in the meantime.

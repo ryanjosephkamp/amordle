@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.7-owner-feedback-polish-and-leaderboard-repair",
-  "status": "owner-review-required",
+  "currentCheckpoint": "stage-2-v6.7-owner-accepted",
+  "status": "owner-accepted",
   "lastGreenCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -403,5 +403,20 @@
       "multiplayer:go:daily:v1"
     ],
     "dailyOgLeaderboardRows": 2
+  },
+  "ownerAcceptance": {
+    "acceptedAt": "2026-08-06T03:10:00Z",
+    "acceptedCommit": "afd48b6ce209767bc58ddeb9930f0fb9192edd17",
+    "acceptedTag": "amordle-stage2-v6.7-owner-feedback-polish-golden-2026-08-05",
+    "acceptedPreview": "https://amordle-gghpij2o3-ryanjosephkamps-projects.vercel.app",
+    "acceptedDeployment": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR",
+    "scope": "ANNOT-01..ANNOT-12 and findings register W-1..W-11",
+    "ownerStatement": "Reviewed the protected Preview; game runs smoothly, no significant bugs or problems found. Work accepted. Merge authorized; Production release NOT authorized.",
+    "mergeAuthorized": true,
+    "productionReleaseAuthorized": false,
+    "openItemsAcceptedAsKnown": [
+      "W-11 has no end-to-end settled proof for the untimed ranked Practice lane.",
+      "verify:budgets reports 0B JS/0B CSS for both routes (pre-existing)."
+    ]
   }
 }
