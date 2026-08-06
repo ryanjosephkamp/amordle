@@ -4,7 +4,7 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v6.7-owner-accepted",
+  "currentCheckpoint": "stage-2-v7-design-elevation-owner-accepted",
   "status": "owner-accepted",
   "lastGreenCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
   "v6Implementation": {
@@ -359,8 +359,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v6.6-account-controls-combat-stats-responsive-protected-preview-acceptance-complete-owner-review-required",
-  "updatedAt": "2026-08-03T01:16:23Z",
+  "reportStatus": "v7-frontend-design-elevation-phases-0-3-complete-owner-accepted-uncommitted-awaiting-commit-authorization",
+  "updatedAt": "2026-08-06T19:54:35Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -429,5 +429,116 @@
       "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
       "reversible": "Set default_branch back to bootstrap/greenfield-2026-07-20; nothing was deleted or rewritten."
     }
+  },
+  "v7DesignElevation": {
+    "package": "docs/prompts/claude-code-amordle-v7-design-2026-08-06/PLAN-MODE-PACKAGE.md",
+    "baseCommit": "e75e78b8080325027c18e4bea007cd2f2bff3899",
+    "revertPoint": "amordle-v6.7-accepted-revert-point-2026-08-06 -> 740ca5e",
+    "scope": "presentation only; no game mechanics, keyboard behaviour, evidence colour semantics, routes, page order, or information architecture changed",
+    "authorityMutationRequired": false,
+    "migrationsUnchanged": 53,
+    "immutableMigrations": 45,
+    "bootstrapFiles": "107/107",
+    "httpInterfaces": 3,
+    "phases": {
+      "phase0": {
+        "title": "instrumentation and pre-change baseline",
+        "report": "reports/v7-phase0-baseline-2026-08-06/README.md",
+        "delivered": [
+          "repaired scripts/verify-bundle-budgets.mjs, which reported a vacuous 0B JS/0B CSS for both routes because Turbopack resolves [project] to the inferred project root and the exact-key lookup missed, with ?? [] swallowing the miss",
+          "captured 35 pre-change fidelity screenshots (7 surfaces x 5 variants)"
+        ]
+      },
+      "phase1": {
+        "title": "foundations - the token layer",
+        "report": "reports/v7-phase1-token-layer-2026-08-06/README.md",
+        "delivered": [
+          "type scale 34 fixed sizes + 11 clamp ramps -> 6 steps; 156/170 font-size declarations on scale",
+          "spacing 39 distinct values -> 7 steps; 393/409 rem-bearing declarations on scale",
+          "four focus-ring geometries -> one (plus one deliberate inset for swatch grids)",
+          "40 dead :root colour declarations removed",
+          "deleted the stale max-width:70ch that truncated every heading rule at 613px",
+          "one text column: removed the 1.65rem intro indent",
+          "fixed the always-empty bordered box under every game and the 'device.No active Solo games' copy collision"
+        ],
+        "regressionsFoundAndFixed": [
+          "account trigger carried font: inherit and rendered at 14px against neighbours at 11px",
+          ".desktop-nav had flex: 1 and clipped its last route by 21px at 1440px"
+        ]
+      },
+      "phase2": {
+        "title": "surfaces",
+        "report": "reports/v7-phase2-surfaces-2026-08-06/README.md",
+        "delivered": [
+          "elevation ladder: four unrelated shadow recipes -> three tokenised levels",
+          "removed unused --z-backdrop and --z-modal; native <dialog> uses the browser top layer",
+          "selection rebalanced: accent underline for current route, accent rail for recommended row, inverse reserved for genuine selection, nav dividers removed",
+          "play screen unified from four stacked measures to one 44rem column (the keyboard's own width)",
+          "four left edges reduced to two: markers at 24px, all text at 44px",
+          "shell footer added; restates existing shortcuts from the keyboard registry and adds no destinations"
+        ],
+        "testChanged": {
+          "file": "tests/e2e/fixture.solo.spec.ts",
+          "test": "renders the terminal menu above the game status row on mobile and desktop",
+          "reason": "its geometric precondition stopped holding once the play column narrowed; the menu no longer intersects the status row at 1440px because it opens over empty margin",
+          "change": "assertion strengthened, not relaxed: the probe now samples the menu centre so layering is asserted at every viewport, and the intersection is still required at mobile widths",
+          "ownerReviewed": true
+        }
+      },
+      "phase3": {
+        "title": "motion, states, cleanup",
+        "report": "reports/v7-phase3-motion-states-cleanup-2026-08-06/README.md",
+        "delivered": [
+          "motion applied to roughly 100 interaction states; tiles and the key-to-tile path deliberately excluded",
+          "reduced-motion reduced from three disagreeing blocks to one authoritative block",
+          "added src/app/loading.tsx and src/app/error.tsx; neither existed at any level before",
+          "gave .field-help, .field-error and .form-error rules for the first time; error carries a marker so it never depends on colour alone",
+          "deleted 452 lines of superseded CSS after rule-by-rule verification"
+        ],
+        "deliberatelyRetained": [
+          ".is-removed - live keyboard state built dynamically as `key is-${state}`, invisible to source-token analysis",
+          ".is-pane - unused today but a documented WorkbenchRegion variant DESIGN.md reserves"
+        ],
+        "tailwindDecision": {
+          "measured": true,
+          "savingIfRemoved": "3391 compressed bytes per route, roughly 15 percent of route CSS",
+          "blocker": "preflight is load-bearing; removing the import fails the keyboard-fit matrix with 58px of overflow",
+          "decision": "kept",
+          "rationale": "the saving is headroom the project does not need (22 KiB used against a 50 KiB budget) and the cost is a hand-written reset whose regressions would be subtle across 26 routes with no pixel baselines; worth doing as its own attentive change, not stacked on a 452-line deletion",
+          "experimentReverted": true
+        }
+      }
+    },
+    "localAcceptance": {
+      "check": "green",
+      "domainTests": 137,
+      "browserComponentTests": 27,
+      "fixtureE2E": 20,
+      "visualE2E": 20,
+      "parityRows": 237,
+      "mpAuditRows": 73,
+      "contrastSweep": "zero failures across 24 routes x 6 accents x 3 interaction states x 2 schemes",
+      "homeCompressedBytes": { "js": 193014, "css": 22126 },
+      "gameCompressedBytes": { "js": 198728, "css": 26485 },
+      "cssChangeVsBaseline": { "home": -2075, "game": -2203 }
+    },
+    "hostedAcceptance": null,
+    "openItems": [
+      "No Preview deployment exists for this cycle. All evidence is local: pnpm test:e2e:services requires a protected Vercel Preview plus a service-role key and was not run.",
+      "W-11 still has no end-to-end settled proof for the untimed ranked Practice lane (carried forward from v6.7, untouched by this cycle)."
+    ]
+  },
+  "v7OwnerAcceptance": {
+    "acceptedAt": "2026-08-06T19:54:35Z",
+    "acceptedBaseCommit": "e75e78b8080325027c18e4bea007cd2f2bff3899",
+    "acceptedArtifact": "uncommitted working tree on top of e75e78b",
+    "reviewBasis": "four phase reports and 140 fidelity screenshots (35 per phase across four phases) reviewed locally; no Preview deployment was produced for this cycle",
+    "ownerStatement": "Reviewed the fidelity screenshots and phase reports. Approves all work in Phases 0 through 3, including the tech-stack judgement calls (keeping the existing plain-CSS stack, keeping Tailwind) and the single strengthened test assertion in Phase 2.",
+    "commitAuthorized": false,
+    "mergeAuthorized": false,
+    "productionReleaseAuthorized": false,
+    "serviceMutationAuthorized": false,
+    "warning": "This acceptance covers an UNCOMMITTED working tree. Nine modified files, two new source files and four report directories exist only on disk. Committing is the recommended immediate next action; until then the cycle is one accidental checkout away from being lost.",
+    "resumeCondition": "owner to authorize a commit; merge, Preview deployment and Production release each require separate authorization"
   }
 }
