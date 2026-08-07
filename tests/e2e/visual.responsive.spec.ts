@@ -2,6 +2,7 @@ import AxeBuilder from '@axe-core/playwright';
 import { expect, test } from '@playwright/test';
 import { writeFile } from 'node:fs/promises';
 import path from 'node:path';
+import { accentCssVariableMap } from '../../src/domain/profile';
 
 const widths = [320, 360, 390, 412, 768, 960, 1440, 1920] as const;
 const gameViewports = [
@@ -85,6 +86,25 @@ const contrastSchemes = ['light', 'dark'] as const;
 // variables that only exist for a signed-in account with an active preset, so the
 // named set is the complete signed-out matrix.
 const contrastAccents = ['aurora', 'ice', 'cyan', 'violet', 'rose', 'amber'] as const;
+/*
+ * B2. `custom` is not out of reach after all — ProfileAccentBridge only sets
+ * `data-accent` and the fourteen `--custom-*` variables, both of which a page script can
+ * do. These hexes are chosen to straddle bestForeground's ink flip at luminance 0.1842
+ * and to push the accent-soft surface to both extremes in each scheme; #32BFA2 is the
+ * app's own default preview colour, which measured 4.29:1 on the unread row before B2.
+ */
+const contrastCustomHexes = [
+  '#767676',
+  '#0B1F3A',
+  '#B4004E',
+  '#FFE066',
+  '#32BFA2',
+  '#FFFFFF',
+] as const;
+// Accent-backed *surfaces*, not controls — which is why controlSelector never saw them.
+const accentSurfaceSelector = ['.badge', '.attention-badge', '.notification-list a.is-unread'].join(
+  ', ',
+);
 // `:active` carries no colour semantics in this design (`button:active` only sets
 // `translate`), so forcing it duplicates `rest` and doubles runtime for no signal.
 const contrastStates = ['rest', 'hover', 'focus-visible'] as const;
@@ -827,45 +847,89 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(collapsed).toBe('grid');
   });
 
-  // ANNOT-01: status, date, and time must be separable and aligned, never concatenated.
-  test('Notification rows separate status, date, and time', async ({ page }) => {
-    await page.setViewportSize({ width: 1440, height: 1024 });
+  /*
+   * ANNOT-01 + B3. Status, date and time must be separable and aligned, never
+   * concatenated and never overlapping.
+   *
+   * The previous version ran at 1440 only and asserted `columns === 3`, which is
+   * structurally incompatible with the two-column mobile rule — so it could not simply
+   * be re-run at a phone width, and the layout the owner reported as broken had no
+   * coverage at all. This walks every viewport the suite cares about and asserts
+   * *geometry*: three rects that never intersect, whatever the column count. Overlap is
+   * the actual defect; column count was only ever a proxy for it.
+   */
+  test('Notification rows separate status, date, and time at every width', async ({ page }) => {
     await page.goto('/');
-    const layout = await page.evaluate(() => {
-      const anchor = document.createElement('a');
-      anchor.className = 'is-unread';
-      anchor.innerHTML =
-        '<strong class="notification-status">Match ready</strong>' +
-        '<time class="notification-date">8/2/2026</time>' +
-        '<time class="notification-time">4:40:46 PM</time>';
-      const list = document.createElement('div');
-      list.className = 'notification-list';
-      const popover = document.createElement('div');
-      popover.className = 'menu-popover notification-popover';
-      popover.append(list);
-      list.append(anchor);
-      document.body.append(popover);
-      const style = getComputedStyle(anchor);
-      const status = anchor.querySelector('.notification-status')!.getBoundingClientRect();
-      const date = anchor.querySelector('.notification-date')!.getBoundingClientRect();
-      const time = anchor.querySelector('.notification-time')!.getBoundingClientRect();
-      const result = {
-        display: style.display,
-        columns: style.gridTemplateColumns.split(' ').length,
-        statusBeforeDate: status.right <= date.left + 1,
-        dateBeforeTime: date.right <= time.left + 1,
-        tabularTime: getComputedStyle(
-          anchor.querySelector('.notification-time')!,
-        ).fontVariantNumeric.includes('tabular-nums'),
-      };
-      popover.remove();
-      return result;
-    });
-    expect(layout.display).toBe('grid');
-    expect(layout.columns).toBe(3);
-    expect(layout.statusBeforeDate).toBe(true);
-    expect(layout.dateBeforeTime).toBe(true);
-    expect(layout.tabularTime).toBe(true);
+    const failures: string[] = [];
+    for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      const layout = await page.evaluate(() => {
+        const anchor = document.createElement('a');
+        anchor.className = 'is-unread';
+        anchor.innerHTML =
+          '<strong class="notification-status">Your turn in Ranked Practice</strong>' +
+          '<time class="notification-date">8/6/26</time>' +
+          '<time class="notification-time">11:47:03 AM</time>';
+        const list = document.createElement('div');
+        list.className = 'notification-list';
+        const popover = document.createElement('div');
+        popover.className = 'menu-popover notification-popover';
+        popover.style.opacity = '1';
+        popover.style.animation = 'none';
+        popover.append(list);
+        list.append(anchor);
+        document.body.append(popover);
+        const rect = (selector: string) =>
+          anchor.querySelector(selector)!.getBoundingClientRect().toJSON() as DOMRect;
+        const status = rect('.notification-status');
+        const date = rect('.notification-date');
+        const time = rect('.notification-time');
+        const overlap = (a: DOMRect, b: DOMRect) =>
+          Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+          Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        const style = getComputedStyle(anchor);
+        const result = {
+          display: style.display,
+          columns: style.gridTemplateColumns.split(' ').length,
+          statusDate: overlap(status, date),
+          statusTime: overlap(status, time),
+          dateTime: overlap(date, time),
+          dateBeforeTime: date.right <= time.left + 1,
+          statusBeforeDate: status.right <= date.left + 1,
+          statusAboveDate: status.bottom <= date.top + 1,
+          sameRow: Math.abs(status.top - date.top) <= 1,
+          statusWraps: getComputedStyle(anchor.querySelector('.notification-status')!).whiteSpace,
+          withinPopover:
+            status.left >= popover.getBoundingClientRect().left - 1 &&
+            time.right <= popover.getBoundingClientRect().right + 1,
+          tabularTime: getComputedStyle(
+            anchor.querySelector('.notification-time')!,
+          ).fontVariantNumeric.includes('tabular-nums'),
+        };
+        popover.remove();
+        return result;
+      });
+
+      const note = (message: string) => failures.push(`${viewport.id}: ${message}`);
+      if (layout.display !== 'grid') note(`display is ${layout.display}`);
+      // The defect as reported: printed on top of each other.
+      if (layout.statusDate > 0) note(`status overlaps date by ${layout.statusDate}px²`);
+      if (layout.statusTime > 0) note(`status overlaps time by ${layout.statusTime}px²`);
+      if (layout.dateTime > 0) note(`date overlaps time by ${layout.dateTime}px²`);
+      if (!layout.dateBeforeTime) note('date does not precede time');
+      if (!layout.withinPopover) note('a cell escapes the popover box');
+      if (!layout.tabularTime) note('time is not tabular');
+      if (viewport.width >= 768) {
+        if (layout.columns !== 3) note(`desktop expects 3 columns, got ${layout.columns}`);
+        if (!layout.statusBeforeDate) note('desktop status does not precede date');
+        if (!layout.sameRow) note('desktop cells are not on one row');
+      } else {
+        if (layout.columns !== 2) note(`mobile expects 2 columns, got ${layout.columns}`);
+        if (!layout.statusAboveDate) note('mobile status does not sit above the date row');
+        if (layout.statusWraps !== 'normal') note(`mobile status is ${layout.statusWraps}`);
+      }
+    }
+    expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
   });
 
   // ANNOT-05: the Players filter inputs, selects, and Apply action must share one
@@ -1105,6 +1169,77 @@ test.describe('responsive and alternate presentation evidence', () => {
           }
         }
       }
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
+  /*
+   * B2. The sweep above is signed-out, so it skipped custom accents entirely — and it
+   * walks `controlSelector`, which is controls. The two surfaces that failed were an
+   * accent-backed *surface* (`.badge`, `.attention-badge`) and an accent-tinted row
+   * (`.notification-list a.is-unread`), neither of which is a control and neither of
+   * which renders signed-out. Both gaps are closed here: the accent variables are
+   * applied by script exactly as ProfileAccentBridge applies them, so no account is
+   * needed, and the surfaces are mounted directly.
+   */
+  for (const scheme of contrastSchemes) {
+    test(`accent-backed surfaces stay readable under custom accents (${scheme})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto('/');
+
+      const failures: string[] = [];
+      for (const hex of contrastCustomHexes) {
+        const variables = accentCssVariableMap(hex);
+        expect(variables, hex).not.toBeNull();
+        await page.evaluate(
+          ({ values }) => {
+            const root = document.documentElement;
+            for (const key of Array.from(root.style)) {
+              if (key.startsWith('--custom-')) root.style.removeProperty(key);
+            }
+            root.dataset.accent = 'custom';
+            for (const [property, value] of Object.entries(values)) {
+              root.style.setProperty(property, value);
+            }
+            document.querySelector('[data-accent-surface-probe]')?.remove();
+            const probe = document.createElement('div');
+            probe.setAttribute('data-accent-surface-probe', 'true');
+            /*
+             * The popover fades in (v7 motion layer), and the measurement composites
+             * inherited opacity — so without settling it first every run reads text at
+             * partial alpha and reports a spurious 1.00:1. What a player reads is the
+             * settled state, so measure that.
+             */
+            probe.innerHTML =
+              '<span class="badge">Unavailable</span>' +
+              '<span class="attention-badge">11</span>' +
+              '<div class="menu-popover notification-popover" ' +
+              'style="opacity:1;animation:none;position:static">' +
+              '<div class="notification-list">' +
+              '<a class="is-unread" href="#">' +
+              '<strong class="notification-status">Your turn</strong>' +
+              '<time class="notification-date">8/6/26</time>' +
+              '<time class="notification-time">11:47:03 AM</time>' +
+              '</a></div></div>';
+            document.body.append(probe);
+          },
+          { values: variables as Record<string, string> },
+        );
+
+        const results = await page.evaluate(measureControlContrast, accentSurfaceSelector);
+        for (const result of results) {
+          if (result.ok) continue;
+          failures.push(
+            `${scheme} · custom ${hex} · ${result.label} — ` +
+              `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
+              `fg ${result.color} on bg ${result.background}`,
+          );
+        }
+      }
+      await page.evaluate(() => document.querySelector('[data-accent-surface-probe]')?.remove());
       expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
     });
   }

@@ -28,6 +28,13 @@ export interface ResolvedAccentColor {
 export interface ResolvedAccentMode {
   accentText: string;
   accentSoft: string;
+  /*
+   * B2. Secondary text sitting on the accent-tinted surface. `--muted` is measured
+   * against the page, not against `--accent-soft`, and a custom accent can lighten that
+   * surface far enough in dark scheme to drop the pairing to 3.55:1. Derived from the
+   * surface it actually paints on, the way keyInk already is.
+   */
+  accentSoftMuted: string;
   focus: string;
   keyBackground: string;
   keyBorder: string;
@@ -171,14 +178,18 @@ function resolveAccentMode(
   hex: string,
   background: string,
   surface: string,
+  muted: string,
   keyMix: number,
   borderMix: number,
 ): ResolvedAccentMode {
   const keyBackground = mixHex(hex, surface, keyMix) ?? surface;
   const keyForeground = bestForeground(keyBackground);
+  const accentSoft = mixHex(hex, surface, 0.14) ?? surface;
   return {
     accentText: contrastSafeTint(hex, background),
-    accentSoft: mixHex(hex, surface, 0.14) ?? surface,
+    accentSoft,
+    // Keeps `--muted` wherever it already clears 4.5:1, and only nudges it where it does not.
+    accentSoftMuted: contrastSafeTint(muted, accentSoft),
     focus: contrastSafeTint(hex, background, 3),
     keyBackground,
     keyBorder: mixHex(hex, bestForeground(surface).color, borderMix) ?? hex,
@@ -195,8 +206,9 @@ export function resolveAccentColor(value: string): ResolvedAccentColor | null {
     hex,
     foreground: foreground.color,
     contrastRatio: foreground.ratio,
-    light: resolveAccentMode(hex, '#F7F9FA', '#E7EEF0', 0.24, 0.58),
-    dark: resolveAccentMode(hex, '#151A20', '#172127', 0.28, 0.62),
+    // The muted values are the hex of `--muted` in each scheme (tui-shell.css:18, :153).
+    light: resolveAccentMode(hex, '#F7F9FA', '#E7EEF0', '#434F55', 0.24, 0.58),
+    dark: resolveAccentMode(hex, '#151A20', '#172127', '#8C989A', 0.28, 0.62),
   };
 }
 
@@ -208,12 +220,14 @@ export function accentCssVariableMap(value: string): Record<string, string> | nu
     '--custom-accent-ink': resolved.foreground,
     '--custom-accent-text-light': resolved.light.accentText,
     '--custom-accent-soft-light': resolved.light.accentSoft,
+    '--custom-accent-soft-muted-light': resolved.light.accentSoftMuted,
     '--custom-focus-light': resolved.light.focus,
     '--custom-key-background-light': resolved.light.keyBackground,
     '--custom-key-border-light': resolved.light.keyBorder,
     '--custom-key-ink-light': resolved.light.keyInk,
     '--custom-accent-text-dark': resolved.dark.accentText,
     '--custom-accent-soft-dark': resolved.dark.accentSoft,
+    '--custom-accent-soft-muted-dark': resolved.dark.accentSoftMuted,
     '--custom-focus-dark': resolved.dark.focus,
     '--custom-key-background-dark': resolved.dark.keyBackground,
     '--custom-key-border-dark': resolved.dark.keyBorder,

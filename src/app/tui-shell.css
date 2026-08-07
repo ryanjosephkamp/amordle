@@ -25,6 +25,14 @@
   --correct-text: oklch(0.39 0.13 145);
   --present: oklch(0.68 0.14 85);
   --present-text: oklch(0.4 0.11 85);
+  /*
+   * B2. Ink for text sitting ON the semantic present fill. DESIGN.md 110-112 forbids
+   * semantic colours inheriting the player accent, and `.badge` was pairing this
+   * background with `--accent-ink` — which a custom accent flips to white, giving 2.02:1.
+   * `--present` is a light amber in both schemes, so one near-black serves both.
+   */
+  --present-solid-ink: oklch(0.14 0.02 85);
+  --accent-soft-muted: var(--muted);
   --absent: oklch(0.55 0.018 220);
   --removed: oklch(0.5 0.06 25);
   --key-unknown-background: oklch(0.84 0.04 165);
@@ -135,6 +143,7 @@
   --accent-text: var(--custom-accent-text-light);
   --accent-ink: var(--custom-accent-ink);
   --accent-soft: var(--custom-accent-soft-light);
+  --accent-soft-muted: var(--custom-accent-soft-muted-light);
   --focus: var(--custom-focus-light);
   --key-unknown-background: var(--custom-key-background-light);
   --key-unknown-border: var(--custom-key-border-light);
@@ -160,6 +169,8 @@
     --correct-text: oklch(0.79 0.13 145);
     --present: oklch(0.78 0.14 85);
     --present-text: oklch(0.82 0.11 85);
+    --present-solid-ink: oklch(0.14 0.02 85);
+    --accent-soft-muted: var(--muted);
     --absent: oklch(0.47 0.018 220);
     --removed: oklch(0.65 0.07 25);
     --key-unknown-background: oklch(0.24 0.05 165);
@@ -255,6 +266,7 @@
     --accent-text: var(--custom-accent-text-dark);
     --accent-ink: var(--custom-accent-ink);
     --accent-soft: var(--custom-accent-soft-dark);
+    --accent-soft-muted: var(--custom-accent-soft-muted-dark);
     --focus: var(--custom-focus-dark);
     --key-unknown-background: var(--custom-key-background-dark);
     --key-unknown-border: var(--custom-key-border-dark);
@@ -570,7 +582,7 @@ button.primary:hover {
   border: 0;
   border-radius: 0;
   background: var(--present);
-  color: var(--accent-ink);
+  color: var(--present-solid-ink);
   font-family: var(--tui-font);
 }
 
@@ -607,6 +619,17 @@ button.primary:hover {
   font-weight: 650;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+/*
+ * B2. Unread rows are tinted `--accent-soft`, and `--muted` is measured against the page
+ * rather than that tint. Named accents clear 4.5:1 on it, but a custom accent can
+ * lighten the dark-scheme row far enough to reach 3.55:1. `--accent-soft-muted` is
+ * `--muted` for every named accent and a derived, contrast-checked value for custom
+ * ones, so the row looks unchanged except where it was failing.
+ */
+.notification-list a.is-unread :is(.notification-date, .notification-time) {
+  color: var(--accent-soft-muted);
 }
 
 .notification-date,
@@ -721,6 +744,74 @@ button.primary:hover {
 
 .route-header p {
   margin-inline-start: var(--marker-gutter);
+}
+
+/*
+ * V7.1-01. Prose lists. The app had no list rules outside three bespoke teaching aids,
+ * so a `<ul>` in an intro or a Help section fell to the browser default: a 40px indent
+ * that ignores `--marker-gutter` and breaks the single text column v7 established. The
+ * marker hangs in that same gutter, matching the `❯` on headings and the row markers in
+ * the command list, and the text lands on the shared column.
+ */
+.route-header ul,
+.route-header ol,
+.prose-sections ul,
+.prose-sections ol,
+.prose ul,
+.prose ol {
+  max-width: 72ch;
+  /*
+   * Tailwind's preflight (still shipped for its reset, see the v7 Phase 3 report) sets
+   * `list-style: none` on every list, so a `<ul>` renders with no marker at all unless
+   * it is restored here. Restoring it is the whole point of these being real lists.
+   */
+  list-style: disc outside;
+  margin: var(--space-3) 0 0;
+  padding-inline-start: var(--space-5);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.route-header ol,
+.prose-sections ol,
+.prose ol {
+  list-style: decimal outside;
+}
+
+.route-header li::marker,
+.prose-sections li::marker,
+.prose li::marker {
+  color: var(--accent-text);
+}
+
+.route-header ul,
+.route-header ol {
+  margin-inline-start: var(--marker-gutter);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+.route-header li + li,
+.prose-sections li + li,
+.prose li + li {
+  margin-block-start: var(--space-2);
+}
+
+.route-header p + p,
+.prose-sections p + p,
+.prose-sections ul + p,
+.prose ul + p {
+  margin-block-start: var(--space-4);
+}
+
+/* Inline prose links read as links without borrowing the button treatment. */
+.route-header a:not(.button),
+.prose-sections a:not(.button),
+.prose a:not(.button) {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
 }
 
 .workbench-region {
@@ -933,6 +1024,13 @@ button.primary:hover {
 .app-footer-hint {
   min-width: 0;
   color: color-mix(in oklch, var(--muted) 82%, transparent);
+}
+
+/* Quieter than the hint: identification, not information. */
+.app-footer-build {
+  flex: 0 0 auto;
+  color: color-mix(in oklch, var(--muted) 58%, transparent);
+  font-variant-numeric: tabular-nums;
 }
 
 /*
