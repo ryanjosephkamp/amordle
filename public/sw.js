@@ -1,4 +1,12 @@
-const CACHE = 'amordle-shell-v1';
+/*
+ * The version arrives on the registration URL (`/sw.js?v=<build>`) rather than being
+ * hardcoded here, because this file is static and byte-stable: without it the browser's
+ * update check never sees a change, the worker never re-installs, and the `activate`
+ * purge below never runs. Registering a different script URL installs unconditionally,
+ * which is what actually evicts a stale precached shell.
+ */
+const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE = `amordle-shell-${VERSION}`;
 const PRESERVED_CACHE_PREFIXES = ['amordle-public-word-lists-'];
 const SAFE_SHELL = ['/', '/play', '/play/solo', '/help', '/about'];
 

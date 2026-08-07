@@ -331,6 +331,14 @@ export function AppShell({ children }: PropsWithChildren) {
         <footer className="app-footer">
           <span aria-hidden="true">❯ amordle</span>
           <span className="app-footer-hint">{footerHint}</span>
+          {/*
+           * B3. Names the build in the page itself, so a screenshot of a layout problem
+           * says which release produced it. The stale-shell mechanism this pass closed
+           * cost a full trace precisely because that could not be read off the picture.
+           */}
+          <span className="app-footer-build" data-build={process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}>
+            build {process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}
+          </span>
         </footer>
       )}
       <ConnectivityStatus />

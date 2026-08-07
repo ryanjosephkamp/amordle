@@ -11,7 +11,9 @@ export function PwaController() {
     }
     let registration: ServiceWorkerRegistration | null = null;
     const register = async () => {
-      registration = await navigator.serviceWorker.register('/sw.js');
+      registration = await navigator.serviceWorker.register(
+        `/sw.js?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}`,
+      );
       if (registration.waiting) setWaiting(registration.waiting);
       registration.addEventListener('updatefound', () => {
         const worker = registration?.installing;

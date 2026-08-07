@@ -1,3 +1,5 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import type { NextConfig } from 'next';
 
 function validPublicUrl(value: string | undefined): string | undefined {
@@ -13,6 +15,31 @@ function validPublicUrl(value: string | undefined): string | undefined {
 function validPublicKey(value: string | undefined): string | undefined {
   return value && value.length >= 20 ? value : undefined;
 }
+
+/*
+ * B3. The service worker's cache key was the literal `amordle-shell-v1`, and because
+ * sw.js itself never changed bytes the browser never re-installed it — so the activate
+ * handler that purges old caches has never run, and a device could stay pinned to a
+ * precached HTML document (and the hashed CSS it points at) indefinitely. Stamping the
+ * build into the registration URL makes every deploy install a new worker and purge the
+ * previous cache. It also gives every screenshot a build to identify itself by.
+ */
+function readGitHeadSha(): string | undefined {
+  try {
+    const head = readFileSync(resolve(process.cwd(), '.git/HEAD'), 'utf8').trim();
+    if (!head.startsWith('ref: ')) return head.slice(0, 12);
+    const ref = readFileSync(resolve(process.cwd(), '.git', head.slice(5)), 'utf8').trim();
+    return ref.slice(0, 12);
+  } catch {
+    return undefined;
+  }
+}
+
+const buildId =
+  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ??
+  process.env.VERCEL_DEPLOYMENT_ID ??
+  readGitHeadSha() ??
+  'dev';
 
 const publicSupabaseUrl =
   validPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? validPublicUrl(process.env.SUPABASE_URL);
@@ -34,6 +61,7 @@ const nextConfig: NextConfig = {
   env: {
     ...(publicSupabaseUrl ? { NEXT_PUBLIC_SUPABASE_URL: publicSupabaseUrl } : {}),
     ...(publicSupabaseAnonKey ? { NEXT_PUBLIC_SUPABASE_ANON_KEY: publicSupabaseAnonKey } : {}),
+    NEXT_PUBLIC_BUILD_ID: buildId,
   },
   outputFileTracingIncludes: {
     '/api/admin-refresh': ['./data/word-lists/manifest.json'],
@@ -45,6 +73,12 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
+      {
+        // Browsers already bypass the HTTP cache for worker scripts; be explicit so a
+        // proxy cannot pin the registration to a stale build stamp.
+        source: '/sw.js',
+        headers: [{ key: 'Cache-Control', value: 'no-cache' }],
+      },
       {
         source: '/word-lists/:revision/:asset',
         headers: [

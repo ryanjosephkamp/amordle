@@ -173,7 +173,11 @@ test.describe('route and public boundary matrix', () => {
     await expect
       .poll(() =>
         page.evaluate(async (currentUrl) => {
-          const cache = await caches.open('amordle-shell-v1');
+          // The key is derived from the build stamp now, so resolve it rather than
+          // hardcoding a version that a deploy is supposed to change.
+          const key = (await caches.keys()).find((name) => name.startsWith('amordle-shell-'));
+          if (!key) return false;
+          const cache = await caches.open(key);
           return Boolean(await cache.match(currentUrl));
         }, page.url()),
       )
@@ -194,6 +198,31 @@ test.describe('route and public boundary matrix', () => {
     await page.reload();
     await expect(page.getByText(/accepted guesses/i)).toBeVisible();
     await page.context().setOffline(false);
+  });
+
+  /*
+   * B3. The shell cache key was the literal `amordle-shell-v1`, and sw.js never changed
+   * bytes, so the browser's update check never fired and the activate purge never ran —
+   * a device could serve a precached HTML document, and the hashed CSS it referenced,
+   * from a build that was weeks old. Deriving the key from the build stamp is what makes
+   * a deploy actually evict it, so the tie between registration and cache is the thing
+   * worth asserting.
+   */
+  test('the shell cache key is derived from the deployed build, not a literal', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    await page.evaluate(() => navigator.serviceWorker.ready);
+    const state = await page.evaluate(async () => {
+      const registration = await navigator.serviceWorker.getRegistration();
+      const scriptURL = registration?.active?.scriptURL ?? '';
+      return {
+        version: new URL(scriptURL, location.href).searchParams.get('v'),
+        shellKeys: (await caches.keys()).filter((key) => key.startsWith('amordle-shell-')),
+      };
+    });
+    expect(state.version, 'the registration must carry a build stamp').toBeTruthy();
+    expect(state.shellKeys).toEqual([`amordle-shell-${state.version}`]);
   });
 
   test('Help separates core teaching aids from collapsed advanced shortcuts', async ({ page }) => {
