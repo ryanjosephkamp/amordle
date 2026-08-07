@@ -5,7 +5,7 @@
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
   "currentCheckpoint": "stage-2-v7.1-refinement-pass",
-  "status": "implemented-pending-hosted-acceptance",
+  "status": "hosted-acceptance-green-pending-owner-review",
   "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -657,6 +657,37 @@
       "the timeout claim settlement path is not hosted-proven; the hosted suite proves the refusal path only",
       "vitest.config.ts declares 90/85/90/90 coverage thresholds that no script runs; actual is ~73% statements (pre-existing)"
     ],
+    "productionReleaseAuthorized": false
+  },
+  "v7_1HostedAcceptance": {
+    "status": "green",
+    "completedAt": "2026-08-07T21:24:20Z",
+    "runId": "e2e_20260807T212228847Z_d29584f1_129eb758",
+    "commit": "d29584f1bdb67f24737762407731323b985e9640",
+    "commitDelta": "none - application and tests are the same commit",
+    "deploymentId": "dpl (amordle-m9z9o6upl)",
+    "preview": "https://amordle-m9z9o6upl-ryanjosephkamps-projects.vercel.app",
+    "previewProtected": true,
+    "deployMethod": "vercel build + vercel deploy --prebuilt",
+    "fixtureE2E": 21,
+    "serviceE2E": 3,
+    "visualE2E": 22,
+    "verifiedParityRows": 237,
+    "newHostedAssertions": [
+      "the requester sees JOIN REMATCH pointing at the accepted rematch game id, and no REQUEST REMATCH button",
+      "the running clock does not jump back after a refocus refetch, and the inactive seat stays at 300s",
+      "a premature timeout claim from the waiting player is refused with TIMEOUT_PENDING and leaves the match byte-identical",
+      "the shell cache key equals the build stamp carried on the service worker registration URL"
+    ],
+    "supersededAttempt": "the first hosted run failed at the new service-worker fixture test: vercel build sets VERCEL_GIT_COMMIT_SHA to an empty string, which ?? passes through, so the registration went out as ?v= and every deploy would have shared one cache key. No service mutation occurred in that attempt. Fixed in d29584f and re-run clean.",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "authResidue": 0,
+    "authUsersCleaned": 6,
+    "gamesCleaned": 7,
+    "accentPresetsCleaned": 25,
+    "avatarObjectsCleaned": 2,
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
   }
 }

@@ -70,3 +70,5 @@
 {"at": "2026-08-07T00:00:03Z", "kind": "v7_1_contrast_repairs", "detail": ".badge 2.02:1 dark -> 9.86:1; unread notification rows 3.57-4.29:1 dark under custom accents -> 4.57-4.62:1"}
 {"at": "2026-08-07T00:00:04Z", "kind": "v7_1_service_worker_versioned", "detail": "cache key derived from NEXT_PUBLIC_BUILD_ID; the previous literal meant activate never ran and stale shells were never purged"}
 {"at": "2026-08-07T00:00:05Z", "kind": "v7_1_local_acceptance_green", "detail": "domain 144, browser 29, fixture 21, visual 22, parity 237, mp-audit 73, bootstrap 107/107"}
+{"at": "2026-08-07T21:24:20Z", "kind": "v7_1_hosted_acceptance_green", "detail": "fixture 21, services 3, visual 22, parity 237 at amordle-m9z9o6upl for d29584f; zero residue on attempt 1, authResidue 0; Production untouched"}
+{"at": "2026-08-07T21:24:21Z", "kind": "v7_1_hosted_caught_build_stamp_defect", "detail": "the first hosted run failed the new service-worker test: vercel build sets VERCEL_GIT_COMMIT_SHA empty and ?? passed it through, so every deploy would have shared amordle-shell-dev and the cache fix would have been inert; no service mutation occurred"}

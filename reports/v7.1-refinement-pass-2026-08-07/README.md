@@ -173,7 +173,29 @@ again after.
 Bundle budgets: home 193,110 B JS / 22,422 B CSS; game 198,828 B JS / 26,781 B CSS — CSS
 +263 B per route against the v7 baseline, all of it the prose-list and failure-panel rules.
 
-## 9. Open items
+## 9. Hosted acceptance
+
+Green at `https://amordle-m9z9o6upl-ryanjosephkamps-projects.vercel.app` for `d29584f`.
+Fixture 21 · services 3 · visual 22 · parity 237/237. Cleanup succeeded on attempt 1 with
+**zero residue** and `authResidue: 0` (6 auth users, 7 games, 25 accent presets, 2 avatar
+objects). Production untouched at `dpl_739mtwiXc9pZPef3pxsKumwC9DfG`, 19 days old.
+
+Four new assertions ran against real services: the requester sees JOIN REMATCH pointing at
+the accepted game; the running clock does not jump back across a refocus refetch while the
+inactive seat holds at 300s; a premature timeout claim is refused with TIMEOUT_PENDING and
+leaves the match byte-identical; and the shell cache key equals the build stamp on the
+registration URL.
+
+**The first hosted run failed, and it was worth the round trip.** The new service-worker
+test caught that `vercel build` *sets* `VERCEL_GIT_COMMIT_SHA` to an empty string rather
+than leaving it unset. An empty string is not nullish, so `??` passed it straight through
+and the registration went out as `/sw.js?v=` — meaning every deployed build would have
+resolved to the same `amordle-shell-dev` key and the cache fix would have been completely
+inert in the only environment it exists for. Locally the variable is absent, `?.`
+short-circuits, and the git-HEAD fallback runs, so nothing local could have surfaced it. No
+service mutation occurred in that attempt; fixed in `d29584f` and re-run clean.
+
+## 10. Open items
 
 1. **The grey "11" is still unexplained.** `.attention-badge` is byte-identical back to the
    original TUI shell commit and all six named accents measure 5.67–11.09. The closest
