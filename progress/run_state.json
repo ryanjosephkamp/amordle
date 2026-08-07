@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v7-design-elevation-owner-accepted",
-  "status": "owner-accepted",
+  "currentCheckpoint": "stage-2-v7.1-refinement-pass",
+  "status": "implemented-pending-hosted-acceptance",
   "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -597,5 +597,66 @@
     ],
     "notLocked": "Defects found during owner testing are still open and are captured as the v7.1 refinement pass; fixing them may touch presentation where a defect requires it.",
     "designAuthority": "DESIGN.md remains the presentation authority; v7 did not amend it."
+  },
+  "v7_1RefinementPass": {
+    "intakeArtifact": "https://claude.ai/code/artifact/cc6e128c-7afc-4272-add2-a93df51696ee",
+    "report": "reports/v7.1-refinement-pass-2026-08-07/README.md",
+    "baseCommit": "4349cdee",
+    "revertPoint": "amordle-stage2-v7-frontend-design-elevation-golden-2026-08-06 -> 4349cde",
+    "scope": "six owner-reported defects and ten copy changes; no game mechanics, scoring, evidence colour semantics or keyboard behaviour changed",
+    "authorityMutationRequired": false,
+    "migrationsAdded": 0,
+    "migrationAuthorizedButNotNeeded": "The owner authorized a forward migration to close the timeout hole. It was not needed: save_amordle_combat_command_v2 already accepts the timeout command and its clock-materialisation branch declares the win before any turn check, so either seated player can reach it. TIMEOUT_PENDING means the clock has not expired, not that clients may not call it. Shipped as a client-only change.",
+    "immutableMigrations": 45,
+    "bootstrapFiles": "107/107",
+    "httpInterfaces": 3,
+    "intakeClaimsCorrected": [
+      "A2: turnStartedAt already existed end to end and was consumed by nothing; no server change was required",
+      "A1: the DB has no pending or accepted status, and the polled row already carried created_game_id, so the fix is client-only",
+      "A3: cancelling does not make a match unavailable - the row keeps status=cancelled and stays visible to both seats, so the reported panel is still unexplained",
+      "B2: the custom-accent transparent-background path is unreachable; two different reachable AA failures were found by measurement instead"
+    ],
+    "deadEvidenceFound": "src/domain/clock.ts was unit-tested and cited in parity-registry.json and mp-v6-clause-audit.json as proof of MP-06.c/d, but no source file imported it. The real clock arithmetic lived inline in match-controller.tsx, untested. The pinned test now exercises the code that runs.",
+    "contrastRepairs": {
+      "badge": "background var(--present) with color var(--accent-ink) measured 2.02:1 dark and 2.91:1 light under a custom accent, violating DESIGN.md 110-112; now --present-solid-ink at 9.86:1 and 6.84:1",
+      "unreadNotificationRow": "dark scheme custom accents measured 3.57-4.29:1 (including #32BFA2, the app default preview hex); now 4.57-4.62:1 via a derived --accent-soft-muted, with already-passing values unchanged"
+    },
+    "deliberatelyNotChanged": [
+      "keyboard .is-correct/.is-present inherit --key-unknown-ink: measured 9.27-13.02 across the reachable space and the owner fenced off the keyboard",
+      "the sixteen bare var(--custom-*) references keep no fallbacks: verify-css-tokens.mjs documents that a fallback would mask the failure it detects"
+    ],
+    "b3Disposition": "symptom not reproduced at 320/360/390/412/568/667; the never-purged service-worker cache (CACHE was a literal and sw.js never changed bytes, so activate never ran) is a dateable mechanism and is closed by deriving the key from NEXT_PUBLIC_BUILD_ID",
+    "coverageGapsClosed": [
+      "notification layout was tested at 1440 only and asserted columns===3, which mobile cannot satisfy; now rect-geometry assertions across nine viewports",
+      "the contrast sweep excluded custom accents and only walked controls; now two custom-accent sweeps over six hexes plus an accent-surface selector",
+      "new tests/domain/accent-contract.test.ts enforces DESIGN.md 110-112 statically"
+    ],
+    "localAcceptance": {
+      "check": "green",
+      "domainTests": 144,
+      "browserComponentTests": 29,
+      "fixtureE2E": 21,
+      "visualE2E": 22,
+      "parityRows": 237,
+      "mpAuditRows": 73,
+      "bootstrapFiles": "107/107",
+      "httpInterfaces": 3,
+      "cssCustomProperties": 96,
+      "homeCompressedBytes": {
+        "js": 193110,
+        "css": 22422
+      },
+      "gameCompressedBytes": {
+        "js": 198828,
+        "css": 26781
+      }
+    },
+    "openItems": [
+      "the grey 11 on a green alerts badge is still unexplained; .attention-badge is byte-identical back to the original TUI shell commit and all six named accents measure 5.67-11.09",
+      "A3 needs one owner reproduction; each candidate cause now prints a distinct code on the panel",
+      "the timeout claim settlement path is not hosted-proven; the hosted suite proves the refusal path only",
+      "vitest.config.ts declares 90/85/90/90 coverage thresholds that no script runs; actual is ~73% statements (pre-existing)"
+    ],
+    "productionReleaseAuthorized": false
   }
 }
