@@ -12,7 +12,8 @@ export function PwaController() {
     let registration: ServiceWorkerRegistration | null = null;
     const register = async () => {
       registration = await navigator.serviceWorker.register(
-        `/sw.js?v=${process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}`,
+        // `||`, not `??`: an empty stamp must fall back too, or the key never changes.
+        `/sw.js?v=${process.env.NEXT_PUBLIC_BUILD_ID || 'dev'}`,
       );
       if (registration.waiting) setWaiting(registration.waiting);
       registration.addEventListener('updatefound', () => {

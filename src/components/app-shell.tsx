@@ -336,8 +336,8 @@ export function AppShell({ children }: PropsWithChildren) {
            * says which release produced it. The stale-shell mechanism this pass closed
            * cost a full trace precisely because that could not be read off the picture.
            */}
-          <span className="app-footer-build" data-build={process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}>
-            build {process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'}
+          <span className="app-footer-build" data-build={process.env.NEXT_PUBLIC_BUILD_ID || 'dev'}>
+            build {process.env.NEXT_PUBLIC_BUILD_ID || 'dev'}
           </span>
         </footer>
       )}

@@ -35,11 +35,27 @@ function readGitHeadSha(): string | undefined {
   }
 }
 
+/*
+ * `??` is wrong for these: `vercel build` *sets* VERCEL_GIT_COMMIT_SHA to an empty
+ * string rather than leaving it unset, and an empty string is not nullish, so it
+ * propagated all the way to the registration URL as `?v=` and every deploy shared one
+ * cache key. Locally the variable is absent, so the bug only appeared once deployed —
+ * the hosted fixture test is what caught it.
+ */
+function firstNonEmpty(...values: Array<string | undefined>): string | undefined {
+  for (const value of values) {
+    const trimmed = value?.trim();
+    if (trimmed) return trimmed;
+  }
+  return undefined;
+}
+
 const buildId =
-  process.env.VERCEL_GIT_COMMIT_SHA?.slice(0, 12) ??
-  process.env.VERCEL_DEPLOYMENT_ID ??
-  readGitHeadSha() ??
-  'dev';
+  firstNonEmpty(
+    process.env.VERCEL_GIT_COMMIT_SHA?.trim().slice(0, 12),
+    process.env.VERCEL_DEPLOYMENT_ID,
+    readGitHeadSha(),
+  ) ?? 'dev';
 
 const publicSupabaseUrl =
   validPublicUrl(process.env.NEXT_PUBLIC_SUPABASE_URL) ?? validPublicUrl(process.env.SUPABASE_URL);
