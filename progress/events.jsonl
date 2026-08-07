@@ -72,3 +72,5 @@
 {"at": "2026-08-07T00:00:05Z", "kind": "v7_1_local_acceptance_green", "detail": "domain 144, browser 29, fixture 21, visual 22, parity 237, mp-audit 73, bootstrap 107/107"}
 {"at": "2026-08-07T21:24:20Z", "kind": "v7_1_hosted_acceptance_green", "detail": "fixture 21, services 3, visual 22, parity 237 at amordle-m9z9o6upl for d29584f; zero residue on attempt 1, authResidue 0; Production untouched"}
 {"at": "2026-08-07T21:24:21Z", "kind": "v7_1_hosted_caught_build_stamp_defect", "detail": "the first hosted run failed the new service-worker test: vercel build sets VERCEL_GIT_COMMIT_SHA empty and ?? passed it through, so every deploy would have shared amordle-shell-dev and the cache fix would have been inert; no service mutation occurred"}
+{"at": "2026-08-07T22:30:00Z", "kind": "v7_1_owner_accepted", "detail": "owner tested the Preview and accepted all v7.1 work at c5275d9; Production still unauthorized"}
+{"at": "2026-08-07T22:30:01Z", "kind": "grey_alerts_badge_explained", "detail": "owner identified it as the hover state; confirmed in source at tui-shell.css:321 and measured 6.93:1 at rest vs 2.89:1 hovered. Carried into v7.2."}

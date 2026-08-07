@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v7.1-refinement-pass",
-  "status": "hosted-acceptance-green-pending-owner-review",
+  "currentCheckpoint": "stage-2-v7.1-owner-accepted",
+  "status": "owner-accepted",
   "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -688,6 +688,18 @@
     "accentPresetsCleaned": 25,
     "avatarObjectsCleaned": 2,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "productionReleaseAuthorized": false
+  },
+  "v7_1OwnerAcceptance": {
+    "acceptedAt": "2026-08-07T22:30:00Z",
+    "acceptedCommit": "c5275d9",
+    "acceptedTag": "amordle-stage2-v7.1-refinement-pass-golden-2026-08-07",
+    "reviewBasis": "owner tested the protected Preview amordle-m9z9o6upl directly after hosted acceptance came back green",
+    "ownerStatement": "Everything looks basically perfect. Every problem I identified most recently seems to have been solved. Lock in all of the changes.",
+    "resolvedOpenItems": {
+      "greyAlertsBadge": "EXPLAINED by the owner and confirmed in source: it is the hover state. tui-shell.css:321 button:hover :is(p, small, span) { color: inherit } outranks .attention-badge, so the badge inherits the trigger button --muted grey. Measured 6.93:1 at rest, 2.89:1 on hover. On touch the hover state sticks after a tap, which is why the mobile screenshot showed it persistently. Carried into v7.2.",
+      "matchUnavailable": "owner could not reproduce it either and judges it transient/server-related; explicitly deferred rather than closed"
+    },
     "productionReleaseAuthorized": false
   }
 }
