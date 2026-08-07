@@ -547,7 +547,13 @@ export async function saveCombatCommand(input: {
   actionId: string;
   expectedVersion: number;
   expectedMoveCount: number;
-  command: 'guess' | 'advance' | 'cancel' | 'forfeit';
+  /*
+   * `timeout` is the authority's claim-a-win-on-time command. It is not a client
+   * assertion that the clock expired: the server materializes the running clock before
+   * evaluating any command, declares the timeout itself when the budget is exhausted,
+   * and otherwise raises TIMEOUT_PENDING. Either seated player may send it.
+   */
+  command: 'guess' | 'advance' | 'cancel' | 'forfeit' | 'timeout';
   guess?: string;
 }) {
   return parseServiceResult(
