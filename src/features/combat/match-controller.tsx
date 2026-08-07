@@ -45,9 +45,14 @@ import type { EvidenceState } from '@/domain/game';
 import type { KeyboardFeedbackEvent } from '@/domain/feedback';
 import { isGuessRuleRejection } from '@/domain/feedback';
 import { historyRowSchema } from '@/domain/account-continuity';
+import { canClaimTimeout } from '@/domain/clock';
+import { rematchViewState } from '@/domain/combat-rematch';
+import { classifyServiceFailure } from '@/domain/service-failure';
+import { MatchUnavailable } from './match-unavailable';
 import { validSeededTranscriptRows } from '@/domain/combat-transcript';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { WordDefinition } from '@/features/words/word-definition';
+import { ClockValue, useCombatClockReading } from './match-clock';
 import { MoveBoards } from './combat-transcript';
 
 interface MatchState {
@@ -58,14 +63,19 @@ interface MatchState {
 }
 
 async function loadMatch(gameId: string): Promise<MatchState> {
+  /*
+   * A3. Control flow is unchanged; only the reason survives it. The legacy fallback used
+   * to replace every failure with a flat NOT_FOUND, so a match that was private to two
+   * other players reported itself as a broken link and the "private" wording could never
+   * be reached.
+   */
+  let primary: ServiceError | null = null;
   try {
     return { authority: 2, game: await getCombatGame(gameId) };
   } catch (error) {
-    if (
-      error instanceof ServiceError &&
-      !['P0002', 'NOT_FOUND', 'FORBIDDEN', '42501'].includes(error.code)
-    ) {
-      throw error;
+    if (error instanceof ServiceError) {
+      if (!['P0002', 'NOT_FOUND', 'FORBIDDEN', '42501'].includes(error.code)) throw error;
+      primary = error;
     }
     try {
       const rankedDaily = await getRankedDailyGame(gameId);
@@ -79,7 +89,7 @@ async function loadMatch(gameId: string): Promise<MatchState> {
       }
     }
     const legacy = await getLegacyPractice(gameId);
-    if (!legacy) throw new ServiceError('That match was not found.', 'NOT_FOUND');
+    if (!legacy) throw primary ?? new ServiceError('That match was not found.', 'NOT_FOUND');
     return { authority: 0, legacy };
   }
 }
@@ -180,7 +190,7 @@ function MatchControllerInner({
   }, [refetchMatch]);
 
   const command = useMutation({
-    mutationFn: async (kind: 'guess' | 'advance' | 'cancel' | 'forfeit') => {
+    mutationFn: async (kind: 'guess' | 'advance' | 'cancel' | 'forfeit' | 'timeout') => {
       const state = match.data;
       const userId = auth.user?.id;
       if (!state || !userId) throw new Error('Match state is unavailable.');
@@ -201,6 +211,7 @@ function MatchControllerInner({
         if (kind !== 'guess' && kind !== 'forfeit') {
           throw new Error('That action is unavailable in this ranked Daily.');
         }
+        // Ranked Daily has no player-owned clock, so `timeout` cannot reach here.
         return {
           authority: 1 as const,
           rankedDaily: await saveRankedDailyAction({
@@ -243,7 +254,17 @@ function MatchControllerInner({
       ) {
         void playKeyboardSound(feedback.settings.keyboardSoundProfile, 'reject');
       }
-      setMessage(error instanceof Error ? error.message : 'That action was not accepted.');
+      /*
+       * TIMEOUT_PENDING is the authority saying the opponent's clock has not actually
+       * run out yet — a refusal, not a failure. It reaches the client as the raw
+       * Postgres exception message, so it needs words a player can act on.
+       */
+      const raw = error instanceof Error ? error.message : '';
+      setMessage(
+        raw.includes('TIMEOUT_PENDING')
+          ? 'Their clock has not run out yet.'
+          : raw || 'That action was not accepted.',
+      );
       void match.refetch();
     },
   });
@@ -327,11 +348,14 @@ function MatchControllerInner({
   if (match.isPending) return <SkeletonRows label="Loading match…" rows={5} />;
   if (match.isError || !match.data) {
     return (
-      <section className="status-panel">
-        <h2>Match unavailable</h2>
-        <p>It may be absent, private to other players, or temporarily unavailable.</p>
-        <button onClick={() => void match.refetch()}>Try again</button>
-      </section>
+      <MatchUnavailable
+        gameId={gameId}
+        kind={classifyServiceFailure({
+          code: match.error instanceof ServiceError ? match.error.code : undefined,
+          online: typeof navigator === 'undefined' ? true : navigator.onLine,
+        })}
+        onRetry={() => void match.refetch()}
+      />
     );
   }
   if (match.data.authority === 0 && match.data.legacy) {
@@ -371,6 +395,7 @@ function MatchControllerInner({
   return (
     <AuthoritativeMatch
       game={game}
+      observedAtMs={match.dataUpdatedAt}
       draft={draft}
       setDraft={setDraft}
       submit={() => command.mutate('guess')}
@@ -385,6 +410,7 @@ function MatchControllerInner({
           command.mutate('cancel');
         }
       }}
+      claimTimeout={() => command.mutate('timeout')}
       settle={() => settle.mutate()}
       settlement={rankedPracticeSettlement}
       pending={command.isPending || settle.isPending}
@@ -629,7 +655,11 @@ function RematchActions({ sourceGameId }: { sourceGameId: string }) {
   const requests = useQuery({
     queryKey: ['combat', 'rematches', sourceGameId],
     queryFn: () => listPracticeRematches(sourceGameId),
-    refetchInterval: 5_000,
+    // Stop once a rematch exists to join, and never poll a tab nobody is looking at.
+    refetchInterval: (query) =>
+      document.visibilityState === 'visible' && !query.state.data?.[0]?.created_game_id
+        ? 5_000
+        : false,
   });
   const act = useMutation({
     mutationFn: async ({
@@ -662,9 +692,26 @@ function RematchActions({ sourceGameId }: { sourceGameId: string }) {
       setMessage(error instanceof Error ? error.message : 'Rematch action was not accepted.'),
   });
   const latest = requests.data?.[0];
+  // Evaluated as of the last poll rather than `Date.now()`: pure during render, and at
+  // most one 5s interval stale, which is the same freshness the row itself has.
+  const view = rematchViewState(latest, requests.dataUpdatedAt);
+  /*
+   * A1. A link rather than an automatic redirect: navigating a player out of the page
+   * from a background poll takes away the back button and fires at a moment they did
+   * not choose. The accepting player keeps their existing redirect because that
+   * navigation follows their own click.
+   */
+  const notice =
+    view.action === 'join'
+      ? 'Your rematch is ready.'
+      : message || (view.lastOutcome ? `Rematch ${view.lastOutcome}.` : '');
   return (
     <div className="field-stack">
-      {!latest || latest.request_status !== 'pending' ? (
+      {view.action === 'join' && view.joinGameId ? (
+        <Link className="button primary" href={`/combat/match/${view.joinGameId}`}>
+          JOIN REMATCH
+        </Link>
+      ) : view.action !== 'respond' && view.action !== 'cancel' ? (
         <button
           type="button"
           disabled={act.isPending}
@@ -672,7 +719,7 @@ function RematchActions({ sourceGameId }: { sourceGameId: string }) {
         >
           REQUEST REMATCH
         </button>
-      ) : latest.viewer_can_accept ? (
+      ) : !latest ? null : view.action === 'respond' ? (
         <div className="action-row">
           <button
             className="primary"
@@ -688,37 +735,41 @@ function RematchActions({ sourceGameId }: { sourceGameId: string }) {
             DECLINE
           </button>
         </div>
-      ) : latest.viewer_can_cancel ? (
+      ) : (
         <button
           disabled={act.isPending}
           onClick={() => act.mutate({ action: 'cancel', request: latest })}
         >
           CANCEL REMATCH REQUEST
         </button>
-      ) : null}
-      <p aria-live="polite">{message}</p>
+      )}
+      <p aria-live="polite">{notice}</p>
     </div>
   );
 }
 
 function AuthoritativeMatch({
   game,
+  observedAtMs,
   draft,
   setDraft,
   submit,
   forfeit,
   cancel,
+  claimTimeout,
   settle,
   settlement,
   pending,
   message,
 }: {
   game: CombatProjection;
+  observedAtMs: number;
   draft: string;
   setDraft(value: string): void;
   submit(): void;
   forfeit(): void;
   cancel(): void;
+  claimTimeout(): void;
   settle(): void;
   settlement: RankedPracticeSettlement | null;
   pending: boolean;
@@ -727,6 +778,15 @@ function AuthoritativeMatch({
   const terminal = game.outcome.terminal;
   const player = game.playerState[game.viewerSeat];
   const opponent = game.players.find((participant) => participant.seat !== game.viewerSeat);
+  const opponentSeat = game.viewerSeat === 'player-one' ? 'player-two' : 'player-one';
+  const opponentClock = useCombatClockReading(game, opponentSeat, observedAtMs);
+  const claimable = canClaimTimeout({
+    status: game.status,
+    terminal,
+    viewerSeat: game.viewerSeat,
+    currentTurn: game.currentTurn,
+    opponentClock,
+  });
   const turn = game.currentTurn === game.viewerSeat && game.capabilities.canSubmitGuess;
   const visibleMoves = game.moves.filter(
     (move) => move.type === 'guess' && move.puzzleIndex === game.currentPuzzleIndex,
@@ -775,7 +835,7 @@ function AuthoritativeMatch({
             </span>
             <strong>{game.playerState[participant.seat].points} pts</strong>
             {game.playerState[participant.seat].timeRemainingMs != null && (
-              <ClockValue game={game} seat={participant.seat} />
+              <ClockValue game={game} seat={participant.seat} observedAtMs={observedAtMs} />
             )}
           </div>
         ))}
@@ -820,6 +880,16 @@ function AuthoritativeMatch({
       <p className="game-message" aria-live="assertive">
         {message}
       </p>
+      {claimable && (
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={claimTimeout}
+          disabled={pending}
+        >
+          CLAIM WIN ON TIME
+        </button>
+      )}
       {!terminal && game.capabilities.canCancel && (
         <button
           type="button"
@@ -900,27 +970,6 @@ function AuthoritativeMatch({
         </div>
       )}
     </section>
-  );
-}
-
-function ClockValue({ game, seat }: { game: CombatProjection; seat: 'player-one' | 'player-two' }) {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    if (game.outcome.terminal || game.currentTurn !== seat || game.status !== 'playing') {
-      return;
-    }
-    const timer = window.setInterval(() => setNow(Date.now()), 250);
-    return () => window.clearInterval(timer);
-  }, [game.currentTurn, game.outcome.terminal, game.status, seat]);
-  const durable = game.playerState[seat].timeRemainingMs ?? 0;
-  const elapsed =
-    !game.outcome.terminal && game.currentTurn === seat && game.status === 'playing'
-      ? Math.max(0, now - Date.parse(game.serverNow))
-      : 0;
-  return (
-    <span className="mono" aria-label={`${seat.replace('-', ' ')} time remaining`}>
-      {formatClock(Math.max(0, durable - elapsed))}
-    </span>
   );
 }
 
@@ -1038,11 +1087,6 @@ function CombatInput({
       />
     </div>
   );
-}
-
-function formatClock(milliseconds: number): string {
-  const seconds = Math.max(0, Math.ceil(milliseconds / 1000));
-  return `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
 }
 
 function combatHistoryRow(

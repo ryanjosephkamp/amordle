@@ -15,7 +15,9 @@ import {
   writeRankedPracticeQueueIntent,
   writeCombatAttentionProjection,
 } from '@/adapters/session-combat';
-import { privateRequestBlockSchema } from '@/adapters/supabase/combat';
+import { combatProjectionSchema, privateRequestBlockSchema } from '@/adapters/supabase/combat';
+import { ClockValue } from '@/features/combat/match-clock';
+import { MatchUnavailable } from '@/features/combat/match-unavailable';
 import { operationId } from '@/adapters/supabase/shared';
 import { isEditableShortcutTarget } from '@/application/keyboard-shortcuts';
 import { dismissOnBackdrop, isOutsideDialogClick } from '@/application/modal-dialog';
@@ -803,4 +805,137 @@ describe('browser components', () => {
     await page.getByRole('button', { name: 'CONFIRM DELETE' }).click();
     expect(onDelete).toHaveBeenCalledOnce();
   });
+
+  /*
+   * A2. The turn began 90s before the projection was read, so the player on move has
+   * 3:30 left of a 5:00 budget. The read RPC is `stable` and never debits the running
+   * turn, so `timeRemainingMs` still reads the full 300_000 — the elapsed 90s exists
+   * only in the gap between `turnStartedAt` and `serverNow`. Anchoring to `serverNow`
+   * instead loses that gap entirely and paints a fresh 5:00, which is the reported bug.
+   */
+  it('anchors the running clock to the turn start, not to the last fetch', async () => {
+    const turnStartedAt = '2026-08-06T12:00:00.000Z';
+    const serverNow = '2026-08-06T12:01:30.000Z';
+    render(
+      <>
+        <ClockValue
+          game={timedMatchProjection({ turnStartedAt, serverNow })}
+          seat="player-one"
+          observedAtMs={Date.now()}
+        />
+        <ClockValue
+          game={timedMatchProjection({ turnStartedAt, serverNow })}
+          seat="player-two"
+          observedAtMs={Date.now()}
+        />
+      </>,
+    );
+    await expect
+      .element(page.getByLabelText('player one time remaining'))
+      .toHaveTextContent(/^3:(29|30)$/);
+    // The inactive seat's stored value is already post-debit and must not tick.
+    await expect
+      .element(page.getByLabelText('player two time remaining'))
+      .toHaveTextContent('5:00');
+  });
+
+  /*
+   * A3. The point of the taxonomy is that the panel tells the truth and does not offer a
+   * retry that cannot succeed. A 404 stays a 404 however many times you press the button.
+   */
+  it('tells a missing match from a private one and only offers a workable retry', async () => {
+    const missing = await render(
+      <MatchUnavailable kind="not-found" gameId="amordle-combat-v2-missing" onRetry={vi.fn()} />,
+    );
+    await expect.element(page.getByRole('heading', { name: 'Match not found' })).toBeVisible();
+    await expect
+      .element(page.getByText('MATCH amordle-combat-v2-missing · NOT-FOUND'))
+      .toBeVisible();
+    await expect.element(page.getByRole('link', { name: 'Active games' })).toBeVisible();
+    expect(page.getByRole('button', { name: 'Try again' }).elements()).toHaveLength(0);
+    missing.unmount();
+
+    const forbidden = await render(
+      <MatchUnavailable kind="forbidden" gameId="amordle-combat-v2-theirs" onRetry={vi.fn()} />,
+    );
+    await expect
+      .element(page.getByRole('heading', { name: 'Match is private to its players' }))
+      .toBeVisible();
+    expect(page.getByRole('button', { name: 'Try again' }).elements()).toHaveLength(0);
+    forbidden.unmount();
+
+    const onRetry = vi.fn();
+    render(
+      <MatchUnavailable kind="unavailable" gameId="amordle-combat-v2-flaky" onRetry={onRetry} />,
+    );
+    await expect
+      .element(page.getByRole('heading', { name: 'COMBAT services are unavailable' }))
+      .toBeVisible();
+    await page.getByRole('button', { name: 'Try again' }).click();
+    expect(onRetry).toHaveBeenCalledOnce();
+  });
 });
+
+function timedMatchProjection({
+  turnStartedAt,
+  serverNow,
+}: {
+  turnStartedAt: string;
+  serverNow: string;
+}) {
+  return combatProjectionSchema.parse({
+    schemaVersion: 2,
+    authorityVersion: 2,
+    id: 'amordle-combat-v2-clock',
+    scope: 'practice',
+    mode: 'og',
+    sourceKind: 'queue',
+    visibilityKind: 'public',
+    wordLength: 5,
+    difficulty: 'standard',
+    hardMode: false,
+    timeLimitMs: 300_000,
+    ranked: true,
+    status: 'playing',
+    version: 4,
+    moveCount: 2,
+    serverNow,
+    createdAt: '2026-08-06T11:55:00.000Z',
+    startedAt: '2026-08-06T11:56:00.000Z',
+    updatedAt: turnStartedAt,
+    turnStartedAt,
+    currentTurn: 'player-one',
+    currentPuzzleIndex: 0,
+    attemptBudget: 6,
+    viewerSeat: 'player-one',
+    players: [
+      { seat: 'player-one', displayName: 'You' },
+      { seat: 'player-two', displayName: 'Rival' },
+    ],
+    moves: [],
+    seededRows: [],
+    playerState: {
+      'player-one': {
+        points: 0,
+        attemptsThisPuzzle: 1,
+        puzzlesSolved: 0,
+        timeRemainingMs: 300_000,
+      },
+      'player-two': {
+        points: 0,
+        attemptsThisPuzzle: 1,
+        puzzlesSolved: 0,
+        timeRemainingMs: 300_000,
+      },
+    },
+    capabilities: {
+      canJoin: false,
+      canSubmitGuess: true,
+      canAdvance: false,
+      canCancel: false,
+      canForfeit: true,
+      canSettleRating: false,
+    },
+    outcome: { terminal: false },
+  });
+}

@@ -1785,6 +1785,20 @@ test.describe.serial('protected Preview services', () => {
       status: 'created',
       created_game_id: rematchGameId,
     });
+
+    /*
+     * A1. The requester never runs the accept mutation, so nothing navigates them. They
+     * poll the same row, which already carries the created game id — within one poll
+     * interval they must be offered a way in, not a fresh REQUEST REMATCH button.
+     */
+    await expect(firstPage.getByRole('link', { name: 'JOIN REMATCH' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(firstPage.getByRole('link', { name: 'JOIN REMATCH' })).toHaveAttribute(
+      'href',
+      `/combat/match/${rematchGameId}`,
+    );
+    await expect(firstPage.getByRole('button', { name: 'REQUEST REMATCH' })).toHaveCount(0);
     secondPage.once('dialog', (dialog) => void dialog.accept());
     await secondPage.getByRole('button', { name: 'CANCEL BEFORE PLAY' }).click();
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(/match complete/i, {
@@ -1852,6 +1866,69 @@ test.describe.serial('protected Preview services', () => {
     await expect(firstPage.locator('.combat-turn-state')).toHaveText(/your turn/i);
     await expect(firstPage.getByLabel(/player one time remaining/i)).toBeVisible();
     await expect(firstPage.getByLabel(/player two time remaining/i)).toBeVisible();
+
+    /*
+     * A2. `refetchOnWindowFocus` refetches on refocus, and the read RPC is `stable` so
+     * it returns the same undebited budget every time. The clock must keep falling
+     * across that refetch rather than resetting, and the inactive seat must not move.
+     */
+    const clockSeconds = async (page: Page, label: RegExp) => {
+      const parts = (await page.getByLabel(label).innerText()).trim().split(':').map(Number);
+      return (parts[0] ?? 0) * 60 + (parts[1] ?? 0);
+    };
+    const clockBeforeRefocus = await clockSeconds(firstPage, /player one time remaining/i);
+    await secondPage.bringToFront();
+    await firstPage.waitForTimeout(3_000);
+    await firstPage.bringToFront();
+    await expect
+      .poll(() => clockSeconds(firstPage, /player one time remaining/i), { timeout: 15_000 })
+      .toBeLessThanOrEqual(clockBeforeRefocus - 2);
+    expect(await clockSeconds(firstPage, /player two time remaining/i)).toBe(300);
+
+    /*
+     * A2. `timeout` is the authority's claim-a-win-on-time command, and the waiting
+     * player is allowed to send it: the server materializes the running clock before
+     * evaluating any command and declares the timeout itself. Sent early it must be
+     * refused with TIMEOUT_PENDING and leave the match untouched — which is what makes
+     * it safe to expose the claim control in the UI.
+     */
+    {
+      const { data: beforeClaim, error: beforeClaimError } = await admin
+        .from('async_multiplayer_games')
+        .select('state_version,move_count,status,winner_player_id')
+        .eq('id', rankedPracticeGameId)
+        .single();
+      if (beforeClaimError) throw beforeClaimError;
+      const waitingPlayerClient = createClient<Database>(supabaseUrl, anonKey, {
+        auth: { autoRefreshToken: false, persistSession: false },
+        global: { headers: { Authorization: `Bearer ${playerTwo!.accessToken}` } },
+      });
+      const { error: prematureClaimError } = await waitingPlayerClient.rpc(
+        'save_amordle_combat_command_v2',
+        {
+          p_game_id: rankedPracticeGameId,
+          p_action_id: `${runId}-premature-timeout-claim`,
+          p_expected_version: beforeClaim.state_version,
+          p_expected_move_count: beforeClaim.move_count,
+          p_command: 'timeout',
+        },
+      );
+      expect(prematureClaimError?.message ?? '').toContain('TIMEOUT_PENDING');
+      const { data: afterClaim, error: afterClaimError } = await admin
+        .from('async_multiplayer_games')
+        .select('state_version,move_count,status,winner_player_id')
+        .eq('id', rankedPracticeGameId)
+        .single();
+      if (afterClaimError) throw afterClaimError;
+      expect(afterClaim).toEqual(beforeClaim);
+      await expect(firstPage.getByRole('button', { name: 'CLAIM WIN ON TIME' })).toHaveCount(0);
+      await event('premature_timeout_claim_refused', {
+        scenarioId: rankedDailyScenarioId,
+        gameId: rankedPracticeGameId,
+        matchUnchanged: true,
+      });
+    }
+
     const rankedPracticeAnswer = await inspectAnswer(rankedPracticeGameId);
     await submitOnScreenGuess(firstPage, rankedPracticeAnswer);
     await expect(firstPage.locator('.combat-turn-state')).toHaveText(/you won|match complete/i, {
