@@ -2,11 +2,11 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import type { PropsWithChildren, ReactNode } from 'react';
+import type { PropsWithChildren } from 'react';
 import { useAuth } from './providers';
-import { SkeletonRows, WorkbenchRegion } from './workbench';
+import { SkeletonRows, StatusPanel, WorkbenchRegion } from './workbench';
 
-export { SkeletonRows, WorkbenchRegion };
+export { SkeletonRows, StatusPanel, WorkbenchRegion };
 
 export function RouteHeader({ title, children }: PropsWithChildren<{ title: string }>) {
   return (
@@ -20,19 +20,6 @@ export function RouteHeader({ title, children }: PropsWithChildren<{ title: stri
       </div>
       {children}
     </header>
-  );
-}
-
-export function StatusPanel({
-  title,
-  children,
-  action,
-}: PropsWithChildren<{ title: string; action?: ReactNode }>) {
-  return (
-    <WorkbenchRegion title={title} className="status-panel" status="STATUS">
-      <div className="prose">{children}</div>
-      {action && <div className="action-row">{action}</div>}
-    </WorkbenchRegion>
   );
 }
 

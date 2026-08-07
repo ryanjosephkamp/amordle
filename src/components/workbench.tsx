@@ -25,6 +25,24 @@ export function WorkbenchRegion({
   );
 }
 
+/*
+ * Lives here rather than beside AccountGate in route-states so that surfaces which only
+ * need to say something went wrong do not pull the auth provider into their module
+ * graph. route-states re-exports it, so existing imports are unaffected.
+ */
+export function StatusPanel({
+  title,
+  children,
+  action,
+}: PropsWithChildren<{ title: string; action?: ReactNode }>) {
+  return (
+    <WorkbenchRegion title={title} className="status-panel" status="STATUS">
+      <div className="prose">{children}</div>
+      {action && <div className="action-row">{action}</div>}
+    </WorkbenchRegion>
+  );
+}
+
 export function SkeletonRows({
   label = 'Loading this view…',
   rows = 3,
