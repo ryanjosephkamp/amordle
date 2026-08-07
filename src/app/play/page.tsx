@@ -8,8 +8,7 @@ export default function PlayPage() {
     <div className="route-frame">
       <RouteHeader title="Choose how to play">
         <p>
-          Solo games work for guests and signed-in players. COMBAT uses your account so both players
-          can recover the same match.
+          Solo works for guests and signed-in players. But for COMBAT, you&rsquo;ll need an account.
         </p>
       </RouteHeader>
       <WorkbenchRegion title="GAME MODES" status="2 AVAILABLE">

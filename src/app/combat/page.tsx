@@ -33,7 +33,20 @@ export default function CombatPage() {
   return (
     <div className="route-frame">
       <RouteHeader title="COMBAT">
-        <p>Alternating-turn word games that stay safe through refreshes and reconnects.</p>
+        <p>Welcome to amordle COMBAT!</p>
+        <p>
+          Hard-core, competitive, turn-based multiplayer &ndash; like online chess, but for Wordle.
+        </p>
+        <ul>
+          <li>Play Practice to hone your skills.</li>
+          <li>Play Daily to earn your streak.</li>
+          <li>Play Ranked to climb the leaderboards.</li>
+        </ul>
+        <p>
+          Looking for Private Practice?
+          <br />
+          Find a player in <Link href="/players">Players</Link> and send your request.
+        </p>
       </RouteHeader>
       <div className="route-grid">
         {lanes.map((lane) => (

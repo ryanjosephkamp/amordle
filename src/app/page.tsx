@@ -8,7 +8,16 @@ export default async function HomePage() {
   return (
     <div className="route-frame home-workspace">
       <RouteHeader title="Choose your next game">
-        <p>A word game for exact minds. Pick a mode; every row is a real destination.</p>
+        <p>
+          The ultimate Wordle-Hurdle hybrid.
+          <br />
+          No ads. No distractions. No BS.
+        </p>
+        <p>Two modes:</p>
+        <ol>
+          <li>OG: an upgraded Wordle experience.</li>
+          <li>GO: an upgraded Hurdle experience.</li>
+        </ol>
       </RouteHeader>
       <div className="home-layout">
         <WorkbenchRegion title="game commands" status="select one" className="home-commands">

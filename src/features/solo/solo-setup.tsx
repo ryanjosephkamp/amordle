@@ -164,7 +164,7 @@ export function SoloSetup({ ownerNamespace }: { ownerNamespace: string }) {
       <WorkbenchRegion title="RUN NOTES" status={mode === 'go' ? `${goCount} PUZZLES` : '1 PUZZLE'}>
         <div className="prose">
           <p>
-            Each configuration keeps its own saved game. Starting here creates a fresh run without
+            Every configuration is a unique saved game. Starting here creates a fresh run without
             changing your other modes, Daily games, or account progress.
           </p>
         </div>

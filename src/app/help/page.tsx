@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { RouteHeader } from '@/components/route-states';
 import {
   directNavigationShortcuts,
@@ -13,22 +14,66 @@ import {
   PrivacyTeachingAid,
 } from '@/features/support/help-teaching-aids';
 
-const sections = [
+/*
+ * The second element is a ReactNode rather than a string because several of these
+ * sections are genuinely lists, and a `<ul>` cannot live inside the `<p>` the map used
+ * to wrap every entry in.
+ */
+const sections: ReadonlyArray<readonly [string, ReactNode]> = [
   [
     'OG and scoring',
-    'OG has one answer. Each accepted guess receives a tile for every letter. Green means correct position, yellow means the letter occurs elsewhere, and a dark tile marked × means no unmatched copy remains. Repeated letters are scored exact positions first, then by remaining multiplicity.',
+    <>
+      <p>OG ≈ Wordle (but better!):</p>
+      <ul>
+        <li>One puzzle, one answer.</li>
+        <li>One colored tile per valid guess letter.</li>
+        <li>Green (✓) = letter in word AND in correct position.</li>
+        <li>Yellow (~) = letter in word BUT in wrong position.</li>
+        <li>Dark (×) = letter not in word.</li>
+        <li>
+          NOTE: If a guess has more copies of a letter than the answer contains, extras are marked
+          dark.
+        </li>
+      </ul>
+    </>,
   ],
   [
     'GO chains',
-    'GO links 5, 7, or 10 Practice puzzles; Daily GO always has five. A solved answer stays visible for two seconds, then becomes labeled evidence against the next answer. Those seeded rows inform Hard Mode but do not count as new guesses or points.',
+    <>
+      <p>GO ≈ Hurdle (but better!):</p>
+      <ul>
+        <li>OG/Wordle, but in a multi-puzzle chain.</li>
+        <li>5, 7, or 10 puzzles (always 5 for Daily).</li>
+        <li>Solutions accumulate as guesses in later puzzles.</li>
+      </ul>
+    </>,
   ],
   [
     'Practice and Daily',
-    'Practice supports 2–35 letters, three nested difficulties, and optional Hard Mode. Solo Daily follows your local date and always uses five letters. COMBAT Daily follows UTC.',
+    <>
+      <p>Practice:</p>
+      <ul>
+        <li>2–35 letters.</li>
+        <li>3 nested difficulties.</li>
+        <li>Optional Hard Mode.</li>
+      </ul>
+      <p>Daily:</p>
+      <ul>
+        <li>Solo Daily: 5 letters, local time code.</li>
+        <li>COMBAT Daily: 5 letters, Universal Time Code (UTC).</li>
+      </ul>
+    </>,
   ],
   [
     'Hard Mode',
-    'Keep green letters fixed, reuse every proven positive letter at least as many times as evidence shows, and avoid letters shown only as absent. Yellow letters do not create an invented position ban.',
+    <>
+      <p>Same as Wordle and Hurdle:</p>
+      <ul>
+        <li>Green letters (✓): must stay fixed.</li>
+        <li>Yellow letters (~): must be guessed at least as many times as evidence shows.</li>
+        <li>Dark letters (×): must be avoided if completely absent.</li>
+      </ul>
+    </>,
   ],
   [
     'COMBAT',
@@ -40,7 +85,7 @@ const sections = [
   ],
   [
     'Access and navigation',
-    'Use Tab and Shift+Tab to move, Enter or Space to activate controls, and Escape to close menus or dialogs. During a game, Focus Mode removes surrounding navigation while retaining Account, alerts, and an explicit exit. Tile meaning is announced and never relies on color alone.',
+    'Use Tab and Shift+Tab to move, Enter or Space to activate controls, and Escape to close menus or dialogs. During a game, Focus Mode removes surrounding navigation while retaining Account, alerts, and an explicit exit.',
   ],
   [
     'Privacy',
@@ -58,7 +103,7 @@ export default function HelpPage() {
         {sections.map(([title, content]) => (
           <section key={title}>
             <h2>{title}</h2>
-            <p>{content}</p>
+            {typeof content === 'string' ? <p>{content}</p> : content}
             {title === 'OG and scoring' && <TileEvidenceExample />}
             {title === 'GO chains' && <GoChainTeachingAid />}
             {title === 'Practice and Daily' && <PracticeDailyTeachingAid />}
