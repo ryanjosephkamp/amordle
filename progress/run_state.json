@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7-frontend-design-elevation-hosted-acceptance-green-owner-review-required",
-  "updatedAt": "2026-08-06T20:48:00Z",
+  "reportStatus": "v7-design-locked-in-v7.1-refinement-pass-intake-open",
+  "updatedAt": "2026-08-07T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -579,5 +579,23 @@
     "authResidue": 0,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "supersededAttempt": "an earlier run on this same Preview aborted at the fixture suite on a pre-existing timing race in fixture.solo.spec.ts:189; no service mutation occurred in that attempt"
+  },
+  "v7DesignLockIn": {
+    "lockedAt": "2026-08-07T00:00:00Z",
+    "commit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
+    "tag": "amordle-stage2-v7-frontend-design-elevation-golden-2026-08-06",
+    "reviewBasis": "owner tested the protected Preview dpl_B866n6v8k1GV6iJ7Zdgtx5TFgovt directly on desktop and Android mobile, after hosted acceptance came back green across all four suites",
+    "ownerStatement": "Design looks good and is sufficient. The v7 presentation work is approved and locked in. Further visual work should treat the v7 token system, layout and design language as the accepted baseline rather than reopening it.",
+    "scopeLocked": [
+      "the six-step type scale and seven-step spacing scale",
+      "the single focus ring and the three-level elevation ladder",
+      "one text column with hanging markers",
+      "the unified 44rem play column",
+      "selection treatment: accent underline for the current route, accent rail for the recommended row, inverse reserved for genuine selection",
+      "the shell footer",
+      "the motion layer"
+    ],
+    "notLocked": "Defects found during owner testing are still open and are captured as the v7.1 refinement pass; fixing them may touch presentation where a defect requires it.",
+    "designAuthority": "DESIGN.md remains the presentation authority; v7 did not amend it."
   }
 }
