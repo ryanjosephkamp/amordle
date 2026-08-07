@@ -264,6 +264,8 @@ describe('MP-01 through MP-21 acceptance authority', () => {
       'ACCEPT REMATCH',
       'DECLINE',
       'CANCEL REMATCH REQUEST',
+      // A1: the requesting player's way into an accepted rematch.
+      'JOIN REMATCH',
       'SEARCH AGAIN',
       'PLAY DAILY',
       'VIEW RIVAL',
