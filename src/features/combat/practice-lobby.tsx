@@ -23,6 +23,7 @@ import {
   writeRankedPracticeQueueIntent,
 } from '@/adapters/session-combat';
 import type { RankedPracticeQueueIntent } from '@/adapters/session-combat';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 import type { Difficulty } from '@/domain/game';
@@ -389,7 +390,12 @@ function PracticeLobbyInner({ length }: Props) {
         </form>
         <p aria-live="polite">{message}</p>
       </section>
-      <section aria-labelledby="open-practice-heading">
+      {/*
+       * B1. `.open-lobbies` is the only element declaring `container-type: inline-size`,
+       * which the `.lobby-row` container query below 42rem depends on. Without it the
+       * row would stay two-column at every width.
+       */}
+      <section className="open-lobbies" aria-labelledby="open-practice-heading">
         <div className="section-heading">
           <h2 id="open-practice-heading">Open public matches</h2>
           <button type="button" onClick={() => void lobbies.refetch()}>
@@ -401,12 +407,22 @@ function PracticeLobbyInner({ length }: Props) {
         ) : available.length ? (
           <div className="data-list">
             {available.map((row) => (
-              <div className="data-row" data-game-id={row.id} key={row.id}>
-                <div>
+              <div className="data-row lobby-row" data-game-id={row.id} key={row.id}>
+                <div className="lobby-row-summary">
                   <strong>
-                    {row.mode.toUpperCase()} · {row.wordLength} letters
+                    {/*
+                     * B1. The same row shape the "Open public games" list already uses.
+                     * PlayerIdentityLink links only when the projection carries a
+                     * sanctioned public profile id, and degrades to plain text
+                     * otherwise, so the privacy rule holds without a check here.
+                     */}
+                    <PlayerIdentityLink
+                      publicProfileId={row.owner.publicProfileId}
+                      displayName={row.owner.displayName || 'Open Practice player'}
+                    />
                   </strong>
                   <p>
+                    Practice · {row.mode.toUpperCase()} · {row.wordLength} letters ·{' '}
                     {row.difficulty}
                     {row.hardMode ? ' · Hard Mode' : ''}
                     {row.timeLimitMs === 300_000 ? ' · 5:00 per player' : ' · untimed'}
