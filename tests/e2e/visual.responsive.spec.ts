@@ -1464,6 +1464,126 @@ test.describe('responsive and alternate presentation evidence', () => {
     });
   }
 
+  /*
+   * W2b. The contrast sweep has never measured a keyboard key in any state. `button` is
+   * in `controlSelector`, but `GameKeyboard` renders only on the three play and match
+   * routes, and none of them is in `contrastSurfaces` — so deepening the opponent's-turn
+   * dim would have been an unmeasured change to how legible the keyboard is.
+   *
+   * Adding those routes to the main sweep would have cost 36 more page-states per scheme
+   * against a suite already carrying a 300s timeout, and they need a live match anyway.
+   * A mounted probe measures the same CSS for a fraction of the time.
+   */
+  for (const scheme of contrastSchemes) {
+    test(`the opponent's-turn keyboard stays legible while reading as unavailable (${scheme})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await page.emulateMedia({ colorScheme: scheme });
+      /*
+       * Not `/`. Every rule under test lives in `solo-game.css`, which is imported by the
+       * four play and combat route files rather than shipped globally, so a probe mounted
+       * on the home page measures unstyled buttons and passes vacuously — the first
+       * version of this test did exactly that and reported the untouched 0.74. The combat
+       * route-group layout imports the stylesheet, so it is present here even signed out,
+       * where the page itself is only the account gate.
+       */
+      await page.goto('/combat/practice');
+      await page.addStyleTag({
+        content:
+          '*, *::before, *::after { transition: none !important; animation: none !important }',
+      });
+
+      const failures: string[] = [];
+      const dims: number[] = [];
+      for (const accent of contrastAccents) {
+        const measured = await page.evaluate((name) => {
+          document.documentElement.dataset.accent = name;
+          document.querySelector('[data-keyboard-probe]')?.remove();
+          const probe = document.createElement('div');
+          probe.setAttribute('data-keyboard-probe', 'true');
+          // The real structure: the dim is a wrapper rule that composites with each
+          // key's own `button:disabled` opacity, so a bare keyboard would under-report.
+          probe.innerHTML =
+            '<div class="combat-input" data-turn-locked="true" data-word-length="5">' +
+            '<div class="keyboard">' +
+            '<div class="keyboard-row">' +
+            ['q', 'w', 'e', 'r', 't']
+              .map(
+                (letter) =>
+                  `<button type="button" class="key is-unknown" disabled>${letter.toUpperCase()}</button>`,
+              )
+              .join('') +
+            '<button type="button" class="key is-correct" disabled>A</button>' +
+            '<button type="button" class="key is-present" disabled>S</button>' +
+            '<button type="button" class="key is-absent" disabled>D</button>' +
+            '</div></div></div>';
+          document.body.append(probe);
+          const key = probe.querySelector('.key') as HTMLElement;
+          let opacity = 1;
+          for (let node: Element | null = key; node; node = node.parentElement) {
+            opacity *= Number(getComputedStyle(node).opacity || '1');
+          }
+          return opacity;
+        }, accent);
+        dims.push(measured);
+
+        const results = await page.evaluate(measureControlContrast, '[data-keyboard-probe] .key');
+        for (const result of results) {
+          if (result.ok) continue;
+          failures.push(
+            `${scheme} · ${accent} · ${result.label} — ${result.ratio.toFixed(2)}:1 ` +
+              `(needs ${result.required}:1) fg ${result.color} on bg ${result.background}`,
+          );
+        }
+      }
+      await page.evaluate(() => document.querySelector('[data-keyboard-probe]')?.remove());
+
+      // The point of the change is that it is visibly deeper than the ordinary disabled
+      // treatment. If someone later reverts the wrapper rule, this fails rather than
+      // quietly restoring the dim the owner called too weak.
+      expect(
+        Math.max(...dims),
+        `effective key opacity per accent: ${dims.join(', ')}`,
+      ).toBeLessThan(0.74);
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
+  /*
+   * W2a. The draft caret is the one thing on the board that says "type here". It blinked
+   * all the way through the opponent's turn, which is most misleading at the very start
+   * of a match, when the board is empty and neither player has moved.
+   *
+   * Asserted through the generated pseudo-element rather than a screenshot, because the
+   * thing that must be true is that the element is not generated at all — `content: none`
+   * rather than a hidden box. That is also what settles the reduced-motion and
+   * forced-colors rules aimed at the same selector: with no pseudo-element, neither has
+   * anything to paint.
+   */
+  test('the draft caret invites input only when it is the viewer turn', async ({ page }) => {
+    await page.goto('/combat/practice');
+    const carets = await page.evaluate(() => {
+      const mount = (locked: boolean) => {
+        const host = document.createElement('div');
+        host.innerHTML =
+          `<div class="combat-input" data-word-length="5"${locked ? ' data-turn-locked="true"' : ''}>` +
+          '<div class="board-row is-draft">' +
+          '<div class="tile"></div><div class="tile"></div><div class="tile"></div>' +
+          '</div></div>';
+        document.body.append(host);
+        const tile = host.querySelector('.tile') as HTMLElement;
+        const style = getComputedStyle(tile, '::after');
+        return { content: style.content, background: style.backgroundColor };
+      };
+      return { locked: mount(true), open: mount(false) };
+    });
+    // Solo shares this stylesheet and never sets the attribute, so its caret is the
+    // `open` case and is unaffected by this change.
+    expect(carets.open.content, 'the caret must still exist on your own turn').not.toBe('none');
+    expect(carets.locked.content, "no caret during the opponent's turn").toBe('none');
+  });
+
   test('200 percent reflow, reduced motion, and forced colors preserve operation', async ({
     page,
   }, testInfo) => {

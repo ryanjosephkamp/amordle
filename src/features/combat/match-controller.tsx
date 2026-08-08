@@ -1117,9 +1117,18 @@ function CombatInput({
     return () => window.removeEventListener('keydown', onKey);
   }, [disabled, draft, length, playCue, setDraft, submit]);
   return (
+    /*
+     * W2. `disabled` reached the keydown guard and GameKeyboard's props and stopped
+     * there, so nothing in the DOM said "not your turn" — the draft row's blinking
+     * cursor kept inviting input during the opponent's turn, most misleadingly at the
+     * very start of a match when the board is empty and neither player has moved.
+     * Presentation only; the flag it reflects is the same one that already governs
+     * input, so nothing about who may type changes.
+     */
     <div
       className="combat-input"
       data-word-length={length}
+      data-turn-locked={disabled ? 'true' : undefined}
       style={{ '--word-length': length } as CSSProperties}
     >
       <div className="board-row is-draft" aria-label="Current guess">

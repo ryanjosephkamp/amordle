@@ -453,8 +453,13 @@ button.key {
   text-transform: uppercase;
 }
 
-button.key:hover,
-button.key:focus-visible {
+/*
+ * W2b. `:not(:disabled)` guards what was an unguarded hover: a dead key still lit up
+ * with an accent border under the pointer, which reads as "press me" on precisely the
+ * keys that cannot be pressed — a removed letter, or any key during the opponent's turn.
+ */
+button.key:hover:not(:disabled),
+button.key:focus-visible:not(:disabled) {
   border-color: var(--accent);
   outline: 2px solid transparent;
   box-shadow: inset 0 0 0 1px var(--accent);
@@ -1107,6 +1112,32 @@ html[data-game-presentation='review'] .combat-history .latest-row-button {
 
 .combat-input > .board-row {
   margin-inline: auto;
+}
+
+/*
+ * W2a. The draft caret is an invitation to type, so it must not blink while the other
+ * player is on move. `content: none` removes the pseudo-element outright rather than
+ * hiding it, which also settles the two sibling rules that target the same selector
+ * further up this file — the reduced-motion `animation: none` and the forced-colors
+ * `background: Highlight` — without either having to be restated here.
+ *
+ * Scoped to `.combat-input`, which only COMBAT renders. Solo shares this stylesheet and
+ * is unaffected: there it is always the player's turn, and nothing sets the attribute.
+ */
+.combat-input[data-turn-locked='true'] .board-row.is-draft .tile:empty:first-child::after {
+  content: none;
+}
+
+/*
+ * W2b. The existing dim was the generic `button:disabled` rule at 0.74 — the same value
+ * every disabled control in the app uses, from calendar days to form fields. Deepening
+ * the token would have dimmed the whole product, so this is scoped to the keyboard of a
+ * COMBAT match on the opponent's turn. It composites with the per-key 0.74 rather than
+ * replacing it; the measured result is asserted by the contrast sweep against the 3:1
+ * disabled floor, in both schemes across every accent.
+ */
+.combat-input[data-turn-locked='true'] .keyboard {
+  opacity: 0.74;
 }
 
 .combat-secondary-action {
