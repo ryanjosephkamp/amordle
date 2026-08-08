@@ -42,10 +42,40 @@ export function PracticeLobby(props: Props) {
   );
 }
 
-function PracticeLobbyInner({ length }: Props) {
+function PracticeLobbyInner({ length: routeLength }: Props) {
   const auth = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
+  /*
+   * C2. Word length was route-derived only, so the sole way to change it was a link that
+   * reloaded the page. It is now an editable field seeded from the route, with the route
+   * kept in step on commit rather than on every keystroke — the URL is what the ranked
+   * search-recovery path compares against after a reload, so it has to record the length
+   * a search was actually created at.
+   *
+   * The draft is held as a string because an `<input type="number">` legitimately passes
+   * through states that are not numbers: clearing it yields '' (Number('') === 0) and a
+   * lone '-' yields NaN. Either would reach `normalizeRankedPracticeConfig`, which is a
+   * zod `.parse` running inside a `useMemo` during render — it throws, and the error
+   * boundary blanks the page. Solo has no such parse, which is why it can be naive here.
+   */
+  const [wordLengthDraft, setWordLengthDraft] = useState(String(routeLength));
+  /*
+   * Reseed when the route changes, so inbound links still set the field — SEARCH AGAIN,
+   * "Return to this ranked search", and the legacy bridges all arrive as a new prop on a
+   * component that is already mounted. Adjusting during render rather than in an effect
+   * is React's own pattern for this, and a `key` remount is wrong here: it would also
+   * throw away the mode, difficulty and clock the player had already chosen.
+   */
+  const [seededFrom, setSeededFrom] = useState(routeLength);
+  if (seededFrom !== routeLength) {
+    setSeededFrom(routeLength);
+    setWordLengthDraft(String(routeLength));
+  }
+  const parsedWordLength = Number(wordLengthDraft);
+  const wordLengthValid =
+    Number.isInteger(parsedWordLength) && parsedWordLength >= 2 && parsedWordLength <= 35;
+  const wordLength = wordLengthValid ? parsedWordLength : routeLength;
   const [mode, setMode] = useState<'og' | 'go'>('og');
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
   const [hardMode, setHardMode] = useState(false);
@@ -60,17 +90,19 @@ function PracticeLobbyInner({ length }: Props) {
       queryClient.invalidateQueries({ queryKey: ['notifications'] }),
     ]);
 
+  // `wordLength` is already clamped to the route value while the draft is invalid, so
+  // this parse cannot throw mid-typing.
   const currentConfig = useMemo<RankedPracticeConfig>(
     () =>
       normalizeRankedPracticeConfig({
         mode,
-        wordLength: length,
+        wordLength,
         difficulty,
         hardMode,
         goPuzzleCount: mode === 'go' ? goCount : null,
         timeLimitMs,
       }),
-    [difficulty, goCount, hardMode, length, mode, timeLimitMs],
+    [difficulty, goCount, hardMode, mode, timeLimitMs, wordLength],
   );
 
   useEffect(() => {
@@ -88,7 +120,7 @@ function PracticeLobbyInner({ length }: Props) {
       return;
     }
     if (restored.status !== 'valid') return;
-    if (restored.intent.config.wordLength !== length) {
+    if (restored.intent.config.wordLength !== routeLength) {
       queueMicrotask(() => {
         setQueue(restored.intent);
         setQueuePhase('queued');
@@ -108,7 +140,7 @@ function PracticeLobbyInner({ length }: Props) {
       setQueuePhase('queued');
       setMessage('Restored your ranked search for this account and tab.');
     });
-  }, [auth.user?.id, length]);
+  }, [auth.user?.id, routeLength]);
 
   const lobbies = useQuery({
     queryKey: ['combat', 'practice', 'unranked', auth.user?.id],
@@ -123,7 +155,7 @@ function PracticeLobbyInner({ length }: Props) {
       if (!userId) throw new Error('Sign in first.');
       return createUnrankedPractice({
         mode,
-        wordLength: length,
+        wordLength,
         difficulty,
         hardMode,
         goPuzzleCount: mode === 'go' ? goCount : null,
@@ -240,7 +272,7 @@ function PracticeLobbyInner({ length }: Props) {
   const advanceRanked = ranked.mutate;
   useEffect(() => {
     if (!queue) return;
-    if (queue.config.wordLength !== length) return;
+    if (queue.config.wordLength !== wordLength) return;
     if (!['queued', 'conflict', 'failed'].includes(queuePhase)) return;
     const timer = window.setTimeout(() => {
       if (!ranked.isPending && document.visibilityState === 'visible') {
@@ -248,7 +280,7 @@ function PracticeLobbyInner({ length }: Props) {
       }
     }, 5_000);
     return () => window.clearTimeout(timer);
-  }, [advanceRanked, length, queue, queuePhase, ranked.isPending]);
+  }, [advanceRanked, queue, queuePhase, ranked.isPending, wordLength]);
 
   const cancelQueue = useMutation({
     mutationFn: async () => {
@@ -298,6 +330,34 @@ function PracticeLobbyInner({ length }: Props) {
               <option value="go">GO</option>
             </select>
           </label>
+          {/*
+           * C2. Same control as Solo setup, in the same place relative to Mode and
+           * Difficulty, so the two setup screens read the same way. The implicit label
+           * gives it the accessible name "Word length", matching how the private
+           * challenge form's equivalent is already targeted.
+           */}
+          <label>
+            Word length
+            <input
+              type="number"
+              min={2}
+              max={35}
+              step={1}
+              value={wordLengthDraft}
+              disabled={Boolean(queue)}
+              aria-invalid={wordLengthValid ? undefined : true}
+              onChange={(event) => setWordLengthDraft(event.target.value)}
+              onBlur={() => {
+                // Commit to the route only once the value settles, and only when there
+                // is no search to disturb — the restore effect keys on the route and
+                // clears the queue before reading storage.
+                if (wordLengthValid && !queue && parsedWordLength !== routeLength) {
+                  router.replace(`/combat/practice?length=${parsedWordLength}`);
+                }
+              }}
+            />
+          </label>
+          {!wordLengthValid && <p className="field-error">Word length must be from 2 to 35.</p>}
           <label>
             Difficulty
             <select
@@ -344,14 +404,16 @@ function PracticeLobbyInner({ length }: Props) {
               <option value="300000">Five minutes per player</option>
             </select>
           </label>
-          <p className="mono">{length} letters</p>
           <div className="action-row">
-            <button className="primary" disabled={create.isPending || Boolean(queue)}>
+            <button
+              className="primary"
+              disabled={create.isPending || Boolean(queue) || !wordLengthValid}
+            >
               {create.isPending ? 'Creating…' : 'Create public unranked'}
             </button>
             <button
               type="button"
-              disabled={ranked.isPending || Boolean(queue)}
+              disabled={ranked.isPending || Boolean(queue) || !wordLengthValid}
               onClick={() => ranked.mutate(null)}
             >
               {queue ? queueButtonLabel(queuePhase) : 'Find ranked match'}
@@ -382,7 +444,7 @@ function PracticeLobbyInner({ length }: Props) {
               {queue.config.timeLimitMs === null ? 'untimed' : '5:00 per player'}
             </p>
           )}
-          {queue && queue.config.wordLength !== length && (
+          {queue && queue.config.wordLength !== wordLength && (
             <Link href={`/combat/practice?length=${queue.config.wordLength}`}>
               Return to this ranked search
             </Link>
@@ -437,9 +499,6 @@ function PracticeLobbyInner({ length }: Props) {
         ) : (
           <p className="prose">No other player is waiting. Create the first match.</p>
         )}
-        <p className="prose">
-          <Link href={`/combat/practice?length=${length === 5 ? 7 : 5}`}>Change word length</Link>
-        </p>
       </section>
     </div>
   );

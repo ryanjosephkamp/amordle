@@ -1844,6 +1844,35 @@ test.describe.serial('protected Preview services', () => {
     await secondPage.setViewportSize({ width: 1440, height: 1024 });
 
     await firstPage.goto(`${baseURL}/combat/practice?length=35`);
+
+    /*
+     * C2. Word length is now typed rather than set by a page-reloading link. It must seed
+     * from the route, and an in-between value must not reach
+     * `normalizeRankedPracticeConfig` — that is a zod `.parse` inside a `useMemo`, so it
+     * throws during render and the error boundary blanks the page. Both submit paths stay
+     * disabled until the value is legal.
+     */
+    {
+      const wordLength = firstPage.getByRole('spinbutton', { name: 'Word length', exact: true });
+      await expect(wordLength).toHaveValue('35');
+      await wordLength.fill('40');
+      await expect(firstPage.getByText('Word length must be from 2 to 35.')).toBeVisible();
+      await expect(firstPage.getByRole('button', { name: 'Find ranked match' })).toBeDisabled();
+      await expect(
+        firstPage.getByRole('button', { name: 'Create public unranked' }),
+      ).toBeDisabled();
+      await wordLength.fill('');
+      await expect(firstPage.getByText('Word length must be from 2 to 35.')).toBeVisible();
+      await wordLength.fill('35');
+      await expect(firstPage.getByText('Word length must be from 2 to 35.')).toHaveCount(0);
+      await expect(firstPage.getByRole('main')).toBeVisible();
+      await event('practice_word_length_selector_verified', {
+        scenarioId: rankedDailyScenarioId,
+        seededFromRoute: 35,
+        rejectsOutOfRange: true,
+      });
+    }
+
     await firstPage.getByLabel('Ranked clock').selectOption('300000');
     await firstPage.getByRole('button', { name: 'Find ranked match' }).click();
     const rankedPracticeOne = await registerLatestQueueRequest(playerOne!, 'practice', 'og');
