@@ -1,0 +1,272 @@
+/*
+ * Geometry and composition for the Help teaching figures.
+ *
+ * Route-scoped on purpose: `globals.css` and `tui-shell.css` ship from the root layout, so
+ * every rule added to either counts against the home and game CSS budgets even though it
+ * only ever paints on `/help`. Imported by the Help page alone, this costs those budgets
+ * nothing. The paint itself — tiles, evidence colours, keys — comes from the shared
+ * `board-surface.css`, so the figures cannot drift from the real board.
+ */
+
+/*
+ * `.help-example` caps every Help figure at 34rem, which is right for a three-swatch
+ * legend and wrong for a board. At 34rem the COMBAT figure sits below its own 44rem
+ * container breakpoint, so it would have stacked at EVERY width and the two-keyboard
+ * composition could never have appeared in the app at all — the artifact was reviewed at
+ * 800px, and this cap is the difference. The animated figures take the full text column
+ * instead, which `.route-frame.is-narrow` already bounds at 52rem.
+ */
+.help-example.help-figure {
+  width: min(52rem, 100%);
+}
+
+.help-figure {
+  --tile-size: 2.4rem;
+  container-type: inline-size;
+}
+
+.help-figure .tile {
+  width: var(--tile-size);
+  font-size: calc(var(--tile-size) * 0.42);
+}
+
+.help-figure :is(button, span).key {
+  min-height: 2.1rem;
+  padding: 0.3rem 0.1rem;
+  font-size: 0.7rem;
+}
+
+.help-stage {
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+  padding: var(--space-4);
+}
+
+.help-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.help-board-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.help-row-meta {
+  width: 5.2rem;
+  flex: 0 0 5.2rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.help-row-meta.is-seed {
+  color: var(--accent-text);
+}
+
+.help-note {
+  min-height: 2.4rem;
+  margin-block: var(--space-3) 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+/*
+ * COMBAT. The board box reserves its FINAL nine-slot height from the first frame while the
+ * board itself grows inside it from six. Both of the owner's requirements fall out of that
+ * one decision: the gameplay area stays above the midline between the two keyboards at
+ * every stage of the match, and the keyboards do not slide down the page as the board
+ * extends past row six — which is exactly when a reader is trying to look at them.
+ */
+.help-combat {
+  display: grid;
+  align-items: center;
+  gap: var(--space-4);
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.help-combat-board {
+  min-height: 24rem;
+  grid-column: 2;
+}
+
+.help-combat-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-combat-side .keyboard {
+  width: 100%;
+}
+
+.help-combat-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-inline-start: 2px solid transparent;
+  padding-inline-start: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/*
+ * The turn marker is the app's own `❯` idiom plus an accent rail — never an opacity
+ * change, which would drag the inactive keyboard's contrast down with it and make the
+ * figure fail the sweep for a purely decorative reason.
+ */
+.help-combat-name::before {
+  color: var(--border);
+  content: '❯';
+}
+
+.help-combat-side.is-active .help-combat-name {
+  border-inline-start-color: var(--accent);
+  color: var(--ink);
+}
+
+.help-combat-side.is-active .help-combat-name::before {
+  color: var(--accent-text);
+}
+
+/*
+ * Below roughly 44rem the three-column composition cannot hold two keyboards and a
+ * five-wide board, so it stacks. Still two players, one board, shared evidence — only the
+ * literal left-and-right is lost, which is the right thing to give up.
+ */
+@container (max-width: 44rem) {
+  .help-combat {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .help-combat-board {
+    min-height: 0;
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+.help-tool-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.help-tool-button {
+  border: var(--terminal-rule);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  font-size: var(--text-1);
+  text-transform: uppercase;
+}
+
+.help-tool-button::before {
+  content: '[';
+}
+
+.help-tool-button::after {
+  content: ']';
+}
+
+.help-tool-button.is-firing {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-soft) 50%, transparent);
+}
+
+.help-result {
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--danger);
+  padding: var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+.help-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-weekdays,
+.help-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.help-weekdays {
+  color: var(--muted);
+  font-size: 0.55rem;
+  text-align: center;
+}
+
+.help-day {
+  display: grid;
+  min-height: 2.6rem;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  border: var(--terminal-rule);
+  color: var(--ink);
+  font-size: 0.66rem;
+}
+
+.help-day small {
+  color: var(--muted);
+  font-size: 0.48rem;
+}
+
+.help-day.is-future {
+  opacity: var(--control-disabled-opacity);
+}
+
+.help-day.is-target {
+  border-color: var(--accent);
+}
+
+.help-day.is-unlocked {
+  border-color: var(--correct);
+}
+
+.help-day.is-selected {
+  background: var(--terminal-selected);
+  color: var(--terminal-selected-ink);
+}
+
+/* W3's rule, applied ahead of the defect rather than after it: secondary text on a
+   selected surface takes the token that exists for exactly that. */
+.help-day.is-selected small {
+  color: var(--terminal-selected-muted);
+}
+
+@media (forced-colors: active) {
+  .help-stage,
+  .help-tool-button,
+  .help-day,
+  .help-result {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .help-day.is-selected {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .help-day.is-selected small {
+    color: HighlightText;
+  }
+}

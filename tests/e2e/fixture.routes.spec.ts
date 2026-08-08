@@ -288,8 +288,43 @@ test.describe('route and public boundary matrix', () => {
     for (const index of [0, 1]) {
       await expect(lanes.nth(index)).toHaveCSS('border-inline-start-width', '2px');
     }
-    // The GO chain still animates until W5.2 replaces it, so it must still rest complete.
-    await expect(page.locator('.help-chain li:not([data-reached])')).toHaveCount(0);
+    /*
+     * W5. The six figures rest on their TERMINAL frame, because `useFrameSequence` starts
+     * at the last frame and only winds back for a client that can animate. This is what a
+     * reader with reduced motion, a browser with no JavaScript, and a crawler all get —
+     * so it has to be the frame worth seeing, and these assert exactly that rather than
+     * that "something rendered".
+     */
+    const figureOf = (caption: RegExp) =>
+      page.locator('figure.help-figure').filter({ has: page.getByText(caption) });
+
+    // GO: six board entries, and puzzle five's four seeded rows carried forward.
+    const go = figureOf(/ONE ANSWER BECOMES THE NEXT PUZZLE/i);
+    await expect(go.locator('.help-board-entry')).toHaveCount(6);
+    await expect(go.locator('.help-row-meta.is-seed')).toHaveCount(4);
+
+    // COMBAT: nine slots, not six — the board does not end at row six, which is the
+    // entire lesson. The eighth row is the win, so every tile in it is correct.
+    const combat = figureOf(/BOTH PLAYERS READ ONE BOARD/i);
+    await expect(combat.locator('.help-board-entry')).toHaveCount(9);
+    await expect(
+      combat.locator('.help-board-entry').nth(7).locator('.tile.is-correct'),
+    ).toHaveCount(5);
+    // Two keyboards, each in its own accent, drawn from one evidence object.
+    await expect(combat.locator('.keyboard')).toHaveCount(2);
+    await expect(combat.locator('[data-accent="violet"], [data-accent="amber"]')).toHaveCount(2);
+
+    // Remove strikes out five keys, which is what the tool does — not "all wrong letters".
+    await expect(figureOf(/REMOVE FIVE WRONG LETTERS/i).locator('.key.is-removed')).toHaveCount(5);
+
+    // Continue ends with a seventh row past the sixth.
+    await expect(figureOf(/CONTINUE PAST THE LAST ROW/i).locator('.help-board-entry')).toHaveCount(
+      7,
+    );
+
+    // The figures are decorative subtrees with the lesson in the caption, so they must not
+    // put 56 keyboard keys and 45 tiles into the tab order.
+    await expect(page.locator('.help-stage button')).toHaveCount(0);
 
     const axe = await new AxeBuilder({ page }).analyze();
     const blocking = axe.violations.filter((item) =>

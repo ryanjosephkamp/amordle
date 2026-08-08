@@ -12,7 +12,17 @@ import {
   PrivacyTeachingAid,
   TileEvidenceAid,
 } from '@/features/support/help-teaching-aids';
-import { GoChainAid, HardModeAid } from '@/features/support/help-live-aids';
+import { HardModeAid } from '@/features/support/help-live-aids';
+import {
+  CombatBoardFigure,
+  ContinueToolFigure,
+  GoChainFigure,
+  PastDailyToolFigure,
+  RemoveToolFigure,
+  RevealToolFigure,
+} from '@/features/support/help-figures/figures';
+import '@/features/board/board-surface.css';
+import './help-figures.css';
 
 /*
  * The second element is a ReactNode rather than a string because several of these
@@ -105,11 +115,19 @@ export default function HelpPage() {
             <h2>{title}</h2>
             {typeof content === 'string' ? <p>{content}</p> : content}
             {title === 'OG and scoring' && <TileEvidenceAid />}
-            {title === 'GO chains' && <GoChainAid />}
+            {title === 'GO chains' && <GoChainFigure />}
             {title === 'Practice and Daily' && <PracticeDailyAid />}
             {title === 'Hard Mode' && <HardModeAid />}
-            {title === 'COMBAT' && <CombatTurnExample />}
-            {title === 'Coins and tools' && <CoinsToolsTeachingAid />}
+            {title === 'COMBAT' && <CombatBoardFigure />}
+            {title === 'Coins and tools' && (
+              <>
+                <CoinsToolsTeachingAid />
+                <RevealToolFigure />
+                <RemoveToolFigure />
+                <PastDailyToolFigure />
+                <ContinueToolFigure />
+              </>
+            )}
             {title === 'Access and navigation' && <AccessTeachingAid />}
             {title === 'Privacy' && <PrivacyTeachingAid />}
           </section>
@@ -154,24 +172,5 @@ export default function HelpPage() {
         </details>
       </div>
     </div>
-  );
-}
-
-function CombatTurnExample() {
-  return (
-    <figure className="help-example">
-      <figcaption>FOLLOW THE SHARED BOARD</figcaption>
-      <div className="help-combat-row">
-        <span>01</span>
-        <strong>YOU</strong>
-        <span>CRANE</span>
-      </div>
-      <div className="help-combat-row is-current">
-        <span>02</span>
-        <strong>RIVAL</strong>
-        <span>SLATE · accepted</span>
-      </div>
-      <p>Next turn: you</p>
-    </figure>
   );
 }

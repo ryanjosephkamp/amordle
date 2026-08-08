@@ -1,122 +1,18 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useState } from 'react';
 import { hardModeViolationForEvidence } from '@/domain/game';
 import type { Tile } from '@/domain/game';
 
 /*
- * V7.2-04. The Help figures describe the game rather than showing it. These four run a
- * short terminal-style sequence — one beat per step, no easing — the first time they
- * scroll into view, then rest.
+ * Hard Mode is the one Help figure the owner asked to leave exactly as it is, and it is
+ * the only thing left in this module.
  *
- * Two properties make that safe rather than clever:
- *
- * The finished state is the INITIAL state. Every aid renders fully resolved on the
- * server, and the sequence only starts if a client with motion enabled scrolls it into
- * view. So no JavaScript, no IntersectionObserver, reduced motion, or a crawler all get
- * the complete figure — never a blank box waiting for an animation that will not run.
- * The global reduced-motion block only stops CSS animation; a JS timer would sail
- * straight through it, so the check is made here explicitly.
- *
- * Nothing is animated by fading text. Letters and labels stay at full opacity
- * throughout; what advances is which tile has resolved its evidence, and where the
- * cursor sits. That keeps every word legible at every instant, keeps the whole
- * explanation in the accessibility tree the entire time, and keeps the contrast sweep
- * measuring real colours instead of half-faded ones.
+ * The terminal-sequence machinery that used to live here — the beat timer, the reduced-
+ * motion check, the replay button — moved to `help-figures/figure-runtime.tsx` when the
+ * other three aids were removed or replaced in v7.3. This aid never used it: it is
+ * interactive rather than animated, judged by the real rule function on every click.
  */
-const BEAT_MS = 320;
-
-function prefersReducedMotion(): boolean {
-  return (
-    typeof window !== 'undefined' &&
-    typeof window.matchMedia === 'function' &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches
-  );
-}
-
-function useTerminalSequence(total: number) {
-  const ref = useRef<HTMLElement | null>(null);
-  const timers = useRef<number[]>([]);
-  // Starts finished. Only a client that can animate ever winds it back.
-  const [step, setStep] = useState(total);
-
-  const clear = useCallback(() => {
-    for (const timer of timers.current) window.clearTimeout(timer);
-    timers.current = [];
-  }, []);
-
-  const play = useCallback(() => {
-    clear();
-    if (prefersReducedMotion()) {
-      setStep(total);
-      return;
-    }
-    setStep(0);
-    for (let index = 1; index <= total; index += 1) {
-      timers.current.push(window.setTimeout(() => setStep(index), BEAT_MS * index));
-    }
-  }, [clear, total]);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node || typeof IntersectionObserver === 'undefined' || prefersReducedMotion()) return;
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (!entries.some((entry) => entry.isIntersecting)) return;
-        observer.disconnect();
-        play();
-      },
-      { threshold: 0.35 },
-    );
-    observer.observe(node);
-    return () => {
-      observer.disconnect();
-      clear();
-    };
-  }, [clear, play]);
-
-  return { ref, step, play };
-}
-
-function ReplayButton({ onClick, label }: { onClick(): void; label: string }) {
-  return (
-    <button type="button" className="help-replay" onClick={onClick}>
-      <span aria-hidden="true">↻</span> replay
-      <span className="sr-only"> {label}</span>
-    </button>
-  );
-}
-
-export function GoChainAid() {
-  const stages = [
-    { key: 'one', head: 'PUZZLE 1', body: 'CRANE', note: 'Solved' },
-    { key: 'carry', head: '→', body: 'SEED EVIDENCE', note: 'Carried forward' },
-    { key: 'two', head: 'PUZZLE 2', body: 'CRANE', note: 'Does not spend an attempt' },
-  ] as const;
-  const { ref, step, play } = useTerminalSequence(stages.length);
-  return (
-    <figure
-      className="help-example help-chain help-sequence"
-      aria-labelledby="help-go-caption"
-      ref={ref as React.Ref<HTMLElement>}
-    >
-      <figcaption id="help-go-caption">
-        ONE ANSWER BECOMES THE NEXT PUZZLE&apos;S EVIDENCE
-      </figcaption>
-      <ol>
-        {stages.map((stage, index) => (
-          <li key={stage.key} data-reached={index < step ? 'true' : undefined}>
-            <span aria-hidden={stage.key === 'carry' ? 'true' : undefined}>{stage.head}</span>
-            <strong>{stage.body}</strong>
-            <small>{stage.note}</small>
-          </li>
-        ))}
-      </ol>
-      <ReplayButton onClick={play} label="the GO chain example" />
-    </figure>
-  );
-}
-
 /*
  * The evidence this aid teaches from, as real tiles. Deriving the verdicts from
  * `hardModeViolationForEvidence` rather than writing them out means the page cannot
