@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import {
   acceptPracticeRematch,
@@ -45,7 +45,7 @@ import type { EvidenceState } from '@/domain/game';
 import type { KeyboardFeedbackEvent } from '@/domain/feedback';
 import { isGuessRuleRejection } from '@/domain/feedback';
 import { historyRowSchema } from '@/domain/account-continuity';
-import { canClaimTimeout } from '@/domain/clock';
+import { shouldAutoSettleTimeout } from '@/domain/clock';
 import { rematchViewState } from '@/domain/combat-rematch';
 import { classifyServiceFailure } from '@/domain/service-failure';
 import { MatchUnavailable } from './match-unavailable';
@@ -54,6 +54,13 @@ import type { AccountHistoryRow } from '@/domain/account-continuity';
 import { WordDefinition } from '@/features/words/word-definition';
 import { ClockValue, useCombatClockReading } from './match-clock';
 import { MoveBoards } from './combat-transcript';
+
+/*
+ * How long to wait before re-offering an automatic timeout settlement the server refused.
+ * Long enough that a refusal costs nothing (this only runs while a clock is already at
+ * zero, which is rare), short enough that a match settles well inside a player's patience.
+ */
+const AUTO_SETTLE_RETRY_MS = 15_000;
 
 interface MatchState {
   authority: 0 | 1 | 2;
@@ -255,19 +262,37 @@ function MatchControllerInner({
         void playKeyboardSound(feedback.settings.keyboardSoundProfile, 'reject');
       }
       /*
-       * TIMEOUT_PENDING is the authority saying the opponent's clock has not actually
-       * run out yet — a refusal, not a failure. It reaches the client as the raw
-       * Postgres exception message, so it needs words a player can act on.
+       * W1. `timeout` is no longer something a player can ask for — it is issued only by
+       * the automatic settlement effect below. Every way it can be refused is an expected
+       * race: TIMEOUT_PENDING when this client's reading crossed zero a moment before the
+       * server's, TERMINAL or STATE_CONFLICT when the other seat's client settled first.
+       * None of them describes anything the player did or could act on, and announcing
+       * them into an assertive live region would interrupt a screen reader with noise
+       * attached to no user action. Refetch so a settlement by the other seat lands, and
+       * say nothing.
        */
+      if (kind === 'timeout') {
+        void match.refetch();
+        return;
+      }
       const raw = error instanceof Error ? error.message : '';
       setMessage(
-        raw.includes('TIMEOUT_PENDING')
-          ? 'Their clock has not run out yet.'
-          : raw || 'That action was not accepted.',
+        raw || 'That action was not accepted.',
       );
       void match.refetch();
     },
   });
+
+  /*
+   * Stable by construction: `mutate` keeps its identity across renders, so the effect
+   * that drives automatic settlement can hold an interval without tearing it down on
+   * every tick of the 250ms clock.
+   */
+  const mutateCommand = command.mutate;
+  const autoSettleTimeout = useCallback(
+    (done: () => void) => mutateCommand('timeout', { onSettled: done }),
+    [mutateCommand],
+  );
 
   const game = match.data?.game;
   useEffect(() => {
@@ -410,7 +435,7 @@ function MatchControllerInner({
           command.mutate('cancel');
         }
       }}
-      claimTimeout={() => command.mutate('timeout')}
+      autoSettleTimeout={autoSettleTimeout}
       settle={() => settle.mutate()}
       settlement={rankedPracticeSettlement}
       pending={command.isPending || settle.isPending}
@@ -756,7 +781,7 @@ function AuthoritativeMatch({
   submit,
   forfeit,
   cancel,
-  claimTimeout,
+  autoSettleTimeout,
   settle,
   settlement,
   pending,
@@ -769,7 +794,7 @@ function AuthoritativeMatch({
   submit(): void;
   forfeit(): void;
   cancel(): void;
-  claimTimeout(): void;
+  autoSettleTimeout(done: () => void): void;
   settle(): void;
   settlement: RankedPracticeSettlement | null;
   pending: boolean;
@@ -778,15 +803,66 @@ function AuthoritativeMatch({
   const terminal = game.outcome.terminal;
   const player = game.playerState[game.viewerSeat];
   const opponent = game.players.find((participant) => participant.seat !== game.viewerSeat);
-  const opponentSeat = game.viewerSeat === 'player-one' ? 'player-two' : 'player-one';
-  const opponentClock = useCombatClockReading(game, opponentSeat, observedAtMs);
-  const claimable = canClaimTimeout({
+  /*
+   * Read the clock of whoever is on move, not the opponent's: settlement is symmetric,
+   * so this client sends the command whether the seat that ran out is theirs or not.
+   * When nobody is on move the seat argument is irrelevant — `shouldAutoSettleTimeout`
+   * returns false on a missing `currentTurn` before the reading is consulted.
+   */
+  const activeClock = useCombatClockReading(
+    game,
+    game.currentTurn ?? game.viewerSeat,
+    observedAtMs,
+  );
+  const shouldSettle = shouldAutoSettleTimeout({
     status: game.status,
     terminal,
-    viewerSeat: game.viewerSeat,
     currentTurn: game.currentTurn,
-    opponentClock,
+    activeClock,
   });
+
+  /*
+   * W1. No control, no message — the match just ends, which is the owner's rule.
+   *
+   * Three properties carry this, and each one is load-bearing:
+   *
+   * 1. It is latched. `operationId()` mints a fresh UUID per call, so the server's
+   *    action-id ledger never dedupes a repeat: an unlatched effect would issue one real
+   *    RPC per 250ms clock tick, and every refusal calls `refetch()`, so it would build
+   *    into a request storm rather than settling anything.
+   * 2. It retries slowly instead of firing once. This client's reading can cross zero a
+   *    moment before the server's, and a single refused attempt would strand the match at
+   *    0:00 until someone reloaded.
+   * 3. It stops as soon as the state stops qualifying, because `shouldSettle` goes false
+   *    the instant the projection comes back terminal.
+   */
+  const settleAttempt = useRef({ inFlight: false, lastMs: 0 });
+  useEffect(() => {
+    if (!shouldSettle) {
+      settleAttempt.current.lastMs = 0;
+      return;
+    }
+    /*
+     * Throttled on wall-clock time held in a ref, not merely on an in-flight flag and
+     * not on the effect running once. That is deliberate: it makes the guarantee
+     * independent of whether `mutate` keeps its identity across renders. If it ever does
+     * not, this effect re-runs on every one of the four-per-second clock ticks, and an
+     * in-flight flag alone would let it fire again the instant each attempt resolved.
+     */
+    const fire = () => {
+      const state = settleAttempt.current;
+      if (state.inFlight || Date.now() - state.lastMs < AUTO_SETTLE_RETRY_MS) return;
+      state.inFlight = true;
+      state.lastMs = Date.now();
+      autoSettleTimeout(() => {
+        settleAttempt.current.inFlight = false;
+      });
+    };
+    fire();
+    const timer = window.setInterval(fire, AUTO_SETTLE_RETRY_MS);
+    return () => window.clearInterval(timer);
+  }, [shouldSettle, autoSettleTimeout]);
+
   const turn = game.currentTurn === game.viewerSeat && game.capabilities.canSubmitGuess;
   const visibleMoves = game.moves.filter(
     (move) => move.type === 'guess' && move.puzzleIndex === game.currentPuzzleIndex,
@@ -880,16 +956,6 @@ function AuthoritativeMatch({
       <p className="game-message" aria-live="assertive">
         {message}
       </p>
-      {claimable && (
-        <button
-          type="button"
-          className="combat-secondary-action"
-          onClick={claimTimeout}
-          disabled={pending}
-        >
-          CLAIM WIN ON TIME
-        </button>
-      )}
       {!terminal && game.capabilities.canCancel && (
         <button
           type="button"

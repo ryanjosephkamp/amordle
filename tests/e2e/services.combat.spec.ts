@@ -1915,11 +1915,18 @@ test.describe.serial('protected Preview services', () => {
     expect(await clockSeconds(firstPage, /player two time remaining/i)).toBe(300);
 
     /*
-     * A2. `timeout` is the authority's claim-a-win-on-time command, and the waiting
-     * player is allowed to send it: the server materializes the running clock before
-     * evaluating any command and declares the timeout itself. Sent early it must be
-     * refused with TIMEOUT_PENDING and leave the match untouched — which is what makes
-     * it safe to expose the claim control in the UI.
+     * W1. There is no longer any claim control: running out of time is the loss, and a
+     * client settles it automatically with no UI. Both halves of that are asserted here.
+     *
+     * The server refusal matters more now than it did when a player pressed a button.
+     * Automatic settlement fires off a *client-side* clock reading, which can cross zero
+     * a moment before the server's; the server materializing the real clock and refusing
+     * with TIMEOUT_PENDING, leaving the match byte-identical, is what stops a fast device
+     * from ending someone's match early. That is asserted against the real database here.
+     *
+     * The absence of the control is asserted directly below it. This is a timed ranked
+     * Practice match with a live opponent — precisely the state that used to render
+     * CLAIM WIN ON TIME.
      */
     {
       const { data: beforeClaim, error: beforeClaimError } = await admin
@@ -1936,7 +1943,7 @@ test.describe.serial('protected Preview services', () => {
         'save_amordle_combat_command_v2',
         {
           p_game_id: rankedPracticeGameId,
-          p_action_id: `${runId}-premature-timeout-claim`,
+          p_action_id: `${runId}-premature-timeout-settle`,
           p_expected_version: beforeClaim.state_version,
           p_expected_move_count: beforeClaim.move_count,
           p_command: 'timeout',
@@ -1951,10 +1958,12 @@ test.describe.serial('protected Preview services', () => {
       if (afterClaimError) throw afterClaimError;
       expect(afterClaim).toEqual(beforeClaim);
       await expect(firstPage.getByRole('button', { name: 'CLAIM WIN ON TIME' })).toHaveCount(0);
-      await event('premature_timeout_claim_refused', {
+      await expect(secondPage.getByRole('button', { name: 'CLAIM WIN ON TIME' })).toHaveCount(0);
+      await event('premature_timeout_settlement_refused', {
         scenarioId: rankedDailyScenarioId,
         gameId: rankedPracticeGameId,
         matchUnchanged: true,
+        claimControlAbsentBothSeats: true,
       });
     }
 

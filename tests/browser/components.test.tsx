@@ -840,6 +840,32 @@ describe('browser components', () => {
   });
 
   /*
+   * W1. The regression that put CLAIM WIN ON TIME onto untimed matches lived exactly
+   * here, at the seam between `readCombatClock` and `useCombatClockReading`: the hook
+   * derives `running` from turn ownership alone, with no reference to whether the lane is
+   * timed, so the seat on move in an untimed match reads as running — and the budget it
+   * is running against is absent, because the server strips the null out of the
+   * projection. Folding that absence into 0 made the seat expired.
+   *
+   * A unit test could not have caught it. It only appears when the hook's own `running`
+   * meets a projection with no budget, which is why this is asserted through the rendered
+   * component rather than against a hand-made clock reading.
+   */
+  it('never reports an untimed seat as out of time, however long the turn runs', async () => {
+    render(
+      <ClockValue
+        game={untimedMatchProjection()}
+        seat="player-one"
+        observedAtMs={Date.now() - 6 * 60 * 60 * 1000}
+      />,
+    );
+    const clock = page.getByLabelText('player one time remaining');
+    // Six hours into an untimed turn: idle, not expired. `expired` here is what used to
+    // render the claim control on a match with no clocks beside either player.
+    await expect.element(clock).toHaveAttribute('data-clock', 'idle');
+  });
+
+  /*
    * A3. The point of the taxonomy is that the panel tells the truth and does not offer a
    * retry that cannot succeed. A 404 stays a 404 however many times you press the button.
    */
@@ -927,6 +953,58 @@ function timedMatchProjection({
         puzzlesSolved: 0,
         timeRemainingMs: 300_000,
       },
+    },
+    capabilities: {
+      canJoin: false,
+      canSubmitGuess: true,
+      canAdvance: false,
+      canCancel: false,
+      canForfeit: true,
+      canSettleRating: false,
+    },
+    outcome: { terminal: false },
+  });
+}
+
+/*
+ * An untimed lane exactly as the server sends one: no `timeLimitMs`, no `turnStartedAt`,
+ * and no `timeRemainingMs` on either seat. All three are emitted as null and removed by
+ * `jsonb_strip_nulls`, so the client never sees the keys at all.
+ */
+function untimedMatchProjection() {
+  const serverNow = '2026-08-08T12:00:00.000Z';
+  return combatProjectionSchema.parse({
+    schemaVersion: 2,
+    authorityVersion: 2,
+    id: 'amordle-combat-v2-untimed',
+    scope: 'practice',
+    mode: 'og',
+    sourceKind: 'queue',
+    visibilityKind: 'public',
+    wordLength: 5,
+    difficulty: 'standard',
+    hardMode: false,
+    ranked: false,
+    status: 'playing',
+    version: 4,
+    moveCount: 2,
+    serverNow,
+    createdAt: '2026-08-08T06:00:00.000Z',
+    startedAt: '2026-08-08T06:00:00.000Z',
+    updatedAt: serverNow,
+    currentTurn: 'player-one',
+    currentPuzzleIndex: 0,
+    attemptBudget: 6,
+    viewerSeat: 'player-one',
+    players: [
+      { seat: 'player-one', displayName: 'You' },
+      { seat: 'player-two', displayName: 'Rival' },
+    ],
+    moves: [],
+    seededRows: [],
+    playerState: {
+      'player-one': { points: 0, attemptsThisPuzzle: 1, puzzlesSolved: 0 },
+      'player-two': { points: 0, attemptsThisPuzzle: 1, puzzlesSolved: 0 },
     },
     capabilities: {
       canJoin: false,

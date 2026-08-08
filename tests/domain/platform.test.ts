@@ -7,7 +7,7 @@ import {
   selectRevealPosition,
   xpFloorForLevel,
 } from '@/domain/economy';
-import { canClaimTimeout, formatClock, readCombatClock } from '@/domain/clock';
+import { formatClock, readCombatClock, shouldAutoSettleTimeout } from '@/domain/clock';
 import { rematchViewState } from '@/domain/combat-rematch';
 import { classifyServiceFailure, serviceFailureIsRetryable } from '@/domain/service-failure';
 import { acceptsExpectedState, terminalPrecedence } from '@/domain/multiplayer';
@@ -136,7 +136,19 @@ describe('platform domains', () => {
     // Degrade rather than render NaN when the anchor is absent or malformed.
     expect(readCombatClock({ ...base, turnStartedAt: undefined }).remainingMs).toBe(300_000);
     expect(readCombatClock({ ...base, serverNow: 'not-a-date' }).remainingMs).toBe(300_000);
-    expect(readCombatClock({ ...base, durableRemainingMs: null }).expired).toBe(true);
+    /*
+     * W1. This previously asserted `expired === true`, pinning the defect in place: an
+     * untimed lane sends no budget at all, and folding that absence into 0 made every
+     * untimed seat read as out of time. A seat with no budget has no time to run out of.
+     */
+    expect(readCombatClock({ ...base, durableRemainingMs: null })).toEqual({
+      remainingMs: 0,
+      running: false,
+      expired: false,
+    });
+    expect(readCombatClock({ ...base, durableRemainingMs: undefined }).expired).toBe(false);
+    // A real budget of zero is a different thing entirely, and still expires.
+    expect(readCombatClock({ ...base, durableRemainingMs: 0 }).expired).toBe(true);
     expect(readCombatClock({ ...base, nowMs: 1_400_000 })).toEqual({
       remainingMs: 0,
       running: true,
@@ -149,36 +161,49 @@ describe('platform domains', () => {
   });
 
   /*
-   * A2. Only the waiting player is offered the claim, and only once the seat on move
-   * has visibly run out. The server re-derives expiry, so this gates the control, not
-   * the outcome.
+   * W1. Running out of time is the loss, so nobody claims it — a client settles it
+   * automatically. The predicate is symmetric: it asks whether the seat ON MOVE has run
+   * out, so whichever client is watching sends the command, including the client of the
+   * player who lost.
+   *
+   * The test this replaces asserted that "an untimed lane never produces a running
+   * clock" and hand-fed `running: false` to prove it. Reality disagreed —
+   * `useCombatClockReading` derives `running` from turn ownership alone, with no
+   * reference to whether the lane is timed — and that false premise is exactly what let
+   * the control ship onto untimed matches. So the untimed case is now built from
+   * `readCombatClock` rather than asserted about a hand-made reading.
    */
-  it('offers a timeout claim only to the waiting player of an exhausted turn', () => {
+  it('settles a timeout automatically for whichever seat on move has run out', () => {
     const expired = { remainingMs: 0, running: true, expired: true } as const;
     const live = { remainingMs: 42_000, running: true, expired: false } as const;
     const base = {
       status: 'playing',
       terminal: false,
-      viewerSeat: 'player-one',
       currentTurn: 'player-two',
-      opponentClock: expired,
+      activeClock: expired,
     } as const;
-    expect(canClaimTimeout(base)).toBe(true);
+    expect(shouldAutoSettleTimeout(base)).toBe(true);
+    // Symmetric: your own exhausted turn settles too. You lose; that is the rule.
+    expect(shouldAutoSettleTimeout({ ...base, currentTurn: 'player-one' })).toBe(true);
     // Their clock is still running.
-    expect(canClaimTimeout({ ...base, opponentClock: live })).toBe(false);
-    // You are the one on move — your own expiry is not yours to claim.
-    expect(canClaimTimeout({ ...base, currentTurn: 'player-one' })).toBe(false);
+    expect(shouldAutoSettleTimeout({ ...base, activeClock: live })).toBe(false);
     // Nobody is on move, or the match already ended.
-    expect(canClaimTimeout({ ...base, currentTurn: undefined })).toBe(false);
-    expect(canClaimTimeout({ ...base, terminal: true })).toBe(false);
-    expect(canClaimTimeout({ ...base, status: 'holding' })).toBe(false);
-    // An untimed lane never produces a running clock, so it never offers the claim.
-    expect(
-      canClaimTimeout({
-        ...base,
-        opponentClock: { remainingMs: 0, running: false, expired: true },
-      }),
-    ).toBe(false);
+    expect(shouldAutoSettleTimeout({ ...base, currentTurn: undefined })).toBe(false);
+    expect(shouldAutoSettleTimeout({ ...base, terminal: true })).toBe(false);
+    expect(shouldAutoSettleTimeout({ ...base, status: 'holding' })).toBe(false);
+
+    // An untimed lane, built the way the app actually builds it: no budget, and
+    // `running` true because this seat is on move. It must never settle.
+    const untimed = readCombatClock({
+      durableRemainingMs: null,
+      running: true,
+      turnStartedAt: undefined,
+      serverNow: '2026-08-08T12:00:00.000Z',
+      observedAtMs: 1_000_000,
+      nowMs: 9_000_000,
+    });
+    expect(untimed.expired).toBe(false);
+    expect(shouldAutoSettleTimeout({ ...base, activeClock: untimed })).toBe(false);
   });
 
   /*

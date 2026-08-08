@@ -33,7 +33,22 @@ export interface CombatClockInput {
  * anchor on every refetch, so returning to a backgrounded tab restored the full budget.
  */
 export function readCombatClock(input: CombatClockInput): CombatClockReading {
-  const durable = Math.max(0, input.durableRemainingMs ?? 0);
+  /*
+   * W1. An untimed lane has no budget at all — the server emits the field as null and
+   * `jsonb_strip_nulls` removes it, so it arrives as `undefined`. Folding that absence
+   * into `0` made `expired` true for every seat of every untimed match, which is what
+   * put CLAIM WIN ON TIME onto matches with no clocks beside either player. `ClockValue`
+   * hid the symptom because it is gated on `timeRemainingMs != null`; nothing gated the
+   * claim. A seat with no budget has not run out of time — it has no time to run out of.
+   *
+   * Note that `running` cannot be relied on to catch this: it is computed in
+   * `useCombatClockReading` purely from turn ownership, with no reference to whether the
+   * lane is timed, so the seat on move in an untimed match really does read as running.
+   */
+  if (input.durableRemainingMs == null) {
+    return { remainingMs: 0, running: false, expired: false };
+  }
+  const durable = Math.max(0, input.durableRemainingMs);
   if (!input.running) return { remainingMs: durable, running: false, expired: durable <= 0 };
 
   const turnStartedAtMs = input.turnStartedAt ? Date.parse(input.turnStartedAt) : Number.NaN;
@@ -48,21 +63,31 @@ export function readCombatClock(input: CombatClockInput): CombatClockReading {
 }
 
 /*
- * Only the player who is waiting may offer to claim, and only once the seat on move
- * has visibly run out. The server re-derives expiry from its own clock, so this is a
- * gate on offering the control, never on the outcome — a premature claim is refused
- * with TIMEOUT_PENDING and changes nothing.
+ * W1. Running out of time IS the loss — there is no claim, no discussion and no button.
+ * But the server only materialises a timeout inside `save_amordle_combat_command_v2`,
+ * when some command arrives, and no scheduled job exists anywhere; so a match whose
+ * player walked away would sit at 0:00 forever unless a client sends one. This is the
+ * predicate for sending it automatically.
+ *
+ * It is deliberately symmetric — it asks whether the seat ON MOVE has run out, not
+ * whether the opponent has. Whichever client is watching settles it, including the
+ * client of the player who lost. That is the owner's rule applied honestly, and it
+ * settles sooner than waiting for the other seat to notice. It costs nothing in
+ * fairness: the server reaches the same outcome the moment the late player submits
+ * anything at all, because clock materialisation runs ahead of the turn check.
+ *
+ * This gates when to ASK, never the outcome. The server re-derives expiry from its own
+ * clock and refuses a premature request with TIMEOUT_PENDING, changing nothing.
  */
-export function canClaimTimeout(input: {
+export function shouldAutoSettleTimeout(input: {
   status: string;
   terminal: boolean;
-  viewerSeat: 'player-one' | 'player-two';
   currentTurn?: 'player-one' | 'player-two' | undefined;
-  opponentClock: CombatClockReading;
+  activeClock: CombatClockReading;
 }): boolean {
   if (input.terminal || input.status !== 'playing') return false;
-  if (!input.currentTurn || input.currentTurn === input.viewerSeat) return false;
-  return input.opponentClock.running && input.opponentClock.expired;
+  if (!input.currentTurn) return false;
+  return input.activeClock.running && input.activeClock.expired;
 }
 
 export function formatClock(milliseconds: number): string {
