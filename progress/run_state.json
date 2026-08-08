@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v7.2-help-and-match-setup",
-  "status": "hosted-acceptance-green-pending-owner-review",
+  "currentCheckpoint": "stage-2-v7.2-owner-accepted",
+  "status": "owner-accepted",
   "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -772,6 +772,15 @@
     "zeroResidue": true,
     "authResidue": 0,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "productionReleaseAuthorized": false
+  },
+  "v7_2OwnerAcceptance": {
+    "acceptedAt": "2026-08-08T02:00:00Z",
+    "acceptedCommit": "3d7e99b",
+    "acceptedTag": "amordle-stage2-v7.2-help-and-match-setup-golden-2026-08-08",
+    "reviewBasis": "owner tested the protected Preview amordle-ffj16pv6j after hosted acceptance came back green",
+    "ownerStatement": "Everything looks good; nothing implemented incorrectly. The Hard Mode interactive aid is basically perfect and stays as is. The game is nearly complete in terms of the reported items.",
+    "regressionReportedAtAcceptance": "the CLAIM WIN ON TIME control added in v7.1 shows on untimed matches, because readCombatClock treats a null time budget as 0 and therefore as expired. The owner wants the control removed entirely rather than gated - see docs/v7.3-intake/.",
     "productionReleaseAuthorized": false
   }
 }
