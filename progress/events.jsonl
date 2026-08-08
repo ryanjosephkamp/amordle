@@ -74,3 +74,6 @@
 {"at": "2026-08-07T21:24:21Z", "kind": "v7_1_hosted_caught_build_stamp_defect", "detail": "the first hosted run failed the new service-worker test: vercel build sets VERCEL_GIT_COMMIT_SHA empty and ?? passed it through, so every deploy would have shared amordle-shell-dev and the cache fix would have been inert; no service mutation occurred"}
 {"at": "2026-08-07T22:30:00Z", "kind": "v7_1_owner_accepted", "detail": "owner tested the Preview and accepted all v7.1 work at c5275d9; Production still unauthorized"}
 {"at": "2026-08-07T22:30:01Z", "kind": "grey_alerts_badge_explained", "detail": "owner identified it as the hover state; confirmed in source at tui-shell.css:321 and measured 6.93:1 at rest vs 2.89:1 hovered. Carried into v7.2."}
+{"at": "2026-08-08T00:57:00Z", "kind": "v7_2_hosted_acceptance_green", "detail": "services 3, visual 22, parity 237 at amordle-ffj16pv6j for 0f1479e; zero residue on attempt 1, authResidue 0; Production untouched"}
+{"at": "2026-08-08T00:57:01Z", "kind": "v7_2_second_contrast_defect_found", "detail": "the new hover sweep found notification row date/time at 1.94:1 hovered, unreported and unrelated to the badge; fixed to 10.73:1"}
+{"at": "2026-08-08T00:57:02Z", "kind": "v7_2_help_aids_cost", "detail": "/help ships 2860 more compressed bytes of JS than Home; Help styling adds 380 bytes of CSS to every route"}

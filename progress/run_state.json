@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v7.1-owner-accepted",
-  "status": "owner-accepted",
+  "currentCheckpoint": "stage-2-v7.2-help-and-match-setup",
+  "status": "hosted-acceptance-green-pending-owner-review",
   "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -700,6 +700,78 @@
       "greyAlertsBadge": "EXPLAINED by the owner and confirmed in source: it is the hover state. tui-shell.css:321 button:hover :is(p, small, span) { color: inherit } outranks .attention-badge, so the badge inherits the trigger button --muted grey. Measured 6.93:1 at rest, 2.89:1 on hover. On touch the hover state sticks after a tap, which is why the mobile screenshot showed it persistently. Carried into v7.2.",
       "matchUnavailable": "owner could not reproduce it either and judges it transient/server-related; explicitly deferred rather than closed"
     },
+    "productionReleaseAuthorized": false
+  },
+  "v7_2Pass": {
+    "intakeArtifact": "https://claude.ai/code/artifact/6da40e73-00a0-4b0a-a389-2c540767aeea",
+    "report": "reports/v7.2-help-and-match-setup-2026-08-08/README.md",
+    "baseCommit": "3636efc",
+    "revertPoint": "amordle-stage2-v7.1-refinement-pass-golden-2026-08-07 -> 3636efc",
+    "scope": "five owner items: alerts badge hover contrast, Practice COMBAT word length selector, removal of the Change word length link, Help evidence tile presentation, and dynamic/interactive Help teaching aids",
+    "migrationsAdded": 0,
+    "authorityMutationRequired": false,
+    "immutableMigrations": 45,
+    "bootstrapFiles": "107/107",
+    "httpInterfaces": 3,
+    "intakeClaimsCorrected": [
+      "C3: the color:inherit rule harms exactly one surface, not many. Its .button.primary branches are dead (no primary button contains a p/small/span) and the aria-current/aria-pressed branches are covered by narrower rules. The rule also beat the forced-colors override for the badge, since a media query adds no specificity, and the test thought to guard it measures .route-link, an <a> the selector cannot match.",
+      "C4: Help tile colours were missing at every width, not only on mobile, and geometry was missing too - the glyphs sat under the letters rather than in the tile corner. Both tile-bearing aids were affected, not just the reported one."
+    ],
+    "secondDefectFoundByTheNewTest": "hovering a notification row flips it to the inverse surface while the date and time keep their own muted ink - <time> is not in the inherit rule element list, so nothing corrected it. Measured 1.94:1, now 10.73:1.",
+    "contrastRepairs": {
+      "alertsBadgeHover": "6.93:1 at rest but 2.89:1 hovered across every accent; on touch the hover latches after a tap so it persisted. Now 6.93:1 in both states.",
+      "notificationRowHover": "1.94:1 hovered; now 10.73:1 via --terminal-selected-muted, the token that already exists for secondary text on a selected surface."
+    },
+    "helpAidsDesign": "finished state is the initial state - aids render fully resolved on the server and only wind back if a client that can animate scrolls them into view, so no-JS, no IntersectionObserver, reduced motion and crawlers all get the complete figure. Nothing animates by fading text, so every word stays legible mid sequence and the contrast sweep never samples a half-faded colour.",
+    "hardModeAidUsesRealRule": "hardModeViolationForEvidence from src/domain/game.ts judges the four candidates; one acceptance and all three refusal families are asserted against its real messages.",
+    "remotionRejected": "Remotion renders video in a build step: megabytes for something the app draws natively, and it cannot respond to prefers-reduced-motion or a keyboard. In-page state-driven animation was used instead.",
+    "costMeasured": {
+      "helpRouteJsOverHome": "2860 compressed bytes",
+      "cssPerRouteAdded": "380 bytes"
+    },
+    "coverageGapsClosed": [
+      "the accent-surface sweep measured custom accents only, at rest only, and mounted the badge outside any button where the rule cannot match; it now mounts the real structure, forces rest/hover/focus-visible via CDP, and covers named accents too",
+      "/help had no reduced-motion or forced-colors coverage at all; both added, asserting the aids rest complete rather than mid-sequence",
+      "Hard Mode aid interaction, including keyboard operation"
+    ],
+    "localAcceptance": {
+      "check": "green",
+      "domainTests": 144,
+      "browserComponentTests": 29,
+      "fixtureE2E": 23,
+      "visualE2E": 22,
+      "parityRows": 237,
+      "mpAuditRows": 73,
+      "bootstrapFiles": "107/107",
+      "homeCompressedBytes": {
+        "js": 193110,
+        "css": 22836
+      },
+      "gameCompressedBytes": {
+        "js": 198828,
+        "css": 27195
+      }
+    },
+    "productionReleaseAuthorized": false
+  },
+  "v7_2HostedAcceptance": {
+    "status": "green",
+    "completedAt": "2026-08-08T00:57:00Z",
+    "runId": "e2e_20260808T005427312Z_0f1479e7_72972ee6",
+    "commit": "0f1479e700af169a70c406fd977e7ef03fd1882e",
+    "deploymentId": "dpl_Cz6fCwtmNgGgnzXi3vqtpPq36Yf6",
+    "preview": "https://amordle-ffj16pv6j-ryanjosephkamps-projects.vercel.app",
+    "previewProtected": true,
+    "deployMethod": "vercel build + vercel deploy --prebuilt",
+    "serviceE2E": 3,
+    "visualE2E": 22,
+    "verifiedParityRows": 237,
+    "fixtureE2E": "passed; the exact count was not captured because the run output was tailed",
+    "newHostedAssertion": "the Practice COMBAT word length field seeds from the route, rejects out-of-range input, and disables both submit paths until the value is legal",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "authResidue": 0,
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
   }
 }
