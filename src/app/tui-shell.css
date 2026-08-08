@@ -42,6 +42,14 @@
   --key-absent-border: oklch(0.34 0.018 220);
   --key-absent-ink: oklch(0.96 0.006 210);
   --danger: oklch(0.56 0.19 28);
+  /*
+   * W4b. The ink counterpart to `--danger`, completing the pair that `--correct-text` and
+   * `--present-text` already establish. `--danger` is tuned to sit on the page background,
+   * where it measures 4.77:1 — but a history row flips to `--accent-soft` on hover, and
+   * there the same red drops to 3.76:1. Every semantic fill in this system has a darker
+   * text sibling for exactly this reason; red was the one that never needed it until now.
+   */
+  --danger-text: oklch(0.42 0.16 28);
   --attention-background: var(--accent);
   --attention-ink: var(--accent-ink);
   --focus: oklch(0.58 0.15 165);
@@ -180,6 +188,7 @@
     --key-absent-border: oklch(0.34 0.018 220);
     --key-absent-ink: oklch(0.94 0.008 205);
     --danger: oklch(0.7 0.18 28);
+    --danger-text: oklch(0.8 0.13 28);
     --attention-background: var(--accent);
     --attention-ink: var(--accent-ink);
     --focus: oklch(0.77 0.14 165);
@@ -1564,6 +1573,32 @@ th {
 
 tbody tr:hover {
   background: var(--accent-soft);
+}
+
+/*
+ * W4b. RESULT was plain text. Colour is redundant emphasis here, never the signal — the
+ * word `won`, `lost`, `draw` or `cancelled` is always present and is what a screen reader
+ * announces.
+ *
+ * No new token was needed, and the obvious choice would have been wrong. `--present` is
+ * the amber fill and measures 2.71:1 as text in light scheme, which is exactly the
+ * wash-out the owner flagged; `--present-text` is its ink counterpart at 8.61:1 light and
+ * 11.56:1 dark. Stats already chose amber for draw (`.result-composition-track .is-draw`),
+ * so this agrees with a decision the app had already made.
+ *
+ * `cancelled` deliberately has no colour. Nobody won and nobody lost, and giving it one
+ * would put an abandoned match on the same visual footing as a real outcome.
+ */
+.responsive-table td[data-result='won'] {
+  color: var(--correct-text);
+}
+
+.responsive-table td[data-result='lost'] {
+  color: var(--danger-text);
+}
+
+.responsive-table td[data-result='draw'] {
+  color: var(--present-text);
 }
 
 .route-grid,

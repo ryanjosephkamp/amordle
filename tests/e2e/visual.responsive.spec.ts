@@ -1584,6 +1584,152 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(carets.locked.content, "no caret during the opponent's turn").toBe('none');
   });
 
+  /*
+   * W4. `/history` is swept, but signed out, where it is only the account gate — so the
+   * completed-game table has never been measured at all. Both stylesheets ship globally,
+   * so the real rules apply to a mounted probe.
+   *
+   * Note the card is a MOBILE presentation: the two-column label/value grid exists only
+   * below 47.99rem. Above that it is an ordinary table where the link already aligned,
+   * which is why the reported defect is width-dependent.
+   */
+  const historyRowMarkup =
+    '<div class="table-scroll"><table class="responsive-table"><tbody>' +
+    '<tr data-history-probe-row>' +
+    '<td data-label="Date">8/8/2026</td>' +
+    '<td data-label="Game">solo practice · OG</td>' +
+    '<td data-label="Result" data-result="won">won</td>' +
+    '<td data-label="Progress">1 solved · 4 guesses</td>' +
+    '<td data-label="Reward">12 coins · 30 XP</td>' +
+    '<td data-label="Status">Synced</td>' +
+    '<td data-label="Definitions"><button type="button" class="text-action">Definition</button></td>' +
+    '</tr>' +
+    '<tr><td data-label="Result" data-result="lost">lost</td></tr>' +
+    '<tr><td data-label="Result" data-result="draw">draw</td></tr>' +
+    '<tr><td data-label="Result" data-result="cancelled">cancelled</td></tr>' +
+    '</tbody></table></div>';
+
+  test('every history value shares its label row and column, definitions included', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 390, height: 844 });
+    await page.goto('/');
+    const cells = await page.evaluate((markup) => {
+      const host = document.createElement('div');
+      host.setAttribute('data-history-probe', 'true');
+      host.innerHTML = markup;
+      document.body.append(host);
+      const row = host.querySelector('[data-history-probe-row]')!;
+      // Measure the painted text itself with a Range, not the element box: the value is a
+      // bare text node in six cells and a <button> in the seventh, and comparing element
+      // boxes would compare two different things.
+      return Array.from(row.querySelectorAll('td')).map((cell) => {
+        const walker = document.createTreeWalker(cell, NodeFilter.SHOW_TEXT);
+        let node = walker.nextNode();
+        while (node && !(node.textContent ?? '').trim()) node = walker.nextNode();
+        const range = document.createRange();
+        range.selectNodeContents(node!);
+        const text = range.getBoundingClientRect();
+        const box = cell.getBoundingClientRect();
+        return {
+          label: cell.getAttribute('data-label')!,
+          left: Math.round(text.left - box.left),
+          offsetFromRowCentre: Math.round(text.top + text.height / 2 - (box.top + box.height / 2)),
+        };
+      });
+    }, historyRowMarkup);
+    await page.evaluate(() => document.querySelector('[data-history-probe]')?.remove());
+
+    const detail = cells.map((c) => `${c.label} left=${c.left} dy=${c.offsetFromRowCentre}`);
+    const lefts = new Set(cells.map((cell) => cell.left));
+    expect(lefts.size, `values must share one column edge — ${detail.join(' | ')}`).toBe(1);
+    for (const cell of cells) {
+      expect(
+        Math.abs(cell.offsetFromRowCentre),
+        `${cell.label} must sit on its label's row — ${detail.join(' | ')}`,
+      ).toBeLessThanOrEqual(1);
+    }
+  });
+
+  for (const scheme of contrastSchemes) {
+    test(`history result colours stay legible at rest and under the row hover (${scheme})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto('/');
+      await page.addStyleTag({
+        content:
+          '*, *::before, *::after { transition: none !important; animation: none !important }',
+      });
+      const client = await page.context().newCDPSession(page);
+      await client.send('DOM.enable');
+      await client.send('CSS.enable');
+      await page.evaluate((markup) => {
+        const host = document.createElement('div');
+        host.setAttribute('data-history-probe', 'true');
+        host.innerHTML = markup;
+        document.body.append(host);
+      }, historyRowMarkup);
+
+      const failures: string[] = [];
+      const { root } = await client.send('DOM.getDocument', { depth: -1 });
+      const { nodeIds } = await client.send('DOM.querySelectorAll', {
+        nodeId: root.nodeId,
+        selector: '[data-history-probe] tbody tr',
+      });
+      /*
+       * Swept across every accent, named and custom, because `tbody tr:hover` flips the
+       * row to `--accent-soft` — an accent-derived surface. A verdict colour that reads
+       * against the page can still fail once a pointer lands on it, which is how the
+       * first version of this caught `--danger` at 3.76:1 and produced `--danger-text`.
+       */
+      const accents: Array<{ label: string; hex: string | null }> = [
+        ...contrastAccents.map((name) => ({ label: name, hex: null })),
+        ...contrastCustomHexes.map((hex) => ({ label: `custom ${hex}`, hex })),
+      ];
+      for (const accent of accents) {
+        const variables = accent.hex ? accentCssVariableMap(accent.hex) : null;
+        await page.evaluate(
+          ({ name, values }) => {
+            const root2 = document.documentElement;
+            for (const key of Array.from(root2.style)) {
+              if (key.startsWith('--custom-')) root2.style.removeProperty(key);
+            }
+            root2.dataset.accent = name;
+            for (const [property, value] of Object.entries(values ?? {})) {
+              root2.style.setProperty(property, value);
+            }
+          },
+          { name: accent.hex ? 'custom' : accent.label, values: variables },
+        );
+        for (const state of ['rest', 'hover'] as const) {
+          for (const nodeId of nodeIds) {
+            await client
+              .send('CSS.forcePseudoState', {
+                nodeId,
+                forcedPseudoClasses: state === 'rest' ? [] : [state],
+              })
+              .catch(() => undefined);
+          }
+          const results = await page.evaluate(
+            measureControlContrast,
+            '[data-history-probe] td[data-result]',
+          );
+          for (const result of results) {
+            if (result.ok) continue;
+            failures.push(
+              `${scheme} · ${accent.label} · ${state} · ${result.label} — ` +
+                `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
+                `fg ${result.color} on bg ${result.background}`,
+            );
+          }
+        }
+      }
+      await page.evaluate(() => document.querySelector('[data-history-probe]')?.remove());
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
   test('200 percent reflow, reduced motion, and forced colors preserve operation', async ({
     page,
   }, testInfo) => {

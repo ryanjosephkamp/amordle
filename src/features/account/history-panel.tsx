@@ -94,7 +94,15 @@ function HistoryInner() {
                 <td data-label="Game">
                   {row.entry.kind.replaceAll('-', ' ')} · {row.entry.mode.toUpperCase()}
                 </td>
-                <td data-label="Result">{row.entry.result}</td>
+                {/*
+                 * W4b. Colour is carried on the cell, not on a wrapper element, so the
+                 * mobile card's `::before` label is unaffected — it sets `--muted`
+                 * explicitly and so keeps its own ink rather than inheriting the verdict.
+                 * The word itself always remains, so colour is never the only signal.
+                 */}
+                <td data-label="Result" data-result={row.entry.result}>
+                  {row.entry.result}
+                </td>
                 <td data-label="Progress">
                   {row.entry.puzzlesSolved === null
                     ? `${row.entry.acceptedGuesses} guesses`
@@ -106,8 +114,14 @@ function HistoryInner() {
                     : `${row.entry.rewardCoins} coins · ${row.entry.rewardXp} XP`}
                 </td>
                 <td data-label="Status">{pendingIds.has(row.id) ? 'Sync pending' : 'Synced'}</td>
+                {/*
+                 * W4a. `HistoryDefinitions` renders nothing when a v3 row happens to have
+                 * no revealed answers, which left a DEFINITIONS label on the mobile card
+                 * with an empty column beside it. The em-dash branch already existed for
+                 * older rows; the emptiness test just has to reach it.
+                 */}
                 <td data-label="Definitions">
-                  {row.entry.schemaVersion === 3 ? (
+                  {row.entry.schemaVersion === 3 && row.entry.revealedAnswers.length ? (
                     <HistoryDefinitions words={row.entry.revealedAnswers} />
                   ) : (
                     '—'

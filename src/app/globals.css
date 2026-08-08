@@ -1476,10 +1476,30 @@ button.calendar-day.is-selected {
     display: grid;
     min-width: 0;
     grid-template-columns: 7rem minmax(0, 1fr);
+    align-items: center;
     gap: var(--space-4);
     border-bottom: 0;
     padding: var(--space-3) var(--space-4);
     overflow-wrap: anywhere;
+  }
+
+  /*
+   * W4a. Every value on this card is a bare text node except the definitions link, which
+   * is a <button>. That one difference produced the whole defect: a text node becomes an
+   * anonymous grid item that hugs the start edge, while a button becomes a real grid item
+   * at the initial `stretch`, filling the column and the row — and `button` carries
+   * `display: inline-flex; justify-content: center; align-items: center`, so its label
+   * centred itself horizontally and sat about 10px below the label's baseline.
+   *
+   * Three declarations, one per cause, and `align-items: center` on the cell above so the
+   * label meets it. The 2.5rem `min-height` from `.text-action` is deliberately left
+   * alone: this is the mobile card, where shrinking a touch target to fix an alignment
+   * problem would be a poor trade.
+   */
+  .responsive-table td > .text-action {
+    justify-self: start;
+    justify-content: flex-start;
+    padding-inline: 0;
   }
 
   .responsive-table td::before {
