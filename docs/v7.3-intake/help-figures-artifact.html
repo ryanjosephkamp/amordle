@@ -1,0 +1,812 @@
+<title>Amordle — Help page animations, v7.3 review</title>
+
+<!--
+  PORT NOTE — this file is the design surface for W5. Everything inside a block marked
+  "PORT → <path>" is written to move into the app almost unchanged. Tokens, scoreGuess,
+  mergeEvidence, deriveKeyboardEvidence and every class name are copied verbatim from the
+  repository so the figures cannot drift from the real game.
+-->
+
+<style>
+/* ============================================================================
+   PORT → none. Artifact chrome only: the review page's own furniture.
+   ========================================================================= */
+*, *::before, *::after { box-sizing: border-box; }
+
+/* ============================================================================
+   PORT → already in src/app/tui-shell.css. Copied verbatim so the figures are
+   coloured by the real token layer. Do NOT hand-tune anything here.
+   ========================================================================= */
+:root {
+  /*
+   * ARTIFACT ONLY — do not port. `--tui-font` below is byte-identical to the app, and it
+   * references `--font-geist-mono`, which Next's font loader defines at runtime. Outside
+   * the app that variable does not exist, and a single invalid var() invalidates the
+   * WHOLE font-family declaration — which silently rendered this entire page in serif
+   * until it was looked at. Defining it here keeps --tui-font unmodified.
+   */
+  --font-geist-mono: ui-monospace;
+  --tui-font: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, var(--font-geist-mono), monospace;
+  --text-1: 0.6875rem; --text-2: 0.75rem; --text-3: 0.875rem;
+  --text-4: 1.0625rem; --text-5: 1.3125rem; --text-6: 1.6875rem;
+  --space-1: 0.125rem; --space-2: 0.25rem; --space-3: 0.5rem; --space-4: 0.75rem;
+  --space-5: 1rem; --space-6: 1.5rem; --space-7: 2.5rem;
+
+  --background: oklch(0.975 0.006 220);
+  --surface: oklch(0.955 0.008 220);
+  --surface-inset: oklch(0.99 0.003 220);
+  --ink: oklch(0.19 0.018 225);
+  --muted: oklch(0.42 0.018 225);
+  --border: oklch(0.68 0.02 220);
+  --accent: oklch(0.66 0.14 165);
+  --accent-text: oklch(0.4 0.12 165);
+  --accent-soft: oklch(0.89 0.045 165);
+  --correct: oklch(0.57 0.14 145);
+  --correct-text: oklch(0.39 0.13 145);
+  --present: oklch(0.68 0.14 85);
+  --present-text: oklch(0.4 0.11 85);
+  --absent: oklch(0.55 0.018 220);
+  --removed: oklch(0.5 0.06 25);
+  --key-unknown-background: oklch(0.84 0.04 165);
+  --key-unknown-border: oklch(0.54 0.08 165);
+  --key-unknown-ink: oklch(0.18 0.03 175);
+  --key-absent-background: oklch(0.18 0.01 220);
+  --key-absent-border: oklch(0.34 0.018 220);
+  --key-absent-ink: oklch(0.96 0.006 210);
+  --danger: oklch(0.56 0.19 28);
+  --focus: oklch(0.58 0.15 165);
+  --terminal-selected: oklch(0.24 0.025 225);
+  --terminal-selected-ink: oklch(0.98 0.004 220);
+  --terminal-rule: 1px solid var(--border);
+  --control-height: 2.75rem;
+}
+
+/* Dark scheme, written twice: once for the OS preference and once for the viewer's
+   explicit toggle, so the toggle wins in both directions. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --background: oklch(0.12 0.012 225);
+    --surface: oklch(0.16 0.014 225);
+    --surface-inset: oklch(0.105 0.01 225);
+    --ink: oklch(0.91 0.008 205);
+    --muted: oklch(0.67 0.014 210);
+    --border: oklch(0.38 0.018 220);
+    --accent: oklch(0.76 0.13 165);
+    --accent-text: oklch(0.8 0.12 165);
+    --accent-soft: oklch(0.25 0.045 165);
+    --correct: oklch(0.7 0.15 145);
+    --correct-text: oklch(0.79 0.13 145);
+    --present: oklch(0.78 0.14 85);
+    --present-text: oklch(0.82 0.11 85);
+    --absent: oklch(0.47 0.018 220);
+    --removed: oklch(0.65 0.07 25);
+    --key-unknown-background: oklch(0.24 0.05 165);
+    --key-unknown-border: oklch(0.48 0.09 165);
+    --key-unknown-ink: oklch(0.94 0.01 210);
+    --key-absent-background: oklch(0.11 0.01 220);
+    --key-absent-border: oklch(0.34 0.018 220);
+    --key-absent-ink: oklch(0.94 0.008 205);
+    --danger: oklch(0.7 0.18 28);
+    --focus: oklch(0.77 0.14 165);
+    --terminal-selected: oklch(0.9 0.008 205);
+    --terminal-selected-ink: oklch(0.13 0.015 225);
+  }
+}
+:root[data-theme='dark'] {
+  --background: oklch(0.12 0.012 225);
+  --surface: oklch(0.16 0.014 225);
+  --surface-inset: oklch(0.105 0.01 225);
+  --ink: oklch(0.91 0.008 205);
+  --muted: oklch(0.67 0.014 210);
+  --border: oklch(0.38 0.018 220);
+  --accent: oklch(0.76 0.13 165);
+  --accent-text: oklch(0.8 0.12 165);
+  --accent-soft: oklch(0.25 0.045 165);
+  --correct: oklch(0.7 0.15 145);
+  --correct-text: oklch(0.79 0.13 145);
+  --present: oklch(0.78 0.14 85);
+  --present-text: oklch(0.82 0.11 85);
+  --absent: oklch(0.47 0.018 220);
+  --removed: oklch(0.65 0.07 25);
+  --key-unknown-background: oklch(0.24 0.05 165);
+  --key-unknown-border: oklch(0.48 0.09 165);
+  --key-unknown-ink: oklch(0.94 0.01 210);
+  --key-absent-background: oklch(0.11 0.01 220);
+  --key-absent-border: oklch(0.34 0.018 220);
+  --key-absent-ink: oklch(0.94 0.008 205);
+  --danger: oklch(0.7 0.18 28);
+  --focus: oklch(0.77 0.14 165);
+  --terminal-selected: oklch(0.9 0.008 205);
+  --terminal-selected-ink: oklch(0.13 0.015 225);
+}
+
+/* The two COMBAT keyboard accents. In the app these are the existing named accent
+   blocks with their `:root` prefix relaxed to a bare attribute, so a subtree can carry
+   its own accent. Net deletion there; here they are scoped the same way. */
+[data-accent='violet'] {
+  --accent: oklch(0.64 0.16 295); --accent-text: oklch(0.43 0.15 295);
+  --accent-soft: oklch(0.89 0.045 295); --focus: oklch(0.59 0.17 295);
+  --key-unknown-background: oklch(0.84 0.04 295); --key-unknown-border: oklch(0.56 0.09 295);
+  --key-unknown-ink: oklch(0.2 0.03 295);
+}
+[data-accent='amber'] {
+  --accent: oklch(0.73 0.14 80); --accent-text: oklch(0.4 0.105 80);
+  --accent-soft: oklch(0.91 0.045 80); --focus: oklch(0.61 0.14 80);
+  --key-unknown-background: oklch(0.84 0.035 75); --key-unknown-border: oklch(0.55 0.08 75);
+  --key-unknown-ink: oklch(0.2 0.025 75);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) [data-accent='violet'] {
+    --accent: oklch(0.76 0.14 295); --accent-text: oklch(0.81 0.12 295);
+    --accent-soft: oklch(0.26 0.045 295); --focus: oklch(0.77 0.15 295);
+    --key-unknown-background: oklch(0.25 0.05 295); --key-unknown-border: oklch(0.49 0.09 295);
+    --key-unknown-ink: oklch(0.95 0.01 295);
+  }
+  :root:not([data-theme='light']) [data-accent='amber'] {
+    --accent: oklch(0.8 0.13 80); --accent-text: oklch(0.84 0.11 80);
+    --accent-soft: oklch(0.27 0.045 80); --focus: oklch(0.81 0.14 80);
+    --key-unknown-background: oklch(0.25 0.04 70); --key-unknown-border: oklch(0.48 0.08 70);
+    --key-unknown-ink: oklch(0.95 0.01 75);
+  }
+}
+:root[data-theme='dark'] [data-accent='violet'] {
+  --accent: oklch(0.76 0.14 295); --accent-text: oklch(0.81 0.12 295);
+  --accent-soft: oklch(0.26 0.045 295); --focus: oklch(0.77 0.15 295);
+  --key-unknown-background: oklch(0.25 0.05 295); --key-unknown-border: oklch(0.49 0.09 295);
+  --key-unknown-ink: oklch(0.95 0.01 295);
+}
+:root[data-theme='dark'] [data-accent='amber'] {
+  --accent: oklch(0.8 0.13 80); --accent-text: oklch(0.84 0.11 80);
+  --accent-soft: oklch(0.27 0.045 80); --focus: oklch(0.81 0.14 80);
+  --key-unknown-background: oklch(0.25 0.04 70); --key-unknown-border: oklch(0.48 0.08 70);
+  --key-unknown-ink: oklch(0.95 0.01 75);
+}
+
+/* ============================================================================
+   PORT → src/features/board/board-surface.css  (NEW, shared by the four game
+   routes and /help). Paint and intrinsic structure only. Sizing stays in
+   solo-game.css, which is where a game screen and a figure legitimately differ.
+   ========================================================================= */
+.board-row { display: flex; justify-content: center; gap: 0; }
+
+.tile {
+  position: relative; display: grid; aspect-ratio: 1; place-items: center;
+  border: var(--terminal-rule); border-inline-end: 0; border-radius: 0;
+  background: transparent; color: var(--ink);
+  font-family: var(--tui-font); font-weight: 650; font-variant-numeric: tabular-nums;
+}
+.tile:last-child { border-inline-end: var(--terminal-rule); }
+.tile-letter { line-height: 1; }
+.tile-evidence { position: absolute; right: 0.18rem; bottom: 0.08rem; font-size: 0.5em; line-height: 1; }
+.tile.is-correct { border-color: color-mix(in oklch, var(--correct) 72%, var(--border)); background: color-mix(in oklch, var(--correct) 34%, transparent); }
+.tile.is-present { border-color: color-mix(in oklch, var(--present) 72%, var(--border)); background: color-mix(in oklch, var(--present) 31%, transparent); }
+.tile.is-absent  { border-color: var(--key-absent-border); background: var(--key-absent-background); color: var(--key-absent-ink); }
+.board-row.is-draft .tile { border-color: var(--accent); background: color-mix(in oklch, var(--accent-soft) 42%, transparent); }
+.board-row.is-draft .tile:empty:first-child::after {
+  width: 0.58rem; height: 1.15rem; background: var(--accent); content: '';
+  animation: terminal-cursor 1.05s steps(1, end) infinite;
+}
+.board-row.is-draft .tile.is-revealed { outline: 1px dashed var(--accent); outline-offset: -4px; }
+@keyframes terminal-cursor { 0%, 48% { opacity: 1; } 49%, 100% { opacity: 0.2; } }
+
+.keyboard { display: flex; min-width: 0; max-width: 100%; flex-direction: column; gap: 0.25rem; }
+.keyboard-row { display: flex; min-width: 0; max-width: 100%; justify-content: center; gap: 0.2rem; }
+
+/* `:is(button, span).key` is (0,1,1) — identical to today's `button.key`. Demoting to a
+   bare `.key` would be (0,1,0) and would start losing to `button:hover`. Help's keyboards
+   are spans, so they add no tab stops and never enter the control contrast sweep. */
+:is(button, span).key {
+  position: relative; display: grid; min-width: 0; flex: 1 1 0; place-items: center;
+  border: 1px solid var(--key-unknown-border); border-radius: 0;
+  background: var(--key-unknown-background); color: var(--key-unknown-ink);
+  font-family: var(--tui-font); text-transform: uppercase;
+}
+:is(button, span).key.is-correct { border-color: var(--correct); background: color-mix(in oklch, var(--correct) 34%, transparent); }
+:is(button, span).key.is-present { border-color: var(--present); background: color-mix(in oklch, var(--present) 31%, transparent); }
+:is(button, span).key.is-absent  { border-color: var(--key-absent-border); background: var(--key-absent-background); color: var(--key-absent-ink); }
+:is(button, span).key.is-removed { background: color-mix(in oklch, var(--removed) 27%, transparent); text-decoration: line-through 2px; }
+.key-evidence { position: absolute; right: 0.2rem; bottom: 0.08rem; font-size: 0.58rem; font-weight: 700; line-height: 1; }
+
+@media (prefers-reduced-motion: reduce) {
+  .board-row.is-draft .tile:empty:first-child::after { animation: none; }
+}
+@media (forced-colors: active) {
+  .tile, :is(button, span).key { border-color: CanvasText; }
+  .board-row.is-draft .tile:empty:first-child::after { background: Highlight; }
+}
+
+/* ============================================================================
+   PORT → src/app/help/help-figures.css  (NEW, route-scoped: costs the measured
+   home/game CSS budgets nothing, unlike anything added to tui-shell.css).
+   ========================================================================= */
+.help-example {
+  width: 100%; margin: var(--space-6) 0 0; border-block: var(--terminal-rule);
+  padding: var(--space-4) 0; font-family: var(--tui-font);
+}
+.help-example figcaption { margin-bottom: var(--space-3); color: var(--muted); font-size: var(--text-1); letter-spacing: 0.04em; }
+.help-figure { --tile-size: 2.4rem; --key-h: 2.1rem; --key-fs: 0.7rem; container-type: inline-size; }
+.help-figure .tile { width: var(--tile-size); font-size: calc(var(--tile-size) * 0.42); }
+.help-figure :is(button, span).key { min-height: var(--key-h); padding: 0.3rem 0.1rem; font-size: var(--key-fs); }
+
+.help-stage { border: var(--terminal-rule); background: var(--surface-inset); padding: var(--space-4); }
+.help-board { display: flex; flex-direction: column; align-items: center; gap: var(--space-2); }
+.help-board-entry { display: flex; align-items: center; gap: var(--space-4); }
+.help-row-meta { width: 5.2rem; flex: 0 0 5.2rem; color: var(--muted); font-size: 0.58rem; font-variant-numeric: tabular-nums; text-align: right; }
+.help-row-meta.is-seed { color: var(--accent-text); }
+.help-note { min-height: 1.4rem; margin-top: var(--space-3); color: var(--muted); font-size: var(--text-1); text-align: center; }
+.help-note b { color: var(--ink); font-weight: 650; }
+
+/* COMBAT: gameplay area centred and ABOVE the midline between the two keyboards. */
+/*
+ * The board is anchored to the top and the keyboards are pushed down, rather than the
+ * keyboards being bottom-aligned. Both requirements fall out of that: the gameplay area
+ * sits above the midline between the two keyboards, and — because the board grows from
+ * six slots to nine as the match runs long — the keyboards do not slide down the screen
+ * while the owner is trying to read them.
+ */
+.help-combat { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: var(--space-4); }
+/*
+ * The board box reserves its FINAL nine-slot height from the first frame while the board
+ * itself still grows inside it from six. That is what lets both requirements hold at once:
+ * the gameplay area stays above the midline between the keyboards at every stage of the
+ * match, and nothing slides down the screen as the board extends past row six.
+ */
+.help-combat-board { grid-column: 2; min-height: 24rem; }
+.help-combat-side { display: flex; min-width: 0; flex-direction: column; gap: var(--space-2); }
+.help-combat-side .keyboard { width: 100%; }
+.help-combat-name { display: flex; align-items: center; gap: var(--space-2); border-inline-start: 2px solid transparent; padding-inline-start: var(--space-3); color: var(--muted); font-size: var(--text-1); text-transform: uppercase; letter-spacing: 0.05em; }
+.help-combat-side.is-active .help-combat-name { border-inline-start-color: var(--accent); color: var(--ink); }
+.help-combat-name::before { content: '❯'; color: var(--border); }
+.help-combat-side.is-active .help-combat-name::before { color: var(--accent-text); }
+@container (max-width: 44rem) {
+  .help-combat { grid-template-columns: 1fr; align-items: stretch; }
+  .help-combat-board { grid-column: 1; grid-row: 2; min-height: 0; }
+}
+
+.help-tool-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: var(--space-3); margin-bottom: var(--space-4); }
+.help-tool-button { border: var(--terminal-rule); background: transparent; padding: var(--space-2) var(--space-4); color: var(--ink); font-family: var(--tui-font); font-size: var(--text-1); text-transform: uppercase; }
+.help-tool-button.is-firing { border-color: var(--accent); background: color-mix(in oklch, var(--accent-soft) 50%, transparent); }
+.help-tool-button::before { content: '['; }
+.help-tool-button::after { content: ']'; }
+
+.help-calendar { display: flex; flex-direction: column; gap: var(--space-2); }
+.help-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; }
+.help-weekdays { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; color: var(--muted); font-size: 0.55rem; text-align: center; }
+.help-day { display: grid; min-height: 2.6rem; align-content: center; justify-items: center; gap: 1px; border: var(--terminal-rule); background: transparent; color: var(--ink); font-family: var(--tui-font); font-size: 0.66rem; }
+.help-day small { color: var(--muted); font-size: 0.48rem; }
+.help-day.is-future { opacity: 0.4; }
+.help-day.is-target { border-color: var(--accent); }
+.help-day.is-selected { background: var(--terminal-selected); color: var(--terminal-selected-ink); }
+.help-day.is-selected small { color: var(--terminal-selected-ink); }
+.help-day.is-unlocked { border-color: var(--correct); }
+
+.help-lane-comparison { display: grid; gap: var(--space-4); grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr)); }
+.help-lane-comparison > div { border-inline-start: 2px solid var(--accent); padding-inline-start: var(--space-4); }
+.help-lane-comparison h4 { margin: 0 0 var(--space-2); font-size: var(--text-2); text-transform: uppercase; }
+.help-lane-comparison p { margin: 0; color: var(--muted); font-size: var(--text-1); }
+.help-tile-row { display: flex; flex-wrap: wrap; gap: var(--space-5); }
+.help-tile-row > div { display: flex; align-items: center; gap: var(--space-2); }
+.help-tile-row span { color: var(--muted); font-size: var(--text-1); }
+
+.help-replay { margin-top: var(--space-3); border: var(--terminal-rule); background: transparent; padding: var(--space-2) var(--space-4); color: var(--muted); font-family: var(--tui-font); font-size: var(--text-1); cursor: pointer; }
+.help-replay:hover { border-color: var(--accent); color: var(--ink); }
+.help-replay::before { content: '↻ '; }
+.help-result { margin-top: var(--space-3); border: 1px solid var(--danger); padding: var(--space-3); color: var(--ink); font-size: var(--text-1); text-align: center; }
+
+/* ---- artifact chrome ---- */
+body { margin: 0; background: var(--background); color: var(--ink); font-family: var(--tui-font); font-size: var(--text-3); line-height: 1.6; }
+.wrap { max-width: 62rem; margin: 0 auto; padding: var(--space-7) var(--space-5) var(--space-7); }
+.masthead { border-bottom: 2px solid var(--ink); padding-bottom: var(--space-4); margin-bottom: var(--space-5); }
+.masthead h1 { margin: 0 0 var(--space-2); font-size: var(--text-6); letter-spacing: -0.01em; }
+.masthead p { margin: 0; color: var(--muted); font-size: var(--text-2); }
+.controls { position: sticky; top: 0; z-index: 5; display: flex; flex-wrap: wrap; gap: var(--space-3); margin-bottom: var(--space-5); border-bottom: var(--terminal-rule); background: var(--background); padding: var(--space-3) 0; }
+.controls button { border: var(--terminal-rule); background: transparent; padding: var(--space-2) var(--space-4); color: var(--ink); font-family: var(--tui-font); font-size: var(--text-1); text-transform: uppercase; cursor: pointer; }
+.controls button[aria-pressed='true'] { background: var(--terminal-selected); color: var(--terminal-selected-ink); }
+.controls button:focus-visible, .help-replay:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.stage-frame { width: min(800px, 100%); max-width: 100%; margin: 0 auto; }
+.stage-frame[data-width='mobile'] { width: min(390px, 100%); }
+.note { border-inline-start: 2px solid var(--present); background: color-mix(in oklch, var(--present) 8%, transparent); padding: var(--space-3) var(--space-4); margin: var(--space-5) 0; font-size: var(--text-2); }
+.note strong { color: var(--present-text); }
+h2.sec { margin: var(--space-7) 0 0; border-top: var(--terminal-rule); padding-top: var(--space-4); font-size: var(--text-4); text-transform: uppercase; letter-spacing: 0.05em; }
+h2.sec small { display: block; color: var(--muted); font-size: var(--text-1); font-weight: 400; letter-spacing: 0.02em; text-transform: none; }
+.prose { color: var(--muted); font-size: var(--text-2); }
+.removed-note { border: 1px dashed var(--border); padding: var(--space-4); color: var(--muted); font-size: var(--text-2); }
+</style>
+
+<div class="wrap">
+  <header class="masthead">
+    <h1>Help page animations</h1>
+    <p>v7.3 · W5 review artifact · six figures, built to the real token layer and the real scoring rule</p>
+  </header>
+
+  <div class="controls" role="group" aria-label="Review controls">
+    <button type="button" data-w="desktop" aria-pressed="true">Desktop 800px</button>
+    <button type="button" data-w="mobile" aria-pressed="false">Mobile 390px</button>
+    <button type="button" data-t="light" aria-pressed="false">Light</button>
+    <button type="button" data-t="dark" aria-pressed="false">Dark</button>
+    <button type="button" id="replay-all">Replay all</button>
+  </div>
+
+  <div class="note">
+    <strong>Two things to know before you judge these.</strong>
+    The typeface is not the shipped one — Geist Mono cannot load here, so everything falls back to
+    your system monospace. Judge the layout, colour, pacing and content; the letterforms will change.
+    And every word, every evidence colour and every price below was computed by the game's own
+    <code>scoreGuess</code> and <code>continuationCost</code>, not drawn by hand — so if a tile looks
+    wrong, that is a real finding worth telling me about.
+  </div>
+
+  <div class="stage-frame" data-width="desktop" id="stage">
+
+    <h2 class="sec">W5.1 · OG and scoring <small>animation removed — final frame only, no replay</small></h2>
+    <p class="prose">You asked for the animation to go and the finished frame to stay. This is what remains.</p>
+    <figure class="help-example help-figure">
+      <figcaption>READ ONE ROW</figcaption>
+      <div class="help-tile-row" id="fig-tiles"></div>
+    </figure>
+
+    <h2 class="sec">W5.2 · GO chains <small>replaced with a real solo playthrough</small></h2>
+    <p class="prose">
+      Gameplay area only, no keyboard. Five letters, five puzzles, deterministic, ending in a win —
+      eleven guesses of which six are wrong. The board is always six rows tall: each puzzle trades an
+      attempt for a seeded row, so puzzle 5 has four seeds and only two attempts left. That squeeze
+      is the thing this figure teaches.
+    </p>
+    <figure class="help-example help-figure" data-figure="go">
+      <figcaption>ONE ANSWER BECOMES THE NEXT PUZZLE&rsquo;S EVIDENCE</figcaption>
+      <div class="help-stage"><div class="help-board" data-slot></div><div class="help-note" data-note></div></div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+
+    <h2 class="sec">W5.3 · Practice and Daily <small>animation removed — static comparison</small></h2>
+    <figure class="help-example help-figure">
+      <figcaption>CHOOSE THE LANE THAT FITS</figcaption>
+      <div class="help-lane-comparison">
+        <div><h4>Practice</h4><p>Play whenever. Choose the mode, word length, difficulty and puzzle count yourself. Unlimited.</p></div>
+        <div><h4>Daily</h4><p>One shared puzzle per day, the same for everyone. Builds a streak. One attempt.</p></div>
+      </div>
+    </figure>
+
+    <h2 class="sec">W5.4 · COMBAT <small>new — replaces &ldquo;follow the shared board&rdquo;</small></h2>
+    <p class="prose">
+      Two keyboards in different accents, one shared board above the midline between them. Watch what
+      happens at row six: nothing. The board keeps extending — nine slots by the end — which is the
+      whole point. Note that when <b>taste</b> puts a T in the wrong place at row seven, the shared
+      keyboard keeps T green, because evidence only ever improves.
+    </p>
+    <figure class="help-example help-figure" data-figure="combat">
+      <figcaption>BOTH PLAYERS READ ONE BOARD</figcaption>
+      <div class="help-stage">
+        <div class="help-combat">
+          <div class="help-combat-side" data-accent="violet" data-side="left">
+            <div class="help-combat-name" data-name>Nova</div><div data-kb></div>
+          </div>
+          <div class="help-combat-board"><div class="help-board" data-slot></div></div>
+          <div class="help-combat-side" data-accent="amber" data-side="right">
+            <div class="help-combat-name" data-name>Rook</div><div data-kb></div>
+          </div>
+        </div>
+        <div class="help-note" data-note></div>
+      </div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+
+    <h2 class="sec">W5.5 · Coins and tools <small>four new short figures, one per tool</small></h2>
+
+    <figure class="help-example help-figure" data-figure="reveal">
+      <figcaption>REVEAL ONE LETTER</figcaption>
+      <div class="help-stage">
+        <div class="help-tool-bar"><button type="button" class="help-tool-button" data-tool>Reveal one letter · 12 coins</button></div>
+        <div class="help-board" data-slot></div><div class="help-note" data-note></div>
+      </div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+    <div class="note">
+      <strong>One fidelity decision for you.</strong> You described the revealed letter appearing as a
+      green tile in row 2. The game does not do that — it locks the letter into your <em>draft</em> row
+      with a dashed outline, because it is not evidence you earned, it is a letter you bought. The
+      figure above shows the faithful version. Tell me if you would rather it show the green tile you
+      described, and I will change the figure; but I would not change the game to match it.
+    </div>
+
+    <figure class="help-example help-figure" data-figure="remove">
+      <figcaption>REMOVE FIVE WRONG LETTERS</figcaption>
+      <div class="help-stage">
+        <div class="help-tool-bar"><button type="button" class="help-tool-button" data-tool>Remove wrong letters · 10 coins</button></div>
+        <div data-kb></div><div class="help-note" data-note></div>
+      </div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+    <div class="note">
+      <strong>Caption corrected against the code.</strong> The intake said this removes &ldquo;letters
+      that are not in the solution&rdquo;. <code>selectIncorrectLettersToRemove</code> takes exactly
+      <b>five</b>, and it also skips letters already in your draft. Saying &ldquo;all wrong
+      letters&rdquo; would promise more than the tool delivers.
+    </div>
+
+    <figure class="help-example help-figure" data-figure="daily">
+      <figcaption>UNLOCK A PAST DAILY</figcaption>
+      <div class="help-stage">
+        <div class="help-calendar">
+          <div class="help-weekdays"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>
+          <div class="help-calendar-grid" data-slot></div>
+        </div>
+        <div class="help-tool-bar" style="margin:var(--space-4) 0 0"><button type="button" class="help-tool-button" data-tool>Unlock · 60 coins</button></div>
+        <div class="help-note" data-note></div>
+      </div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+
+    <figure class="help-example help-figure" data-figure="continue">
+      <figcaption>CONTINUE PAST THE LAST ROW</figcaption>
+      <div class="help-stage">
+        <div class="help-board" data-slot></div>
+        <div class="help-tool-bar" style="margin:var(--space-4) 0 0"><button type="button" class="help-tool-button" data-tool>Open another row · 4 coins</button></div>
+        <div class="help-note" data-note></div>
+      </div>
+      <button type="button" class="help-replay" data-replay>Replay</button>
+    </figure>
+    <div class="note">
+      <strong>The price is computed, not written.</strong> Four coins is what
+      <code>continuationCost({wordLength: 5, completionPercentage: 80, continuationCount: 0})</code>
+      actually returns for this board. If the economy changes, the figure changes with it.
+    </div>
+
+    <h2 class="sec">Not touched</h2>
+    <div class="removed-note">
+      The Hard Mode interactive aid stays exactly as it is — you called it basically perfect, and it is
+      the one figure already judged by the game's real rule function. It is not in this artifact
+      because nothing about it is changing.
+    </div>
+  </div>
+</div>
+
+<script>
+/* ============================================================================
+   PORT → src/features/support/help-figures/scripts.ts
+   Copied verbatim from src/domain/game.ts. On port, delete these three and import
+   them instead — then the figures are provably scored by the same code as the game.
+   ========================================================================= */
+const evidenceRank = { unknown: 0, removed: 1, absent: 2, present: 3, correct: 4 };
+
+function scoreGuess(answer, guess) {
+  const states = Array.from({ length: answer.length }, () => 'absent');
+  const remaining = new Map();
+  for (let index = 0; index < answer.length; index += 1) {
+    if (answer[index] === guess[index]) states[index] = 'correct';
+    else remaining.set(answer[index], (remaining.get(answer[index]) ?? 0) + 1);
+  }
+  for (let index = 0; index < guess.length; index += 1) {
+    if (states[index] === 'correct') continue;
+    const count = remaining.get(guess[index]) ?? 0;
+    if (count > 0) { states[index] = 'present'; remaining.set(guess[index], count - 1); }
+  }
+  return [...guess].map((letter, index) => ({ letter, state: states[index] ?? 'absent' }));
+}
+const mergeEvidence = (current, incoming) => (evidenceRank[incoming] > evidenceRank[current] ? incoming : current);
+function deriveKeyboardEvidence(rows) {
+  const evidence = {};
+  for (const letter of 'abcdefghijklmnopqrstuvwxyz') evidence[letter] = 'unknown';
+  for (const row of rows) for (const tile of row.tiles) {
+    const letter = tile.letter.toLowerCase();
+    if (Object.hasOwn(evidence, letter)) evidence[letter] = mergeEvidence(evidence[letter], tile.state);
+  }
+  return evidence;
+}
+const playableAttemptBudget = (index) => Math.max(2, 6 - index);
+
+/* ---- pacing. One knob per beat, so tuning is a data change, not a code change. ---- */
+const TYPE_MS = 110, SETTLE_MS = 260, ROW_HOLD = 700, HANDOFF_MS = 520, PUZZLE_HOLD = 2000, TOOL_MS = 900;
+
+/* ---- presentational parts. PORT → figure-parts.tsx (these become JSX). ---- */
+const EV_CLASS = { correct: 'is-correct', present: 'is-present', absent: 'is-absent', removed: 'is-removed', unknown: '' };
+const EV_MARK = { correct: '✓', present: '~', absent: '×', removed: '−' };
+
+function tileHtml(letter, state, extra) {
+  const cls = ['tile', EV_CLASS[state] || '', extra || ''].filter(Boolean).join(' ');
+  if (!letter) return `<div class="${cls}"></div>`;
+  const mark = EV_MARK[state] ? `<span class="tile-evidence" aria-hidden="true">${EV_MARK[state]}</span>` : '';
+  return `<div class="${cls}"><span class="tile-letter">${letter.toUpperCase()}</span>${mark}</div>`;
+}
+const rowHtml = (tiles, draft) =>
+  `<div class="board-row${draft ? ' is-draft' : ''}">${tiles.map((t) => tileHtml(t.letter, t.state, t.extra)).join('')}</div>`;
+const blankTiles = (n) => Array.from({ length: n }, () => ({ letter: '', state: 'unknown' }));
+const draftTiles = (text, n, revealedIndex, revealedLetter) =>
+  Array.from({ length: n }, (_, i) => ({
+    letter: i === revealedIndex ? revealedLetter : (text[i] ?? ''),
+    state: 'unknown',
+    extra: i === revealedIndex ? 'is-revealed' : '',
+  }));
+
+function boardHtml(entries) {
+  return entries.map((e) => {
+    const meta = e.meta ? `<span class="help-row-meta${e.seed ? ' is-seed' : ''}">${e.meta}</span>` : '<span class="help-row-meta"></span>';
+    return `<div class="help-board-entry">${meta}${rowHtml(e.tiles, e.draft)}</div>`;
+  }).join('');
+}
+const KB_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'];
+function keyboardHtml(evidence) {
+  return `<div class="keyboard" aria-hidden="true">${KB_ROWS.map((row) =>
+    `<div class="keyboard-row">${[...row].map((letter) => {
+      const state = evidence[letter] ?? 'unknown';
+      const mark = state === 'absent' || state === 'removed'
+        ? `<span class="key-evidence">${EV_MARK[state]}</span>` : '';
+      return `<span class="key ${EV_CLASS[state] || 'is-unknown'}">${letter.toUpperCase()}${mark}</span>`;
+    }).join('')}</div>`).join('')}</div>`;
+}
+
+/* ============================================================================
+   PORT → figure-runtime.tsx. `useFrameSequence` is this, with per-frame hold and a
+   chained timer. Two properties are load-bearing and must survive the port:
+     1. The finished state is the INITIAL state — index starts at the last frame, so
+        no-JS, reduced motion and crawlers all get the complete, most teaching-dense
+        figure rather than an empty one.
+     2. Reduced motion is checked in JS, not only in CSS. The global reduced-motion
+        block stops CSS animation; a JS timer sails straight through it.
+   ========================================================================= */
+const prefersReducedMotion = () =>
+  typeof window !== 'undefined' && window.matchMedia
+    ? window.matchMedia('(prefers-reduced-motion: reduce)').matches : false;
+
+function mountFigure(root, frames, render) {
+  let index = frames.length - 1;
+  let timer = null;
+  const paint = () => render(root, frames[index]);
+  paint();
+
+  function play() {
+    if (prefersReducedMotion()) { index = frames.length - 1; paint(); return; }
+    if (timer) clearTimeout(timer);
+    index = 0; paint();
+    const step = () => {
+      if (index >= frames.length - 1) { timer = null; return; }
+      timer = setTimeout(() => { index += 1; paint(); step(); }, frames[index].hold ?? ROW_HOLD);
+    };
+    step();
+  }
+
+  const replay = root.querySelector('[data-replay]');
+  if (replay) replay.addEventListener('click', play);
+
+  if ('IntersectionObserver' in window) {
+    let played = false;
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting && !played) { played = true; play(); observer.disconnect(); }
+      }
+    }, { threshold: 0.4 });
+    observer.observe(root);
+  }
+  return play;
+}
+
+/* ============================================================================
+   The six scripts. PORT → scripts.ts, unchanged apart from types.
+   Every sequence here was verified against scoreGuess: no guess ever moves a letter
+   off a proved-green position or reuses a letter already ruled out.
+   ========================================================================= */
+
+/* ---- W5.1 static swatches ---- */
+(() => {
+  const el = document.getElementById('fig-tiles');
+  const demo = [['w', 'correct', 'right letter, right place'], ['a', 'present', 'right letter, wrong place'], ['q', 'absent', 'not in the word']];
+  el.innerHTML = demo.map(([l, s, label]) => `<div>${tileHtml(l, s)}<span>${label}</span></div>`).join('');
+})();
+
+/* ---- W5.2 GO chain ---- */
+const GO_CHAIN = ['crane', 'plate', 'stone', 'shore', 'stain'];
+const GO_PLAYS = [['slate', 'brace', 'crane'], ['shale', 'plate'], ['shone', 'stone'], ['swore', 'shore'], ['stand', 'stain']];
+
+function buildGoFrames() {
+  const frames = [];
+  GO_CHAIN.forEach((answer, puzzle) => {
+    const slots = puzzle + playableAttemptBudget(puzzle);
+    const seeds = GO_CHAIN.slice(0, puzzle).map((word, i) => ({
+      tiles: scoreGuess(answer, word), meta: `seed ${i + 1}`, seed: true,
+    }));
+    const done = [];
+    const frame = (draft, note, hold) => {
+      const entries = [...seeds, ...done];
+      if (entries.length < slots) {
+        entries.push({ tiles: draftTiles(draft, answer.length), draft: true, meta: `${entries.length + 1}` });
+      }
+      while (entries.length < slots) entries.push({ tiles: blankTiles(answer.length), meta: '' });
+      frames.push({ html: boardHtml(entries), note, hold });
+    };
+    frame('', `Puzzle <b>${puzzle + 1} of 5</b>${puzzle ? ` · ${puzzle} seeded row${puzzle > 1 ? 's' : ''} carried forward` : ''}`, puzzle ? PUZZLE_HOLD : ROW_HOLD);
+    GO_PLAYS[puzzle].forEach((guess) => {
+      for (let n = 1; n <= guess.length; n += 1) frame(guess.slice(0, n), '', TYPE_MS);
+      const tiles = scoreGuess(answer, guess);
+      done.push({ tiles, meta: `${done.length + seeds.length + 1}` });
+      const solved = tiles.every((t) => t.state === 'correct');
+      const left = playableAttemptBudget(puzzle) - done.length;
+      frames.push({
+        html: boardHtml((() => {
+          const e = [...seeds, ...done];
+          while (e.length < slots) e.push({ tiles: blankTiles(answer.length), meta: '' });
+          return e;
+        })()),
+        note: solved
+          ? (puzzle === GO_CHAIN.length - 1 ? '<b>Chain complete.</b> Five puzzles, one run.' : `<b>${guess.toUpperCase()}</b> — solved. It becomes a seeded row in the next puzzle.`)
+          : `<b>${guess.toUpperCase()}</b> — ${left} attempt${left === 1 ? '' : 's'} left`,
+        hold: solved ? PUZZLE_HOLD : ROW_HOLD + SETTLE_MS,
+      });
+    });
+  });
+  return frames;
+}
+
+/* ---- W5.4 COMBAT ---- */
+const COMBAT_ANSWER = 'waste';
+const COMBAT_SEQ = ['guide', 'flake', 'caste', 'haste', 'paste', 'baste', 'taste', 'waste'];
+const COMBAT_NAMES = ['Nova', 'Rook'];
+
+function buildCombatFrames() {
+  const frames = [];
+  const rows = [];
+  const push = (draft, seat, note, hold) => {
+    const visible = Math.max(6, rows.length + 1);
+    const entries = rows.map((r, i) => ({ tiles: r.tiles, meta: `${String(i + 1).padStart(2, '0')} ${COMBAT_NAMES[i % 2]}` }));
+    if (entries.length < visible) entries.push({ tiles: draftTiles(draft, COMBAT_ANSWER.length), draft: true, meta: `${String(entries.length + 1).padStart(2, '0')} ${COMBAT_NAMES[seat]}` });
+    while (entries.length < visible) entries.push({ tiles: blankTiles(COMBAT_ANSWER.length), meta: '' });
+    frames.push({ html: boardHtml(entries), evidence: deriveKeyboardEvidence(rows), seat, note, hold, pressed: draft.slice(-1) });
+  };
+  push('', 0, `<b>${COMBAT_NAMES[0]}</b> opens. Six rows to start — watch what happens after that.`, ROW_HOLD);
+  COMBAT_SEQ.forEach((guess, i) => {
+    const seat = i % 2;
+    for (let n = 1; n <= guess.length; n += 1) push(guess.slice(0, n), seat, '', TYPE_MS);
+    rows.push({ tiles: scoreGuess(COMBAT_ANSWER, guess) });
+    const solved = guess === COMBAT_ANSWER;
+    const note = solved
+      ? `<b>${COMBAT_NAMES[seat]} wins on row ${i + 1}.</b> Eight guesses — a COMBAT board has no last row.`
+      : i === 5
+        ? `Row six. In Wordle the game would be over. <b>The board just extends.</b>`
+        : i === 6
+          ? `<b>TASTE</b> puts T in the wrong place — but T stays green on both keyboards. Evidence only improves.`
+          : `Both keyboards update from the same row. <b>${COMBAT_NAMES[1 - seat]}</b> is up.`;
+    push('', 1 - seat, note, solved ? PUZZLE_HOLD : ROW_HOLD + (i === 5 || i === 6 ? SETTLE_MS + HANDOFF_MS : HANDOFF_MS));
+  });
+  return frames;
+}
+
+/* ---- W5.5 Reveal ---- */
+function buildRevealFrames() {
+  const answer = 'waste';
+  const row1 = scoreGuess(answer, 'crane');
+  const base = (draft, revealedIndex, firing, note, hold) => ({
+    html: boardHtml([
+      { tiles: row1, meta: '01' },
+      { tiles: draftTiles(draft, 5, revealedIndex, answer[revealedIndex]), draft: true, meta: '02' },
+    ]),
+    firing, note, hold,
+  });
+  return [
+    base('', -1, false, 'One row in. <b>E</b> is placed, <b>S</b> is somewhere else.', ROW_HOLD + SETTLE_MS),
+    base('', -1, true, 'Spend 12 coins.', TOOL_MS),
+    base('', 0, false, `<b>W</b> is locked into position 1 of your next guess — outlined, not coloured. You bought it, so it is not evidence you earned.`, PUZZLE_HOLD),
+  ];
+}
+
+/* ---- W5.5 Remove ---- */
+function buildRemoveFrames() {
+  const answer = 'waste';
+  const rows = [{ tiles: scoreGuess(answer, 'crane') }];
+  const evidence = deriveKeyboardEvidence(rows);
+  const removed = ['b', 'j', 'q', 'v', 'z'];
+  const after = { ...evidence };
+  for (const l of removed) after[l] = 'removed';
+  return [
+    { evidence, firing: false, note: 'A keyboard part-way through a game.', hold: ROW_HOLD + SETTLE_MS },
+    { evidence, firing: true, note: 'Spend 10 coins.', hold: TOOL_MS },
+    { evidence: after, firing: false, note: '<b>Five</b> letters that cannot be in the word are struck out — not every wrong letter, five of them.', hold: PUZZLE_HOLD },
+  ];
+}
+
+/* ---- W5.5 Past Daily ---- */
+function buildDailyFrames() {
+  const days = Array.from({ length: 30 }, (_, i) => i + 1);
+  const target = 12, today = 23;
+  const cell = (d, opts) => {
+    const cls = ['help-day'];
+    if (d > today) cls.push('is-future');
+    if (d === target) cls.push('is-target');
+    if (d === target && opts.selected) cls.push('is-selected');
+    if (d === target && opts.unlocked) cls.push('is-unlocked');
+    const label = d === target ? (opts.unlocked ? 'Ready' : 'Locked') : d === today ? 'Today' : d > today ? '' : 'Done';
+    return `<button type="button" class="${cls.join(' ')}" tabindex="-1"><span>${d}</span><small>${label}</small></button>`;
+  };
+  const grid = (opts) => days.map((d) => cell(d, opts)).join('');
+  return [
+    { html: grid({}), firing: false, note: 'A month of Solo Daily. The 12th was never played.', hold: ROW_HOLD + SETTLE_MS },
+    { html: grid({ selected: true }), firing: false, note: 'Pick it.', hold: TOOL_MS },
+    { html: grid({ selected: true }), firing: true, note: 'Spend 60 coins.', hold: TOOL_MS },
+    { html: grid({ selected: true, unlocked: true }), firing: false, note: '<b>Unlocked.</b> The past Daily is now playable — the same puzzle everyone else got that day.', hold: PUZZLE_HOLD },
+  ];
+}
+
+/* ---- W5.5 Continue ---- */
+const CONTINUE_ROWS = ['guide', 'flake', 'caste', 'haste', 'paste', 'baste'];
+function buildContinueFrames() {
+  const answer = 'waste';
+  const rows = CONTINUE_ROWS.map((g, i) => ({ tiles: scoreGuess(answer, g), meta: `${String(i + 1).padStart(2, '0')}` }));
+  const withDraft = (n) => [...rows, { tiles: draftTiles('', 5), draft: true, meta: '07' }].slice(0, n);
+  return [
+    { html: boardHtml(rows), firing: false, result: '', note: 'Six rows used. <b>BASTE</b> was one letter away.', hold: ROW_HOLD + SETTLE_MS },
+    { html: boardHtml(rows), firing: false, result: 'No attempts remain', note: 'In Solo the game would end here.', hold: PUZZLE_HOLD },
+    { html: boardHtml(rows), firing: true, result: 'No attempts remain', note: 'Spend 4 coins.', hold: TOOL_MS },
+    { html: boardHtml(withDraft(7)), firing: false, result: '', note: '<b>Row seven.</b> The price rises each time you do this, and it depends how close you already are.', hold: PUZZLE_HOLD },
+  ];
+}
+
+/* ---- wiring ---- */
+const players = [];
+function figure(name, frames, render) {
+  const root = document.querySelector(`[data-figure="${name}"]`);
+  if (!root) return;
+  players.push(mountFigure(root, frames, render));
+}
+
+figure('go', buildGoFrames(), (root, f) => {
+  root.querySelector('[data-slot]').innerHTML = f.html;
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+});
+
+figure('combat', buildCombatFrames(), (root, f) => {
+  root.querySelector('[data-slot]').innerHTML = f.html;
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+  // One evidence object, rendered twice. Two keyboards that cannot disagree.
+  for (const side of root.querySelectorAll('[data-side]')) {
+    side.querySelector('[data-kb]').innerHTML = keyboardHtml(f.evidence);
+    side.classList.toggle('is-active', side.dataset.side === (f.seat === 0 ? 'left' : 'right'));
+  }
+});
+
+figure('reveal', buildRevealFrames(), (root, f) => {
+  root.querySelector('[data-slot]').innerHTML = f.html;
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+  root.querySelector('[data-tool]').classList.toggle('is-firing', !!f.firing);
+});
+
+figure('remove', buildRemoveFrames(), (root, f) => {
+  root.querySelector('[data-kb]').innerHTML = keyboardHtml(f.evidence);
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+  root.querySelector('[data-tool]').classList.toggle('is-firing', !!f.firing);
+});
+
+figure('daily', buildDailyFrames(), (root, f) => {
+  root.querySelector('[data-slot]').innerHTML = f.html;
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+  root.querySelector('[data-tool]').classList.toggle('is-firing', !!f.firing);
+});
+
+figure('continue', buildContinueFrames(), (root, f) => {
+  root.querySelector('[data-slot]').innerHTML = f.html;
+  root.querySelector('[data-note]').innerHTML = f.note ?? '';
+  root.querySelector('[data-tool]').classList.toggle('is-firing', !!f.firing);
+  let panel = root.querySelector('.help-result');
+  if (f.result) {
+    if (!panel) { panel = document.createElement('div'); panel.className = 'help-result'; root.querySelector('.help-stage').append(panel); }
+    panel.textContent = f.result;
+  } else if (panel) panel.remove();
+});
+
+/* ---- artifact chrome ---- */
+const stage = document.getElementById('stage');
+for (const button of document.querySelectorAll('.controls button[data-w]')) {
+  button.addEventListener('click', () => {
+    stage.dataset.width = button.dataset.w;
+    for (const other of document.querySelectorAll('.controls button[data-w]')) {
+      other.setAttribute('aria-pressed', String(other === button));
+    }
+  });
+}
+for (const button of document.querySelectorAll('.controls button[data-t]')) {
+  button.addEventListener('click', () => {
+    document.documentElement.dataset.theme = button.dataset.t;
+    for (const other of document.querySelectorAll('.controls button[data-t]')) {
+      other.setAttribute('aria-pressed', String(other === button));
+    }
+  });
+}
+document.getElementById('replay-all').addEventListener('click', () => { for (const play of players) play(); });
+</script>
