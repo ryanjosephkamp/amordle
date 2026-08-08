@@ -5,6 +5,7 @@ const root = process.cwd();
 const stylesheets = [
   'src/app/globals.css',
   'src/app/tui-shell.css',
+  'src/features/board/board-surface.css',
   'src/features/solo/solo-game.css',
 ];
 

@@ -1,0 +1,221 @@
+/*
+ * Board surface — the shared visual language of a guess.
+ *
+ * Extracted from `solo-game.css` so that `/help` can draw real boards and real keyboards
+ * without importing a stylesheet built for a screen where the board IS the page. Help
+ * previously kept a hand-copied duplicate of the tile presentation for exactly that
+ * reason; with six teaching figures now drawing boards, keyboards, evidence and draft
+ * rows, a second copy would have been a second source of truth for the thing those
+ * figures exist to teach.
+ *
+ * The split is deliberate and narrow:
+ *
+ *   HERE            paint and intrinsic structure — what a tile IS.
+ *   solo-game.css   everything route-specific, every media query, and the tile SIZING.
+ *
+ * Sizing stays behind because it is the one thing a game screen and a figure legitimately
+ * disagree about: the board sizes itself from the viewport, a figure sizes itself from the
+ * column it sits in. Consumers set their own `--tile-size`-equivalent rules.
+ *
+ * Import this BEFORE `solo-game.css` on the play and combat routes, so their route
+ * overrides still win at equal specificity.
+ */
+
+.board-row {
+  display: flex;
+  justify-content: center;
+  gap: 0;
+}
+
+.tile {
+  position: relative;
+  display: grid;
+  aspect-ratio: 1;
+  place-items: center;
+  border: var(--terminal-rule);
+  border-inline-end: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.tile:last-child {
+  border-inline-end: var(--terminal-rule);
+}
+
+.tile-letter {
+  line-height: 1;
+}
+
+.tile-evidence {
+  position: absolute;
+  right: 0.18rem;
+  bottom: 0.08rem;
+  font-size: 0.5em;
+  line-height: 1;
+}
+
+.tile.is-correct {
+  border-color: color-mix(in oklch, var(--correct) 72%, var(--border));
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+}
+
+.tile.is-present {
+  border-color: color-mix(in oklch, var(--present) 72%, var(--border));
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+}
+
+.tile.is-absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
+}
+
+.board-row.is-draft .tile {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-soft) 42%, transparent);
+}
+
+.board-row.is-draft .tile:empty:first-child::after {
+  width: 0.58rem;
+  height: 1.15rem;
+  background: var(--accent);
+  content: '';
+  animation: terminal-cursor 1.05s steps(1, end) infinite;
+}
+
+.board-row.is-draft .tile.is-revealed {
+  outline: 1px dashed var(--accent);
+  outline-offset: -4px;
+}
+
+@keyframes terminal-cursor {
+  0%,
+  48% {
+    opacity: 1;
+  }
+
+  49%,
+  100% {
+    opacity: 0.2;
+  }
+}
+
+.keyboard {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  flex-direction: column;
+  gap: 0.25rem;
+  touch-action: manipulation;
+}
+
+.keyboard-row {
+  display: flex;
+  min-width: 0;
+  max-width: 100%;
+  justify-content: center;
+  gap: 0.2rem;
+}
+
+/*
+ * `:is(button, span).key` has the same specificity as the `button.key` it replaces —
+ * (0,1,1) — because `:is()` takes the specificity of its most specific argument. That
+ * matters: demoting to a bare `.key` would be (0,1,0) and would start losing to
+ * `button:hover` for `background`.
+ *
+ * The span form exists so Help's figures can draw a keyboard without shipping 56 tab
+ * stops and 56 more nodes into the control contrast sweep. A figure is not a control.
+ */
+:is(button, span).key {
+  position: relative;
+  min-width: 0;
+  min-height: 2.75rem;
+  flex: 1 1 0;
+  border: 1px solid var(--key-unknown-border);
+  border-radius: 0;
+  background: var(--key-unknown-background);
+  padding: 0.4rem 0.12rem;
+  color: var(--key-unknown-ink);
+  font-family: var(--tui-font);
+  font-size: clamp(0.68rem, 2.7vw, 0.86rem);
+  text-transform: uppercase;
+}
+
+/*
+ * W2b. `:not(:disabled)` guards what was an unguarded hover: a dead key still lit up
+ * with an accent border under the pointer, which reads as "press me" on precisely the
+ * keys that cannot be pressed — a removed letter, or any key during the opponent's turn.
+ */
+button.key:hover:not(:disabled),
+button.key:focus-visible:not(:disabled) {
+  border-color: var(--accent);
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
+:is(button, span).key.is-wide {
+  flex-basis: 3.5rem;
+  font-size: clamp(0.54rem, 1.8vw, 0.66rem);
+}
+
+:is(button, span).key.is-correct {
+  border-color: var(--correct);
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+}
+
+:is(button, span).key.is-present {
+  border-color: var(--present);
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+}
+
+:is(button, span).key.is-absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
+}
+
+:is(button, span).key.is-removed {
+  background: color-mix(in oklch, var(--removed) 27%, transparent);
+  text-decoration: line-through 2px;
+}
+
+.key-evidence {
+  position: absolute;
+  right: 0.2rem;
+  bottom: 0.08rem;
+  font-size: 0.58rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .board-row.is-draft .tile:empty:first-child::after {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .tile,
+  :is(button, span).key {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .tile.is-correct,
+  .tile.is-present,
+  .tile.is-absent,
+  :is(button, span).key.is-correct,
+  :is(button, span).key.is-present,
+  :is(button, span).key.is-absent,
+  .board-row.is-draft .tile {
+    border-color: Highlight;
+  }
+
+  .board-row.is-draft .tile:empty:first-child::after {
+    background: Highlight;
+  }
+}

@@ -1,6 +1,7 @@
 import { notFound } from 'next/navigation';
 import { SoloGame } from '@/features/solo/solo-game';
 import { DailyAccessGate } from '@/features/solo/daily-access-gate';
+import '@/features/board/board-surface.css';
 import '@/features/solo/solo-game.css';
 import { loadWordBank } from '@/server/word-bank';
 import { selectDailyAnswers } from '@/domain/selectors';
