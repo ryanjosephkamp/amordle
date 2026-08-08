@@ -2527,9 +2527,66 @@ button.calendar-day:disabled {
   gap: var(--space-2);
 }
 
+/*
+ * V7.2-03. Help's evidence swatches had no presentation at all. The rules that draw a
+ * tile — its frame, its fill, and the corner glyph — live in `solo-game.css`, which only
+ * the play and combat routes import, so on `/help` every tile rendered with a fully
+ * transparent background and an unpositioned glyph sitting under the letter. Measured
+ * background alpha 0.00 on all three at 1400px and at 390px, so this was never a mobile
+ * problem; the ✓ ~ × marks carried the whole figure.
+ *
+ * Help gets its own presentation rather than importing a stylesheet it does not own,
+ * built from the same semantic tokens and the same `color-mix` ratios the board uses —
+ * a figure explaining what these colours mean has to show the colours they actually are.
+ * Evidence semantics are unchanged; this only makes them visible where they are taught.
+ */
+.help-tile-row .tile,
+.help-hard-evidence .tile {
+  border: var(--terminal-rule);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
 .help-tile-row .tile {
+  position: relative;
   display: inline-grid;
   width: 2.4rem;
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.help-tile-row .tile-letter {
+  line-height: 1;
+}
+
+.help-tile-row .tile-evidence {
+  position: absolute;
+  right: 0.18rem;
+  bottom: 0.08rem;
+  font-size: 0.5em;
+  line-height: 1;
+}
+
+.help-tile-row .tile.is-correct,
+.help-hard-evidence .tile.is-correct {
+  border-color: color-mix(in oklch, var(--correct) 72%, var(--border));
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+}
+
+.help-tile-row .tile.is-present,
+.help-hard-evidence .tile.is-present {
+  border-color: color-mix(in oklch, var(--present) 72%, var(--border));
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+}
+
+.help-tile-row .tile.is-absent,
+.help-hard-evidence .tile.is-absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
 }
 
 .help-tile-row small {
