@@ -13,8 +13,15 @@ import { accountEconomyNamespace, economyQueryKey } from '@/application/query-ke
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import { useAuth } from '@/components/providers';
 import { defaultAccountProgress } from '@/domain/account-continuity';
-import { buildPlayerStats, buildRatingTrajectory, nextLevelProgress } from '@/domain/account-stats';
+import {
+  buildDifficultyBreakdown,
+  buildPlayerStats,
+  buildRatingTrajectory,
+  buildResultTimeline,
+  nextLevelProgress,
+} from '@/domain/account-stats';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
+import type { DifficultyBreakdownRow, ResultTimelineDay } from '@/domain/account-stats';
 import { ratingBucketLabel, resolveRatingLane } from '@/domain/profile';
 
 export function PrivateStats() {
@@ -69,6 +76,8 @@ function PrivateStatsInner() {
   const byId = new Map(pendingRows.map((row) => [row.id, row]));
   for (const row of history.data?.rows ?? []) byId.set(row.id, row);
   const projection = buildPlayerStats([...byId.values()], pendingIds);
+  const timeline = buildResultTimeline([...byId.values()], pendingIds);
+  const difficulty = buildDifficultyBreakdown([...byId.values()], pendingIds);
   const accountProgress = progress.data ?? defaultAccountProgress();
   const level = nextLevelProgress(accountProgress);
   const failed =
@@ -125,6 +134,7 @@ function PrivateStatsInner() {
           losses={projection.losses}
           draws={projection.draws}
         />
+        <ResultTimeline days={timeline} />
       </StatsSection>
 
       <StatsSection title="breakdowns" note="durable completed games">
@@ -151,6 +161,7 @@ function PrivateStatsInner() {
             ['Daily', projection.byLane.daily],
           ]}
         />
+        <DifficultyWinRate rows={difficulty} />
       </StatsSection>
 
       <StatsSection title="solo attempt distribution" note="guesses used">
@@ -370,6 +381,94 @@ function ComparisonBars({ rows }: { rows: Array<[string, number]> }) {
             <span style={{ width: `${(value / maximum) * 100}%` }} />
           </span>
           <strong>{value}</strong>
+        </div>
+      ))}
+    </figure>
+  );
+}
+
+/**
+ * W6. Results over time, from a projection that was written, reviewed and unit-tested
+ * before this pass and then called from nowhere.
+ *
+ * Plotted as games-per-day with a win share, not as a win-rate line: a day with one game
+ * has a win rate of either 0% or 100%, and a line through those would read as violent
+ * swings in form rather than as a small sample. Days with no completed game are absent
+ * from the data rather than drawn as zero, so the horizontal axis is ordinal — the
+ * spacing between points says "next session", not "next day".
+ */
+function ResultTimeline({ days }: { days: ResultTimelineDay[] }) {
+  if (days.length < 2) return null;
+
+  const width = 100;
+  const height = 32;
+  const peak = Math.max(...days.map((day) => day.games));
+  const totals = days.reduce(
+    (sum, day) => ({ games: sum.games + day.games, wins: sum.wins + day.wins }),
+    { games: 0, wins: 0 },
+  );
+  const point = (index: number, value: number) =>
+    `${((index / (days.length - 1)) * width).toFixed(2)},${(height - (value / peak) * height).toFixed(2)}`;
+
+  return (
+    <figure className="stats-visual stats-result-timeline">
+      <figcaption>
+        Games per day · {days.length} active days · {totals.games} games, {totals.wins} won
+      </figcaption>
+      <svg
+        className="trajectory-chart"
+        viewBox={`0 0 ${width} ${height}`}
+        preserveAspectRatio="none"
+        role="img"
+        aria-label={`Completed games across ${days.length} active days, ${totals.games} in total of which ${totals.wins} were won`}
+      >
+        <polyline
+          className="trajectory-line"
+          points={days.map((day, index) => point(index, day.games)).join(' ')}
+        />
+        <polyline
+          className="timeline-wins"
+          points={days.map((day, index) => point(index, day.wins)).join(' ')}
+        />
+      </svg>
+      {/* Exact textual equivalent: the chart never carries information on its own. */}
+      <ol className="trajectory-values">
+        {days.map((day) => (
+          <li key={day.day}>
+            <time dateTime={day.day}>{new Date(`${day.day}T12:00:00`).toLocaleDateString()}</time>
+            <span>
+              {day.games} game{day.games === 1 ? '' : 's'}
+            </span>
+            <strong>{day.wins} won</strong>
+          </li>
+        ))}
+      </ol>
+    </figure>
+  );
+}
+
+/**
+ * W6. Win rate by difficulty — recorded on every completed game since schema v2 and never
+ * shown anywhere until now. Buckets with too few games to carry a rate are absent from the
+ * data entirely, so an empty figure means "not enough played yet", never "0%".
+ */
+function DifficultyWinRate({ rows }: { rows: DifficultyBreakdownRow[] }) {
+  if (!rows.length) return null;
+  return (
+    <figure className="stats-visual stats-comparison">
+      <figcaption>Win rate by difficulty · completed games only</figcaption>
+      {rows.map((row) => (
+        <div
+          className="comparison-row"
+          key={row.difficulty}
+          tabIndex={0}
+          aria-label={`${row.difficulty}: ${row.winRate}% win rate across ${row.games} completed games`}
+        >
+          <span>{row.difficulty}</span>
+          <span className="comparison-track" aria-hidden="true">
+            <span style={{ width: `${row.winRate}%` }} />
+          </span>
+          <strong>{row.winRate}%</strong>
         </div>
       ))}
     </figure>

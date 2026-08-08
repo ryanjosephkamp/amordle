@@ -128,25 +128,84 @@ export function buildRatingTrajectory(
   });
 }
 
+export interface ResultTimelineDay {
+  day: string;
+  wins: number;
+  losses: number;
+  draws: number;
+  games: number;
+}
+
 /**
- * Completed games grouped by ISO week, for an honest results-over-time view. Weeks with
- * no completed game are omitted rather than drawn as zero, so the shape never implies
+ * Completed games grouped by day, for an honest results-over-time view. Days with no
+ * completed game are omitted rather than drawn as zero, so the shape never implies
  * activity that did not happen.
+ *
+ * W6. Two corrections on wiring this up, both of which had been latent since it was
+ * written: the buckets were named `week` while the implementation slices `YYYY-MM-DD`
+ * off the timestamp, which is a day; and unsynced rows were counted, unlike every other
+ * projection on this page, so a figure drawn from it would have disagreed with the
+ * metrics printed beside it.
  */
 export function buildResultTimeline(
   history: readonly AccountHistoryRow[],
-): Array<{ week: string; wins: number; losses: number; draws: number }> {
-  const weeks = new Map<string, { week: string; wins: number; losses: number; draws: number }>();
+  pendingIds: ReadonlySet<string> = new Set(),
+): ResultTimelineDay[] {
+  const days = new Map<string, ResultTimelineDay>();
   for (const row of history) {
-    if (row.entry.result === 'cancelled') continue;
-    const week = row.completed_at.slice(0, 10);
-    const bucket = weeks.get(week) ?? { week, wins: 0, losses: 0, draws: 0 };
+    if (row.entry.result === 'cancelled' || pendingIds.has(row.id)) continue;
+    const day = row.completed_at.slice(0, 10);
+    const bucket = days.get(day) ?? { day, wins: 0, losses: 0, draws: 0, games: 0 };
     if (row.entry.result === 'won') bucket.wins += 1;
     else if (row.entry.result === 'lost') bucket.losses += 1;
     else if (row.entry.result === 'draw') bucket.draws += 1;
-    weeks.set(week, bucket);
+    bucket.games = bucket.wins + bucket.losses + bucket.draws;
+    days.set(day, bucket);
   }
-  return [...weeks.values()].sort((left, right) => left.week.localeCompare(right.week));
+  return [...days.values()].sort((left, right) => left.day.localeCompare(right.day));
+}
+
+export interface DifficultyBreakdownRow {
+  difficulty: 'casual' | 'standard' | 'expert';
+  games: number;
+  wins: number;
+  winRate: number;
+}
+
+/**
+ * W6. Win rate by difficulty. `difficulty` is recorded on every completed game from
+ * schema v2 onward and has never been surfaced anywhere in the app.
+ *
+ * Chosen over word length, which is the more distinctive Amordle dimension but spreads a
+ * hundred-row history across up to thirty-four buckets — sparse enough to read as a
+ * pattern when it is noise. Three buckets stay dense enough to mean something.
+ *
+ * A bucket below `minimumGames` is omitted rather than drawn, for the same reason this
+ * file omits empty days: two games is not a win rate. v1 rows carry no difficulty at all
+ * and are excluded rather than bucketed as a guess.
+ */
+export function buildDifficultyBreakdown(
+  history: readonly AccountHistoryRow[],
+  pendingIds: ReadonlySet<string> = new Set(),
+  minimumGames = 3,
+): DifficultyBreakdownRow[] {
+  const order = ['casual', 'standard', 'expert'] as const;
+  const buckets = new Map<string, { games: number; wins: number }>();
+  for (const row of history) {
+    if (row.entry.schemaVersion === 1) continue;
+    if (row.entry.result === 'cancelled' || pendingIds.has(row.id)) continue;
+    const bucket = buckets.get(row.entry.difficulty) ?? { games: 0, wins: 0 };
+    bucket.games += 1;
+    if (row.entry.result === 'won') bucket.wins += 1;
+    buckets.set(row.entry.difficulty, bucket);
+  }
+  return order
+    .map((difficulty) => ({ difficulty, ...(buckets.get(difficulty) ?? { games: 0, wins: 0 }) }))
+    .filter((row) => row.games >= minimumGames)
+    .map((row) => ({
+      ...row,
+      winRate: Math.round((row.wins / row.games) * 1000) / 10,
+    }));
 }
 
 export function nextLevelProgress(progress: AccountProgress): {

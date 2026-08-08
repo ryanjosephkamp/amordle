@@ -768,6 +768,71 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(ratingGridColumn).toContain('1 / -1');
   });
 
+  /*
+   * W6. The two figures added to Stats. `/stats` is behind the account gate, so like the
+   * rating grid above they are asserted through a probe carrying the real markup.
+   *
+   * The obligations checked here are the ones this page already imposes on every visual:
+   * full-bleed rather than stranded in one grid column, no horizontal overflow at the
+   * narrowest supported width, and a dash pattern on the second line so the pair stays
+   * separable when forced colours collapse the palette.
+   */
+  test('the new Stats figures are full-bleed, contained, and separable without colour', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 320, height: 844 });
+    await page.goto('/stats');
+    const probe = await page.evaluate(() => {
+      const host = document.createElement('div');
+      host.className = 'stats-metrics';
+      host.innerHTML =
+        '<figure class="stats-visual stats-result-timeline">' +
+        '<figcaption>Games per day</figcaption>' +
+        '<svg class="trajectory-chart" viewBox="0 0 100 32" preserveAspectRatio="none" role="img" aria-label="probe">' +
+        '<polyline class="trajectory-line" points="0,10 50,4 100,20"></polyline>' +
+        '<polyline class="timeline-wins" points="0,20 50,12 100,28"></polyline>' +
+        '</svg>' +
+        '<ol class="trajectory-values"><li><time datetime="2026-08-08">8/8/2026</time>' +
+        '<span>3 games</span><strong>2 won</strong></li></ol></figure>' +
+        '<figure class="stats-visual stats-comparison">' +
+        '<figcaption>Win rate by difficulty</figcaption>' +
+        '<div class="comparison-row" tabindex="0" aria-label="probe">' +
+        '<span>standard</span><span class="comparison-track"><span style="width:40%"></span></span>' +
+        '<strong>40%</strong></div></figure>';
+      document.body.append(host);
+      const row = host.getBoundingClientRect();
+      const read = (selector: string) => {
+        const element = host.querySelector(selector)!;
+        const box = element.getBoundingClientRect();
+        return { gridColumn: getComputedStyle(element).gridColumn, width: Math.round(box.width) };
+      };
+      const wins = getComputedStyle(host.querySelector('.timeline-wins')!);
+      const games = getComputedStyle(host.querySelector('.trajectory-line')!);
+      const result = {
+        rowWidth: Math.round(row.width),
+        timeline: read('.stats-result-timeline'),
+        difficulty: read('.stats-comparison'),
+        winsDash: wins.strokeDasharray,
+        gamesDash: games.strokeDasharray,
+        winsStroke: wins.stroke,
+        gamesStroke: games.stroke,
+        documentOverflow:
+          document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      };
+      host.remove();
+      return result;
+    });
+
+    for (const figure of [probe.timeline, probe.difficulty]) {
+      expect(figure.gridColumn, 'Stats visuals must span the full row').toContain('1 / -1');
+      expect(probe.rowWidth - figure.width).toBeLessThanOrEqual(2);
+    }
+    expect(probe.documentOverflow, 'no horizontal scrolling at 320px').toBeLessThanOrEqual(1);
+    // Colour alone must not be what separates the two lines.
+    expect(probe.winsDash).not.toBe(probe.gamesDash);
+    expect(probe.winsStroke).not.toBe(probe.gamesStroke);
+  });
+
   // ANNOT-11: the account trigger carries identity while staying bounded, so the
   // toolbar cannot grow, collide, or overflow at any supported width or zoom.
   test('Account trigger shows guest and stays bounded in the toolbar', async ({ page }) => {
