@@ -225,6 +225,67 @@ test.describe('route and public boundary matrix', () => {
     expect(state.shellKeys).toEqual([`amordle-shell-${state.version}`]);
   });
 
+  /*
+   * C5. The Hard Mode aid judges each candidate with `hardModeViolationForEvidence`, the
+   * same function the game enforces, so these assertions are on the real rule rather than
+   * on prose that could drift away from it. One accept plus all three refusal families.
+   */
+  test('Help judges Hard Mode candidates with the real rule', async ({ page }) => {
+    await page.goto('/help');
+    const verdict = page.locator('.help-hard-verdict');
+    await expect(verdict).toContainText('No guess tried yet.');
+
+    await page.getByRole('button', { name: 'MEETS' }).click();
+    await expect(verdict).toContainText('ACCEPTED');
+
+    await page.getByRole('button', { name: 'MATES' }).click();
+    await expect(verdict).toContainText('Use at least 2 Es.');
+
+    await page.getByRole('button', { name: 'GLEES' }).click();
+    await expect(verdict).toContainText('G has already been ruled out.');
+
+    await page.getByRole('button', { name: 'MELEE' }).click();
+    await expect(verdict).toContainText('Keep S in position 5.');
+    await expect(page.getByRole('button', { name: 'MELEE' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    );
+
+    // Operable without a pointer.
+    await page.getByRole('button', { name: 'MEETS' }).focus();
+    await page.keyboard.press('Enter');
+    await expect(verdict).toContainText('ACCEPTED');
+  });
+
+  /*
+   * C5. The aids render finished and only wind back if a client that can animate scrolls
+   * them into view, so reduced motion must leave the complete figure rather than a frame
+   * mid-sequence. That is the whole safety argument for the design, and /help had no
+   * reduced-motion or forced-colors coverage at all before this.
+   */
+  test('Help teaching aids rest in a complete state under reduced motion and forced colors', async ({
+    page,
+  }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
+    await page.goto('/help');
+
+    // Every evidence tile has resolved: none is still pending, and each carries its mark.
+    await expect(page.locator('.help-tile-row .tile.is-pending')).toHaveCount(0);
+    await expect(page.locator('.help-tile-row .tile[data-cursor]')).toHaveCount(0);
+    for (const state of ['is-correct', 'is-present', 'is-absent']) {
+      await expect(page.locator(`.help-tile-row .tile.${state}`)).toHaveCount(1);
+    }
+    // Every sequence step has been reached.
+    await expect(page.locator('.help-chain li:not([data-reached])')).toHaveCount(0);
+    await expect(page.locator('.help-lane-comparison > div:not([data-reached])')).toHaveCount(0);
+
+    const axe = await new AxeBuilder({ page }).analyze();
+    const blocking = axe.violations.filter((item) =>
+      ['serious', 'critical'].includes(item.impact ?? ''),
+    );
+    expect(blocking, blocking.map((item) => item.id).join(', ')).toEqual([]);
+  });
+
   test('Help separates core teaching aids from collapsed advanced shortcuts', async ({ page }) => {
     await page.goto('/help');
     await expect(page.getByText(/ONE ANSWER BECOMES THE NEXT PUZZLE/i)).toBeVisible();

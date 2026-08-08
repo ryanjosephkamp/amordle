@@ -8,11 +8,14 @@ import {
 import {
   AccessTeachingAid,
   CoinsToolsTeachingAid,
-  GoChainTeachingAid,
-  HardModeTeachingAid,
-  PracticeDailyTeachingAid,
   PrivacyTeachingAid,
 } from '@/features/support/help-teaching-aids';
+import {
+  GoChainAid,
+  HardModeAid,
+  PracticeDailyAid,
+  TileEvidenceAid,
+} from '@/features/support/help-live-aids';
 
 /*
  * The second element is a ReactNode rather than a string because several of these
@@ -104,10 +107,10 @@ export default function HelpPage() {
           <section key={title}>
             <h2>{title}</h2>
             {typeof content === 'string' ? <p>{content}</p> : content}
-            {title === 'OG and scoring' && <TileEvidenceExample />}
-            {title === 'GO chains' && <GoChainTeachingAid />}
-            {title === 'Practice and Daily' && <PracticeDailyTeachingAid />}
-            {title === 'Hard Mode' && <HardModeTeachingAid />}
+            {title === 'OG and scoring' && <TileEvidenceAid />}
+            {title === 'GO chains' && <GoChainAid />}
+            {title === 'Practice and Daily' && <PracticeDailyAid />}
+            {title === 'Hard Mode' && <HardModeAid />}
             {title === 'COMBAT' && <CombatTurnExample />}
             {title === 'Coins and tools' && <CoinsToolsTeachingAid />}
             {title === 'Access and navigation' && <AccessTeachingAid />}
@@ -154,32 +157,6 @@ export default function HelpPage() {
         </details>
       </div>
     </div>
-  );
-}
-
-function TileEvidenceExample() {
-  const tiles = [
-    { letter: 'C', state: 'correct', label: 'correct spot' },
-    { letter: 'R', state: 'present', label: 'present elsewhere' },
-    { letter: 'A', state: 'absent', label: 'not in the word' },
-  ] as const;
-  return (
-    <figure className="help-example">
-      <figcaption>READ ONE ROW</figcaption>
-      <div className="help-tile-row">
-        {tiles.map((tile) => (
-          <div key={tile.letter}>
-            <span className={`tile is-${tile.state}`} aria-label={`${tile.letter}, ${tile.label}`}>
-              <span className="tile-letter">{tile.letter}</span>
-              <span className="tile-evidence" aria-hidden="true">
-                {tile.state === 'correct' ? '✓' : tile.state === 'present' ? '~' : '×'}
-              </span>
-            </span>
-            <small>{tile.label}</small>
-          </div>
-        ))}
-      </div>
-    </figure>
   );
 }
 

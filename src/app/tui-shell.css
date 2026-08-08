@@ -2589,6 +2589,92 @@ button.calendar-day:disabled {
   color: var(--key-absent-ink);
 }
 
+/*
+ * V7.2-04. The teaching aids resolve one beat at a time. A tile that has not resolved
+ * yet is the pending frame the board already uses for a draft row, and the cursor marks
+ * the cell about to land — the whole vocabulary is "terminal output arriving", not
+ * "content fading in". Letters never change opacity, so every word stays legible mid
+ * sequence and the contrast sweep never samples a half-faded colour.
+ */
+/*
+ * A pending tile keeps the plain frame. The board tints its draft row with the accent,
+ * but this figure exists to teach what the evidence colours mean, and under the default
+ * accent an accent-tinted frame sits far too close to "correct" — the cursor alone marks
+ * where the next result lands.
+ */
+.help-tile-row .tile.is-pending {
+  border-color: var(--border);
+}
+
+.help-tile-row .tile[data-cursor]::after {
+  position: absolute;
+  right: 0.18rem;
+  bottom: 0.16rem;
+  width: 0.42rem;
+  height: 0.16rem;
+  animation: help-cursor-blink 1s steps(1, end) infinite;
+  background: var(--accent);
+  content: '';
+}
+
+/* `from`-only, so stopping the animation leaves the cursor visible rather than gone. */
+@keyframes help-cursor-blink {
+  from {
+    opacity: 0.25;
+  }
+}
+
+/*
+ * The advancing marker for the chain and lane aids: a rail, not a fade. Scoped through
+ * `.help-sequence` on the figure so it out-specifies the shared box border these items
+ * already carry, which is otherwise declared later in this file and would win.
+ */
+.help-sequence.help-chain li,
+.help-sequence.help-lane-comparison > div {
+  border-inline-start: 2px solid transparent;
+}
+
+.help-sequence.help-chain li[data-reached],
+.help-sequence.help-lane-comparison > div[data-reached] {
+  border-inline-start-color: var(--accent);
+}
+
+.help-replay {
+  min-height: 2.25rem;
+  margin-block-start: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-1);
+}
+
+.help-hard-prompt {
+  margin-block: var(--space-4) var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.help-hard-candidates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.help-hard-verdict {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-2);
+}
+
+.help-hard-verdict .is-accepted strong {
+  color: var(--correct-text);
+}
+
+.help-hard-verdict .is-refused strong {
+  color: var(--danger);
+}
+
+.help-hard-verdict strong {
+  margin-inline-end: var(--space-2);
+}
+
 .help-tile-row small {
   max-width: 8rem;
   color: var(--muted);
