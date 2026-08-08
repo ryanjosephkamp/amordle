@@ -322,14 +322,14 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_B866n6v8k1GV6iJ7Zdgtx5TFgovt",
-    "url": "https://amordle-mdyng2rcv-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4",
+    "url": "https://amordle-rcl7pofqo-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "target": "preview",
-    "applicationCommit": "1d918cf7290ead42ff83b0b9a9b9b4a59960ce4a",
+    "applicationCommit": "563d02f2e9f04563fbb421da66a990389236631d",
     "evidenceCommit": null,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
-    "supersededPreview": "dpl_AL4UNa59TdXhmMn8ek2rBu6oMGrR"
+    "supersededPreview": "dpl_Cz6fCwtmNgGgnzXi3vqtpPq36Yf6"
   },
   "cleanup": {
     "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7-design-locked-in-v7.1-refinement-pass-intake-open",
-  "updatedAt": "2026-08-07T00:00:00Z",
+  "reportStatus": "v7.3-w1-w4-and-w6-complete-w5-artifact-awaiting-owner-lock-in",
+  "updatedAt": "2026-08-08T07:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -781,6 +781,105 @@
     "reviewBasis": "owner tested the protected Preview amordle-ffj16pv6j after hosted acceptance came back green",
     "ownerStatement": "Everything looks good; nothing implemented incorrectly. The Hard Mode interactive aid is basically perfect and stays as is. The game is nearly complete in terms of the reported items.",
     "regressionReportedAtAcceptance": "the CLAIM WIN ON TIME control added in v7.1 shows on untimed matches, because readCombatClock treats a null time budget as 0 and therefore as expired. The owner wants the control removed entirely rather than gated - see docs/v7.3-intake/.",
+    "productionReleaseAuthorized": false
+  },
+  "v7_3Pass": {
+    "spec": "docs/v7.3-intake/WORK-INTAKE.md",
+    "deferredRoadmap": "docs/v7.3-intake/DEFERRED-ROADMAP.md",
+    "report": "reports/v7.3-timeout-contrast-history-stats-2026-08-08/README.md",
+    "artifact": "https://claude.ai/code/artifact/9d018dd8-b1b7-4bd2-a11c-c48e921e4c18",
+    "artifactSource": "docs/v7.3-intake/help-figures-artifact.html",
+    "baseCommit": "75a1eaa",
+    "revertPoint": "amordle-stage2-v7.2-help-and-match-setup-golden-2026-08-08 -> 3d7e99b",
+    "scope": "W1 W2 W3 W4 W6 complete; W5 split - animations built into a review artifact, W5.1 and W5.3 removals landed, port deferred to owner lock-in",
+    "migrationsAdded": 0,
+    "authorityMutationRequired": false,
+    "immutableMigrations": 45,
+    "bootstrapFiles": "107/107",
+    "httpInterfaces": 3,
+    "intakeClaimsCorrected": [
+      "W1: the timeout command is NOT idempotent by action id - operationId() mints a fresh UUID per call, so an unlatched effect would issue one real RPC per 250ms clock tick and every refusal calls refetch(). The auto-settle effect is throttled on wall-clock time held in a ref.",
+      "W1: fixing the null budget is a PREREQUISITE, not a separable tidy-up - with the bug in place auto-settlement fires on every untimed match and the server can never settle one.",
+      "W1: canClaimTimeout is not deleted but renamed and gated; automatic settlement asks the same question. Two tests were asserting the defect, including one whose comment claimed untimed lanes never produce a running clock.",
+      "W2b: there is no combat dim rule at all - 28 disabled attributes route into one generic button:disabled using a token that governs every disabled control in the app.",
+      "W2a: no not-your-turn state reached the DOM; one had to be added before anything could be scoped to it.",
+      "W3: .custom-accent-option small is at tui-shell.css:3270 not :3090, and the accent NAME is equally unreadable, which the intake does not mention.",
+      "W4a: the card is a mobile presentation only (below 47.99rem); above that the link already aligned. Root cause is button base styles against grid stretch, not markup.",
+      "W4b: 'draw' DOES exist - produced in match-controller.tsx, ranked by terminalPrecedence, CHECK-constrained in the DB and written by the settlement RPC, and already drawn on Stats. There are also FOUR result values; cancelled was missing.",
+      "W4b: no new orange token was needed (--present-text is 8.61:1; the naive --present is 2.71:1), but red DID need one - --danger measured 3.76:1 on a hovered row.",
+      "W5: CombatTurnExample is inlined in src/app/help/page.tsx, not in help-live-aids.tsx.",
+      "W5.3: not a subtraction - the lane rail painted only through data-reached, which existed solely because the sequence pre-set its final step."
+    ],
+    "w1Resolution": {
+      "decision": "silent automatic settlement, symmetric - whichever client is watching sends the command, including the client of the player who ran out",
+      "migrationRequired": false,
+      "residual": "settlement still needs someone's client open on the match; if both players close the tab it sits at 0:00 until either returns, then settles instantly before they can act. Automatic from the player's point of view, not guaranteed within N seconds. A scheduled sweep is the real fix and belongs in the deferred roadmap."
+    },
+    "contrastFamilyRepaired": {
+      "found": "widening the sweep turned 1 reported defect into 5 real ones across 254 failing accent x state x scheme combinations",
+      "routeLinkChevron": "1.01:1",
+      "unreadBulletMarker": "1.01:1",
+      "customAccentHex": "1.94:1",
+      "customAccentName": "1.94:1 - not in the intake at all",
+      "combatWaitState": "3.57:1, custom accents only",
+      "durableFix": "the sweep now measures ::before and ::after wherever they carry content - previously every pseudo-element in the design was unmeasured because getComputedStyle(element) cannot see one. Single-glyph markers are held to the 3:1 non-text floor, real words to 4.5:1."
+    },
+    "keyboardDimMeasured": "0.548 on the opponent's turn against 0.740 for an ordinary disabled control, identical in both schemes, still clear of the 3:1 disabled floor across all six accents",
+    "tokensAdded": ["--danger-text"],
+    "localAcceptance": {
+      "check": "green",
+      "domainTests": 148,
+      "browserComponentTests": 30,
+      "fixtureE2E": 23,
+      "visualE2E": 31,
+      "parityRows": 237,
+      "mpAuditRows": 73,
+      "bootstrapFiles": "107/107",
+      "httpInterfaces": 3,
+      "homeCompressedBytes": {
+        "js": 193110,
+        "css": 22981
+      },
+      "gameCompressedBytes": {
+        "js": 198828,
+        "css": 27385
+      },
+      "cssDeltaVsBaseline": {
+        "home": 145,
+        "game": 190
+      }
+    },
+    "openItems": [
+      "W5 is incomplete by design: six animations await owner feedback on the artifact; the port is Phase 8. GoChainAid and CombatTurnExample are unchanged until then.",
+      "The shared board-surface.css extraction is deferred, not abandoned - it touches four live game routes and its only consumer is the port.",
+      "One fidelity question recorded in the artifact: the intake describes Reveal as a green tile in row two, but the game locks the letter into the draft row with a dashed outline.",
+      "Server-side timeout settlement is still not hosted-proven, carried unchanged from v7.1.",
+      "Declared 90/85/90/90 coverage thresholds are still not run by any script (actual ~73%), and 'Match unavailable' remains unreproduced."
+    ],
+    "productionReleaseAuthorized": false
+  },
+  "v7_3HostedAcceptance": {
+    "status": "green",
+    "completedAt": "2026-08-08T06:44:53Z",
+    "runId": "e2e_20260808T064303505Z_563d02f2_385d2736",
+    "commit": "563d02f2e9f04563fbb421da66a990389236631d",
+    "deploymentId": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4",
+    "preview": "https://amordle-rcl7pofqo-ryanjosephkamps-projects.vercel.app",
+    "previewProtected": true,
+    "deployMethod": "vercel build + vercel deploy --prebuilt",
+    "fixtureE2E": 23,
+    "serviceE2E": 3,
+    "visualE2E": 31,
+    "verifiedParityRows": 237,
+    "newHostedAssertion": "a premature timeout settlement is refused by the server and leaves the match byte-identical, and the CLAIM WIN ON TIME control is absent for BOTH seats of a live timed ranked Practice match",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "authResidue": 0,
+    "authUsersCleaned": 6,
+    "gamesCleaned": 7,
+    "accentPresetsCleaned": 25,
+    "avatarObjectsCleaned": 2,
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
   }
 }
