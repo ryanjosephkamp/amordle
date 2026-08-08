@@ -87,41 +87,6 @@ function ReplayButton({ onClick, label }: { onClick(): void; label: string }) {
   );
 }
 
-export function TileEvidenceAid() {
-  const tiles = [
-    { letter: 'C', state: 'correct', mark: '✓', label: 'correct spot' },
-    { letter: 'R', state: 'present', mark: '~', label: 'present elsewhere' },
-    { letter: 'A', state: 'absent', mark: '×', label: 'not in the word' },
-  ] as const;
-  const { ref, step, play } = useTerminalSequence(tiles.length);
-  return (
-    <figure className="help-example help-sequence" ref={ref as React.Ref<HTMLElement>}>
-      <figcaption>READ ONE ROW</figcaption>
-      <div className="help-tile-row">
-        {tiles.map((tile, index) => {
-          const resolved = index < step;
-          return (
-            <div key={tile.letter}>
-              <span
-                className={`tile ${resolved ? `is-${tile.state}` : 'is-pending'}`}
-                data-cursor={index === step ? 'true' : undefined}
-                aria-label={`${tile.letter}, ${tile.label}`}
-              >
-                <span className="tile-letter">{tile.letter}</span>
-                <span className="tile-evidence" aria-hidden="true">
-                  {resolved ? tile.mark : ''}
-                </span>
-              </span>
-              <small>{tile.label}</small>
-            </div>
-          );
-        })}
-      </div>
-      <ReplayButton onClick={play} label="the tile evidence example" />
-    </figure>
-  );
-}
-
 export function GoChainAid() {
   const stages = [
     { key: 'one', head: 'PUZZLE 1', body: 'CRANE', note: 'Solved' },
@@ -148,35 +113,6 @@ export function GoChainAid() {
         ))}
       </ol>
       <ReplayButton onClick={play} label="the GO chain example" />
-    </figure>
-  );
-}
-
-export function PracticeDailyAid() {
-  const lanes = [
-    { key: 'practice', name: 'PRACTICE', facts: ['2–35 letters', 'OG or GO', 'Replay anytime'] },
-    {
-      key: 'daily',
-      name: 'DAILY',
-      facts: ['5 letters', 'OG or five-puzzle GO', 'One dated challenge'],
-    },
-  ] as const;
-  const { ref, step, play } = useTerminalSequence(lanes.length);
-  return (
-    <figure
-      className="help-example help-lane-comparison help-sequence"
-      ref={ref as React.Ref<HTMLElement>}
-    >
-      <figcaption>CHOOSE THE LANE THAT FITS</figcaption>
-      {lanes.map((lane, index) => (
-        <div key={lane.key} data-reached={index < step ? 'true' : undefined}>
-          <strong>{lane.name}</strong>
-          {lane.facts.map((fact) => (
-            <span key={fact}>{fact}</span>
-          ))}
-        </div>
-      ))}
-      <ReplayButton onClick={play} label="the lane comparison" />
     </figure>
   );
 }

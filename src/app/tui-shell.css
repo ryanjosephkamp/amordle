@@ -2655,45 +2655,15 @@ button.calendar-day:disabled {
  * sequence and the contrast sweep never samples a half-faded colour.
  */
 /*
- * A pending tile keeps the plain frame. The board tints its draft row with the accent,
- * but this figure exists to teach what the evidence colours mean, and under the default
- * accent an accent-tinted frame sits far too close to "correct" — the cursor alone marks
- * where the next result lands.
- */
-.help-tile-row .tile.is-pending {
-  border-color: var(--border);
-}
-
-.help-tile-row .tile[data-cursor]::after {
-  position: absolute;
-  right: 0.18rem;
-  bottom: 0.16rem;
-  width: 0.42rem;
-  height: 0.16rem;
-  animation: help-cursor-blink 1s steps(1, end) infinite;
-  background: var(--accent);
-  content: '';
-}
-
-/* `from`-only, so stopping the animation leaves the cursor visible rather than gone. */
-@keyframes help-cursor-blink {
-  from {
-    opacity: 0.25;
-  }
-}
-
-/*
- * The advancing marker for the chain and lane aids: a rail, not a fade. Scoped through
+ * The advancing marker for the chain aid: a rail, not a fade. Scoped through
  * `.help-sequence` on the figure so it out-specifies the shared box border these items
  * already carry, which is otherwise declared later in this file and would win.
  */
-.help-sequence.help-chain li,
-.help-sequence.help-lane-comparison > div {
+.help-sequence.help-chain li {
   border-inline-start: 2px solid transparent;
 }
 
-.help-sequence.help-chain li[data-reached],
-.help-sequence.help-lane-comparison > div[data-reached] {
+.help-sequence.help-chain li[data-reached] {
   border-inline-start-color: var(--accent);
 }
 
@@ -2788,6 +2758,21 @@ button.calendar-day:disabled {
   gap: var(--space-2);
   border: var(--terminal-rule);
   padding: var(--space-4);
+}
+
+/*
+ * W5.3. The lane comparison's rail used to be an ADVANCING marker, painted through a
+ * `data-reached` attribute that existed only because the sequence pre-set its own final
+ * step. Removing the animation would therefore have silently removed the rail as well —
+ * which is why that removal was not the clean subtraction the tile figure was. Hard-coding
+ * `data-reached="true"` onto a static figure would have kept a test green while leaving a
+ * lie in the markup, so the rail is simply unconditional now.
+ *
+ * Declared here, after the `border` shorthand above, rather than beside the chain rail:
+ * at equal specificity the later rule wins, and that shorthand would otherwise reset it.
+ */
+.help-lane-comparison > div {
+  border-inline-start: 2px solid var(--accent);
 }
 
 .help-chain li:nth-child(2) {

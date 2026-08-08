@@ -269,15 +269,27 @@ test.describe('route and public boundary matrix', () => {
     await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
     await page.goto('/help');
 
-    // Every evidence tile has resolved: none is still pending, and each carries its mark.
-    await expect(page.locator('.help-tile-row .tile.is-pending')).toHaveCount(0);
-    await expect(page.locator('.help-tile-row .tile[data-cursor]')).toHaveCount(0);
+    /*
+     * W5.1 and W5.3 removed the sequences from these two figures, so they no longer rest
+     * in a complete state — they only ever have one state. The assertions are repointed
+     * at what must now be true rather than deleted, because the property that matters is
+     * unchanged: a reader with reduced motion sees the whole figure.
+     */
     for (const state of ['is-correct', 'is-present', 'is-absent']) {
       await expect(page.locator(`.help-tile-row .tile.${state}`)).toHaveCount(1);
     }
-    // Every sequence step has been reached.
+    // The pending treatment and the blinking cursor belonged to the sequence and are gone.
+    await expect(page.locator('.help-tile-row .tile.is-pending')).toHaveCount(0);
+    await expect(page.locator('.help-tile-row .tile[data-cursor]')).toHaveCount(0);
+    // The lane rail is unconditional now, so it must paint without any attribute at all.
+    const lanes = page.locator('.help-lane-comparison > div');
+    await expect(lanes).toHaveCount(2);
+    await expect(page.locator('.help-lane-comparison > div[data-reached]')).toHaveCount(0);
+    for (const index of [0, 1]) {
+      await expect(lanes.nth(index)).toHaveCSS('border-inline-start-width', '2px');
+    }
+    // The GO chain still animates until W5.2 replaces it, so it must still rest complete.
     await expect(page.locator('.help-chain li:not([data-reached])')).toHaveCount(0);
-    await expect(page.locator('.help-lane-comparison > div:not([data-reached])')).toHaveCount(0);
 
     const axe = await new AxeBuilder({ page }).analyze();
     const blocking = axe.violations.filter((item) =>

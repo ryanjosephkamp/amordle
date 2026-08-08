@@ -8,14 +8,11 @@ import {
 import {
   AccessTeachingAid,
   CoinsToolsTeachingAid,
-  PrivacyTeachingAid,
-} from '@/features/support/help-teaching-aids';
-import {
-  GoChainAid,
-  HardModeAid,
   PracticeDailyAid,
+  PrivacyTeachingAid,
   TileEvidenceAid,
-} from '@/features/support/help-live-aids';
+} from '@/features/support/help-teaching-aids';
+import { GoChainAid, HardModeAid } from '@/features/support/help-live-aids';
 
 /*
  * The second element is a ReactNode rather than a string because several of these
