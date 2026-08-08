@@ -276,9 +276,7 @@ function MatchControllerInner({
         return;
       }
       const raw = error instanceof Error ? error.message : '';
-      setMessage(
-        raw || 'That action was not accepted.',
-      );
+      setMessage(raw || 'That action was not accepted.');
       void match.refetch();
     },
   });

@@ -105,6 +105,33 @@ const contrastCustomHexes = [
 const accentSurfaceSelector = ['.badge', '.attention-badge', '.notification-list a.is-unread'].join(
   ', ',
 );
+/*
+ * W3. Three separate defects now — the alerts badge, the notification row, and the
+ * profile custom-accent card — have been the same thing: secondary text keeping
+ * `--muted` after its surface flipped to the light/inverse `--terminal-selected`
+ * treatment. Patching the third would have guaranteed a fourth, so this sweeps the
+ * family instead of the instance.
+ *
+ * It exists as its own probe because the control sweep cannot reach these, for three
+ * independent reasons that each had to be closed:
+ *   1. `.custom-accent-option` is a <div>. It matches nothing in `controlSelector`, and
+ *      note that `.accent-option` does NOT match it — class matching is exact.
+ *   2. The defect needs `input:checked`. `contrastStates` forces rest/hover/focus-visible
+ *      and nothing else, and `:checked` is real DOM state that cannot be forced by CDP
+ *      at all. Here the inputs are simply mounted checked.
+ *   3. `/profile` IS swept, but signed out, where ProfileEditor short-circuits to a
+ *      skeleton and the accent fieldset never mounts.
+ */
+const selectedSurfaceSelector = [
+  '.custom-accent-option',
+  '.accent-option',
+  '.route-link',
+  '.word-list button',
+  'button.calendar-day',
+  '.segmented button',
+  '.combat-wait-state',
+  '.confirmation-panel',
+].join(', ');
 // `:active` carries no colour semantics in this design (`button:active` only sets
 // `translate`), so forcing it duplicates `rest` and doubles runtime for no signal.
 const contrastStates = ['rest', 'hover', 'focus-visible'] as const;
@@ -191,22 +218,48 @@ function measureControlContrast(selector: string): ControlContrastResult[] {
   // owns a text node — rather than the control box alone. A container with no direct
   // text has no foreground of its own, and ANNOT-09 is specifically about descendant
   // labels re-inheriting the wrong colour.
-  const textRuns: Element[] = [];
+  /*
+   * W3. `::before` and `::after` paint real, visible words in this design — the `›` on
+   * every route link, the `●` unread marker, the `[` `]` brackets on tool buttons, the
+   * DATE/GAME/RESULT labels on the mobile history card. All of them carry their own
+   * `color`, and none of them was ever measured, because `getComputedStyle(el)` does not
+   * see a pseudo-element. Two of the surfaces repaired in this pass are pseudo-elements
+   * sitting at 1.32:1, so this is not hypothetical.
+   */
+  const textRuns: Array<{ element: Element; pseudo: string | null }> = [];
+  const seen = new Set<string>();
   for (const control of Array.from(document.querySelectorAll(selector))) {
     const candidates = [control, ...Array.from(control.querySelectorAll('*'))];
     for (const candidate of candidates) {
       const ownsText = Array.from(candidate.childNodes).some(
         (node) => node.nodeType === Node.TEXT_NODE && (node.textContent ?? '').trim().length > 0,
       );
-      if (ownsText && !textRuns.includes(candidate)) textRuns.push(candidate);
+      const key = (suffix: string) => {
+        const index = Array.from(document.querySelectorAll('*')).indexOf(candidate);
+        return `${index}${suffix}`;
+      };
+      if (ownsText && !seen.has(key(''))) {
+        seen.add(key(''));
+        textRuns.push({ element: candidate, pseudo: null });
+      }
+      for (const pseudo of ['::before', '::after']) {
+        const content = getComputedStyle(candidate, pseudo).content;
+        // `none` means no box; `normal` is what a non-generating element reports. An
+        // empty or whitespace-only string paints nothing and has no foreground to judge.
+        if (!content || content === 'none' || content === 'normal') continue;
+        if (!/[^\s"']/.test(content.replace(/^"|"$/g, ''))) continue;
+        if (seen.has(key(pseudo))) continue;
+        seen.add(key(pseudo));
+        textRuns.push({ element: candidate, pseudo });
+      }
     }
   }
 
   const results: ControlContrastResult[] = [];
-  for (const element of textRuns) {
+  for (const { element, pseudo } of textRuns) {
     const rect = element.getBoundingClientRect();
     if (rect.width === 0 || rect.height === 0) continue;
-    const style = getComputedStyle(element);
+    const style = getComputedStyle(element, pseudo);
     if (style.visibility === 'hidden' || style.display === 'none') continue;
 
     // Cumulative opacity: a control faded by an ancestor is judged as rendered.
@@ -215,7 +268,14 @@ function measureControlContrast(selector: string): ControlContrastResult[] {
       opacity *= Number(getComputedStyle(node).opacity || '1');
     }
 
-    const backdrop = backdropOf(element);
+    // A pseudo-element paints over its originating element's backdrop, plus whatever
+    // background the pseudo sets for itself.
+    const elementBackdrop = backdropOf(element);
+    const pseudoBackground = pseudo ? parse(style.backgroundColor) : null;
+    const backdrop =
+      pseudoBackground && pseudoBackground[3] > 0
+        ? over(pseudoBackground, elementBackdrop)
+        : elementBackdrop;
     const raw = parse(style.color);
     const foreground = over([raw[0], raw[1], raw[2], raw[3] * opacity], backdrop);
 
@@ -232,13 +292,27 @@ function measureControlContrast(selector: string): ControlContrastResult[] {
       (element as HTMLButtonElement).disabled === true ||
       element.getAttribute('aria-disabled') === 'true' ||
       element.closest('[disabled], [aria-disabled="true"]') !== null;
-    const required = large || disabled ? 3 : 4.5;
+    /*
+     * A pseudo-element whose whole content is a single non-alphanumeric glyph — `›`, `●`,
+     * `▸`, the `[` `]` around tool labels — is a graphical marker, not prose, and WCAG
+     * scores those against the 3:1 non-text floor. Anything containing a letter or a
+     * digit is real content and stays at 4.5:1: `.responsive-table td::before` carries
+     * the words DATE and RESULT, and `.evidence-legend::before` carries "evidence".
+     *
+     * This is a category, not an exemption. The `›` on a hovered route link measured
+     * 1.01:1 and is repaired; it would fail either floor.
+     */
+    const pseudoText = pseudo ? style.content.replace(/^"|"$/g, '').trim() : '';
+    const marker = pseudo !== null && pseudoText.length <= 2 && !/[\p{L}\p{N}]/u.test(pseudoText);
+    const required = large || disabled || marker ? 3 : 4.5;
 
     const label = `${element.tagName.toLowerCase()}${
       element.className && typeof element.className === 'string'
         ? `.${element.className.trim().split(/\s+/).join('.')}`
         : ''
-    } "${(element.textContent ?? '').trim().slice(0, 32)}"`;
+    }${pseudo ?? ''} "${(pseudo ? style.content.replace(/^"|"$/g, '') : (element.textContent ?? ''))
+      .trim()
+      .slice(0, 32)}"`;
 
     results.push({
       ok: ratio >= required,
@@ -1280,6 +1354,112 @@ test.describe('responsive and alternate presentation evidence', () => {
         }
       }
       await page.evaluate(() => document.querySelector('[data-accent-surface-probe]')?.remove());
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
+  for (const scheme of contrastSchemes) {
+    test(`secondary text stays readable on every selected surface (${scheme})`, async ({
+      page,
+    }) => {
+      await page.setViewportSize({ width: 1440, height: 1024 });
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto('/');
+      await page.addStyleTag({
+        content:
+          '*, *::before, *::after { transition: none !important; animation: none !important }',
+      });
+      const client = await page.context().newCDPSession(page);
+      await client.send('DOM.enable');
+      await client.send('CSS.enable');
+
+      const failures: string[] = [];
+      /*
+       * Named and custom alike. `.combat-wait-state span` and `.confirmation-panel p`
+       * sit on `--accent-soft`, which tracks the scheme and so passes comfortably for
+       * every named accent — they can only fail under a custom hex, which is exactly the
+       * blind spot that produced the unread-row defect in v7.1.
+       */
+      const accents: Array<{ label: string; hex: string | null }> = [
+        ...contrastAccents.map((name) => ({ label: name, hex: null })),
+        ...contrastCustomHexes.map((hex) => ({ label: `custom ${hex}`, hex })),
+      ];
+      for (const accent of accents) {
+        const variables = accent.hex ? accentCssVariableMap(accent.hex) : null;
+        if (accent.hex) expect(variables, accent.hex).not.toBeNull();
+        await page.evaluate(
+          ({ name, values }) => {
+            const root = document.documentElement;
+            for (const key of Array.from(root.style)) {
+              if (key.startsWith('--custom-')) root.style.removeProperty(key);
+            }
+            root.dataset.accent = name;
+            for (const [property, value] of Object.entries(values ?? {})) {
+              root.style.setProperty(property, value);
+            }
+            document.querySelector('[data-selected-surface-probe]')?.remove();
+            const probe = document.createElement('div');
+            probe.setAttribute('data-selected-surface-probe', 'true');
+            /*
+             * The real markup, not a simplification. The custom accent card in particular
+             * only fails as a nested structure: `.custom-accent-option:has(input:checked)`
+             * flips a <div>, and the ink for the preset name comes from `.field-stack
+             * label` two levels up, so flattening it would hide the defect exactly the way
+             * mounting the alerts badge outside a <button> hid the last one.
+             */
+            probe.innerHTML =
+              '<div class="field-stack">' +
+              '<div class="custom-accent-option">' +
+              '<label><input type="radio" name="probe-accent" checked />' +
+              '<span class="accent-swatch"></span>' +
+              '<span>Gay<small>#8702B0</small></span></label>' +
+              '<button type="button" class="text-action">EDIT</button>' +
+              '</div>' +
+              '<label class="accent-option"><input type="radio" name="probe-named" checked />' +
+              '<span class="accent-swatch"></span><span>Aurora</span></label>' +
+              '</div>' +
+              '<a class="route-link" href="#" data-selected-probe-control>' +
+              '<strong>Leaderboards</strong><span>Ranked standings</span></a>' +
+              '<div class="word-list"><button type="button" aria-selected="true">' +
+              '<strong>CRANE</strong><span>encountered</span></button></div>' +
+              '<div class="calendar-grid"><button type="button" class="calendar-day is-selected">' +
+              '<span>12</span><strong>Locked</strong></button></div>' +
+              '<div class="segmented"><button type="button" aria-pressed="true">' +
+              'Practice<span>unlimited</span></button></div>' +
+              '<p class="combat-wait-state">Waiting<span>Their turn</span></p>' +
+              '<div class="confirmation-panel"><h3>Unlock this Daily?</h3>' +
+              '<p>Sixty coins, and the date opens for play.</p></div>';
+            document.body.append(probe);
+          },
+          { name: accent.hex ? 'custom' : accent.label, values: variables },
+        );
+
+        const { root } = await client.send('DOM.getDocument', { depth: -1 });
+        const { nodeIds } = await client.send('DOM.querySelectorAll', {
+          nodeId: root.nodeId,
+          selector: '[data-selected-probe-control]',
+        });
+        for (const state of contrastStates) {
+          for (const nodeId of nodeIds) {
+            await client
+              .send('CSS.forcePseudoState', {
+                nodeId,
+                forcedPseudoClasses: state === 'rest' ? [] : [state],
+              })
+              .catch(() => undefined);
+          }
+          const results = await page.evaluate(measureControlContrast, selectedSurfaceSelector);
+          for (const result of results) {
+            if (result.ok) continue;
+            failures.push(
+              `${scheme} · ${accent.label} · ${state} · ${result.label} — ` +
+                `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
+                `fg ${result.color} on bg ${result.background}`,
+            );
+          }
+        }
+      }
+      await page.evaluate(() => document.querySelector('[data-selected-surface-probe]')?.remove());
       expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
     });
   }

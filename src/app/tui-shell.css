@@ -685,6 +685,17 @@ button.primary:hover {
   content: '● ';
 }
 
+/*
+ * W3. Same cause as the `<time>` elements repaired above it, one element further out:
+ * the unread bullet keeps `--accent-text` when the row flips to `--terminal-selected`,
+ * measuring as low as 1.01:1. On touch the hover state latches after a tap, so this is
+ * not a flicker — it is the state for as long as the panel stays open.
+ */
+.notification-list a.is-unread:hover .notification-status::before,
+.notification-list a.is-unread:focus-visible .notification-status::before {
+  color: var(--terminal-selected-muted);
+}
+
 @media (max-width: 47.99rem) {
   .notification-list a {
     grid-template-columns: minmax(0, 1fr) auto;
@@ -1599,6 +1610,18 @@ tbody tr:hover {
 
 .route-link:hover span,
 .route-link:focus-visible span {
+  color: var(--terminal-selected-muted);
+}
+
+/*
+ * W3. The `›` marker is `--accent-text`, which is tuned to sit on the page background,
+ * not on the inverse slab a hovered route link becomes. Measured as low as 1.01:1. It
+ * was never caught because a pseudo-element is invisible to `getComputedStyle(element)`
+ * — the contrast sweep now measures `::before` and `::after` wherever they carry real
+ * content, which is how this surfaced at all.
+ */
+.route-link:hover::before,
+.route-link:focus-visible::before {
   color: var(--terminal-selected-muted);
 }
 
@@ -3275,6 +3298,30 @@ html[data-game-presentation='review'] .game-route {
 .custom-accent-option:has(input:checked) {
   background: var(--terminal-selected);
   color: var(--control-ink-on-selected);
+}
+
+/*
+ * W3. Third instance of one defect family: secondary text keeping `--muted` after its
+ * surface flips to `--terminal-selected`. Measured 1.94:1 light and 2.21:1 dark — the
+ * accent's name and its hex both, not just the hex the owner reported.
+ *
+ * Every existing guard missed this because the flip is applied by `:has(input:checked)`
+ * on a plain <div>. The rule that corrects hovered controls requires a `button`, `.button`
+ * or an `[aria-pressed]` ancestor; `.accent-option:has(input:checked)` is safe only
+ * because there the class sits on the <label> itself, so it colours the element that
+ * would otherwise inherit from `.field-stack label`. Here the label is nested one level
+ * inside the flipped div, and that one level is the whole bug.
+ *
+ * The name is primary text and takes the surface's own ink. The hex is genuinely
+ * secondary and takes `--terminal-selected-muted`, the token that exists for secondary
+ * text on a selected surface — the same treatment `.route-link:hover span` uses.
+ */
+.custom-accent-option:has(input:checked) > label {
+  color: inherit;
+}
+
+.custom-accent-option:has(input:checked) small {
+  color: var(--terminal-selected-muted);
 }
 
 .custom-accent-option:has(input:focus-visible) {

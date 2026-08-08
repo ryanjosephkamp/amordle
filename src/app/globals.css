@@ -1098,8 +1098,15 @@ th {
   font-family: var(--font-geist-mono), monospace;
 }
 
+/*
+ * W3. `--accent-soft` tracks the scheme, so `--muted` on it is comfortable for every
+ * named accent and only fails under a custom one — measured 3.57:1, invisible to any
+ * sweep that covers named accents alone. `--accent-soft-muted` is the token derived per
+ * custom accent for exactly this surface; the unread notification row, which is the same
+ * accent-soft tint, already uses it.
+ */
 .combat-wait-state span {
-  color: var(--muted);
+  color: var(--accent-soft-muted);
 }
 
 .combat-input {
