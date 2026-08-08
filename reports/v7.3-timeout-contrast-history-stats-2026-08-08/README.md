@@ -7,9 +7,8 @@ Revert point: `amordle-stage2-v7.2-help-and-match-setup-golden-2026-08-08` → `
 Spec: `docs/v7.3-intake/WORK-INTAKE.md` (W1–W6)
 Artifact: https://claude.ai/code/artifact/9d018dd8-b1b7-4bd2-a11c-c48e921e4c18
 
-Six owner items. **W1–W4 and W6 are complete.** W5 is half-done by design: the animations
-were built into a review artifact and the two removals landed; the port waits on lock-in.
-No migration. Production untouched.
+**All six owner items complete.** W5 was built artifact-first, approved unchanged, and
+ported. No migration. Production untouched.
 
 ---
 
@@ -88,7 +87,7 @@ darker text sibling; red was the one that had never needed it.
 
 | Suite | Before | After |
 | --- | --- | --- |
-| domain | 144 | **148** |
+| domain | 144 | **157** |
 | browser component | 29 | **30** |
 | fixture e2e | 23 | 23 |
 | visual e2e | 22 | **31** |
@@ -100,27 +99,49 @@ reported an untouched `0.74` while measuring unstyled buttons — it would have 
 vacuously. The explicit opacity assertion caught it.
 
 Hosted acceptance green at
-`https://amordle-rcl7pofqo-ryanjosephkamps-projects.vercel.app`
-(`dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4`) for `563d02f`: fixture 23, services 3, visual 31,
+`https://amordle-cwoz5jwao-ryanjosephkamps-projects.vercel.app`
+(`dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX`) for `4d1ee18`: fixture 23, services 3, visual 31,
 parity 237/237. Cleanup succeeded on the **first attempt with zero residue** and
 `authResidue: 0`. Production unchanged at `dpl_739mtwiXc9pZPef3pxsKumwC9DfG`.
 
-**Cost, measured:** CSS +145 B home, +190 B game. JS unchanged (−1 B). W5.1 and W5.3
-moving to the server-only module removes their client JavaScript entirely.
+**Cost, measured.** Home 193,128 B JS / 22,981 B CSS; game 198,846 B / 27,789 B — against
+budgets of 220/50 KiB and 320/65 KiB. The game CSS rise of 594 B is the gzip cost of
+splitting one stylesheet into two, not new rules. `/help`, which has no budget of its own,
+costs **+16,548 B raw JS and +3,341 B raw CSS** over Home.
 
-## 6. Open items
+## 6. W5 — the animation rework
 
-1. **W5 is incomplete by design.** Six animations are built into the artifact and await
-   owner feedback; the port is Phase 8. `GoChainAid` and `CombatTurnExample` are unchanged
-   until then.
-2. **The shared `board-surface.css` extraction is deferred**, not abandoned. It touches
-   four live game routes and its only consumer is the port. Landing a structural refactor
-   with no consumer would make this Preview riskier for no visible gain.
-3. **One fidelity question for the owner**, recorded in the artifact: the intake describes
-   Reveal as a green tile in row two; the game locks the letter into the *draft* row with a
-   dashed outline. The figure shows the faithful version and asks.
-4. **Server-side timeout settlement is still not hosted-proven**, carried unchanged from
+Built into one artifact, approved unchanged, then ported. Three things surfaced only by
+opening the page, none of which any test would have caught:
+
+1. **`.help-example` caps figures at 34 rem**, which sits *below* the COMBAT figure's own
+   44 rem container breakpoint — so the two-keyboard composition approved at 800 px would
+   have stacked at every width and never appeared in the app at all.
+2. A **stale service worker** served the previous CSS during local verification and
+   reported the wrong width. Worth remembering.
+3. The canonical-route walk went from 9.4 s to a **35 s timeout**. Six figures were
+   re-rendering 45 tiles and 104 keys across all ~130 frames. Played rows and derived
+   evidence are now shared by reference and the row and keyboard components memoised, so
+   typing re-renders the draft row alone. Back to **12.3 s**.
+
+The figures' content is computed by `scoreGuess`, `deriveKeyboardEvidence` and
+`continuationCost` rather than drawn, and nine domain tests assert it cannot contradict the
+rules it teaches — including that **T stays green** after row seven plays `TASTE` and scores
+its own T absent, which a hand-drawn figure would almost certainly have got wrong.
+
+Keyboards are `<span>`, not `<button>`: a figure is not a control, and buttons would have
+added 56 tab stops to `/help`. `HardModeAid` is byte-identical, verified by diff.
+
+## 7. Open items
+
+1. **Server-side timeout settlement is still not hosted-proven**, carried unchanged from
    v7.1. Proving it needs a match whose clock actually expires, and the only timed match in
    the hosted suite is load-bearing for a later win-by-guess assertion.
-5. Carried, unchanged: the declared 90/85/90/90 coverage thresholds are still not run by
+2. **`/help` and `/stats` still have no bundle budget of their own.** Both were measured by
+   hand this cycle; nothing automated guards them.
+3. Carried, unchanged: the declared 90/85/90/90 coverage thresholds are still not run by
    any script (actual ≈73%), and "Match unavailable" remains unreproduced.
+
+The Reveal fidelity question raised during review is closed: the owner approved the
+faithful rendering, where a bought letter lands in the draft row outlined rather than as a
+green evidence tile.

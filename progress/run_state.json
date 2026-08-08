@@ -322,14 +322,14 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4",
-    "url": "https://amordle-rcl7pofqo-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX",
+    "url": "https://amordle-cwoz5jwao-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "target": "preview",
-    "applicationCommit": "563d02f2e9f04563fbb421da66a990389236631d",
+    "applicationCommit": "4d1ee18e1b33b31909a4fb8c8bd1af5a6f17ae44",
     "evidenceCommit": null,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
-    "supersededPreview": "dpl_Cz6fCwtmNgGgnzXi3vqtpPq36Yf6"
+    "supersededPreview": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4"
   },
   "cleanup": {
     "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7.3-w1-w4-and-w6-complete-w5-artifact-awaiting-owner-lock-in",
-  "updatedAt": "2026-08-08T07:00:00Z",
+  "reportStatus": "v7.3-complete-all-six-items-hosted-green",
+  "updatedAt": "2026-08-08T08:05:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -791,7 +791,7 @@
     "artifactSource": "docs/v7.3-intake/help-figures-artifact.html",
     "baseCommit": "75a1eaa",
     "revertPoint": "amordle-stage2-v7.2-help-and-match-setup-golden-2026-08-08 -> 3d7e99b",
-    "scope": "W1 W2 W3 W4 W6 complete; W5 split - animations built into a review artifact, W5.1 and W5.3 removals landed, port deferred to owner lock-in",
+    "scope": "W1 through W6 all complete. W5 built artifact-first, owner-approved, then ported.",
     "migrationsAdded": 0,
     "authorityMutationRequired": false,
     "immutableMigrations": 45,
@@ -828,7 +828,7 @@
     "tokensAdded": ["--danger-text"],
     "localAcceptance": {
       "check": "green",
-      "domainTests": 148,
+      "domainTests": 157,
       "browserComponentTests": 30,
       "fixtureE2E": 23,
       "visualE2E": 31,
@@ -836,49 +836,66 @@
       "mpAuditRows": 73,
       "bootstrapFiles": "107/107",
       "httpInterfaces": 3,
+      "cssStylesheets": 4,
+      "cssCustomProperties": 97,
       "homeCompressedBytes": {
-        "js": 193110,
+        "js": 193128,
         "css": 22981
       },
       "gameCompressedBytes": {
-        "js": 198828,
-        "css": 27385
+        "js": 198846,
+        "css": 27789
       },
-      "cssDeltaVsBaseline": {
-        "home": 145,
-        "game": 190
+      "deltaVsBaseline": {
+        "homeJs": 17,
+        "homeCss": 145,
+        "gameJs": 17,
+        "gameCss": 594,
+        "gameCssNote": "the rise is the gzip cost of splitting one stylesheet into two, not new rules; 27789 against a 65 KiB budget"
       }
     },
     "openItems": [
-      "W5 is incomplete by design: six animations await owner feedback on the artifact; the port is Phase 8. GoChainAid and CombatTurnExample are unchanged until then.",
-      "The shared board-surface.css extraction is deferred, not abandoned - it touches four live game routes and its only consumer is the port.",
-      "One fidelity question recorded in the artifact: the intake describes Reveal as a green tile in row two, but the game locks the letter into the draft row with a dashed outline.",
-      "Server-side timeout settlement is still not hosted-proven, carried unchanged from v7.1.",
-      "Declared 90/85/90/90 coverage thresholds are still not run by any script (actual ~73%), and 'Match unavailable' remains unreproduced."
+      "Server-side timeout settlement is still not hosted-proven, carried unchanged from v7.1. Proving it needs a match whose clock actually expires, and the only timed match in the hosted suite is load-bearing for a later win-by-guess assertion.",
+      "Declared 90/85/90/90 coverage thresholds are still not run by any script (actual ~73%), pre-existing.",
+      "'Match unavailable' remains unreproduced, deferred since v7.1.",
+      "/help and /stats still have no bundle budget of their own; both were measured by hand this cycle."
     ],
-    "productionReleaseAuthorized": false
+    "productionReleaseAuthorized": false,
+    "w5Completion": {
+      "process": "six animations built into one review artifact, owner locked them in unchanged, then ported",
+      "artifact": "https://claude.ai/code/artifact/9d018dd8-b1b7-4bd2-a11c-c48e921e4c18",
+      "ownerVerdict": "These animations are perfect. Please lock them in.",
+      "boardSurfaceExtraction": "deferred in the first half of the pass because its only consumer was the port; landed here as its own commit and verified against the game screens BEFORE Help was touched",
+      "foundByOpeningThePage": [
+        ".help-example caps figures at 34rem, below the COMBAT figure's own 44rem container breakpoint - the approved two-keyboard composition would have stacked at every width and never appeared in the app. Animated figures now take min(52rem, 100%).",
+        "a stale service worker served the previous CSS during local verification and reported the wrong width",
+        "the canonical-route walk went from 9.4s to a 35s TIMEOUT: six figures re-rendered 45 tiles and 104 keys on all ~130 frames. Fixed by sharing played rows and derived evidence by reference and memoising the row and keyboard components; back to 12.3s."
+      ],
+      "figuresAreSpanNotButton": "a figure is not a control - <button> keyboards would have added 56 tab stops to /help and pulled 56 nodes into the control contrast sweep; asserted directly",
+      "hardModeAidUnchanged": "verified byte-identical by diff",
+      "helpCostMeasured": {
+        "rawJsOverHome": 16548,
+        "rawCssOverHome": 3341
+      }
+    }
   },
   "v7_3HostedAcceptance": {
     "status": "green",
-    "completedAt": "2026-08-08T06:44:53Z",
-    "runId": "e2e_20260808T064303505Z_563d02f2_385d2736",
-    "commit": "563d02f2e9f04563fbb421da66a990389236631d",
-    "deploymentId": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4",
-    "preview": "https://amordle-rcl7pofqo-ryanjosephkamps-projects.vercel.app",
+    "completedAt": "2026-08-08T08:02:00Z",
+    "runId": "e2e_20260808T075923330Z_4d1ee18e_0453e249",
+    "commit": "4d1ee18e1b33b31909a4fb8c8bd1af5a6f17ae44",
+    "deploymentId": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX",
+    "preview": "https://amordle-cwoz5jwao-ryanjosephkamps-projects.vercel.app",
     "previewProtected": true,
     "deployMethod": "vercel build + vercel deploy --prebuilt",
     "fixtureE2E": 23,
     "serviceE2E": 3,
     "visualE2E": 31,
     "verifiedParityRows": 237,
-    "newHostedAssertion": "a premature timeout settlement is refused by the server and leaves the match byte-identical, and the CLAIM WIN ON TIME control is absent for BOTH seats of a live timed ranked Practice match",
     "cleanupAttempt": 1,
     "zeroResidue": true,
     "authResidue": 0,
-    "authUsersCleaned": 6,
-    "gamesCleaned": 7,
-    "accentPresetsCleaned": 25,
-    "avatarObjectsCleaned": 2,
+    "supersededPreview": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4 (W1-W4 and W6 only)",
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
   }
