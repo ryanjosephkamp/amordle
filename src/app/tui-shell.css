@@ -318,12 +318,31 @@ button:hover,
   color: var(--control-ink-on-selected);
 }
 
-button:hover :is(p, small, span),
-.button:hover :is(p, small, span),
-.button.primary :is(p, small, span),
-button.primary :is(p, small, span),
-[aria-current='page'] :is(p, small, span),
-[aria-pressed='true'] :is(p, small, span) {
+/*
+ * V7.2-01. When a control flips to the inverse `--terminal-selected` surface, plain
+ * descendant text must stop painting `--muted` on it — surface and ink travel together.
+ *
+ * The exclusion is the point. A descendant that carries its OWN background is not plain
+ * text on the control's surface; it is a surface of its own, and forcing it to inherit
+ * strips its ink while leaving its background. `.attention-badge` — the alerts count —
+ * is a `<span>` inside the alerts `<button>`, so it matched here and inherited the
+ * trigger's muted grey while keeping its accent fill: 6.93:1 at rest, 2.89:1 hovered,
+ * across every accent. On touch the hover latches after a tap, so it was the state a
+ * phone user saw for as long as the panel stayed open. This also beat the forced-colors
+ * override for the same element, since a media query adds no specificity.
+ *
+ * Two branches below are currently dead — no `.primary` button in the app contains a
+ * `p`, `small` or `span` — and the `[aria-current]` / `[aria-pressed]` branches are
+ * covered by narrower rules further down. They are kept because the intent is sound and
+ * deleting them buys nothing; the contrast sweep now forces hover and focus on
+ * accent-backed surfaces, so a regression here is caught rather than shipped.
+ */
+button:hover :is(p, small, span):not(.attention-badge, .badge),
+.button:hover :is(p, small, span):not(.attention-badge, .badge),
+.button.primary :is(p, small, span):not(.attention-badge, .badge),
+button.primary :is(p, small, span):not(.attention-badge, .badge),
+[aria-current='page'] :is(p, small, span):not(.attention-badge, .badge),
+[aria-pressed='true'] :is(p, small, span):not(.attention-badge, .badge) {
   color: inherit;
 }
 
@@ -630,6 +649,22 @@ button.primary:hover {
  */
 .notification-list a.is-unread :is(.notification-date, .notification-time) {
   color: var(--accent-soft-muted);
+}
+
+/*
+ * V7.2-02. Hovering or focusing a notification row flips it to the inverse
+ * `--terminal-selected` surface, but the date and time are `<time>` elements carrying
+ * their own muted ink, so they kept painting grey on the dark slab — 1.94:1, and worse
+ * on an unread row where the tint had already been accounted for. `<time>` is not in
+ * the `:is(p, small, span)` list above, so nothing was correcting it.
+ *
+ * `--terminal-selected-muted` is the token that exists for exactly this: secondary text
+ * that stays secondary on a selected surface. Same treatment `.route-link:hover span`
+ * already uses. Placed after the unread rule so it wins at equal specificity.
+ */
+.notification-list a:hover :is(.notification-date, .notification-time),
+.notification-list a:focus-visible :is(.notification-date, .notification-time) {
+  color: var(--terminal-selected-muted);
 }
 
 .notification-date,

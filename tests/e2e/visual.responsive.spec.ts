@@ -1182,61 +1182,101 @@ test.describe('responsive and alternate presentation evidence', () => {
    * applied by script exactly as ProfileAccentBridge applies them, so no account is
    * needed, and the surfaces are mounted directly.
    */
+  /*
+   * C3. This previously swept custom accents only, and only at rest, and it mounted the
+   * alerts badge as a bare child of a <div>. All three of those hid the same defect: a
+   * rule setting `color: inherit` on spans inside a *hovered button* out-specifies the
+   * badge's own ink, so the badge inherited the trigger's muted grey while keeping its
+   * accent background — 6.93:1 at rest, 2.89:1 hovered. A badge that is not inside a
+   * button cannot match that rule, so the probe now mounts the real structure, forces
+   * the same pseudo-states the control sweep uses, and covers named accents too, since
+   * the failure was never custom-specific.
+   */
   for (const scheme of contrastSchemes) {
-    test(`accent-backed surfaces stay readable under custom accents (${scheme})`, async ({
-      page,
-    }) => {
+    test(`accent-backed surfaces stay readable in every state (${scheme})`, async ({ page }) => {
       await page.setViewportSize({ width: 1440, height: 1024 });
       await page.emulateMedia({ colorScheme: scheme });
       await page.goto('/');
+      // Controls transition colour over 90ms; forcing a state and reading immediately
+      // would sample mid-flight and report a colour no player ever sees.
+      await page.addStyleTag({
+        content:
+          '*, *::before, *::after { transition: none !important; animation: none !important }',
+      });
+      const client = await page.context().newCDPSession(page);
+      await client.send('DOM.enable');
+      await client.send('CSS.enable');
+
+      const accents: Array<{ label: string; hex: string | null }> = [
+        ...contrastAccents.map((name) => ({ label: name, hex: null })),
+        ...contrastCustomHexes.map((hex) => ({ label: `custom ${hex}`, hex })),
+      ];
 
       const failures: string[] = [];
-      for (const hex of contrastCustomHexes) {
-        const variables = accentCssVariableMap(hex);
-        expect(variables, hex).not.toBeNull();
+      for (const accent of accents) {
+        const variables = accent.hex ? accentCssVariableMap(accent.hex) : null;
+        if (accent.hex) expect(variables, accent.hex).not.toBeNull();
         await page.evaluate(
-          ({ values }) => {
+          ({ name, values }) => {
             const root = document.documentElement;
             for (const key of Array.from(root.style)) {
               if (key.startsWith('--custom-')) root.style.removeProperty(key);
             }
-            root.dataset.accent = 'custom';
-            for (const [property, value] of Object.entries(values)) {
+            root.dataset.accent = name;
+            for (const [property, value] of Object.entries(values ?? {})) {
               root.style.setProperty(property, value);
             }
             document.querySelector('[data-accent-surface-probe]')?.remove();
             const probe = document.createElement('div');
             probe.setAttribute('data-accent-surface-probe', 'true');
             /*
-             * The popover fades in (v7 motion layer), and the measurement composites
-             * inherited opacity — so without settling it first every run reads text at
-             * partial alpha and reports a spurious 1.00:1. What a player reads is the
-             * settled state, so measure that.
+             * The alerts badge is a <span> inside the trigger <button>, and the popover
+             * fades in — the measurement composites inherited opacity, so the popover is
+             * settled inline or every run reads text at partial alpha and reports a
+             * spurious 1.00:1.
              */
             probe.innerHTML =
               '<span class="badge">Unavailable</span>' +
-              '<span class="attention-badge">11</span>' +
+              '<div class="notification-menu">' +
+              '<button type="button" data-accent-probe-control>' +
+              'Alerts<span class="attention-badge">11</span>' +
+              '</button></div>' +
               '<div class="menu-popover notification-popover" ' +
               'style="opacity:1;animation:none;position:static">' +
               '<div class="notification-list">' +
-              '<a class="is-unread" href="#">' +
+              '<a class="is-unread" href="#" data-accent-probe-control>' +
               '<strong class="notification-status">Your turn</strong>' +
               '<time class="notification-date">8/6/26</time>' +
               '<time class="notification-time">11:47:03 AM</time>' +
               '</a></div></div>';
             document.body.append(probe);
           },
-          { values: variables as Record<string, string> },
+          { name: accent.hex ? 'custom' : accent.label, values: variables },
         );
 
-        const results = await page.evaluate(measureControlContrast, accentSurfaceSelector);
-        for (const result of results) {
-          if (result.ok) continue;
-          failures.push(
-            `${scheme} · custom ${hex} · ${result.label} — ` +
-              `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
-              `fg ${result.color} on bg ${result.background}`,
-          );
+        const { root } = await client.send('DOM.getDocument', { depth: -1 });
+        const { nodeIds } = await client.send('DOM.querySelectorAll', {
+          nodeId: root.nodeId,
+          selector: '[data-accent-probe-control]',
+        });
+        for (const state of contrastStates) {
+          for (const nodeId of nodeIds) {
+            await client
+              .send('CSS.forcePseudoState', {
+                nodeId,
+                forcedPseudoClasses: state === 'rest' ? [] : [state],
+              })
+              .catch(() => undefined);
+          }
+          const results = await page.evaluate(measureControlContrast, accentSurfaceSelector);
+          for (const result of results) {
+            if (result.ok) continue;
+            failures.push(
+              `${scheme} · ${accent.label} · ${state} · ${result.label} — ` +
+                `${result.ratio.toFixed(2)}:1 (needs ${result.required}:1) ` +
+                `fg ${result.color} on bg ${result.background}`,
+            );
+          }
         }
       }
       await page.evaluate(() => document.querySelector('[data-accent-surface-probe]')?.remove());
