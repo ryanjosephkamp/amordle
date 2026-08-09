@@ -322,14 +322,14 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX",
-    "url": "https://amordle-cwoz5jwao-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_4ZarqhJytpLMw5eEMmsw9Nz8kvnr",
+    "url": "https://amordle-eri2l45fw-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "target": "preview",
-    "applicationCommit": "4d1ee18e1b33b31909a4fb8c8bd1af5a6f17ae44",
+    "applicationCommit": "7d3ce9b78c47375596cd1644bdaf4eac8d51c383",
     "evidenceCommit": null,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
-    "supersededPreview": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4"
+    "supersededPreview": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX"
   },
   "cleanup": {
     "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7.3-complete-all-six-items-hosted-green",
-  "updatedAt": "2026-08-08T08:05:00Z",
+  "reportStatus": "v7.4-help-keyboard-fidelity-complete-hosted-green",
+  "updatedAt": "2026-08-09T03:40:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -877,7 +877,8 @@
         "rawJsOverHome": 16548,
         "rawCssOverHome": 3341
       }
-    }
+    },
+    "correctionAfterV7_4": "The v7.3 report and commits claimed the figures' terminal frame reaches a client with no JavaScript. That is wrong, and not because of the figures: the whole app shell sits inside a Suspense boundary that suspends during SSR, so the initial HTML of EVERY route is the skeleton fallback and all page content - server and client components alike - arrives only after hydration. Verified by curl: the only <main> in /help's HTML is the fallback's, and the page text appears solely inside the RSC flight payload. 'The finished state is the initial state' still holds for reduced motion and for the first paint after hydration, which is what it was built for. Pre-existing and app-wide; not addressed in v7.4."
   },
   "v7_3HostedAcceptance": {
     "status": "green",
@@ -896,6 +897,75 @@
     "zeroResidue": true,
     "authResidue": 0,
     "supersededPreview": "dpl_HwNPKXyD4LHqUXi7sjmXZESKGoh4 (W1-W4 and W6 only)",
+    "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
+    "productionReleaseAuthorized": false
+  },
+  "v7_4Pass": {
+    "report": "reports/v7.3-timeout-contrast-history-stats-2026-08-08/README.md (section 8)",
+    "baseCommit": "c848dba",
+    "scope": "five owner-reported cosmetic defects on the Help page figures; presentation only",
+    "migrationsAdded": 0,
+    "ownerDecisions": {
+      "pressTreatment": "amplified",
+      "opponentAccent": "violet with an amber fallback when the viewer's own accent is violet"
+    },
+    "causesCorrected": [
+      "The keyboards looked wrong because of a BOX-MODEL hole, not a styling drift: the properties that centre a key's glyph live on `button, .button`, which a <span class=\"key\"> does not match, so letters sat top-left at the wrong weight.",
+      "The parity values had to come from tui-shell.css, not globals.css - tui-shell redeclares `button, .button` and loads second, so a real key computes font-weight 650 and letter-spacing 0, not 700 and 0.015em. Copying the first rule found would have made every figure key bolder than the keyboard it imitates.",
+      "Both keyboards showed one accent because the data-accent attributes DID NOTHING: the accent blocks were still scoped to :root, which is <html>, so an attribute on a nested div matched no selector. Planned in v7.3 and never executed in the port; the approved artifact had relaxed selectors, which is why it looked right there and wrong in the app.",
+      "The game has NO pressed state at all: globals.css sets button:active { translate: 0 1px } and tui-shell.css cancels it with translate: 0. The only visible key state is the hover treatment, which on touch IS the tap state.",
+      "SUBMIT and DELETE were missing, so the figure's row three had seven keys where the real one has nine - making its letters WIDER than row one when the real ones are narrower."
+    ],
+    "pressTreatmentCorrection": "The first attempt tinted the pressed key with --accent-soft and the new sweep caught it at 1.31:1: an absent key carries near-white ink, and a light tint underneath left white on pale green. Amplified as a doubled inset ring instead, which never touches the text/background pair and so cannot fail on any key state, accent or scheme.",
+    "measured": {
+      "removeKeyboardWidth": "704px, exactly 44rem - the real play-route width",
+      "removeKeys": "68 / 64 / 115 px against the real game's 67.5 / 62.9 / 118.9",
+      "combatRowThreeRatio": "0.95 against the real game's 0.93, held at any width by an 8% flex-basis rather than a fixed 3.5rem"
+    },
+    "coverageGapsClosed": [
+      "The figure keys are spans, so controlSelector never matched them and NOTHING swept them in any state; they now go through the contrast sweep pressed and at rest in both schemes.",
+      "A new fixture test asserts the two COMBAT keyboards resolve DIFFERENT key backgrounds and that the draft row alternates accent with the turn - verified to fail with the selectors re-scoped.",
+      "The key-parity test compares against a real <button> injected into the same row rather than remembered constants, so it cannot drift when the real key changes."
+    ],
+    "governanceTestUpdated": "accent-presets.test.ts pinned the old :root selectors; strengthened to assert the six named accents are NOT :root-scoped and that custom still is.",
+    "localAcceptance": {
+      "check": "green",
+      "domainTests": 158,
+      "browserComponentTests": 30,
+      "fixtureE2E": 24,
+      "visualE2E": 33,
+      "parityRows": 237,
+      "mpAuditRows": 73,
+      "bootstrapFiles": "107/107",
+      "httpInterfaces": 3,
+      "homeCompressedBytes": {
+        "js": 193127,
+        "css": 22985
+      },
+      "gameCompressedBytes": {
+        "js": 198845,
+        "css": 27864
+      }
+    },
+    "productionReleaseAuthorized": false
+  },
+  "v7_4HostedAcceptance": {
+    "status": "green",
+    "completedAt": "2026-08-09T03:35:00Z",
+    "runId": "e2e_20260809T033115905Z_7d3ce9b7_27d98b2d",
+    "commit": "7d3ce9b78c47375596cd1644bdaf4eac8d51c383",
+    "deploymentId": "dpl_4ZarqhJytpLMw5eEMmsw9Nz8kvnr",
+    "preview": "https://amordle-eri2l45fw-ryanjosephkamps-projects.vercel.app",
+    "previewProtected": true,
+    "deployMethod": "vercel build + vercel deploy --prebuilt",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 33,
+    "verifiedParityRows": 237,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "authResidue": 0,
+    "supersededPreview": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX",
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
   }

@@ -145,3 +145,59 @@ added 56 tab stops to `/help`. `HardModeAid` is byte-identical, verified by diff
 The Reveal fidelity question raised during review is closed: the owner approved the
 faithful rendering, where a bought letter lands in the draft row outlined rather than as a
 green evidence tile.
+
+---
+
+## 8. v7.4 — Help keyboard fidelity (follow-up)
+
+Owner accepted everything except the Help figures, and reported five cosmetic defects.
+Two had causes I had got wrong when I built the figures.
+
+| Reported | Actual cause |
+| --- | --- |
+| "The keyboards are a bit too different from the real ones" | A **box-model hole**, not a styling drift. The properties that centre a key's glyph live on `button, .button`; a `<span class="key">` matches neither, so letters sat top-left at the wrong weight. |
+| "Both keyboards show my accent" | **The `data-accent` attributes did nothing.** The accent blocks were still scoped to `:root`, which is `<html>`, so an attribute on a nested `<div>` matched no selector. Planned in v7.3 and never executed in the port — the approved artifact *had* relaxed selectors, which is exactly why it looked right there and wrong in the app. |
+| "Make the keys look pressed like the game" | **The game has no pressed state.** `button:active` sets a 1px nudge in `globals.css` and `tui-shell.css` cancels it. The only visible key state is the hover treatment, which on touch *is* the tap state. |
+
+Two further corrections came from the tests rather than from reading:
+
+- The parity values had to come from `tui-shell.css`, not `globals.css`. The first declares
+  `font-weight: 700; letter-spacing: 0.015em`; the second **redeclares `button, .button`
+  and loads after it**, so a real key computes **650 and 0**. Copying the first rule found
+  would have made every figure key bolder than the keyboard it imitates. The parity test
+  caught it because it compares against a real `<button>` injected into the same row rather
+  than against remembered constants.
+- The pressed state was first built as an `--accent-soft` tint, and the new sweep caught it
+  at **1.31:1** — an absent key carries near-white ink, and a light tint underneath left
+  white on pale green. Amplified as a **doubled inset ring** instead, which never touches
+  the text/background pair and so cannot fail on any key state, accent, or scheme.
+
+**Measured, not asserted.** The Remove keyboard is now **704 px — exactly 44 rem**, the real
+play-route width, with 68 / 64 / 115 px keys against the game's 67.5 / 62.9 / 118.9. The
+COMBAT figure holds a row-three ratio of **0.95** against the game's **0.93**, at any width,
+because the wide keys use an 8% basis rather than a fixed `3.5rem` that would eat half a
+247 px column.
+
+Coverage: the figure keys are spans, so `controlSelector` never matched them and **nothing
+swept them in any state**. They now go through the contrast sweep pressed and at rest in
+both schemes, and a new fixture test asserts the two keyboards resolve different key
+backgrounds and that the draft row alternates accent with the turn — verified to fail with
+the selectors re-scoped.
+
+domain 157 → 158, fixture 23 → 24, visual 31 → 33. Hosted acceptance green at
+`https://amordle-eri2l45fw-ryanjosephkamps-projects.vercel.app`
+(`dpl_4ZarqhJytpLMw5eEMmsw9Nz8kvnr`) for `7d3ce9b`, zero residue on the first attempt.
+
+### Correction to section 5
+
+The v7.3 report claimed the figures' terminal frame reaches a client with no JavaScript.
+**That is wrong** — and not because of the figures. The whole app shell sits inside a
+Suspense boundary that suspends during SSR, so the initial HTML of *every* route is the
+skeleton fallback and all page content, server and client components alike, arrives only
+after hydration. Verified by `curl`: the only `<main>` in `/help`'s HTML is the fallback's,
+and the page text appears solely inside the RSC flight payload.
+
+"The finished state is the initial state" still holds for reduced motion and for the first
+paint after hydration, which is what it was built for. The no-JS part of the claim was
+never true. Pre-existing and app-wide; recorded here rather than fixed, because it is an
+architecture question and not a Help cosmetic.
