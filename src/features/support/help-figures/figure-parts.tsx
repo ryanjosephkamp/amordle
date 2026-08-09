@@ -80,29 +80,59 @@ export function FigureBoard({ rows }: { rows: readonly FigureRow[] }) {
 
 const KEYBOARD_ROWS = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
 
-/* Memoised for the same reason, and it matters more here: 26 keys x 2 keyboards, against
-   an evidence object that only changes when a guess resolves. */
+/*
+ * Memoised for the same reason as the board row, and it matters more here: 26 keys x 2
+ * keyboards, against an evidence object that only changes when a guess resolves.
+ *
+ * `pressed` is the letter (or `submit`) being struck on this frame, and it is passed only
+ * to the side on move — so a player's own keys light as they type while the opponent's
+ * stay still, which is what makes the two keyboards read as belonging to two people.
+ *
+ * The row structure mirrors `game-keyboard.tsx` exactly, SUBMIT first and DELETE last on
+ * row three. Without them the figure's row three had seven keys where the real one has
+ * nine, which made its letters WIDER than row one when the real ones are narrower — the
+ * most visible part of "these do not look like the real keyboard".
+ */
 export const FigureKeyboard = memo(function FigureKeyboard({
   evidence,
+  pressed,
 }: {
   evidence: Record<string, EvidenceState>;
+  pressed?: string | undefined;
 }) {
+  const wideKey = (label: string) => (
+    <span
+      className={
+        pressed === label.toLowerCase()
+          ? 'key is-wide is-unknown is-pressed'
+          : 'key is-wide is-unknown'
+      }
+    >
+      {label}
+    </span>
+  );
   return (
     <div className="keyboard">
-      {KEYBOARD_ROWS.map((row) => (
+      {KEYBOARD_ROWS.map((row, rowIndex) => (
         <div className="keyboard-row" key={row}>
+          {rowIndex === 2 && wideKey('SUBMIT')}
           {[...row].map((letter) => {
             const state = evidence[letter] ?? 'unknown';
             const mark = EVIDENCE_MARK[state];
+            const classes = ['key', EVIDENCE_CLASS[state] ?? 'is-unknown'];
+            if (pressed === letter) classes.push('is-pressed');
             return (
-              <span className={`key ${EVIDENCE_CLASS[state] ?? 'is-unknown'}`} key={letter}>
+              <span className={classes.filter(Boolean).join(' ')} key={letter}>
                 {letter.toUpperCase()}
                 {state === 'absent' || state === 'removed' ? (
-                  <span className="key-evidence">{mark}</span>
+                  <span className="key-evidence" aria-hidden="true">
+                    {mark}
+                  </span>
                 ) : null}
               </span>
             );
           })}
+          {rowIndex === 2 && wideKey('DELETE')}
         </div>
       ))}
     </div>

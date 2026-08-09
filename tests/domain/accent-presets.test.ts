@@ -114,9 +114,27 @@ describe('v6.3 custom accent authority', () => {
   });
 
   it('defines every named palette in both modes and keeps semantic evidence outside custom accents', () => {
+    /*
+     * The six NAMED accents are scoped to a bare attribute so that a subtree can carry its
+     * own accent — the Help COMBAT figure needs two keyboards in two different accents,
+     * one of them the viewer's. Asserted as "not :root-scoped" rather than just "present",
+     * because re-adding the `:root` prefix would silently break that figure again.
+     */
     for (const accent of ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber']) {
-      expect(shellCss.match(new RegExp(`:root\\[data-accent='${accent}'\\]`, 'g'))).toHaveLength(2);
+      expect(
+        shellCss.match(new RegExp(`(?<!:root)\\[data-accent='${accent}'\\]\\s*\\{`, 'g')),
+        accent,
+      ).toHaveLength(2);
+      expect(shellCss, `${accent} must not be re-scoped to :root`).not.toMatch(
+        new RegExp(`:root\\[data-accent='${accent}'\\]`),
+      );
     }
+    /*
+     * `custom` is the deliberate exception and stays at `:root`. It resolves fourteen
+     * `--custom-*` variables that only a signed-in account's active preset supplies, and
+     * `accent-preset-dialog` puts `data-accent="custom"` on a non-root node — relaxing it
+     * would repaint that dialog from variables that may not exist.
+     */
     expect(shellCss.match(/:root\[data-accent='custom'\]/g)).toHaveLength(2);
     for (const block of shellCss.matchAll(/:root\[data-accent='custom'\]\s*\{([^}]+)\}/g)) {
       expect(block[1]).not.toMatch(/--(?:correct|present|absent|removed):/);

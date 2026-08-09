@@ -103,6 +103,35 @@ describe('W5 Help figure content is derived from the real rules', () => {
     expect(frames.at(-1)!.evidence!.t).toBe('correct');
   });
 
+  it('presses the key it is typing on every frame, then SUBMIT before the row resolves', () => {
+    /*
+     * The press has to follow the draft exactly: frame N of a guess adds the Nth letter and
+     * presses that same letter. SUBMIT gets a beat of its own BEFORE the row resolves,
+     * because the resolve frame has already handed the turn over and would light the wrong
+     * player's keyboard.
+     */
+    const frames = buildCombatFrames();
+    let previous = '';
+    let submits = 0;
+    for (const frame of frames) {
+      const draftRow = frame.rows.find((row) => row.draft);
+      const draft = (draftRow?.tiles ?? []).map((tile) => tile.letter).join('');
+      if (frame.pressed === 'submit') {
+        submits += 1;
+        // A submit beat shows the finished word, not a partial one.
+        expect(draft.length).toBe(COMBAT_ANSWER.length);
+      } else if (frame.pressed) {
+        expect(draft.length).toBe(previous.length + 1);
+        expect(draft.at(-1)).toBe(frame.pressed);
+      }
+      previous = draft;
+    }
+    // One submit per guess, and every guess types its full length.
+    expect(submits).toBe(COMBAT_SEQUENCE.length);
+    const typed = frames.filter((frame) => frame.pressed && frame.pressed !== 'submit').length;
+    expect(typed).toBe(COMBAT_SEQUENCE.length * COMBAT_ANSWER.length);
+  });
+
   it('renders both COMBAT keyboards from one evidence object', () => {
     // Not a style preference: two keyboards that read from a single source cannot
     // disagree, which is the entire point the figure is making.

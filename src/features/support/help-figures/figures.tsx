@@ -69,23 +69,40 @@ export function CombatBoardFigure() {
            * One evidence object, rendered twice. Two keyboards reading from a single
            * source cannot disagree, which states the shared-evidence lesson in code
            * rather than only in the caption.
+           *
+           * Nova carries NO `data-accent` and so renders in the viewer's own accent, which
+           * is the point: one of these players is you. Rook carries violet. Previously both
+           * sides carried an accent attribute and neither resolved, because the accent
+           * blocks were still scoped to `:root` — so both keyboards came out in the page
+           * accent and the two-player reading was lost.
+           *
+           * `pressed` goes only to the side on move. The opponent's keyboard must stay
+           * still while you type, or neither keyboard belongs to anyone.
            */}
-          <div
-            className={frame.seat === 0 ? 'help-combat-side is-active' : 'help-combat-side'}
-            data-accent="violet"
-          >
+          <div className={frame.seat === 0 ? 'help-combat-side is-active' : 'help-combat-side'}>
             <div className="help-combat-name">{COMBAT_NAMES[0]}</div>
-            <FigureKeyboard evidence={evidence} />
+            <FigureKeyboard
+              evidence={evidence}
+              pressed={frame.seat === 0 ? frame.pressed : undefined}
+            />
           </div>
-          <div className="help-combat-board">
+          {/* The board takes the accent of whoever is on move, so the draft row's outline
+              and caret alternate with the turn along with that player's keyboard. */}
+          <div
+            className="help-combat-board"
+            {...(frame.seat === 1 ? { 'data-accent': 'violet' } : {})}
+          >
             <FigureBoard rows={frame.rows} />
           </div>
           <div
             className={frame.seat === 1 ? 'help-combat-side is-active' : 'help-combat-side'}
-            data-accent="amber"
+            data-accent="violet"
           >
             <div className="help-combat-name">{COMBAT_NAMES[1]}</div>
-            <FigureKeyboard evidence={evidence} />
+            <FigureKeyboard
+              evidence={evidence}
+              pressed={frame.seat === 1 ? frame.pressed : undefined}
+            />
           </div>
         </div>
         <FigureNote note={frame.note} />

@@ -146,6 +146,40 @@
 }
 
 /*
+ * A `<span>` key has to be told the things a `<button>` key gets for free.
+ *
+ * The properties that actually centre a key's glyph are declared on `button, .button` in
+ * globals.css, not on `.key` — so a span, which matches neither, is blockified as a flex
+ * item and renders its letter top-left at weight 400 instead of centred and bold. That is
+ * the entire reason the Help figures' keyboards looked wrong next to the real one; it was
+ * never a styling drift.
+ *
+ * Deliberately scoped to `span.key` rather than folded into the shared rule above: these
+ * values are identical to what a button already computes, so restating them for buttons
+ * would be harmless but unprovable. Scoped this way, the change *cannot* move a game
+ * screen. `cursor: pointer` is pointedly not included — a figure is not clickable and
+ * must not claim to be.
+ */
+span.key {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  /*
+   * 650 and 0, not the 700 and 0.015em that `globals.css` declares — `tui-shell.css`
+   * redeclares `button, .button` and loads second, so those are the values a real key
+   * actually computes. Copying from the first rule found would have made every figure key
+   * bolder and wider-tracked than the keyboard it is imitating.
+   */
+  font-weight: 650;
+  letter-spacing: 0;
+  transition:
+    background-color var(--duration-feedback) var(--ease-standard),
+    border-color var(--duration-feedback) var(--ease-standard),
+    box-shadow var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
+}
+
+/*
  * W2b. `:not(:disabled)` guards what was an unguarded hover: a dead key still lit up
  * with an accent border under the pointer, which reads as "press me" on precisely the
  * keys that cannot be pressed — a removed letter, or any key during the opponent's turn.

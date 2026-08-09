@@ -80,7 +80,22 @@
   --radius-panel: 0;
 }
 
-:root[data-accent='ice'] {
+/*
+ * The six NAMED accents are scoped to a bare attribute rather than `:root[data-accent]`, so
+ * any subtree can carry its own accent. The Help COMBAT figure needs exactly that: two
+ * keyboards belonging to two players, one of whom is the viewer. Scoped to `:root` those
+ * attributes matched nothing on a nested element and both keyboards silently rendered in
+ * the page accent.
+ *
+ * Specificity drops from (0,2,0) to (0,1,0), which equals the base `:root` block above —
+ * these still win because they are declared after it.
+ *
+ * `custom` deliberately stays at `:root`. It is driven by fourteen `--custom-*` variables
+ * that only a signed-in account's active preset supplies, and `accent-preset-dialog` puts
+ * `data-accent="custom"` on a non-root node; leaving it scoped keeps that inert instead of
+ * repainting the dialog from variables that may not exist.
+ */
+[data-accent='ice'] {
   --accent: oklch(0.68 0.085 210);
   --accent-text: oklch(0.43 0.095 210);
   --accent-ink: oklch(0.12 0.025 225);
@@ -91,7 +106,7 @@
   --key-unknown-ink: oklch(0.2 0.025 220);
 }
 
-:root[data-accent='aurora'] {
+[data-accent='aurora'] {
   --accent: oklch(0.66 0.14 165);
   --accent-text: oklch(0.4 0.12 165);
   --accent-ink: oklch(0.12 0.025 180);
@@ -102,7 +117,7 @@
   --key-unknown-ink: oklch(0.18 0.03 175);
 }
 
-:root[data-accent='cyan'] {
+[data-accent='cyan'] {
   --accent: oklch(0.62 0.13 215);
   --accent-text: oklch(0.45 0.13 215);
   --accent-ink: oklch(0.12 0.025 225);
@@ -113,7 +128,7 @@
   --key-unknown-ink: oklch(0.22 0.025 225);
 }
 
-:root[data-accent='violet'] {
+[data-accent='violet'] {
   --accent: oklch(0.64 0.16 295);
   --accent-text: oklch(0.43 0.15 295);
   --accent-ink: oklch(0.13 0.025 295);
@@ -124,7 +139,7 @@
   --key-unknown-ink: oklch(0.2 0.03 295);
 }
 
-:root[data-accent='rose'] {
+[data-accent='rose'] {
   --accent: oklch(0.65 0.16 15);
   --accent-text: oklch(0.43 0.15 15);
   --accent-ink: oklch(0.13 0.025 15);
@@ -135,7 +150,7 @@
   --key-unknown-ink: oklch(0.2 0.03 15);
 }
 
-:root[data-accent='amber'] {
+[data-accent='amber'] {
   --accent: oklch(0.73 0.14 80);
   --accent-text: oklch(0.4 0.105 80);
   --accent-ink: oklch(0.14 0.025 80);
@@ -210,7 +225,7 @@
     --shadow-color-strong: oklch(0 0 0 / 0.72);
   }
 
-  :root[data-accent='ice'] {
+  [data-accent='ice'] {
     --accent: oklch(0.8 0.075 210);
     --accent-text: oklch(0.82 0.075 210);
     --accent-soft: oklch(0.26 0.04 210);
@@ -220,7 +235,7 @@
     --key-unknown-ink: oklch(0.95 0.01 210);
   }
 
-  :root[data-accent='aurora'] {
+  [data-accent='aurora'] {
     --accent: oklch(0.76 0.13 165);
     --accent-text: oklch(0.8 0.12 165);
     --accent-soft: oklch(0.25 0.045 165);
@@ -230,7 +245,7 @@
     --key-unknown-ink: oklch(0.95 0.01 165);
   }
 
-  :root[data-accent='cyan'] {
+  [data-accent='cyan'] {
     --accent: oklch(0.76 0.12 210);
     --accent-text: oklch(0.78 0.11 210);
     --accent-soft: oklch(0.25 0.045 210);
@@ -240,7 +255,7 @@
     --key-unknown-ink: oklch(0.94 0.01 210);
   }
 
-  :root[data-accent='violet'] {
+  [data-accent='violet'] {
     --accent: oklch(0.76 0.14 295);
     --accent-text: oklch(0.81 0.12 295);
     --accent-soft: oklch(0.26 0.045 295);
@@ -250,7 +265,7 @@
     --key-unknown-ink: oklch(0.95 0.01 295);
   }
 
-  :root[data-accent='rose'] {
+  [data-accent='rose'] {
     --accent: oklch(0.75 0.14 15);
     --accent-text: oklch(0.8 0.12 15);
     --accent-soft: oklch(0.25 0.045 15);
@@ -260,7 +275,7 @@
     --key-unknown-ink: oklch(0.95 0.01 15);
   }
 
-  :root[data-accent='amber'] {
+  [data-accent='amber'] {
     --accent: oklch(0.8 0.13 80);
     --accent-text: oklch(0.84 0.11 80);
     --accent-soft: oklch(0.27 0.045 80);

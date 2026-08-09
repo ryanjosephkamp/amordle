@@ -310,9 +310,11 @@ test.describe('route and public boundary matrix', () => {
     await expect(
       combat.locator('.help-board-entry').nth(7).locator('.tile.is-correct'),
     ).toHaveCount(5);
-    // Two keyboards, each in its own accent, drawn from one evidence object.
+    // Two keyboards drawn from one evidence object. Exactly one side declares an accent:
+    // Nova deliberately declares none so it inherits the viewer's own, which is the point.
     await expect(combat.locator('.keyboard')).toHaveCount(2);
-    await expect(combat.locator('[data-accent="violet"], [data-accent="amber"]')).toHaveCount(2);
+    await expect(combat.locator('.help-combat-side[data-accent]')).toHaveCount(1);
+    await expect(combat.locator('.help-combat-side:not([data-accent])')).toHaveCount(1);
 
     // Remove strikes out five keys, which is what the tool does — not "all wrong letters".
     await expect(figureOf(/REMOVE FIVE WRONG LETTERS/i).locator('.key.is-removed')).toHaveCount(5);
@@ -326,11 +328,132 @@ test.describe('route and public boundary matrix', () => {
     // put 56 keyboard keys and 45 tiles into the tab order.
     await expect(page.locator('.help-stage button')).toHaveCount(0);
 
+    /*
+     * v7.4. The figure keyboards must be the real keyboard, not an approximation of it.
+     * Row three carries SUBMIT and DELETE, so it is nine items and its letters end up
+     * NARROWER than row one — the figure previously had seven and got that backwards.
+     */
+    const rows = combat.locator('[data-accent="violet"] .keyboard-row');
+    await expect(rows).toHaveCount(3);
+    await expect(rows.nth(0).locator('.key')).toHaveCount(10);
+    await expect(rows.nth(1).locator('.key')).toHaveCount(9);
+    await expect(rows.nth(2).locator('.key')).toHaveCount(9);
+    await expect(rows.nth(2).locator('.key').first()).toHaveText('SUBMIT');
+    await expect(rows.nth(2).locator('.key').last()).toHaveText('DELETE');
+
+    /*
+     * A `<span>` key has to be indistinguishable from a `<button>` key. The properties that
+     * centre a key's glyph live on `button, .button`, which a span does not match, so
+     * without an explicit parity rule the letters sit top-left at weight 400.
+     */
+    const keyParity = await combat
+      .locator('.keyboard-row')
+      .first()
+      .evaluate((row) => {
+        /*
+         * Compared against a real <button class="key"> injected into the same row, not
+         * against remembered constants: parity IS the property under test, and a
+         * hardcoded value would drift the moment the real key changed. It also sidesteps
+         * a trap — a flex item is blockified, so both compute `flex`, not `inline-flex`.
+         */
+        const probe = document.createElement('button');
+        probe.type = 'button';
+        probe.className = 'key is-unknown';
+        probe.textContent = 'Q';
+        row.append(probe);
+        const read = (node: Element) => {
+          const style = getComputedStyle(node);
+          return [
+            style.display,
+            style.alignItems,
+            style.justifyContent,
+            style.fontWeight,
+            style.letterSpacing,
+          ].join(' | ');
+        };
+        const result = { span: read(row.querySelector('span.key')!), button: read(probe) };
+        probe.remove();
+        return result;
+      });
+    expect(keyParity.span, 'a figure key must render exactly like a real key').toBe(
+      keyParity.button,
+    );
+    // 650, not 700: tui-shell.css redeclares `button, .button` after globals.css does.
+    expect(keyParity.span).toContain('center | center | 650');
+
+    // The two-accent assertion cannot live here: forced colors replaces every colour with
+    // a system colour, so both keyboards legitimately read white. It has its own test.
+
     const axe = await new AxeBuilder({ page }).analyze();
     const blocking = axe.violations.filter((item) =>
       ['serious', 'critical'].includes(item.impact ?? ''),
     );
     expect(blocking, blocking.map((item) => item.id).join(', ')).toEqual([]);
+  });
+
+  /*
+   * v7.4. The regression that shipped in v7.3, asserted directly.
+   *
+   * Both COMBAT keyboards carried a `data-accent` attribute and NEITHER resolved: the
+   * accent blocks were scoped to `:root`, which is <html>, so an attribute on a nested
+   * <div> matched nothing and both keyboards rendered in the page accent. The figure's
+   * whole two-player reading was lost, and no test noticed because nothing compared them.
+   *
+   * Its own test rather than part of the reduced-motion one, because that runs with
+   * forced colors active, where every colour is a system colour and both sides
+   * legitimately read white.
+   */
+  test('the two COMBAT keyboards render in different accents', async ({ page }) => {
+    await page.goto('/help');
+    /*
+     * Waited for rather than read straight after `goto`: the whole app shell sits inside a
+     * Suspense boundary that suspends during SSR, so the initial HTML of EVERY route is the
+     * skeleton fallback and all page content — server and client components alike — arrives
+     * after hydration. Pre-existing and app-wide, not specific to these figures.
+     */
+    await page.locator('.help-combat-side').first().waitFor();
+    const sides = await page.evaluate(() => {
+      const nodes = document.querySelectorAll('.help-combat-side');
+      const keyOf = (side: Element) => {
+        const key = side.querySelector('.key')!;
+        const style = getComputedStyle(key);
+        return { background: style.backgroundColor, border: style.borderColor };
+      };
+      return { nova: keyOf(nodes[0]!), rook: keyOf(nodes[1]!), count: nodes.length };
+    });
+    expect(sides.count).toBe(2);
+    expect(sides.nova.background, 'the two keyboards must not share one accent').not.toBe(
+      sides.rook.background,
+    );
+    expect(sides.nova.border).not.toBe(sides.rook.border);
+
+    /*
+     * And the draft row follows the turn. The board carries the accent of whoever is on
+     * move, so its outline and caret alternate with the keyboards — asserted by driving
+     * the sequence rather than trusting the markup, since the terminal frame only ever
+     * shows one of the two states.
+     */
+    const draftBorders = await page.evaluate(async () => {
+      const figure = [...document.querySelectorAll('figure.help-figure')].find((node) =>
+        /BOTH PLAYERS/i.test(node.textContent ?? ''),
+      )!;
+      const seen = new Set<string>();
+      const sample = () => {
+        const tile = figure.querySelector('.board-row.is-draft .tile');
+        if (tile) seen.add(getComputedStyle(tile).borderTopColor);
+      };
+      sample();
+      (figure.querySelector('.help-replay') as HTMLButtonElement | null)?.click();
+      for (let tick = 0; tick < 60; tick += 1) {
+        await new Promise((resolve) => setTimeout(resolve, 120));
+        sample();
+      }
+      return [...seen];
+    });
+    expect(
+      draftBorders.length,
+      `the draft row must change accent with the turn — saw ${draftBorders.join(', ')}`,
+    ).toBeGreaterThan(1);
   });
 
   test('Help separates core teaching aids from collapsed advanced shortcuts', async ({ page }) => {

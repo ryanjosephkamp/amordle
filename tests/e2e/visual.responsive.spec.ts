@@ -1616,6 +1616,49 @@ test.describe('responsive and alternate presentation evidence', () => {
   }
 
   /*
+   * v7.4. The Help figure keyboards are `<span class="key">`, which `controlSelector`
+   * cannot match — so nothing swept them, in any state, even though `/help` is a swept
+   * route. Three new things need measuring: the pressed state, and the two accents the
+   * COMBAT figure now renders side by side.
+   *
+   * Measured on the real figures rather than a mounted probe, because these exist on the
+   * page already and a probe would only re-prove the CSS I just wrote.
+   */
+  for (const scheme of contrastSchemes) {
+    test(`Help figure keys stay readable pressed and in both accents (${scheme})`, async ({
+      page,
+    }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto('/help');
+      await page.locator('.help-combat-side').first().waitFor();
+      await page.addStyleTag({
+        content:
+          '*, *::before, *::after { transition: none !important; animation: none !important }',
+      });
+
+      const failures: string[] = [];
+      for (const state of ['rest', 'pressed'] as const) {
+        // `:is-pressed` is applied by the sequence, not by a pseudo-class, so it is set
+        // directly rather than forced through CDP.
+        await page.evaluate((pressed) => {
+          for (const key of document.querySelectorAll('.help-figure .key')) {
+            key.classList.toggle('is-pressed', pressed === 'pressed');
+          }
+        }, state);
+        const results = await page.evaluate(measureControlContrast, '.help-figure .keyboard');
+        for (const result of results) {
+          if (result.ok) continue;
+          failures.push(
+            `${scheme} · ${state} · ${result.label} — ${result.ratio.toFixed(2)}:1 ` +
+              `(needs ${result.required}:1) fg ${result.color} on bg ${result.background}`,
+          );
+        }
+      }
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
+  /*
    * W2a. The draft caret is the one thing on the board that says "type here". It blinked
    * all the way through the opponent's turn, which is most misleading at the very start
    * of a match, when the board is empty and neither player has moved.

@@ -39,6 +39,12 @@ export interface Frame {
   evidence?: Record<string, EvidenceState>;
   /** Tool figures: whether the tool button is mid-press on this frame. */
   firing?: boolean;
+  /**
+   * The key struck on this frame — a letter, or `submit` on the beat a guess resolves.
+   * Rendered only by the keyboard of the side on move, so the two keyboards read as
+   * belonging to two different people rather than mirroring each other.
+   */
+  pressed?: string;
   /** Continue only: the terminal panel copy, when the board has run out. */
   result?: string;
 }
@@ -194,7 +200,7 @@ export function buildCombatFrames(): Frame[] {
   const blanks = Object.freeze(blankTiles(COMBAT_ANSWER.length));
   let evidence = deriveKeyboardEvidence(rows);
 
-  const push = (draft: string, seat: 0 | 1, note: string, hold: number) => {
+  const push = (draft: string, seat: 0 | 1, note: string, hold: number, pressed?: string) => {
     const visible = Math.max(6, rows.length + 1);
     const composed: FigureRow[] = [...playedRows];
     if (composed.length < visible) {
@@ -205,7 +211,7 @@ export function buildCombatFrames(): Frame[] {
       });
     }
     while (composed.length < visible) composed.push({ tiles: blanks as FigureTile[], meta: '' });
-    frames.push({ rows: composed, seat, evidence, note, hold });
+    frames.push({ rows: composed, seat, evidence, note, hold, ...(pressed ? { pressed } : {}) });
   };
 
   push(
@@ -217,7 +223,17 @@ export function buildCombatFrames(): Frame[] {
 
   COMBAT_SEQUENCE.forEach((guess, index) => {
     const seat = (index % 2) as 0 | 1;
-    for (let n = 1; n <= guess.length; n += 1) push(guess.slice(0, n), seat, '', TYPE_MS);
+    // Each typing frame presses the letter it just added.
+    for (let n = 1; n <= guess.length; n += 1) {
+      push(guess.slice(0, n), seat, '', TYPE_MS, guess[n - 1]);
+    }
+    /*
+     * A beat of its own for SUBMIT, before the row resolves. It cannot ride the resolve
+     * frame: that frame has already handed the turn to the other player, so the press
+     * would light the wrong keyboard. Here the word is complete, SUBMIT is struck, and the
+     * evidence has not landed yet — which is the order it happens in.
+     */
+    push(guess, seat, '', SETTLE_MS, 'submit');
     rows.push({ tiles: scoreGuess(COMBAT_ANSWER, guess) });
     playedRows.push({
       tiles: asFigureTiles(rows[rows.length - 1]!.tiles),
