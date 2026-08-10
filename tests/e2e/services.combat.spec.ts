@@ -2001,15 +2001,15 @@ test.describe.serial('protected Preview services', () => {
     await expect(firstPage.locator('.combat-turn-state')).toHaveText(/you won|match complete/i, {
       timeout: 15_000,
     });
-    await firstPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(firstPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
+    // v8-A2. No press. The winner's rating and the loser's both move on their own.
+    await expect(firstPage.getByRole('button', { name: 'UPDATE RATING' })).toHaveCount(0);
+    await expect(firstPage.locator('.rating-outcome li')).toHaveCount(2, { timeout: 20_000 });
     await secondPage.reload();
     await expect(secondPage.locator('.combat-turn-state')).toHaveText(
       /opponent won|match complete/i,
       { timeout: 15_000 },
     );
-    await secondPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(secondPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
+    await expect(secondPage.locator('.rating-outcome li')).toHaveCount(2, { timeout: 20_000 });
     await expect
       .poll(async () => {
         const { data, error } = await admin
@@ -2156,7 +2156,8 @@ test.describe.serial('protected Preview services', () => {
     await expect(secondPage.getByLabel(/time remaining/i)).toHaveCount(0);
     await submitOnScreenGuess(openingPage, 'crane');
     await waitForGameMoveCount(rankedDailyGameId, 1);
-    if ((await openingPage.getByRole('button', { name: 'UPDATE RATING' }).count()) === 0) {
+    // The rating panel replaces the button as the "this match has ended" signal.
+    if ((await openingPage.locator('.rating-outcome').count()) === 0) {
       await respondingPage.reload();
       await expect(respondingPage.locator('.combat-turn-state')).toHaveText(/your turn/i, {
         timeout: 15_000,
@@ -2165,14 +2166,42 @@ test.describe.serial('protected Preview services', () => {
       await respondingPage.getByRole('button', { name: 'FORFEIT MATCH' }).click();
     }
     await Promise.all([firstPage.reload(), secondPage.reload()]);
-    await expect(firstPage.getByRole('button', { name: 'UPDATE RATING' })).toBeVisible({
-      timeout: 15_000,
+
+    /*
+     * v8-A2. Nobody presses anything. UPDATE RATING was the only writer of ELO in the whole
+     * system, so a player could decline a loss by simply never clicking it. The control is
+     * gone and settlement is automatic — asserted by its ABSENCE plus the result landing.
+     */
+    await expect(firstPage.getByRole('button', { name: 'UPDATE RATING' })).toHaveCount(0);
+    await expect(secondPage.getByRole('button', { name: 'UPDATE RATING' })).toHaveCount(0);
+
+    // Both seats' movement, shown without being asked for, on both players' screens.
+    for (const page of [firstPage, secondPage]) {
+      const outcome = page.locator('.rating-outcome');
+      await expect(outcome).toBeVisible({ timeout: 20_000 });
+      await expect(outcome.locator('li')).toHaveCount(2);
+      await expect(outcome.locator('.rating-outcome-move').first()).toContainText(/\d+ → \d+/);
+      await expect(outcome.locator('.rating-outcome-delta').first()).toHaveAttribute(
+        'data-direction',
+        /up|down|level/,
+      );
+    }
+
+    /*
+     * v8-A4. The forfeited puzzle's answer is on the board, in red, as the last row — so a
+     * player does not have to hunt for it in the definition line. It is not a guess, so it
+     * carries no evidence glyph.
+     */
+    const answerRow = firstPage.locator('.combat-transcript .board-row.is-answer');
+    await expect(answerRow).toHaveCount(1);
+    await expect(answerRow.locator('.tile.is-answer')).toHaveCount(5);
+    await expect(answerRow.locator('.tile-evidence')).toHaveCount(0);
+    await expect(firstPage.locator('.combat-transcript-entry').last()).toContainText('ANSWER');
+    await event('forfeit_reveals_answer_row', {
+      scenarioId: rankedDailyScenarioId,
+      gameId: rankedDailyGameId,
+      ratingAppliedWithoutPress: true,
     });
-    await firstPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(firstPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
-    await secondPage.reload();
-    await secondPage.getByRole('button', { name: 'UPDATE RATING' }).click();
-    await expect(secondPage.locator('p.mono[role="status"]')).toContainText(/RATING \d+ → \d+/i);
     await expect
       .poll(async () => {
         const { data, error } = await admin

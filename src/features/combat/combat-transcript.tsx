@@ -13,7 +13,21 @@ export interface CombatTranscriptMove {
   acceptedAt: string;
 }
 
-export type CombatTranscriptRow = SeededTranscriptRow | (CombatTranscriptMove & { kind: 'guess' });
+/**
+ * v8-A4. The answer, shown on the board when a match ends by forfeit.
+ *
+ * Not a guess and not evidence — nobody played it. It is rendered in red, which no tile
+ * state has ever used (the three are green, amber and slate), precisely so it cannot be
+ * mistaken for a solve.
+ */
+export interface CombatTranscriptAnswer {
+  id: string;
+  kind: 'answer';
+  guess: string;
+}
+
+export type CombatTranscriptRow =
+  SeededTranscriptRow | (CombatTranscriptMove & { kind: 'guess' }) | CombatTranscriptAnswer;
 
 export function MoveBoards({
   moves,
@@ -22,6 +36,7 @@ export function MoveBoards({
   actorLabels,
   actorProfileIds,
   seededRows = [],
+  forfeitedAnswer,
 }: {
   moves: CombatTranscriptMove[];
   length: number;
@@ -29,6 +44,13 @@ export function MoveBoards({
   actorLabels?: Partial<Record<'player-one' | 'player-two', string>>;
   actorProfileIds?: Partial<Record<'player-one' | 'player-two', string>>;
   seededRows?: SeededTranscriptRow[];
+  /*
+   * Optional and off by default, deliberately. This component is shared with the public
+   * spectator view, whose RPC withholds `revealedAnswers` on purpose — a shared component
+   * that can render the solution is a leak waiting to happen, so the caller must opt in
+   * and only the two seated players ever do.
+   */
+  forfeitedAnswer?: string | undefined;
 }) {
   const orderedMoves = [...moves].sort(
     (left, right) =>
@@ -37,6 +59,9 @@ export function MoveBoards({
   const rows: CombatTranscriptRow[] = [
     ...seededRows,
     ...orderedMoves.map((move) => ({ ...move, kind: 'guess' as const })),
+    ...(forfeitedAnswer
+      ? [{ id: `answer:${forfeitedAnswer}`, kind: 'answer' as const, guess: forfeitedAnswer }]
+      : []),
   ];
   const visibleRows = Math.max(6, rows.length + 1);
   return (
@@ -82,15 +107,19 @@ export function MoveBoards({
               );
             }
             const seeded = row.kind === 'seeded';
-            const perspective = seeded
-              ? 'seeded'
-              : viewerSeat === undefined
-                ? row.seat
-                : row.seat === viewerSeat
-                  ? 'you'
-                  : 'opponent';
-            const actorLabel =
-              row.kind === 'seeded'
+            const answer = row.kind === 'answer';
+            const perspective = answer
+              ? 'answer'
+              : seeded
+                ? 'seeded'
+                : viewerSeat === undefined
+                  ? row.seat
+                  : row.seat === viewerSeat
+                    ? 'you'
+                    : 'opponent';
+            const actorLabel = answer
+              ? 'ANSWER'
+              : row.kind === 'seeded'
                 ? row.actorLabel
                 : (actorLabels?.[row.seat] ??
                   (viewerSeat === undefined
@@ -111,7 +140,9 @@ export function MoveBoards({
                   <span className="combat-meta-divider" aria-hidden="true">
                     ·
                   </span>
-                  {row.kind === 'seeded' ? (
+                  {row.kind === 'answer' ? (
+                    <span className="combat-actor">ANSWER</span>
+                  ) : row.kind === 'seeded' ? (
                     <span className="combat-actor">SEED {row.sourcePuzzleIndex + 1}</span>
                   ) : (
                     <PlayerIdentityLink
@@ -122,12 +153,16 @@ export function MoveBoards({
                   )}
                 </span>
                 <div className="combat-transcript-move">
-                  <TranscriptTileRow
-                    guess={row.guess}
-                    tiles={row.tiles}
-                    actorLabel={actorLabel}
-                    seeded={seeded}
-                  />
+                  {row.kind === 'answer' ? (
+                    <AnswerTileRow guess={row.guess} />
+                  ) : (
+                    <TranscriptTileRow
+                      guess={row.guess}
+                      tiles={row.tiles}
+                      actorLabel={actorLabel}
+                      seeded={seeded}
+                    />
+                  )}
                 </div>
               </div>
             );
@@ -171,6 +206,26 @@ function TranscriptTileRow({
           </div>
         );
       })}
+    </div>
+  );
+}
+
+/**
+ * v8-A4. The unplayed answer, in red.
+ *
+ * Its own component rather than a fourth state on `TranscriptTileRow`, because it is not
+ * evidence: there is no per-letter verdict to show, so it carries no ✓/~/× glyph. The row
+ * is marked `is-answer` and announced as the answer, not as a guess, so a screen reader
+ * gets the same distinction the colour makes visually.
+ */
+function AnswerTileRow({ guess }: { guess: string }) {
+  return (
+    <div className="board-row is-answer" role="row" aria-label={`Answer ${guess}`}>
+      {[...guess].map((letter, index) => (
+        <div key={`${index}:${letter}`} className="tile is-answer" role="cell">
+          <span className="tile-letter">{letter.toUpperCase()}</span>
+        </div>
+      ))}
     </div>
   );
 }

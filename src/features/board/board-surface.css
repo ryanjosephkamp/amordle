@@ -74,6 +74,23 @@
   color: var(--key-absent-ink);
 }
 
+/*
+ * v8-A4. The answer, when a match ended by forfeit and nobody guessed it.
+ *
+ * Red is deliberately the one colour no tile state has ever used — the three evidence
+ * states are green, amber and slate — so this cannot be misread as a solve. It is not
+ * evidence and carries no ✓/~/× glyph.
+ *
+ * `--danger-text` for the letter rather than `--danger`: the text variant is the darker ink
+ * counterpart added in v7.3 for exactly this reason, and the fill version is not legible as
+ * type.
+ */
+.tile.is-answer {
+  border-color: var(--danger);
+  background: color-mix(in oklch, var(--danger) 22%, transparent);
+  color: var(--danger-text);
+}
+
 .board-row.is-draft .tile {
   border-color: var(--accent);
   background: color-mix(in oklch, var(--accent-soft) 42%, transparent);
@@ -242,6 +259,7 @@ button.key:focus-visible:not(:disabled) {
   .tile.is-correct,
   .tile.is-present,
   .tile.is-absent,
+  .tile.is-answer,
   :is(button, span).key.is-correct,
   :is(button, span).key.is-present,
   :is(button, span).key.is-absent,

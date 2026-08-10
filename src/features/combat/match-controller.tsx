@@ -1076,6 +1076,20 @@ function AuthoritativeMatch({
             .filter((participant) => participant.publicProfileId)
             .map((participant) => [participant.seat, participant.publicProfileId]),
         )}
+        /*
+         * v8-A4. On a forfeit, put the answer on the board rather than leaving it only in
+         * small print under the definition. Nobody guessed it, so it is red — a colour no
+         * tile state has ever used.
+         *
+         * `revealedAnswers` is the whole GO chain, so it is indexed by the puzzle the match
+         * stopped on, not `[0]`. It arrives only when the authority reaches `completed`,
+         * which covers forfeit and correctly excludes a cancel before play.
+         */
+        forfeitedAnswer={
+          game.outcome.reason === 'forfeit'
+            ? game.revealedAnswers?.[game.currentPuzzleIndex]
+            : undefined
+        }
       />
       {!terminal && game.status === 'playing' && (
         <CombatInput

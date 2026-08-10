@@ -1696,6 +1696,57 @@ test.describe('responsive and alternate presentation evidence', () => {
   }
 
   /*
+   * v8-A4. The forfeit answer row introduces the first red tile in the game, and no sweep
+   * has ever measured a tile — `controlSelector` is controls, and the board only exists on
+   * routes the sweep does not visit. Measured here in both schemes.
+   */
+  for (const scheme of contrastSchemes) {
+    test(`the forfeited answer row stays readable (${scheme})`, async ({ page }) => {
+      await page.emulateMedia({ colorScheme: scheme });
+      await page.goto('/combat/practice');
+      const failures: string[] = [];
+      await page.evaluate(() => {
+        const probe = document.createElement('div');
+        probe.setAttribute('data-answer-probe', 'true');
+        probe.innerHTML =
+          '<div class="board-row is-answer">' +
+          [...'waste']
+            .map(
+              (letter) =>
+                `<div class="tile is-answer"><span class="tile-letter">${letter.toUpperCase()}</span></div>`,
+            )
+            .join('') +
+          '</div>';
+        document.body.append(probe);
+      });
+      const results = await page.evaluate(measureControlContrast, '[data-answer-probe] .board-row');
+      for (const result of results) {
+        if (result.ok) continue;
+        failures.push(
+          `${scheme} · ${result.label} — ${result.ratio.toFixed(2)}:1 ` +
+            `(needs ${result.required}:1) fg ${result.color} on bg ${result.background}`,
+        );
+      }
+      // Red must be unmistakably not-green: the answer row is the one place red appears.
+      const distinct = await page.evaluate(() => {
+        const answer = getComputedStyle(document.querySelector('[data-answer-probe] .tile')!);
+        const solved = document.createElement('div');
+        solved.className = 'tile is-correct';
+        document.querySelector('[data-answer-probe]')!.append(solved);
+        const correct = getComputedStyle(solved);
+        const pair = [
+          answer.color !== correct.color,
+          answer.borderTopColor !== correct.borderTopColor,
+        ];
+        document.querySelector('[data-answer-probe]')?.remove();
+        return pair;
+      });
+      expect(distinct, 'the answer row must not read as a solved row').toEqual([true, true]);
+      expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+    });
+  }
+
+  /*
    * W2a. The draft caret is the one thing on the board that says "type here". It blinked
    * all the way through the opponent's turn, which is most misleading at the very start
    * of a match, when the board is empty and neither player has moved.
