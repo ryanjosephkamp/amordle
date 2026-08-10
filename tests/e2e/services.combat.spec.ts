@@ -1905,15 +1905,44 @@ test.describe.serial('protected Preview services', () => {
       }, hidden);
     await setWaiterHidden(true);
 
+    /*
+     * v8-B1/B2. The waiter now also LEAVES the lobby.
+     *
+     * Cycle A fixed the poll but left it owned by this page, so navigating anywhere
+     * else stopped it while the server-side queue row stayed alive and kept counting
+     * against the five-request cap. The search is owned above the shell now, so it has
+     * to survive a real navigation — and this asserts that against live services, with
+     * the tab still forced hidden, which is the combination a player actually hits.
+     *
+     * It must also NOT drag the player back. Auto-navigation happens on the lobby and
+     * nowhere else; from Home the match announces itself and waits to be opened.
+     */
+    await firstPage.goto(`${baseURL}/`);
+    await setWaiterHidden(true);
+    await expect(firstPage.locator('.ranked-search-status.is-searching')).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(firstPage.locator('.ranked-search-status.is-searching')).toContainText(
+      /Ranked OG · 35 letters/i,
+    );
+
     await secondPage.goto(`${baseURL}/combat/practice?length=35`);
     await secondPage.getByLabel('Ranked clock').selectOption('300000');
     await secondPage.getByRole('button', { name: 'Find ranked match' }).click();
     const rankedPracticeTwo = await registerLatestQueueRequest(playerTwo!, 'practice', 'og');
+
+    const matchReady = firstPage.locator('.ranked-search-status.is-matched');
+    await expect(matchReady).toBeVisible({ timeout: 30_000 });
+    // Still on Home: notified, not yanked.
+    expect(new URL(firstPage.url()).pathname).toBe('/');
+    await matchReady.getByRole('link', { name: /open match/i }).click();
     await expect(firstPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });
     await setWaiterHidden(false);
     await event('ranked_waiter_matched_while_backgrounded', {
       scenarioId: rankedDailyScenarioId,
       waiterTabHidden: true,
+      waiterLeftTheLobby: true,
+      autoNavigatedAwayFromLobby: false,
       manualRefreshRequired: false,
     });
     await expect(secondPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });

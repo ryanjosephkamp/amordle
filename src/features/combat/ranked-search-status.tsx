@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import { useRankedQueue } from './ranked-queue';
 
@@ -30,17 +31,25 @@ function elapsedLabel(sinceIso: string, now: number): string {
 
 export function RankedSearchStatus() {
   const queue = useRankedQueue();
+  const pathname = usePathname();
   const [now, setNow] = useState(() => Date.now());
+  /*
+   * Stand down on the lobby. That page renders the search inline, with its own
+   * configuration line and its own cancel, and it is where a match auto-opens. Showing
+   * the strip there would duplicate every control and, because both are polite live
+   * regions, announce the same search twice to a screen reader.
+   */
+  const onLobby = pathname?.startsWith('/combat/practice') ?? false;
   const searching = queue.phase === 'queued' || queue.phase === 'conflict';
   const matched = queue.phase === 'matched' && Boolean(queue.matchedGameId);
 
   useEffect(() => {
-    if (!searching) return;
+    if (!searching || onLobby) return;
     const timer = window.setInterval(() => setNow(Date.now()), 1_000);
     return () => window.clearInterval(timer);
-  }, [searching]);
+  }, [onLobby, searching]);
 
-  if (!queue.hydrated) return null;
+  if (!queue.hydrated || onLobby) return null;
   if (matched) {
     return (
       <aside className="ranked-search-status is-matched" role="status" aria-live="polite">
