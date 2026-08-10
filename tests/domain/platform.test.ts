@@ -11,7 +11,12 @@ import { formatClock, readCombatClock, shouldAutoSettleTimeout } from '@/domain/
 import { rematchViewState } from '@/domain/combat-rematch';
 import { classifyServiceFailure, serviceFailureIsRetryable } from '@/domain/service-failure';
 import { acceptsExpectedState, terminalPrecedence } from '@/domain/multiplayer';
-import { mergeNotifications } from '@/domain/notifications';
+import {
+  countByCategory,
+  matchesCategory,
+  mergeNotifications,
+  notificationMetadata,
+} from '@/domain/notifications';
 import { INITIAL_RATING, expectedScore, ratingDelta } from '@/domain/rating';
 import { reconcileRevisioned } from '@/domain/reconciliation';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
@@ -359,7 +364,18 @@ describe('platform domains', () => {
     expect(coordinator.isCurrent(second)).toBe(true);
   });
 
-  it('keeps a durable transition read when an unchanged feed row reappears', () => {
+  /*
+   * v8-B3/B4. The read flag is the only thing the stored copy is authoritative for.
+   *
+   * This used to return the STORED row wholesale for an unchanged transition, which
+   * was indistinguishable from the right answer while a notification was nothing but
+   * identity plus a flag. It stopped being right once rows carry a live summary and a
+   * board snapshot: those are stripped before persisting, so returning the stored copy
+   * meant every notification lost its detail the moment it was read.
+   *
+   * The rule now is: take the live row, carry the flag across.
+   */
+  it('keeps a durable transition read while the live row stays authoritative', () => {
     const read = {
       id: 'local-read',
       accountNamespace: 'account:a',
@@ -369,9 +385,68 @@ describe('platform domains', () => {
       createdAt: '2026-07-27T12:00:00.000Z',
       read: true,
     };
-    const remoteReplay = { ...read, id: 'remote-replay', read: false };
+    const remoteReplay = {
+      ...read,
+      id: 'remote-replay',
+      read: false,
+      detail: 'Nova · Ranked · OG · 5 letters',
+      board: { wordLength: 5, rows: ['aapca'] },
+    };
 
-    expect(mergeNotifications([read], [remoteReplay])).toEqual([read]);
+    expect(mergeNotifications([read], [remoteReplay])).toEqual([{ ...remoteReplay, read: true }]);
+  });
+
+  /*
+   * v8-B3/B4. What gets written down, and what gets filtered.
+   *
+   * The stripping is load-bearing in two directions: it keeps a per-notification board
+   * snapshot out of the durable envelope, and it is what makes the persist-comparison
+   * in the centre terminate — comparing a stripped stored record against a live one
+   * would never match, and the component would write on every render.
+   */
+  it('persists identity and read state only, and sorts notifications into lanes', () => {
+    const base = {
+      accountNamespace: 'account:a',
+      durableRevision: 'game:7',
+      route: '/combat/match/game',
+      createdAt: '2026-07-27T12:00:00.000Z',
+      read: false,
+    };
+    const turn = {
+      ...base,
+      id: 'turn:game',
+      kind: 'turn' as const,
+      detail: 'Nova · OG · 5 letters',
+      board: { wordLength: 5, rows: ['aapca', 'ccccc'] },
+    };
+
+    expect(notificationMetadata(turn)).toEqual({
+      id: 'turn:game',
+      accountNamespace: 'account:a',
+      kind: 'turn',
+      durableRevision: 'game:7',
+      route: '/combat/match/game',
+      createdAt: '2026-07-27T12:00:00.000Z',
+      read: false,
+    });
+    expect(Object.keys(notificationMetadata(turn))).not.toContain('board');
+
+    const waiting = { ...base, id: 'match:other', kind: 'match' as const };
+    const result = { ...base, id: 'result:done', kind: 'result' as const, read: true };
+    const rematch = { ...base, id: 'rematch:req', kind: 'rematch' as const };
+    const all = [turn, waiting, result, rematch];
+
+    // A game waiting on the opponent belongs in the turn lane: both answer "which
+    // games am I in right now".
+    expect(all.filter((item) => matchesCategory(item, 'turn')).map((item) => item.id)).toEqual([
+      'turn:game',
+      'match:other',
+    ]);
+    expect(all.filter((item) => matchesCategory(item, 'all'))).toHaveLength(4);
+    expect(countByCategory(all, 'turn')).toBe(2);
+    // Counts are unread-only, so a lane whose items have all been read reads as quiet.
+    expect(countByCategory(all, 'result')).toBe(0);
+    expect(countByCategory(all, 'all')).toBe(3);
   });
 
   it('prunes obsolete notifications and makes a revised event unread again', () => {

@@ -102,9 +102,27 @@ const contrastCustomHexes = [
   '#FFFFFF',
 ] as const;
 // Accent-backed *surfaces*, not controls — which is why controlSelector never saw them.
-const accentSurfaceSelector = ['.badge', '.attention-badge', '.notification-list a.is-unread'].join(
-  ', ',
-);
+const accentSurfaceSelector = [
+  '.badge',
+  '.attention-badge',
+  '.notification-list a.is-unread',
+  /*
+   * v8-B3. The selected filter chip is `--ink` on `--accent-soft` with an
+   * `--accent-text` count riding it. That is the exact pairing that measured 1.31:1
+   * under a custom accent in v7.4, so it goes through the named-and-custom sweep
+   * rather than being reasoned about.
+   */
+  '.notification-filters button',
+  /*
+   * v8-B2. Not accent-backed, but it belongs to this probe rather than the control
+   * sweep for the same reason the chips do: it only exists while a ranked search is
+   * running, so the sweep that walks a real page can never reach it. Its controls
+   * declare their own rest surface, which is precisely the shape that loses its ink to
+   * `button:hover` if the hover surface is not declared with it.
+   */
+  '.ranked-search-status a',
+  '.ranked-search-status button',
+].join(', ');
 /*
  * W3. Three separate defects now — the alerts badge, the notification row, and the
  * profile custom-accent card — have been the same thing: secondary text keeping
@@ -1108,6 +1126,110 @@ test.describe('responsive and alternate presentation evidence', () => {
     expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
   });
 
+  /*
+   * v8-B3/B4. The same invariant for the row shape the notification centre now emits.
+   *
+   * A3 proved the three-cell row is engine-independent. Adding a summary line and a
+   * board snapshot adds a band, and a band added by auto-placement would reintroduce
+   * exactly the construct A3 removed. So this asserts the same three properties on the
+   * richer row — named areas, explicitly sized rows, no baseline group across rows —
+   * plus the thing the extra band exists for: it must not collide with anything above
+   * it, and the snapshot must stay inside the popover.
+   */
+  test('Notification rows keep the summary and board in their own band @crossbrowser', async ({
+    page,
+  }) => {
+    await page.goto('/');
+    const failures: string[] = [];
+    for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      const layout = await page.evaluate(() => {
+        const anchor = document.createElement('a');
+        anchor.className = 'is-unread';
+        anchor.innerHTML =
+          '<strong class="notification-status">Your turn</strong>' +
+          '<time class="notification-date">8/9/26</time>' +
+          '<time class="notification-time">11:47:03 AM</time>' +
+          '<span class="notification-detail">Nova · Ranked · OG · 5 letters</span>' +
+          '<span class="notification-board" style="--snapshot-columns:5">' +
+          '<span class="notification-board-row">' +
+          '<span class="notification-board-tile is-absent"></span>' +
+          '<span class="notification-board-tile is-present"></span>' +
+          '<span class="notification-board-tile is-correct"></span>' +
+          '<span class="notification-board-tile is-absent"></span>' +
+          '<span class="notification-board-tile is-absent"></span>' +
+          '</span></span>';
+        const list = document.createElement('div');
+        list.className = 'notification-list';
+        const popover = document.createElement('div');
+        popover.className = 'menu-popover notification-popover';
+        popover.style.opacity = '1';
+        popover.style.animation = 'none';
+        popover.append(list);
+        list.append(anchor);
+        document.body.append(popover);
+        const rect = (selector: string) =>
+          anchor.querySelector(selector)!.getBoundingClientRect().toJSON() as DOMRect;
+        const status = rect('.notification-status');
+        const date = rect('.notification-date');
+        const detail = rect('.notification-detail');
+        const board = rect('.notification-board');
+        const overlap = (a: DOMRect, b: DOMRect) =>
+          Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+          Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+        const style = getComputedStyle(anchor);
+        const popoverRect = popover.getBoundingClientRect();
+        const result = {
+          areas: style.gridTemplateAreas,
+          rowTracks: style.gridTemplateRows.split(' ').filter(Boolean).length,
+          alignItems: style.alignItems,
+          detailOverStatus: overlap(detail, status),
+          detailOverDate: overlap(detail, date),
+          boardOverDetail: overlap(board, detail),
+          boardOverDate: overlap(board, date),
+          detailBelowStatus: detail.top >= status.bottom - 1,
+          boardVisible: board.width > 0 && board.height > 0,
+          boardInside: board.right <= popoverRect.right + 1 && board.left >= popoverRect.left - 1,
+          detailInside: detail.left >= popoverRect.left - 1,
+          /*
+           * Dropping the container-level baseline must not cost the first band its
+           * alignment. Restored per-cell with `align-self`, which is safe because those
+           * three cells share a named row and so cannot group across rows.
+           */
+          firstBandShares: status.bottom > date.top + 1 && date.bottom > status.top + 1,
+          statusBaseline: getComputedStyle(anchor.querySelector('.notification-status')!).alignSelf,
+        };
+        popover.remove();
+        return result;
+      });
+
+      const note = (message: string) => failures.push(`${viewport.id}: ${message}`);
+      if (layout.areas === 'none') note('the summary band is auto-placed, not named');
+      if (!layout.areas.includes('detail')) note(`no detail area in ${layout.areas}`);
+      if (!layout.areas.includes('board')) note(`no board area in ${layout.areas}`);
+      if (layout.alignItems === 'baseline') note('a baseline group spans the summary band');
+      if (layout.detailOverStatus > 0) note('the summary overlaps the status');
+      if (layout.detailOverDate > 0) note('the summary overlaps the date');
+      if (layout.boardOverDetail > 0) note('the board overlaps the summary');
+      if (layout.boardOverDate > 0) note('the board overlaps the date');
+      if (!layout.detailBelowStatus) note('the summary is not below the status');
+      if (!layout.boardVisible) note('the board snapshot has no box');
+      if (!layout.boardInside) note('the board escapes the popover');
+      if (!layout.detailInside) note('the summary escapes the popover');
+      if (layout.statusBaseline !== 'baseline') {
+        note(`the first band lost its baseline (align-self is ${layout.statusBaseline})`);
+      }
+      const expectedRows = viewport.width >= 768 ? 2 : 3;
+      if (layout.rowTracks !== expectedRows) {
+        note(`expected ${expectedRows} explicit rows, got ${layout.rowTracks}`);
+      }
+      if (viewport.width >= 768 && !layout.firstBandShares) {
+        note('desktop status and date no longer share a band');
+      }
+    }
+    expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+  });
+
   // ANNOT-05: the Players filter inputs, selects, and Apply action must share one
   // control block-size and one baseline at every width that keeps them on a row.
   test('Players filter controls share one height and baseline', async ({ page }) => {
@@ -1419,12 +1541,27 @@ test.describe('responsive and alternate presentation evidence', () => {
               '</button></div>' +
               '<div class="menu-popover notification-popover" ' +
               'style="opacity:1;animation:none;position:static">' +
+              '<div class="notification-filters">' +
+              '<button type="button" class="is-selected" data-accent-probe-control>' +
+              'Your turn<span class="notification-filter-count">3</span>' +
+              '</button>' +
+              '<button type="button" data-accent-probe-control>' +
+              'Results<span class="notification-filter-count">2</span>' +
+              '</button></div>' +
               '<div class="notification-list">' +
               '<a class="is-unread" href="#" data-accent-probe-control>' +
               '<strong class="notification-status">Your turn</strong>' +
               '<time class="notification-date">8/6/26</time>' +
               '<time class="notification-time">11:47:03 AM</time>' +
-              '</a></div></div>';
+              '<span class="notification-detail">Nova · Ranked · OG · 5 letters</span>' +
+              '</a></div></div>' +
+              '<aside class="ranked-search-status is-searching" style="position:static">' +
+              '<strong>SEARCHING</strong>' +
+              '<span>Ranked OG · 5 letters · <span class="ranked-search-elapsed">1:04</span></span>' +
+              '<div class="ranked-search-actions">' +
+              '<a class="button" href="#" data-accent-probe-control>Open lobby</a>' +
+              '<button type="button" data-accent-probe-control>Cancel search</button>' +
+              '</div></aside>';
             document.body.append(probe);
           },
           { name: accent.hex ? 'custom' : accent.label, values: variables },

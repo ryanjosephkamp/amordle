@@ -686,6 +686,164 @@ button.primary:hover {
   grid-area: time;
 }
 
+.notification-detail {
+  grid-area: detail;
+}
+
+.notification-board {
+  grid-area: board;
+}
+
+/*
+ * v8-B3/B4. A row that carries a summary — and possibly a board — grows a second
+ * band, stated as areas and explicit rows for exactly the reason A3 above states.
+ *
+ * Conditional on `:has()` rather than declared unconditionally, because an empty
+ * track still contributes a row gap: a row with nothing to say would grow a few
+ * pixels of dead space and the list would lose its rhythm. This also keeps the plain
+ * three-cell row byte-identical to what A3 fixed.
+ */
+.notification-list a:has(.notification-detail) {
+  grid-template-areas:
+    'status date time'
+    'detail detail board';
+  grid-template-rows: auto auto;
+  /*
+   * `start`, not the inherited `baseline`. A3's rule is that no baseline group may
+   * span rows, and this variant has two rows at every width — a container-level
+   * baseline here is the same construct that let Gecko drop the title into the date's
+   * row. The rule below restores baseline alignment where it is actually wanted,
+   * scoped to the three cells that share the first band.
+   */
+  align-items: start;
+}
+
+.notification-list
+  a:has(.notification-detail)
+  :is(.notification-status, .notification-date, .notification-time) {
+  align-self: baseline;
+}
+
+.notification-detail {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-list a.is-unread .notification-detail {
+  color: var(--accent-soft-muted);
+}
+
+.notification-list a:hover .notification-detail,
+.notification-list a:focus-visible .notification-detail {
+  color: var(--terminal-selected-muted);
+}
+
+/*
+ * v8-B4. The board snapshot: evidence colour only, at a size that reads as a shape
+ * rather than as tiles. It is decoration for the summary beside it, so it never grows
+ * a row on its own and never takes the row's remaining width.
+ */
+.notification-board {
+  display: grid;
+  gap: 1px;
+  align-self: center;
+  justify-self: end;
+}
+
+.notification-board-row {
+  display: grid;
+  grid-template-columns: repeat(var(--snapshot-columns, 5), 0.3rem);
+  gap: 1px;
+}
+
+.notification-board-tile {
+  display: block;
+  block-size: 0.3rem;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+
+.notification-board-tile.is-correct {
+  border-color: var(--correct);
+  background: var(--correct);
+}
+
+.notification-board-tile.is-present {
+  border-color: var(--present);
+  background: var(--present);
+}
+
+/*
+ * v8-B3. The lanes. Chips rather than a select, because the counts have to be visible
+ * without opening anything — the point of the filter is to answer "is there anything
+ * waiting on me" before you decide to read the list.
+ */
+.notification-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+
+/*
+ * A chip declares its own rest surface, so — per the rule `.segmented` states above —
+ * it must declare its own ink too. Omitting `color` leaves `button:hover` painting
+ * `--control-ink-on-selected` on a surface that never flipped: in the dark scheme the
+ * selected surface is light and its ink is near-black, so a chip keeping `--surface`
+ * measured 1.04:1 on hover for every accent.
+ */
+.notification-filters button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  text-transform: lowercase;
+}
+
+.notification-filters button.is-selected {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* Last, so hover and focus win over selection at equal specificity — a hovered chip
+   takes the shell's inverse surface whether or not it is the current lane. */
+.notification-filters button:hover,
+.notification-filters button:focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * v8-B3. The count inherits its chip's ink. It is deliberately not accent-coloured.
+ *
+ * Accent ink was tried and measured on all three surfaces a chip can present, and it
+ * failed on every one: 3.60:1 on `--accent-soft` when selected, 4.26:1 on `--surface`
+ * at rest, and as low as 1.01:1 on the inverse `--terminal-selected` surface under
+ * hover and focus — the last being the same defect as the alerts badge, a coloured
+ * descendant keeping its ink while its container flips surface.
+ *
+ * There is no colour to rescue here, because colour was never carrying meaning: the
+ * number is already a number, and weight plus tabular figures set it apart from the
+ * label. Inheriting means it is correct on every surface by construction.
+ */
+.notification-filter-count {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
 .notification-status {
   min-width: 0;
   overflow: hidden;
@@ -764,6 +922,19 @@ button.primary:hover {
     grid-template-columns: minmax(0, 1fr) auto;
     grid-template-rows: auto auto;
     align-items: start;
+  }
+
+  /*
+   * v8-B3/B4. The same conditional band at phone widths, three explicit rows rather
+   * than two. `align-items: start` is inherited from the rule above, so the summary
+   * band cannot form a baseline group with the timestamp row either.
+   */
+  .notification-list a:has(.notification-detail) {
+    grid-template-areas:
+      'status status'
+      'date time'
+      'detail board';
+    grid-template-rows: auto auto auto;
   }
 
   .notification-status {
@@ -1807,10 +1978,19 @@ button.calendar-day.is-selected {
   border-radius: 0;
   background: var(--surface);
   padding: var(--space-2) var(--space-4);
+  /* Declares a surface, so it declares its ink — see the filter chips below. */
+  color: var(--ink);
   font-family: var(--tui-font);
   font-size: var(--text-1);
   text-decoration: none;
   text-transform: lowercase;
+}
+
+.ranked-search-status :is(a, button):hover,
+.ranked-search-status :is(a, button):focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
 }
 
 .focus-exit {
