@@ -45,6 +45,10 @@ const authorizedAdditiveMigrations = new Map([
     '20260810020000_amordle_ranked_buckets_v4.sql',
     '84ec8bb0474570878db66091b0565faebd5ee89c4e806ff0b35c72ee9c06c721',
   ],
+  [
+    '20260810090000_amordle_combat_portal_v1.sql',
+    '01fd1edc7c06e05d6045f194c033939cb632629326875a9e8bb6460929f3898a',
+  ],
 ]);
 const reviewedPendingMigrations = new Map([]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
