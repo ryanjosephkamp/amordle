@@ -3,6 +3,7 @@
 import { z } from 'zod';
 import { hardModeViolationForEvidence, playableAttemptBudget, scoreGuess } from '@/domain/game';
 import { rankedDailyExpiryUtc } from '@/domain/multiplayer';
+import type { RankedPracticeConfig } from '@/domain/multiplayer';
 import type { Database, Json } from '@/types/database';
 import { getBrowserSupabase } from './browser';
 import { parseServiceList, parseServiceResult, ServiceError, throwServiceError } from './shared';
@@ -773,7 +774,8 @@ export async function createUnrankedPractice(input: {
   difficulty: 'casual' | 'standard' | 'expert';
   hardMode: boolean;
   goPuzzleCount: 5 | 7 | 10 | null;
-  timeLimitMs: 300_000 | null;
+  /** v8-C. One of the seven ranked clocks, or null for untimed. */
+  timeLimitMs: RankedPracticeConfig['timeLimitMs'];
   creationKey: string;
 }) {
   return parseServiceResult(
@@ -1136,7 +1138,8 @@ export async function createPrivateRequest(input: {
   mode: 'og' | 'go';
   wordLength: number;
   hardMode: boolean;
-  timeLimitMs: 300_000 | null;
+  /** v8-C. One of the seven ranked clocks, or null for untimed. */
+  timeLimitMs: RankedPracticeConfig['timeLimitMs'];
   goPuzzleCount: 5 | 7 | 10 | null;
   idempotencyKey: string;
 }) {

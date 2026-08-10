@@ -10,7 +10,20 @@ const rankedPracticeConfigSchema = z
     difficulty: z.enum(['casual', 'standard', 'expert']),
     hardMode: z.boolean(),
     goPuzzleCount: z.union([z.literal(5), z.literal(7), z.literal(10), z.null()]),
-    timeLimitMs: z.union([z.literal(300_000), z.null()]),
+    /*
+     * v8-C. The ranked clock ladder widened from two options to seven. The database
+     * is the authority — `brrrdle_private.amordle_rating_bucket` decides what is
+     * playable — so this list only has to agree with it, not police it.
+     */
+    timeLimitMs: z.union([
+      z.literal(60_000),
+      z.literal(180_000),
+      z.literal(300_000),
+      z.literal(600_000),
+      z.literal(1_200_000),
+      z.literal(2_700_000),
+      z.null(),
+    ]),
   })
   .strict();
 

@@ -16,7 +16,8 @@ export interface RankedPracticeConfig {
   difficulty: 'casual' | 'standard' | 'expert';
   hardMode: boolean;
   goPuzzleCount: 5 | 7 | 10 | null;
-  timeLimitMs: 300_000 | null;
+  /** v8-C. One of the seven ranked clocks, or null for untimed. */
+  timeLimitMs: 60_000 | 180_000 | 300_000 | 600_000 | 1_200_000 | 2_700_000 | null;
 }
 
 export type RankedPracticeQueuePhase =

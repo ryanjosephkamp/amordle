@@ -1856,7 +1856,7 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.setViewportSize({ width: 1440, height: 1024 });
     await secondPage.setViewportSize({ width: 1440, height: 1024 });
 
-    await firstPage.goto(`${baseURL}/combat/practice?length=35`);
+    await firstPage.goto(`${baseURL}/combat/practice?length=5`);
 
     /*
      * C2. Word length is now typed rather than set by a page-reloading link. It must seed
@@ -1867,7 +1867,7 @@ test.describe.serial('protected Preview services', () => {
      */
     {
       const wordLength = firstPage.getByRole('spinbutton', { name: 'Word length', exact: true });
-      await expect(wordLength).toHaveValue('35');
+      await expect(wordLength).toHaveValue('5');
       await wordLength.fill('40');
       await expect(firstPage.getByText('Word length must be from 2 to 35.')).toBeVisible();
       await expect(firstPage.getByRole('button', { name: 'Find ranked match' })).toBeDisabled();
@@ -1876,7 +1876,7 @@ test.describe.serial('protected Preview services', () => {
       ).toBeDisabled();
       await wordLength.fill('');
       await expect(firstPage.getByText('Word length must be from 2 to 35.')).toBeVisible();
-      await wordLength.fill('35');
+      await wordLength.fill('5');
       await expect(firstPage.getByText('Word length must be from 2 to 35.')).toHaveCount(0);
       await expect(firstPage.getByRole('main')).toBeVisible();
       await event('practice_word_length_selector_verified', {
@@ -1886,10 +1886,15 @@ test.describe.serial('protected Preview services', () => {
       });
     }
 
-    await firstPage.getByLabel('Ranked clock').selectOption('300000');
+    await firstPage.getByLabel('Clock').selectOption('300000');
     await firstPage.getByRole('button', { name: 'Find ranked match' }).click();
     const rankedPracticeOne = await registerLatestQueueRequest(playerOne!, 'practice', 'og');
-    await expect(firstPage.getByRole('status')).toContainText(/OG · 35 letters · standard · 5:00/i);
+    /*
+     * v8-C. Ranked is standardised now, so the search line states the ranked format
+     * rather than whatever the form holds: five letters, expert, and the chosen clock.
+     * The word-length field above still belongs to the unranked half of this page.
+     */
+    await expect(firstPage.getByRole('status')).toContainText(/OG · 5 letters · expert · 5:00/i);
     await firstPage.reload();
     await expect(firstPage.getByText(/Restored your ranked search/i)).toBeVisible({
       timeout: 15_000,
@@ -1936,11 +1941,11 @@ test.describe.serial('protected Preview services', () => {
       timeout: 15_000,
     });
     await expect(firstPage.locator('.ranked-search-status.is-searching')).toContainText(
-      /Ranked OG · 35 letters/i,
+      /Ranked OG · 5 letters/i,
     );
 
-    await secondPage.goto(`${baseURL}/combat/practice?length=35`);
-    await secondPage.getByLabel('Ranked clock').selectOption('300000');
+    await secondPage.goto(`${baseURL}/combat/practice?length=5`);
+    await secondPage.getByLabel('Clock').selectOption('300000');
     await secondPage.getByRole('button', { name: 'Find ranked match' }).click();
     const rankedPracticeTwo = await registerLatestQueueRequest(playerTwo!, 'practice', 'og');
 

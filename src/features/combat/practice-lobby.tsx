@@ -17,7 +17,17 @@ import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 import type { Difficulty } from '@/domain/game';
 import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/multiplayer';
+import { rankedClockLadder } from '@/domain/profile';
 import { useRankedQueue } from './ranked-queue';
+
+/*
+ * v8-C. The ranked format, matching what
+ * `create_amordle_ranked_practice_request_v2` now enforces. The server is the
+ * authority; these exist so the UI never composes a search it would refuse.
+ */
+const RANKED_WORD_LENGTH = 5;
+const RANKED_DIFFICULTY = 'expert' as const;
+const RANKED_GO_PUZZLES = 5 as const;
 
 interface Props {
   length: number;
@@ -71,7 +81,7 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
   const [difficulty, setDifficulty] = useState<Difficulty>('standard');
   const [hardMode, setHardMode] = useState(false);
   const [goCount, setGoCount] = useState<5 | 7 | 10>(5);
-  const [timeLimitMs, setTimeLimitMs] = useState<300_000 | null>(null);
+  const [timeLimitMs, setTimeLimitMs] = useState<RankedPracticeConfig['timeLimitMs']>(null);
   /*
    * v8-B1. The ranked search is no longer this page's property. It is owned by
    * `RankedQueueProvider` above the shell, so it keeps running when the player
@@ -109,10 +119,32 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     [difficulty, goCount, hardMode, mode, timeLimitMs, wordLength],
   );
 
+  /*
+   * v8-C. Ranked is one comparable format, so its configuration is derived rather than
+   * whatever the form happens to hold.
+   *
+   * This form creates unranked matches too, and those keep every option — any length
+   * from 2 to 35, any difficulty, any GO count. Ranked takes only the three choices
+   * that identify a rating pool: mode, clock and hard mode. Deriving it here means the
+   * player cannot compose a ranked search the server would refuse.
+   */
+  const rankedConfig = useMemo<RankedPracticeConfig>(
+    () =>
+      normalizeRankedPracticeConfig({
+        mode,
+        wordLength: RANKED_WORD_LENGTH,
+        difficulty: RANKED_DIFFICULTY,
+        hardMode,
+        goPuzzleCount: mode === 'go' ? RANKED_GO_PUZZLES : null,
+        timeLimitMs,
+      }),
+    [hardMode, mode, timeLimitMs],
+  );
+
   const startSearch = useCallback(() => {
     setStartedHere(true);
-    rankedQueue.start(currentConfig);
-  }, [currentConfig, rankedQueue]);
+    rankedQueue.start(rankedConfig);
+  }, [rankedConfig, rankedQueue]);
 
   /*
    * Two message sources — this page's own outcomes and the app-wide search's phase —
@@ -145,21 +177,18 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     setStartedHere(false);
   } else if (queue && seededSearch !== queue.requestId) {
     setSeededSearch(queue.requestId);
-    if (queue.config.wordLength !== routeLength) {
-      setMessage(
-        `A ranked ${queue.config.wordLength}-letter search is still running. Its settings are on the matching Practice route.`,
-      );
-    } else if (!startedHere) {
+    if (!startedHere) {
       /*
        * A search this mount did not start: it came back from the durable store, so the
        * form has to be told what it is searching for. Announced, because the player did
        * not just press for it — saying "restored" about a search someone started a
        * second ago would be nonsense.
        */
+      // Only what identifies a ranked pool. Length, difficulty and GO count are fixed
+      // for ranked, so restoring them over the player's unranked settings would be
+      // rewriting choices the search never made.
       setMode(queue.config.mode);
-      setDifficulty(queue.config.difficulty);
       setHardMode(queue.config.hardMode);
-      setGoCount(queue.config.goPuzzleCount ?? 5);
       setTimeLimitMs(queue.config.timeLimitMs);
       setMessage('Restored your ranked search for this account.');
     }
@@ -176,13 +205,10 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     mutationFn: async () => {
       const userId = auth.user?.id;
       if (!userId) throw new Error('Sign in first.');
+      // Unranked takes the form exactly as the player set it. Only ranked is
+      // standardised, and `rankedConfig` above is where that happens.
       return createUnrankedPractice({
-        mode,
-        wordLength,
-        difficulty,
-        hardMode,
-        goPuzzleCount: mode === 'go' ? goCount : null,
-        timeLimitMs,
+        ...currentConfig,
         creationKey: operationId('public-practice-create'),
       });
     },
@@ -322,14 +348,23 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
             Hard Mode
           </label>
           <label>
-            Ranked clock
+            Clock
             <select
               value={timeLimitMs ?? 'untimed'}
               disabled={Boolean(queue)}
-              onChange={(event) => setTimeLimitMs(event.target.value === '300000' ? 300_000 : null)}
+              onChange={(event) =>
+                setTimeLimitMs(
+                  event.target.value === 'untimed'
+                    ? null
+                    : (Number(event.target.value) as RankedPracticeConfig['timeLimitMs']),
+                )
+              }
             >
-              <option value="untimed">Untimed</option>
-              <option value="300000">Five minutes per player</option>
+              {rankedClockLadder.map((entry) => (
+                <option key={entry.label} value={entry.timeLimitMs ?? 'untimed'}>
+                  {entry.display}
+                </option>
+              ))}
             </select>
           </label>
           <div className="action-row">

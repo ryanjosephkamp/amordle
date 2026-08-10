@@ -287,13 +287,75 @@ export const timedRatingBucketLabels: Record<string, string> = {
   'multiplayer:go:timed:v1': 'Ranked Practice · GO · 5-minute',
 };
 
+/*
+ * v8-C. The ranked clock ladder, stated once.
+ *
+ * The database holds the same seven rows in `brrrdle_private.amordle_rating_bucket`,
+ * which is the authority: a clock missing from there cannot be played whatever this
+ * file says. This list exists so the lobby can offer the options and so a bucket name
+ * can be read back into words, not to decide what is legal.
+ */
+export const rankedClockLadder = [
+  { label: 'untimed', timeLimitMs: null, display: 'Untimed' },
+  { label: '1m', timeLimitMs: 60_000, display: '1 minute per player' },
+  { label: '3m', timeLimitMs: 180_000, display: '3 minutes per player' },
+  { label: '5m', timeLimitMs: 300_000, display: '5 minutes per player' },
+  { label: '10m', timeLimitMs: 600_000, display: '10 minutes per player' },
+  { label: '20m', timeLimitMs: 1_200_000, display: '20 minutes per player' },
+  { label: '45m', timeLimitMs: 2_700_000, display: '45 minutes per player' },
+] as const;
+
+export type RankedClockLabel = (typeof rankedClockLadder)[number]['label'];
+export type RankedClockMs = (typeof rankedClockLadder)[number]['timeLimitMs'];
+
+export function rankedClockFromMs(timeLimitMs: number | null) {
+  return rankedClockLadder.find((entry) => entry.timeLimitMs === timeLimitMs) ?? null;
+}
+
 export interface RatingLane {
   /** App bucket key, or null when the storage key is not recognized. */
   appBucket: string | null;
   scope: 'practice' | 'daily' | 'unknown';
   mode: 'og' | 'go' | 'unknown';
-  clock: 'untimed' | '5-minute' | 'unknown';
+  /** A ladder label, the legacy `5-minute`, or `unknown`. */
+  clock: RankedClockLabel | '5-minute' | 'unknown';
+  hardMode: boolean;
   label: string;
+}
+
+/*
+ * v8-C. `async:<mode>:<clock>:<hard|std>:v4`.
+ *
+ * The bucket name is self-describing now, so one parser replaces the hand-written
+ * ladders this file used to carry. The previous `resolveRatingLane` sniffed substrings
+ * — `bucket.includes(':go')`, `bucket.includes(':daily:')` — which could not express a
+ * clock at all and would have reported `async:og:10m:hard:v4` as an OG untimed lane
+ * with a straight face.
+ */
+const v4Bucket = /^async:(og|go):([a-z0-9]+):(std|hard):v4$/;
+
+function parseV4Bucket(bucket: string): RatingLane | null {
+  const match = v4Bucket.exec(bucket);
+  if (!match) return null;
+  const [, mode, clockLabel, hardness] = match;
+  const clock = rankedClockLadder.find((entry) => entry.label === clockLabel);
+  if (!clock) return null;
+  const hardMode = hardness === 'hard';
+  return {
+    appBucket: `multiplayer:${mode}:${clockLabel}:${hardness}`,
+    scope: 'practice',
+    mode: mode as 'og' | 'go',
+    clock: clock.label,
+    hardMode,
+    label: [
+      'Ranked Practice',
+      (mode as string).toUpperCase(),
+      clock.timeLimitMs === null ? 'Untimed' : clock.display.replace(' per player', ''),
+      hardMode ? 'Hard Mode' : null,
+    ]
+      .filter(Boolean)
+      .join(' · '),
+  };
 }
 
 /**
@@ -302,6 +364,8 @@ export interface RatingLane {
  * gap beats a confident wrong answer.
  */
 export function resolveRatingLane(bucket: string): RatingLane {
+  const v4 = parseV4Bucket(bucket);
+  if (v4) return v4;
   const appBucket = ratingStorageBucketToAppBucket[bucket] ?? bucket;
   const publicMatch = publicRatingBucketSchema.safeParse(appBucket);
   if (publicMatch.success) {
@@ -311,6 +375,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
       scope: daily ? 'daily' : 'practice',
       mode: appBucket.includes(':go') ? 'go' : 'og',
       clock: 'untimed',
+      hardMode: false,
       label: publicRatingBucketLabels[publicMatch.data],
     };
   }
@@ -321,6 +386,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
       scope: 'practice',
       mode: appBucket.includes(':go') ? 'go' : 'og',
       clock: '5-minute',
+      hardMode: false,
       label: timedLabel,
     };
   }
@@ -329,6 +395,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
     scope: 'unknown',
     mode: 'unknown',
     clock: 'unknown',
+    hardMode: false,
     label: `Ranked COMBAT · unrecognized lane (${bucket})`,
   };
 }
