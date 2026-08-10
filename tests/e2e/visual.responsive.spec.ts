@@ -997,7 +997,18 @@ test.describe('responsive and alternate presentation evidence', () => {
    * *geometry*: three rects that never intersect, whatever the column count. Overlap is
    * the actual defect; column count was only ever a proxy for it.
    */
-  test('Notification rows separate status, date, and time at every width', async ({ page }) => {
+  /*
+   * v8-A3. Tagged @crossbrowser and run in Firefox and WebKit as well as Chromium.
+   *
+   * This test already existed and already asserted exactly the overlap the owner reported
+   * on Firefox for Android — and it passed the entire time, because the `visual` project
+   * runs Desktop Chrome only. A layout defect that only one engine exhibits cannot be
+   * caught by a suite that only drives the other one. Everything under this tag must stay
+   * free of CDP, which is Chromium-only.
+   */
+  test('Notification rows separate status, date, and time at every width @crossbrowser', async ({
+    page,
+  }) => {
     await page.goto('/');
     const failures: string[] = [];
     for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
@@ -1037,7 +1048,25 @@ test.describe('responsive and alternate presentation evidence', () => {
           statusBeforeDate: status.right <= date.left + 1,
           statusAboveDate: status.bottom <= date.top + 1,
           sameRow: Math.abs(status.top - date.top) <= 1,
+          // "One row" is a vertical overlap, not equal tops: the desktop row is
+          // baseline-aligned across two different font sizes, so the tops legitimately
+          // differ and by an engine-specific amount.
+          sharesBand: status.bottom > date.top + 1 && date.bottom > status.top + 1,
+          topDelta: Math.round(Math.abs(status.top - date.top)),
           statusWraps: getComputedStyle(anchor.querySelector('.notification-status')!).whiteSpace,
+          /*
+           * v8-A3. The structural invariant, not just the geometry.
+           *
+           * The reported overlap was Firefox for ANDROID, and desktop Gecko does not
+           * reproduce it — so a geometry assertion alone cannot prove this fix in CI on any
+           * browser available here. What CAN be proven is the property that makes the
+           * layout engine-independent in the first place: every cell explicitly placed,
+           * every row explicitly sized, and no baseline group spanning rows. Auto-placement
+           * plus a `1 / -1` spanner in an implicit row is the construct that diverged.
+           */
+          areas: style.gridTemplateAreas,
+          rowTracks: style.gridTemplateRows.split(' ').filter(Boolean).length,
+          alignItems: style.alignItems,
           withinPopover:
             status.left >= popover.getBoundingClientRect().left - 1 &&
             time.right <= popover.getBoundingClientRect().right + 1,
@@ -1060,12 +1089,20 @@ test.describe('responsive and alternate presentation evidence', () => {
       if (!layout.tabularTime) note('time is not tabular');
       if (viewport.width >= 768) {
         if (layout.columns !== 3) note(`desktop expects 3 columns, got ${layout.columns}`);
+        if (layout.areas === 'none') note('desktop placement is implicit, not named areas');
         if (!layout.statusBeforeDate) note('desktop status does not precede date');
-        if (!layout.sameRow) note('desktop cells are not on one row');
+        if (!layout.sharesBand) {
+          note(`desktop cells are not on one row (top delta ${layout.topDelta}px)`);
+        }
       } else {
         if (layout.columns !== 2) note(`mobile expects 2 columns, got ${layout.columns}`);
         if (!layout.statusAboveDate) note('mobile status does not sit above the date row');
         if (layout.statusWraps !== 'normal') note(`mobile status is ${layout.statusWraps}`);
+        if (layout.areas === 'none') note('mobile placement is implicit, not named areas');
+        if (layout.rowTracks !== 2) note(`mobile expects 2 explicit rows, got ${layout.rowTracks}`);
+        if (layout.alignItems === 'baseline') {
+          note('mobile shares a baseline group across two rows');
+        }
       }
     }
     expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);

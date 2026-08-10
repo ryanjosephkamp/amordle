@@ -55,5 +55,26 @@ export default defineConfig({
       testMatch: /visual\..+\.spec\.ts/,
       use: { ...devices['Desktop Chrome'] },
     },
+    /*
+     * v8-A3. Layout that must hold in every engine, run in every engine.
+     *
+     * The notification overlap the owner hit on Firefox for Android already had a test
+     * asserting exactly that geometry across eight phone widths — and it passed throughout,
+     * because `visual` runs Desktop Chrome alone. These projects re-run only the
+     * @crossbrowser-tagged tests, which is the subset deliberately kept free of CDP
+     * (`newCDPSession` is Chromium-only, so the contrast sweeps cannot travel).
+     */
+    {
+      name: 'visual-firefox',
+      testMatch: /visual\..+\.spec\.ts/,
+      grep: /@crossbrowser/,
+      use: { ...devices['Desktop Firefox'] },
+    },
+    {
+      name: 'visual-webkit',
+      testMatch: /visual\..+\.spec\.ts/,
+      grep: /@crossbrowser/,
+      use: { ...devices['Desktop Safari'] },
+    },
   ],
 });

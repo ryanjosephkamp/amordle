@@ -648,12 +648,42 @@ button.primary:hover {
  * ("Match ready8/2/2026, 4:40:46 PM"). This rule restores the grid after it and gives
  * status, date, and time their own aligned columns.
  */
+/*
+ * v8-A3. Placement is explicit — named areas and named rows — rather than left to
+ * auto-placement, because auto-placement is where Firefox and Chromium disagreed.
+ *
+ * The mobile shape is three children in two columns, held together only by
+ * `grid-column: 1 / -1` on the first child and by IMPLICIT rows, with `align-items:
+ * baseline` forming a baseline group across those rows. A full-width spanner in an
+ * implicit row sharing a baseline group is exactly the construct where the two engines
+ * diverge, and on Firefox for Android the title and the date painted on top of each other
+ * while the right-aligned time stayed clear.
+ *
+ * Three things remove the browser's discretion: named areas, so nothing is auto-placed;
+ * explicit `grid-template-rows`, so no row is implicit; and `align-items: start`, so no
+ * baseline group spans rows. Baseline alignment was only ever meaningful for the
+ * single-row desktop shape, and it is kept there.
+ */
 .notification-list a {
   display: grid;
+  grid-template-areas: 'status date time';
   grid-template-columns: minmax(0, 1fr) auto auto;
+  grid-template-rows: auto;
   gap: var(--space-1) var(--space-4);
   align-items: baseline;
   border-block-start: var(--terminal-rule);
+}
+
+.notification-status {
+  grid-area: status;
+}
+
+.notification-date {
+  grid-area: date;
+}
+
+.notification-time {
+  grid-area: time;
 }
 
 .notification-status {
@@ -721,12 +751,22 @@ button.primary:hover {
 }
 
 @media (max-width: 47.99rem) {
+  /*
+   * v8-A3. The two-row shape, stated as areas rather than produced by a spanner plus
+   * auto-placement. `align-items: start` replaces the inherited `baseline`: with two rows
+   * there is no single baseline to share, and asking for one is what let Firefox drop the
+   * title into the date's row.
+   */
   .notification-list a {
+    grid-template-areas:
+      'status status'
+      'date time';
     grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-rows: auto auto;
+    align-items: start;
   }
 
   .notification-status {
-    grid-column: 1 / -1;
     white-space: normal;
   }
 
