@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8-cycle-a-hosted-green",
+  "currentCheckpoint": "stage-2-v8-cycle-b-hosted-green",
   "status": "awaiting-owner-review",
-  "lastGreenCommit": "81e96f1",
+  "lastGreenCommit": "9fc688d",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,7 +361,7 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8-cycle-a-combat-defects-complete-hosted-green",
+  "reportStatus": "v8-cycle-b-background-search-notifications-complete-hosted-green",
   "updatedAt": "2026-08-09T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
@@ -1003,6 +1003,43 @@
     "parity": "237/237 ordered atomic clauses acceptance-verified",
     "residue": "none \u2014 working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
     "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06\u00b7\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
+  },
+  "v8CycleBImplementation": {
+    "scope": "background ranked searching that survives navigation, a persistent search affordance, and the notification centre rework",
+    "revertPoint": "81e96f1 for Cycle B alone; 59e5833 discards Cycles A and B",
+    "headCommit": "9fc688d",
+    "commits": [
+      "84b3cb5 B1+B2 keep a ranked search running across the whole app",
+      "61d3c59 B3+B4 give the notification centre lanes, summaries and a board",
+      "ceeb722 B5 prove the ranked search survives leaving the lobby",
+      "b1cc48b B5 let the lobby speak over the app-wide search message",
+      "9fc688d B5 give the heaviest hosted guess a realistic clearing window"
+    ],
+    "migration": "none",
+    "b1": "RankedQueueProvider mounted above the shell in the root layout owns the intent, poll, claim, finalize and cancel; the intent moved from per-tab sessionStorage to the account-scoped IndexedDB envelope store, which gets account-deletion cleanup for free from the account:<userId> namespace. A durable read that finds nothing drains any surviving session record exactly once so nobody is stranded with a server queue row they can no longer reach or cancel. Exactly one poller, because two would race on the resulting navigation; two tabs are safe because the shared intent means shared action ids and therefore idempotent RPCs",
+    "b2": "a status strip on every route except the lobby, showing the search, its elapsed time and a cancel; a match landing away from the lobby announces itself and offers a link rather than navigating. Both floating strips share one stack, since a search that survives navigation can now be running when the connection drops",
+    "b3": "filter chips for turn, results, requests and rematches with unread counts, and a per-row summary of opponent, ranked, mode, word length and hard mode built from payloads the feed already fetched",
+    "b4": "the last four rows of the puzzle in play as evidence-coloured cells, no letters, never persisted; mergeNotifications now takes the live row and carries the read flag across rather than returning the stored row wholesale, which would otherwise have stripped every read notification of its summary and board",
+    "defectsFoundByNewTests": "three, each a repeat of a family the stylesheet documents: the two-row summary variant kept align-items:baseline, the same cross-row baseline group A3 removed; the filter chips declared a rest surface without ink so button:hover measured 1.04:1 in dark for every accent, the rule .segmented states; and the unread count in --accent-text failed on all three surfaces a chip can present, 3.60:1 selected, 4.26:1 at rest, 1.01:1 hovered",
+    "deliberatelyNotDone": "no realtime on the queue table (needs a migration, and five seconds to discover a match is not the bottleneck); no cross-tab leader election (safe without it); ranked Daily keeps its session-scoped intent because its queue resolves synchronously; server-side settlement, buckets and the portal are Cycles C and D; get_public_site_stats_v1 still filters the pre-v2 buckets",
+    "localGate": "159 domain, 31 browser, 24 fixture, 43 visual; budgets home 197273B JS/23770B CSS, game 203576B JS/28680B CSS",
+    "bundleGrowth": "home JS 193242 to 197273 B across Cycles A and B, the cost of a watcher every route loads, inside budget",
+    "report": "reports/v8-cycle-b-background-search-notifications-2026-08-09/README.md"
+  },
+  "v8CycleBHostedAcceptance": {
+    "deployment": "dpl_AS17pQYKnVdkF7mCpcWaGbrhmWPH",
+    "url": "https://amordle-23n0hovtc-ryanjosephkamps-projects.vercel.app",
+    "protection": "deployment protection on",
+    "commit": "9fc688d",
+    "fixture": "24 passed across Chromium, Firefox and WebKit",
+    "services": "3 passed against real Supabase at 1 worker",
+    "visual": "43 passed: 39 Chromium, 2 Firefox, 2 WebKit",
+    "parity": "237/237 ordered atomic clauses acceptance-verified",
+    "residue": "none",
+    "scenarioStrengthened": "the hosted ranked scenario now forces the waiter hidden AND navigates them to Home before the opponent claims, then asserts the search is still visibly running there, the match announces itself, the player is not dragged off the page, and opening it by hand works",
+    "firstRunFailure": "real: the provider phase message had precedence over the lobby message, so the lobby stopped saying \"Restored your ranked search\" after a reload. Precedence inverted and a phase change now clears the page message",
+    "secondRunFailure": "harness only: the 35-letter ranked winner needs more than five seconds for the command round-trip, terminal transition, automatic settlement and a 35-column re-render before the draft row clears. The failure screenshot showed the win, the points and both ratings applied with no press. Window widened to 15s, assertion unchanged",
     "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
   }
 }
