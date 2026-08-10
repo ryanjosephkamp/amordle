@@ -80,12 +80,54 @@ export function AppShell({ children }: PropsWithChildren) {
   const moreButton = useRef<HTMLButtonElement>(null);
   const mobileMoreButton = useRef<HTMLButtonElement>(null);
   const morePanel = useRef<HTMLDivElement>(null);
+  const chrome = useRef<HTMLElement>(null);
+
   const previousPathname = useRef(pathname);
   const [routeAnnouncement, setRouteAnnouncement] = useState('');
   const focus =
     search.get('focus') === '1' &&
     (pathname.includes('/play/solo/') || pathname.includes('/combat/match/'));
   const gameSurface = pathname.includes('/play/solo/') || pathname.includes('/combat/match/');
+
+  /*
+   * v8-A3-redux. Publish where the header actually ends.
+   *
+   * Every dropdown is `position: fixed` pinned to a hard-coded offset — 3.1rem, 3.4rem,
+   * 5.6rem, 7.3rem, 2.95rem depending on width and surface — each one a guess at the
+   * header's height. At phone width the guess clears the header by 3.6 pixels, which is
+   * not a margin, it is a coincidence.
+   *
+   * Firefox for Android's Accessibility font setting is a TEXT-ONLY zoom: it scales
+   * type but not `rem` lengths. At 1.5x the toolbar wraps and grows to 145.7px while the
+   * panel stays pinned at 134.4px, so the panel paints on top of the header — measured,
+   * in Gecko. Desktop Gecko has no equivalent setting, which is why every test and every
+   * check on this machine said the layout was fine.
+   *
+   * Measuring removes the guess. The panels clamp against this value, so a header that
+   * grows for any reason — text zoom, a wrapped toolbar, a longer route name, a larger
+   * default font — pushes them down instead of being covered by them.
+   */
+  useEffect(() => {
+    const header = chrome.current;
+    const root = document.documentElement;
+    if (!header) {
+      root.style.removeProperty('--chrome-bottom');
+      return;
+    }
+    const publish = () => {
+      const bottom = header.getBoundingClientRect().bottom;
+      root.style.setProperty('--chrome-bottom', `${Math.max(0, Math.round(bottom))}px`);
+    };
+    publish();
+    const observer = new ResizeObserver(publish);
+    observer.observe(header);
+    window.addEventListener('resize', publish);
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', publish);
+      root.style.removeProperty('--chrome-bottom');
+    };
+  }, [focus]);
   const moreOpen = moreOpenedOn === pathname;
   const focusHref = (() => {
     const parameters = new URLSearchParams(search.toString());
@@ -198,7 +240,7 @@ export function AppShell({ children }: PropsWithChildren) {
       onClick={confirmTouchControl}
     >
       {!focus && (
-        <header className="global-chrome">
+        <header className="global-chrome" ref={chrome}>
           <div className="app-toolbar">
             <Link className="wordmark" href="/" aria-label="Amordle home">
               <span aria-hidden="true">❯</span> amordle

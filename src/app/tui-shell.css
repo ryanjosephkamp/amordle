@@ -550,7 +550,7 @@ button.primary:hover {
 .menu-popover {
   position: fixed;
   z-index: var(--z-dropdown);
-  top: 7.3rem;
+  top: max(7.3rem, var(--chrome-bottom, 0px));
   right: max(1.75rem, calc((100vw - 96rem) / 2 + 0.75rem));
   width: min(21rem, calc(100vw - 2rem));
   border: var(--terminal-rule);
@@ -642,86 +642,75 @@ button.primary:hover {
 }
 
 /*
- * ANNOT-01. `.menu-popover a { display: block }` above has the same specificity as
- * globals' `.notification-list a { display: grid }` and loses only on source order, so
- * the status and timestamp collapsed into one inline run with no separator at all
- * ("Match ready8/2/2026, 4:40:46 PM"). This rule restores the grid after it and gives
- * status, date, and time their own aligned columns.
+ * ANNOT-01. `.menu-popover a { display: block }` above has the same specificity as the
+ * notification row's own display, and used to lose only on source order — the status and
+ * timestamp collapsed into one inline run with no separator at all ("Match ready8/2/2026,
+ * 4:40:46 PM"). The selector below is scoped to the popover so it outranks that rule
+ * outright rather than depending on which of two equal-specificity rules comes last.
  */
 /*
- * v8-A3. Placement is explicit — named areas and named rows — rather than left to
- * auto-placement, because auto-placement is where Firefox and Chromium disagreed.
+ * v8-A3-redux. Stacked lines, not a grid.
  *
- * The mobile shape is three children in two columns, held together only by
- * `grid-column: 1 / -1` on the first child and by IMPLICIT rows, with `align-items:
- * baseline` forming a baseline group across those rows. A full-width spanner in an
- * implicit row sharing a baseline group is exactly the construct where the two engines
- * diverge, and on Firefox for Android the title and the date painted on top of each other
- * while the right-aligned time stayed clear.
+ * History of this row: it was auto-placed grid children with an implicit second row and a
+ * baseline group spanning both, which is exactly where Gecko and Blink diverge, and on
+ * Firefox for Android the title painted on top of the date. v8-A3 replaced that with
+ * named areas, explicitly sized rows, and `align-items: start` — provably engine-
+ * independent in Chromium, Gecko and WebKit on the desktop, and the owner reported the
+ * overlap STILL happening on their phone afterwards.
  *
- * Three things remove the browser's discretion: named areas, so nothing is auto-placed;
- * explicit `grid-template-rows`, so no row is implicit; and `align-items: start`, so no
- * baseline group spans rows. Baseline alignment was only ever meaningful for the
- * single-row desktop shape, and it is kept there.
+ * Desktop Gecko does not reproduce it, with or without `:has()`, so there is nothing here
+ * to debug against. What can be done instead is to stop asking any engine to place
+ * anything: the row is a column of two block-level lines, and each line is a single flex
+ * line. Block boxes in normal flow cannot overlap one another, and a flex line cannot
+ * spill onto the line above it. There is no placement decision left for an engine to get
+ * wrong.
+ *
+ * The mobile shape is likewise a column rather than a wrapped row, so no flex line ever
+ * has to wrap and no baseline group can span one.
  */
-.notification-list a {
-  display: grid;
-  grid-template-areas: 'status date time';
-  grid-template-columns: minmax(0, 1fr) auto auto;
-  grid-template-rows: auto;
-  gap: var(--space-1) var(--space-4);
-  align-items: baseline;
+.notification-popover .notification-list a {
+  display: flex;
+  /*
+   * `min-width: 0` because the row is itself a flex item of the list, and a flex item's
+   * default `min-width: auto` refuses to shrink below its content's minimum — here the
+   * whole untruncated title plus the timestamp, which overflowed the popover by 75px.
+   * The grid this replaced hid the same problem inside `minmax(0, 1fr)`.
+   */
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-1);
   border-block-start: var(--terminal-rule);
 }
 
+.notification-head,
+.notification-summary {
+  display: flex;
+  min-width: 0;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.notification-head {
+  align-items: baseline;
+}
+
+.notification-summary {
+  align-items: center;
+}
+
+.notification-stamp {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+
 .notification-status {
-  grid-area: status;
-}
-
-.notification-date {
-  grid-area: date;
-}
-
-.notification-time {
-  grid-area: time;
-}
-
-.notification-detail {
-  grid-area: detail;
-}
-
-.notification-board {
-  grid-area: board;
-}
-
-/*
- * v8-B3/B4. A row that carries a summary — and possibly a board — grows a second
- * band, stated as areas and explicit rows for exactly the reason A3 above states.
- *
- * Conditional on `:has()` rather than declared unconditionally, because an empty
- * track still contributes a row gap: a row with nothing to say would grow a few
- * pixels of dead space and the list would lose its rhythm. This also keeps the plain
- * three-cell row byte-identical to what A3 fixed.
- */
-.notification-list a:has(.notification-detail) {
-  grid-template-areas:
-    'status date time'
-    'detail detail board';
-  grid-template-rows: auto auto;
-  /*
-   * `start`, not the inherited `baseline`. A3's rule is that no baseline group may
-   * span rows, and this variant has two rows at every width — a container-level
-   * baseline here is the same construct that let Gecko drop the title into the date's
-   * row. The rule below restores baseline alignment where it is actually wanted,
-   * scoped to the three cells that share the first band.
-   */
-  align-items: start;
-}
-
-.notification-list
-  a:has(.notification-detail)
-  :is(.notification-status, .notification-date, .notification-time) {
-  align-self: baseline;
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .notification-detail {
@@ -744,14 +733,14 @@ button.primary:hover {
 
 /*
  * v8-B4. The board snapshot: evidence colour only, at a size that reads as a shape
- * rather than as tiles. It is decoration for the summary beside it, so it never grows
- * a row on its own and never takes the row's remaining width.
+ * rather than as tiles. It never grows a line on its own and never takes the line's
+ * remaining width.
  */
 .notification-board {
-  display: grid;
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
   gap: 1px;
-  align-self: center;
-  justify-self: end;
 }
 
 .notification-board-row {
@@ -850,21 +839,6 @@ button.primary:hover {
   font-weight: 650;
 }
 
-.notification-status {
-  min-width: 0;
-  overflow: hidden;
-  font-weight: 650;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-/*
- * B2. Unread rows are tinted `--accent-soft`, and `--muted` is measured against the page
- * rather than that tint. Named accents clear 4.5:1 on it, but a custom accent can
- * lighten the dark-scheme row far enough to reach 3.55:1. `--accent-soft-muted` is
- * `--muted` for every named accent and a derived, contrast-checked value for custom
- * ones, so the row looks unchanged except where it was failing.
- */
 .notification-list a.is-unread :is(.notification-date, .notification-time) {
   color: var(--accent-soft-muted);
 }
@@ -895,8 +869,8 @@ button.primary:hover {
 }
 
 /*
- * The unread marker rides the status cell, not the link. On a grid container a
- * `::before` becomes its own grid item and would shift every column by one.
+ * The unread marker rides the status text, not the link. As a child of the flex row it
+ * would become a flex item of its own and take a slot in the line.
  */
 .notification-list a.is-unread .notification-status::before {
   color: var(--accent-text);
@@ -916,31 +890,18 @@ button.primary:hover {
 
 @media (max-width: 47.99rem) {
   /*
-   * v8-A3. The two-row shape, stated as areas rather than produced by a spanner plus
-   * auto-placement. `align-items: start` replaces the inherited `baseline`: with two rows
-   * there is no single baseline to share, and asking for one is what let Firefox drop the
-   * title into the date's row.
+   * v8-A3-redux. At phone widths the head becomes a column too, rather than a row that
+   * wraps.
+   *
+   * Wrapping is the last place a line could have interacted with the line above it, and
+   * a wrapped flex line with `align-items: baseline` is the flexbox analogue of the grid
+   * construct that started all of this. Stacking removes it: title on its own line,
+   * then date and time pushed to the two ends of the line below.
    */
-  .notification-list a {
-    grid-template-areas:
-      'status status'
-      'date time';
-    grid-template-columns: minmax(0, 1fr) auto;
-    grid-template-rows: auto auto;
-    align-items: start;
-  }
-
-  /*
-   * v8-B3/B4. The same conditional band at phone widths, three explicit rows rather
-   * than two. `align-items: start` is inherited from the rule above, so the summary
-   * band cannot form a baseline group with the timestamp row either.
-   */
-  .notification-list a:has(.notification-detail) {
-    grid-template-areas:
-      'status status'
-      'date time'
-      'detail board';
-    grid-template-rows: auto auto auto;
+  .notification-head {
+    flex-direction: column;
+    gap: var(--space-1);
+    align-items: stretch;
   }
 
   .notification-status {
@@ -2063,11 +2024,20 @@ button.calendar-day.is-selected {
     min-height: 2.5rem;
   }
 
+  /*
+   * v8-A3-redux. This variant grows upward from the bottom, so it cannot be pushed
+   * down — it is capped instead, and scrolls, so its top edge can never rise into the
+   * header however tall the header becomes or however long the list is.
+   */
   .menu-popover {
     top: auto;
     right: 0.5rem;
     bottom: calc(4.75rem + env(safe-area-inset-bottom));
     width: calc(100vw - 1rem);
+    max-block-size: calc(
+      100dvh - var(--chrome-bottom, 3.4rem) - 5.5rem - env(safe-area-inset-bottom)
+    );
+    overflow-y: auto;
   }
 
   .route-frame {
@@ -2360,7 +2330,7 @@ body {
 }
 
 .menu-popover {
-  top: 3.4rem;
+  top: max(3.4rem, var(--chrome-bottom, 0px));
 }
 
 .account-menu {
@@ -3276,14 +3246,14 @@ button.calendar-day:disabled {
   }
 
   .menu-popover {
-    top: 5.6rem;
+    top: max(5.6rem, var(--chrome-bottom, 0px));
     right: 0.4rem;
     bottom: auto;
     width: calc(100vw - 0.8rem);
   }
 
   .is-game-surface .menu-popover {
-    top: 2.95rem;
+    top: max(2.95rem, var(--chrome-bottom, 0px));
   }
 
   .route-frame {

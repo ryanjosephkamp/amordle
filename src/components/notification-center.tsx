@@ -267,15 +267,38 @@ export function NotificationCenter() {
                       className={item.read ? '' : 'is-unread'}
                       onClick={() => markRead(item.id)}
                     >
-                      <strong className="notification-status">{labelFor(item.kind)}</strong>
-                      <time className="notification-date" dateTime={item.createdAt}>
-                        {occurredAt.toLocaleDateString()}
-                      </time>
-                      <time className="notification-time" dateTime={item.createdAt}>
-                        {occurredAt.toLocaleTimeString()}
-                      </time>
-                      {item.detail && <span className="notification-detail">{item.detail}</span>}
-                      {item.board && <BoardSnapshot board={item.board} />}
+                      {/*
+                       * v8-A3-redux. Two stacked lines, each an explicit element.
+                       *
+                       * These five pieces used to be direct children of a grid, placed by
+                       * named areas. That was engine-independent in theory and provably so
+                       * in all three desktop engines — and the owner still saw the title
+                       * printing over the date on Firefox for Android after it shipped.
+                       *
+                       * Rather than harden a placement model I cannot reproduce a failure
+                       * in, the row no longer asks any engine to place anything: block
+                       * boxes in normal flow cannot overlap each other, and a flex line
+                       * cannot spill onto the line above it.
+                       */}
+                      <span className="notification-head">
+                        <strong className="notification-status">{labelFor(item.kind)}</strong>
+                        <span className="notification-stamp">
+                          <time className="notification-date" dateTime={item.createdAt}>
+                            {occurredAt.toLocaleDateString()}
+                          </time>
+                          <time className="notification-time" dateTime={item.createdAt}>
+                            {occurredAt.toLocaleTimeString()}
+                          </time>
+                        </span>
+                      </span>
+                      {(item.detail || item.board) && (
+                        <span className="notification-summary">
+                          {item.detail && (
+                            <span className="notification-detail">{item.detail}</span>
+                          )}
+                          {item.board && <BoardSnapshot board={item.board} />}
+                        </span>
+                      )}
                     </Link>
                   );
                 })}

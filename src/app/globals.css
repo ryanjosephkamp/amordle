@@ -286,7 +286,13 @@ button:disabled,
 .menu-popover {
   position: fixed;
   z-index: var(--z-dropdown);
-  top: 3.1rem;
+  /*
+   * v8-A3-redux. `max()` against the header's measured bottom edge. The literal is the
+   * fallback for the frame before the shell has measured, and for any surface that has
+   * no header at all; the measurement wins whenever the header is taller than the
+   * literal assumed. See the note in app-shell.tsx for what this is guarding against.
+   */
+  top: max(3.1rem, var(--chrome-bottom, 0px));
   right: 1rem;
   display: flex;
   width: min(16rem, calc(100vw - 2rem));

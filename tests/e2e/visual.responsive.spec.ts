@@ -1005,121 +1005,144 @@ test.describe('responsive and alternate presentation evidence', () => {
   });
 
   /*
-   * ANNOT-01 + B3. Status, date and time must be separable and aligned, never
-   * concatenated and never overlapping.
+   * ANNOT-01 + B3 + v8-A3 + v8-A3-redux. Nothing in a notification row may overlap
+   * anything else in it, in any engine, at any width.
    *
-   * The previous version ran at 1440 only and asserted `columns === 3`, which is
-   * structurally incompatible with the two-column mobile rule — so it could not simply
-   * be re-run at a phone width, and the layout the owner reported as broken had no
-   * coverage at all. This walks every viewport the suite cares about and asserts
-   * *geometry*: three rects that never intersect, whatever the column count. Overlap is
-   * the actual defect; column count was only ever a proxy for it.
-   */
-  /*
-   * v8-A3. Tagged @crossbrowser and run in Firefox and WebKit as well as Chromium.
+   * The history matters, because it is why this test is shaped the way it is. The row
+   * began as auto-placed grid children with an implicit second row and a baseline group
+   * spanning both — the construct where Gecko and Blink diverge — and on Firefox for
+   * Android the title painted over the date. The original test could not have caught it:
+   * it ran at 1440 only, and the `visual` project drives Chromium alone.
    *
-   * This test already existed and already asserted exactly the overlap the owner reported
-   * on Firefox for Android — and it passed the entire time, because the `visual` project
-   * runs Desktop Chrome only. A layout defect that only one engine exhibits cannot be
-   * caught by a suite that only drives the other one. Everything under this tag must stay
+   * v8-A3 fixed the placement and added Firefox and WebKit runs. v8-A3-redux went
+   * further after the owner reported the overlap STILL present on their phone: the row
+   * is now a column of block-level lines, each a single flex line, because block boxes
+   * in normal flow cannot overlap and a flex line cannot spill onto the one above it.
+   *
+   * So this asserts two things. Geometry — no pair of pieces intersects, at every
+   * viewport the suite cares about, in all three engines. And structure — the row is a
+   * column, its lines are stacked, and no line wraps, because a wrapped line is the last
+   * place this class of defect could return. Everything under @crossbrowser must stay
    * free of CDP, which is Chromium-only.
    */
-  test('Notification rows separate status, date, and time at every width @crossbrowser', async ({
+  test('Notification rows never overlap and never wrap, in any engine @crossbrowser', async ({
     page,
   }) => {
     await page.goto('/');
     const failures: string[] = [];
     for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
       await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      const layout = await page.evaluate(() => {
-        const anchor = document.createElement('a');
-        anchor.className = 'is-unread';
-        anchor.innerHTML =
-          '<strong class="notification-status">Your turn in Ranked Practice</strong>' +
-          '<time class="notification-date">8/6/26</time>' +
-          '<time class="notification-time">11:47:03 AM</time>';
-        const list = document.createElement('div');
-        list.className = 'notification-list';
-        const popover = document.createElement('div');
-        popover.className = 'menu-popover notification-popover';
-        popover.style.opacity = '1';
-        popover.style.animation = 'none';
-        popover.append(list);
-        list.append(anchor);
-        document.body.append(popover);
-        const rect = (selector: string) =>
-          anchor.querySelector(selector)!.getBoundingClientRect().toJSON() as DOMRect;
-        const status = rect('.notification-status');
-        const date = rect('.notification-date');
-        const time = rect('.notification-time');
-        const overlap = (a: DOMRect, b: DOMRect) =>
-          Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
-          Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-        const style = getComputedStyle(anchor);
-        const result = {
-          display: style.display,
-          columns: style.gridTemplateColumns.split(' ').length,
-          statusDate: overlap(status, date),
-          statusTime: overlap(status, time),
-          dateTime: overlap(date, time),
-          dateBeforeTime: date.right <= time.left + 1,
-          statusBeforeDate: status.right <= date.left + 1,
-          statusAboveDate: status.bottom <= date.top + 1,
-          sameRow: Math.abs(status.top - date.top) <= 1,
-          // "One row" is a vertical overlap, not equal tops: the desktop row is
-          // baseline-aligned across two different font sizes, so the tops legitimately
-          // differ and by an engine-specific amount.
-          sharesBand: status.bottom > date.top + 1 && date.bottom > status.top + 1,
-          topDelta: Math.round(Math.abs(status.top - date.top)),
-          statusWraps: getComputedStyle(anchor.querySelector('.notification-status')!).whiteSpace,
-          /*
-           * v8-A3. The structural invariant, not just the geometry.
-           *
-           * The reported overlap was Firefox for ANDROID, and desktop Gecko does not
-           * reproduce it — so a geometry assertion alone cannot prove this fix in CI on any
-           * browser available here. What CAN be proven is the property that makes the
-           * layout engine-independent in the first place: every cell explicitly placed,
-           * every row explicitly sized, and no baseline group spanning rows. Auto-placement
-           * plus a `1 / -1` spanner in an implicit row is the construct that diverged.
-           */
-          areas: style.gridTemplateAreas,
-          rowTracks: style.gridTemplateRows.split(' ').filter(Boolean).length,
-          alignItems: style.alignItems,
-          withinPopover:
-            status.left >= popover.getBoundingClientRect().left - 1 &&
-            time.right <= popover.getBoundingClientRect().right + 1,
-          tabularTime: getComputedStyle(
-            anchor.querySelector('.notification-time')!,
-          ).fontVariantNumeric.includes('tabular-nums'),
-        };
-        popover.remove();
-        return result;
-      });
+      for (const shape of ['bare', 'rich'] as const) {
+        const layout = await page.evaluate((rowShape) => {
+          const anchor = document.createElement('a');
+          anchor.className = 'is-unread';
+          anchor.href = '#';
+          anchor.innerHTML =
+            '<span class="notification-head">' +
+            '<strong class="notification-status">Your turn in Ranked Practice</strong>' +
+            '<span class="notification-stamp">' +
+            '<time class="notification-date">8/9/26</time>' +
+            '<time class="notification-time">11:47:03 AM</time>' +
+            '</span></span>' +
+            (rowShape === 'rich'
+              ? '<span class="notification-summary">' +
+                '<span class="notification-detail">Nova · Ranked · OG · 5 letters</span>' +
+                '<span class="notification-board" style="--snapshot-columns:5">' +
+                '<span class="notification-board-row">' +
+                '<span class="notification-board-tile is-absent"></span>'.repeat(5) +
+                '</span></span></span>'
+              : '');
+          const list = document.createElement('div');
+          list.className = 'notification-list';
+          const popover = document.createElement('div');
+          popover.className = 'menu-popover notification-popover';
+          popover.style.opacity = '1';
+          popover.style.animation = 'none';
+          popover.append(list);
+          list.append(anchor);
+          document.body.append(popover);
 
-      const note = (message: string) => failures.push(`${viewport.id}: ${message}`);
-      if (layout.display !== 'grid') note(`display is ${layout.display}`);
-      // The defect as reported: printed on top of each other.
-      if (layout.statusDate > 0) note(`status overlaps date by ${layout.statusDate}px²`);
-      if (layout.statusTime > 0) note(`status overlaps time by ${layout.statusTime}px²`);
-      if (layout.dateTime > 0) note(`date overlaps time by ${layout.dateTime}px²`);
-      if (!layout.dateBeforeTime) note('date does not precede time');
-      if (!layout.withinPopover) note('a cell escapes the popover box');
-      if (!layout.tabularTime) note('time is not tabular');
-      if (viewport.width >= 768) {
-        if (layout.columns !== 3) note(`desktop expects 3 columns, got ${layout.columns}`);
-        if (layout.areas === 'none') note('desktop placement is implicit, not named areas');
-        if (!layout.statusBeforeDate) note('desktop status does not precede date');
-        if (!layout.sharesBand) {
-          note(`desktop cells are not on one row (top delta ${layout.topDelta}px)`);
-        }
-      } else {
-        if (layout.columns !== 2) note(`mobile expects 2 columns, got ${layout.columns}`);
-        if (!layout.statusAboveDate) note('mobile status does not sit above the date row');
-        if (layout.statusWraps !== 'normal') note(`mobile status is ${layout.statusWraps}`);
-        if (layout.areas === 'none') note('mobile placement is implicit, not named areas');
-        if (layout.rowTracks !== 2) note(`mobile expects 2 explicit rows, got ${layout.rowTracks}`);
-        if (layout.alignItems === 'baseline') {
-          note('mobile shares a baseline group across two rows');
+          const rect = (selector: string) => {
+            const node = anchor.querySelector(selector);
+            return node ? (node.getBoundingClientRect().toJSON() as DOMRect) : null;
+          };
+          const pieces: Array<[string, DOMRect | null]> = [
+            ['status', rect('.notification-status')],
+            ['date', rect('.notification-date')],
+            ['time', rect('.notification-time')],
+            ['detail', rect('.notification-detail')],
+            ['board', rect('.notification-board')],
+          ];
+          const overlap = (a: DOMRect, b: DOMRect) =>
+            Math.round(
+              Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
+                Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)),
+            );
+          const collisions: string[] = [];
+          for (let i = 0; i < pieces.length; i += 1) {
+            for (let j = i + 1; j < pieces.length; j += 1) {
+              const [aName, a] = pieces[i]!;
+              const [bName, b] = pieces[j]!;
+              if (!a || !b) continue;
+              const area = overlap(a, b);
+              if (area > 0) collisions.push(`${aName}/${bName} ${area}px²`);
+            }
+          }
+
+          const head = anchor.querySelector('.notification-head')!;
+          const summary = anchor.querySelector('.notification-summary');
+          const headRect = head.getBoundingClientRect();
+          const summaryRect = summary?.getBoundingClientRect() ?? null;
+          const anchorStyle = getComputedStyle(anchor);
+          const headStyle = getComputedStyle(head);
+          const popoverRect = popover.getBoundingClientRect();
+          const status = rect('.notification-status')!;
+          const date = rect('.notification-date')!;
+          const time = rect('.notification-time')!;
+          const result = {
+            collisions,
+            display: anchorStyle.display,
+            direction: anchorStyle.flexDirection,
+            headWrap: headStyle.flexWrap,
+            stampWrap: getComputedStyle(anchor.querySelector('.notification-stamp')!).flexWrap,
+            // Lines are stacked: the summary begins at or below the head's bottom edge.
+            linesStacked: summaryRect ? summaryRect.top >= headRect.bottom - 1 : true,
+            dateBeforeTime: date.right <= time.left + 1,
+            statusSharesLineWithDate: status.bottom > date.top + 1 && date.bottom > status.top + 1,
+            escapes:
+              status.left < popoverRect.left - 1 ||
+              time.right > popoverRect.right + 1 ||
+              (summaryRect ? summaryRect.right > popoverRect.right + 1 : false),
+            overflow: Math.round(anchor.scrollWidth - anchor.clientWidth),
+            tabularTime: getComputedStyle(
+              anchor.querySelector('.notification-time')!,
+            ).fontVariantNumeric.includes('tabular-nums'),
+          };
+          popover.remove();
+          return result;
+        }, shape);
+
+        const note = (message: string) => failures.push(`${viewport.id} ${shape}: ${message}`);
+        for (const collision of layout.collisions) note(`overlap ${collision}`);
+        if (layout.display !== 'flex') note(`row display is ${layout.display}`);
+        if (layout.direction !== 'column') note(`row direction is ${layout.direction}`);
+        // A wrapped flex line is the flexbox analogue of the grid construct that caused
+        // the original defect. Neither line may ever wrap.
+        if (layout.headWrap !== 'nowrap') note(`the head line wraps (${layout.headWrap})`);
+        if (layout.stampWrap !== 'nowrap') note(`the stamp wraps (${layout.stampWrap})`);
+        if (!layout.linesStacked) note('the summary line is not below the head line');
+        if (!layout.dateBeforeTime) note('date does not precede time');
+        if (layout.escapes) note('a piece escapes the popover box');
+        if (layout.overflow > 0) note(`the row scrolls sideways by ${layout.overflow}px`);
+        if (!layout.tabularTime) note('time is not tabular');
+        // Desktop keeps date and time on the title's line; phones drop them below it.
+        const shouldShare = viewport.width >= 768;
+        if (layout.statusSharesLineWithDate !== shouldShare) {
+          note(
+            shouldShare
+              ? 'desktop title and date are not on one line'
+              : 'phone title and date share a line',
+          );
         }
       }
     }
@@ -1127,104 +1150,82 @@ test.describe('responsive and alternate presentation evidence', () => {
   });
 
   /*
-   * v8-B3/B4. The same invariant for the row shape the notification centre now emits.
+   * v8-A3-redux. The dropdown panels must never paint on top of the header.
    *
-   * A3 proved the three-cell row is engine-independent. Adding a summary line and a
-   * board snapshot adds a band, and a band added by auto-placement would reintroduce
-   * exactly the construct A3 removed. So this asserts the same three properties on the
-   * richer row — named areas, explicitly sized rows, no baseline group across rows —
-   * plus the thing the extra band exists for: it must not collide with anything above
-   * it, and the snapshot must stay inside the popover.
+   * The owner reported the notification overlap STILL present on Firefox for Android
+   * after v8-A3 hardened the row's internal layout — and every engine on this machine
+   * said the row was fine, because the row was not the problem.
+   *
+   * The panels are `position: fixed` at hard-coded offsets, each a guess at the header's
+   * height, and at phone width the guess cleared the header by 3.6px. Firefox for
+   * Android's Accessibility font setting is a text-only zoom: it scales type but not
+   * `rem` lengths, so the toolbar wraps and grows while the panel stays put. This
+   * reproduces that by scaling every element's computed font size once, leaving lengths
+   * alone — which is what that setting does — and asserts the panel still clears the
+   * header. It fails on the pre-fix CSS from 1.5x upward.
    */
-  test('Notification rows keep the summary and board in their own band @crossbrowser', async ({
+  test('dropdown panels stay clear of the header under text-only zoom @crossbrowser', async ({
     page,
   }) => {
-    await page.goto('/');
     const failures: string[] = [];
     for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
-      await page.setViewportSize({ width: viewport.width, height: viewport.height });
-      const layout = await page.evaluate(() => {
-        const anchor = document.createElement('a');
-        anchor.className = 'is-unread';
-        anchor.innerHTML =
-          '<strong class="notification-status">Your turn</strong>' +
-          '<time class="notification-date">8/9/26</time>' +
-          '<time class="notification-time">11:47:03 AM</time>' +
-          '<span class="notification-detail">Nova · Ranked · OG · 5 letters</span>' +
-          '<span class="notification-board" style="--snapshot-columns:5">' +
-          '<span class="notification-board-row">' +
-          '<span class="notification-board-tile is-absent"></span>' +
-          '<span class="notification-board-tile is-present"></span>' +
-          '<span class="notification-board-tile is-correct"></span>' +
-          '<span class="notification-board-tile is-absent"></span>' +
-          '<span class="notification-board-tile is-absent"></span>' +
-          '</span></span>';
-        const list = document.createElement('div');
-        list.className = 'notification-list';
-        const popover = document.createElement('div');
-        popover.className = 'menu-popover notification-popover';
-        popover.style.opacity = '1';
-        popover.style.animation = 'none';
-        popover.append(list);
-        list.append(anchor);
-        document.body.append(popover);
-        const rect = (selector: string) =>
-          anchor.querySelector(selector)!.getBoundingClientRect().toJSON() as DOMRect;
-        const status = rect('.notification-status');
-        const date = rect('.notification-date');
-        const detail = rect('.notification-detail');
-        const board = rect('.notification-board');
-        const overlap = (a: DOMRect, b: DOMRect) =>
-          Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) *
-          Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
-        const style = getComputedStyle(anchor);
-        const popoverRect = popover.getBoundingClientRect();
-        const result = {
-          areas: style.gridTemplateAreas,
-          rowTracks: style.gridTemplateRows.split(' ').filter(Boolean).length,
-          alignItems: style.alignItems,
-          detailOverStatus: overlap(detail, status),
-          detailOverDate: overlap(detail, date),
-          boardOverDetail: overlap(board, detail),
-          boardOverDate: overlap(board, date),
-          detailBelowStatus: detail.top >= status.bottom - 1,
-          boardVisible: board.width > 0 && board.height > 0,
-          boardInside: board.right <= popoverRect.right + 1 && board.left >= popoverRect.left - 1,
-          detailInside: detail.left >= popoverRect.left - 1,
-          /*
-           * Dropping the container-level baseline must not cost the first band its
-           * alignment. Restored per-cell with `align-self`, which is safe because those
-           * three cells share a named row and so cannot group across rows.
-           */
-          firstBandShares: status.bottom > date.top + 1 && date.bottom > status.top + 1,
-          statusBaseline: getComputedStyle(anchor.querySelector('.notification-status')!).alignSelf,
-        };
-        popover.remove();
-        return result;
-      });
-
-      const note = (message: string) => failures.push(`${viewport.id}: ${message}`);
-      if (layout.areas === 'none') note('the summary band is auto-placed, not named');
-      if (!layout.areas.includes('detail')) note(`no detail area in ${layout.areas}`);
-      if (!layout.areas.includes('board')) note(`no board area in ${layout.areas}`);
-      if (layout.alignItems === 'baseline') note('a baseline group spans the summary band');
-      if (layout.detailOverStatus > 0) note('the summary overlaps the status');
-      if (layout.detailOverDate > 0) note('the summary overlaps the date');
-      if (layout.boardOverDetail > 0) note('the board overlaps the summary');
-      if (layout.boardOverDate > 0) note('the board overlaps the date');
-      if (!layout.detailBelowStatus) note('the summary is not below the status');
-      if (!layout.boardVisible) note('the board snapshot has no box');
-      if (!layout.boardInside) note('the board escapes the popover');
-      if (!layout.detailInside) note('the summary escapes the popover');
-      if (layout.statusBaseline !== 'baseline') {
-        note(`the first band lost its baseline (align-self is ${layout.statusBaseline})`);
-      }
-      const expectedRows = viewport.width >= 768 ? 2 : 3;
-      if (layout.rowTracks !== expectedRows) {
-        note(`expected ${expectedRows} explicit rows, got ${layout.rowTracks}`);
-      }
-      if (viewport.width >= 768 && !layout.firstBandShares) {
-        note('desktop status and date no longer share a band');
+      for (const zoom of [1, 1.3, 1.5, 2]) {
+        await page.setViewportSize({ width: viewport.width, height: viewport.height });
+        await page.goto('/');
+        await page.evaluate((factor) => {
+          if (factor === 1) return;
+          for (const element of Array.from(document.querySelectorAll('*'))) {
+            const size = Number.parseFloat(getComputedStyle(element).fontSize);
+            if (Number.isFinite(size)) {
+              (element as HTMLElement).style.fontSize = `${size * factor}px`;
+            }
+          }
+        }, zoom);
+        /*
+         * The shell publishes the header's height from a ResizeObserver, which fires a
+         * frame after the layout changes. Waiting for the published value to agree with
+         * the measured header is therefore also the assertion that the observer works —
+         * a version that measured immediately would read the pre-zoom value and report
+         * a failure that is only the test being early.
+         */
+        await page
+          .waitForFunction(
+            () => {
+              const chrome = document.querySelector('.global-chrome');
+              if (!chrome) return true;
+              const published = getComputedStyle(document.documentElement).getPropertyValue(
+                '--chrome-bottom',
+              );
+              return (
+                Math.abs(Number.parseFloat(published) - chrome.getBoundingClientRect().bottom) <=
+                1.5
+              );
+            },
+            { timeout: 5_000 },
+          )
+          .catch(() => {
+            failures.push(`${viewport.id} @ ${zoom}x: the header height was never published`);
+          });
+        const clearance = await page.evaluate(() => {
+          const header = document.querySelector('.global-chrome');
+          if (!header) return null;
+          const panel = document.createElement('div');
+          panel.className = 'menu-popover notification-popover';
+          panel.style.opacity = '1';
+          panel.style.animation = 'none';
+          panel.innerHTML = '<div class="notification-list"></div>';
+          document.body.append(panel);
+          const measured =
+            panel.getBoundingClientRect().top - header.getBoundingClientRect().bottom;
+          panel.remove();
+          return Math.round(measured);
+        });
+        if (clearance === null) continue;
+        if (clearance < 0) {
+          failures.push(
+            `${viewport.id} @ ${zoom}x text zoom: the panel covers the header by ${-clearance}px`,
+          );
+        }
       }
     }
     expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
@@ -1550,10 +1551,15 @@ test.describe('responsive and alternate presentation evidence', () => {
               '</button></div>' +
               '<div class="notification-list">' +
               '<a class="is-unread" href="#" data-accent-probe-control>' +
+              '<span class="notification-head">' +
               '<strong class="notification-status">Your turn</strong>' +
+              '<span class="notification-stamp">' +
               '<time class="notification-date">8/6/26</time>' +
               '<time class="notification-time">11:47:03 AM</time>' +
+              '</span></span>' +
+              '<span class="notification-summary">' +
               '<span class="notification-detail">Nova · Ranked · OG · 5 letters</span>' +
+              '</span>' +
               '</a></div></div>' +
               '<aside class="ranked-search-status is-searching" style="position:static">' +
               '<strong>SEARCHING</strong>' +
