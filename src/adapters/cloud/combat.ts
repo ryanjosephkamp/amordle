@@ -539,6 +539,36 @@ export async function listActiveCombat() {
   );
 }
 
+/*
+ * v8-D. Live occupancy for the COMBAT portal.
+ *
+ * Bands, not counts — `none`, `few`, `some`, `many`, `busy`. At this player base an
+ * exact number plus knowing where one friend is identifies them, and no player can act
+ * on the difference between three and four anyway.
+ */
+export const combatOccupancySchema = z
+  .object({
+    bucket: z.string(),
+    mode: z.enum(['og', 'go']),
+    time_limit_ms: z.number().int().nullable(),
+    hard_mode: z.boolean(),
+    clock_kind: z.enum(['budget', 'per_move']),
+    sort_order: z.number().int(),
+    queued_band: z.enum(['none', 'few', 'some', 'many', 'busy']),
+    playing_band: z.enum(['none', 'few', 'some', 'many', 'busy']),
+  })
+  .strict();
+
+export type CombatOccupancy = z.infer<typeof combatOccupancySchema>;
+
+export async function listCombatOccupancy(): Promise<CombatOccupancy[]> {
+  const client = getBrowserSupabase();
+  if (!client) return [];
+  const { data, error } = await client.rpc('get_amordle_combat_occupancy_v1');
+  if (error) throwServiceError(error);
+  return z.array(combatOccupancySchema).parse(data ?? []);
+}
+
 export async function listRecentCombat() {
   return listCombatActivity();
 }

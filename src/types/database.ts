@@ -298,6 +298,39 @@ export type Database = {
         };
         Relationships: [];
       };
+      amordle_rating_bucket: {
+        Row: {
+          active: boolean;
+          bucket: string;
+          clock_kind: string;
+          hard_mode: boolean;
+          mode: string;
+          scope: string;
+          sort_order: number;
+          time_limit_ms: number | null;
+        };
+        Insert: {
+          active?: boolean;
+          bucket: string;
+          clock_kind?: string;
+          hard_mode: boolean;
+          mode: string;
+          scope: string;
+          sort_order?: number;
+          time_limit_ms?: number | null;
+        };
+        Update: {
+          active?: boolean;
+          bucket?: string;
+          clock_kind?: string;
+          hard_mode?: boolean;
+          mode?: string;
+          scope?: string;
+          sort_order?: number;
+          time_limit_ms?: number | null;
+        };
+        Relationships: [];
+      };
       amordle_word_catalogs: {
         Row: {
           casual_answers: string[];
@@ -533,6 +566,15 @@ export type Database = {
         Args: { p_storage_bucket: string };
         Returns: string;
       };
+      amordle_assert_combat_capacity: {
+        Args: {
+          p_ranked: boolean;
+          p_rating_bucket: string;
+          p_time_limit_ms: number;
+          p_user_id: string;
+        };
+        Returns: undefined;
+      };
       amordle_attempt_budget: {
         Args: { p_puzzle_index: number };
         Returns: number;
@@ -548,6 +590,11 @@ export type Database = {
         };
         Returns: string;
       };
+      amordle_clock_is_playable: {
+        Args: { p_time_limit_ms: number };
+        Returns: boolean;
+      };
+      amordle_clock_kind: { Args: { p_time_limit_ms: number }; Returns: string };
       amordle_create_combat_v3: {
         Args: {
           p_created_at?: string;
@@ -585,6 +632,7 @@ export type Database = {
         Returns: boolean;
       };
       amordle_ledger_moves: { Args: { p_game_id: string }; Returns: Json };
+      amordle_occupancy_band: { Args: { p_count: number }; Returns: string };
       amordle_participant_projection: {
         Args: { p_game_id: string; p_viewer_id: string };
         Returns: Json;
@@ -614,13 +662,23 @@ export type Database = {
         };
         Returns: string[];
       };
-      amordle_storage_bucket: {
-        Args: { p_mode: string; p_time_limit_ms: number };
-        Returns: string;
-      };
+      amordle_storage_bucket:
+        | { Args: { p_mode: string; p_time_limit_ms: number }; Returns: string }
+        | {
+            Args: {
+              p_hard_mode: boolean;
+              p_mode: string;
+              p_time_limit_ms: number;
+            };
+            Returns: string;
+          };
       amordle_tiles: {
         Args: { p_answer: string; p_guess: string };
         Returns: Json;
+      };
+      amordle_timeout_game: {
+        Args: { p_action_id: string; p_game_id: string };
+        Returns: boolean;
       };
       phase55_daily_go_seed_index: {
         Args: { p_answer_count: number; p_day: number };
@@ -2597,6 +2655,19 @@ export type Database = {
         }[];
       };
       get_amordle_combat_game_v2: { Args: { p_game_id: string }; Returns: Json };
+      get_amordle_combat_occupancy_v1: {
+        Args: never;
+        Returns: {
+          bucket: string;
+          clock_kind: string;
+          hard_mode: boolean;
+          mode: string;
+          playing_band: string;
+          queued_band: string;
+          sort_order: number;
+          time_limit_ms: number;
+        }[];
+      };
       get_amordle_practice_leaderboard_v2: {
         Args: { p_app_bucket: string; p_limit?: number; p_offset?: number };
         Returns: Json[];
@@ -3563,6 +3634,10 @@ export type Database = {
           public_profile_id: string;
           updated_at: string;
         }[];
+      };
+      settle_amordle_expired_correspondence_v1: {
+        Args: { p_limit?: number };
+        Returns: Json;
       };
       settle_amordle_ranked_daily_v3: {
         Args: { p_action_id: string; p_game_id: string };

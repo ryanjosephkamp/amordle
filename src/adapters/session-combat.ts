@@ -22,6 +22,10 @@ const rankedPracticeConfigSchema = z
       z.literal(600_000),
       z.literal(1_200_000),
       z.literal(2_700_000),
+      // v8-D. Correspondence: one day, three days, seven days per move.
+      z.literal(86_400_000),
+      z.literal(259_200_000),
+      z.literal(604_800_000),
       z.null(),
     ]),
   })

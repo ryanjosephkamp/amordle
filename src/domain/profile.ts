@@ -303,7 +303,21 @@ export const rankedClockLadder = [
   { label: '10m', timeLimitMs: 600_000, display: '10 minutes per player' },
   { label: '20m', timeLimitMs: 1_200_000, display: '20 minutes per player' },
   { label: '45m', timeLimitMs: 2_700_000, display: '45 minutes per player' },
+  /*
+   * v8-D. Correspondence: a fresh allowance every turn rather than one budget for the
+   * match. `clockKind` is the only thing that distinguishes them, and the database
+   * carries the same flag on the bucket row.
+   */
+  { label: '1d', timeLimitMs: 86_400_000, display: '1 day per move' },
+  { label: '3d', timeLimitMs: 259_200_000, display: '3 days per move' },
+  { label: '7d', timeLimitMs: 604_800_000, display: '7 days per move' },
 ] as const;
+
+const perMoveClocks = new Set(['1d', '3d', '7d']);
+
+export function rankedClockKind(label: string): 'budget' | 'per_move' {
+  return perMoveClocks.has(label) ? 'per_move' : 'budget';
+}
 
 export type RankedClockLabel = (typeof rankedClockLadder)[number]['label'];
 export type RankedClockMs = (typeof rankedClockLadder)[number]['timeLimitMs'];
@@ -319,6 +333,8 @@ export interface RatingLane {
   mode: 'og' | 'go' | 'unknown';
   /** A ladder label, the legacy `5-minute`, or `unknown`. */
   clock: RankedClockLabel | '5-minute' | 'unknown';
+  /** v8-D. Whether the clock is one budget for the match or a fresh one each turn. */
+  clockKind: 'budget' | 'per_move';
   hardMode: boolean;
   label: string;
 }
@@ -346,6 +362,7 @@ function parseV4Bucket(bucket: string): RatingLane | null {
     scope: 'practice',
     mode: mode as 'og' | 'go',
     clock: clock.label,
+    clockKind: rankedClockKind(clock.label),
     hardMode,
     label: [
       'Ranked Practice',
@@ -375,6 +392,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
       scope: daily ? 'daily' : 'practice',
       mode: appBucket.includes(':go') ? 'go' : 'og',
       clock: 'untimed',
+      clockKind: 'budget',
       hardMode: false,
       label: publicRatingBucketLabels[publicMatch.data],
     };
@@ -386,6 +404,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
       scope: 'practice',
       mode: appBucket.includes(':go') ? 'go' : 'og',
       clock: '5-minute',
+      clockKind: 'budget',
       hardMode: false,
       label: timedLabel,
     };
@@ -395,6 +414,7 @@ export function resolveRatingLane(bucket: string): RatingLane {
     scope: 'unknown',
     mode: 'unknown',
     clock: 'unknown',
+    clockKind: 'budget',
     hardMode: false,
     label: `Ranked COMBAT · unrecognized lane (${bucket})`,
   };
