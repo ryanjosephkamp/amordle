@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   createUnrankedPractice,
   joinUnrankedPractice,
@@ -82,6 +82,12 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
   const queue = rankedQueue.intent;
   const queuePhase = rankedQueue.phase;
   const [message, setMessage] = useState('');
+  /*
+   * Whether the live search was started from this form, on this mount. State rather
+   * than a ref because the seed below reads it while rendering, and a ref read during
+   * render is a value React does not guarantee is current.
+   */
+  const [startedHere, setStartedHere] = useState(false);
   const invalidateCombat = () =>
     Promise.all([
       queryClient.invalidateQueries({ queryKey: ['combat'] }),
@@ -103,6 +109,24 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     [difficulty, goCount, hardMode, mode, timeLimitMs, wordLength],
   );
 
+  const startSearch = useCallback(() => {
+    setStartedHere(true);
+    rankedQueue.start(currentConfig);
+  }, [currentConfig, rankedQueue]);
+
+  /*
+   * Two message sources — this page's own outcomes and the app-wide search's phase —
+   * so one of them has to yield. This page's wins while it has something to say, and a
+   * change of phase clears it, because a phase change makes anything said before it
+   * stale by definition. Both adjustments below run in the same render, and the seed
+   * runs second so a restore can speak over the generic "searching".
+   */
+  const [trackedPhase, setTrackedPhase] = useState<RankedPracticeQueuePhase>(queuePhase);
+  if (trackedPhase !== queuePhase) {
+    setTrackedPhase(queuePhase);
+    setMessage('');
+  }
+
   /*
    * Seed the form from a search that is already running, once per search.
    *
@@ -118,19 +142,26 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
   const [seededSearch, setSeededSearch] = useState<string | null>(null);
   if (!queue && seededSearch !== null) {
     setSeededSearch(null);
+    setStartedHere(false);
   } else if (queue && seededSearch !== queue.requestId) {
     setSeededSearch(queue.requestId);
-    if (queue.config.wordLength === routeLength) {
+    if (queue.config.wordLength !== routeLength) {
+      setMessage(
+        `A ranked ${queue.config.wordLength}-letter search is still running. Its settings are on the matching Practice route.`,
+      );
+    } else if (!startedHere) {
+      /*
+       * A search this mount did not start: it came back from the durable store, so the
+       * form has to be told what it is searching for. Announced, because the player did
+       * not just press for it — saying "restored" about a search someone started a
+       * second ago would be nonsense.
+       */
       setMode(queue.config.mode);
       setDifficulty(queue.config.difficulty);
       setHardMode(queue.config.hardMode);
       setGoCount(queue.config.goPuzzleCount ?? 5);
       setTimeLimitMs(queue.config.timeLimitMs);
       setMessage('Restored your ranked search for this account.');
-    } else {
-      setMessage(
-        `A ranked ${queue.config.wordLength}-letter search is still running. Its settings are on the matching Practice route.`,
-      );
     }
   }
 
@@ -194,8 +225,10 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     if (!autoQueueRanked || autoQueued.current || !rankedQueue.hydrated) return;
     if (!auth.user?.id || queue || queuePhase !== 'idle') return;
     autoQueued.current = true;
-    rankedQueue.start(currentConfig);
-  }, [auth.user?.id, autoQueueRanked, currentConfig, queue, queuePhase, rankedQueue]);
+    // Deferred a tick: starting the search sets state, and this effect is reacting to
+    // arrival rather than synchronising with anything, so it must not cascade renders.
+    queueMicrotask(startSearch);
+  }, [auth.user?.id, autoQueueRanked, queue, queuePhase, rankedQueue.hydrated, startSearch]);
 
   const available = useMemo(
     () => lobbies.data?.filter((row) => !row.capabilities.canCancel) ?? [],
@@ -309,7 +342,7 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
             <button
               type="button"
               disabled={rankedQueue.isBusy || Boolean(queue) || !wordLengthValid}
-              onClick={() => rankedQueue.start(currentConfig)}
+              onClick={startSearch}
             >
               {queue ? queueButtonLabel(queuePhase) : 'Find ranked match'}
             </button>
@@ -337,12 +370,7 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
             </Link>
           )}
         </form>
-        {/*
-         * Two message sources now: this page's own create/join outcomes, and the
-         * app-wide search's phase. The search's own message wins while it has one,
-         * because it is the thing the player is waiting on.
-         */}
-        <p aria-live="polite">{rankedQueue.message || message}</p>
+        <p aria-live="polite">{message || rankedQueue.message}</p>
       </section>
       {/*
        * B1. `.open-lobbies` is the only element declaring `container-type: inline-size`,
