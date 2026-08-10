@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v7.2-owner-accepted",
-  "status": "owner-accepted",
-  "lastGreenCommit": "89f86211a30a51af09dc6f9843ab551fd6e5cd1e",
+  "currentCheckpoint": "stage-2-v8-cycle-a-hosted-green",
+  "status": "awaiting-owner-review",
+  "lastGreenCommit": "81e96f1",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v7.4-help-keyboard-fidelity-complete-hosted-green",
-  "updatedAt": "2026-08-09T03:40:00Z",
+  "reportStatus": "v8-cycle-a-combat-defects-complete-hosted-green",
+  "updatedAt": "2026-08-09T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -825,7 +825,9 @@
       "durableFix": "the sweep now measures ::before and ::after wherever they carry content - previously every pseudo-element in the design was unmeasured because getComputedStyle(element) cannot see one. Single-glyph markers are held to the 3:1 non-text floor, real words to 4.5:1."
     },
     "keyboardDimMeasured": "0.548 on the opponent's turn against 0.740 for an ordinary disabled control, identical in both schemes, still clear of the 3:1 disabled floor across all six accents",
-    "tokensAdded": ["--danger-text"],
+    "tokensAdded": [
+      "--danger-text"
+    ],
     "localAcceptance": {
       "check": "green",
       "domainTests": 157,
@@ -968,5 +970,41 @@
     "supersededPreview": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX",
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
     "productionReleaseAuthorized": false
+  },
+  "v8CycleAImplementation": {
+    "scope": "the five COMBAT defects: ranked matchmaking stall, automatic ELO with both diffs shown, Firefox notification overlap, forfeit answer reveal, end-of-match cluster",
+    "revertPoint": "59e5833",
+    "headCommit": "81e96f1",
+    "commits": [
+      "c44ec54 A1+A2 unstall ranked matchmaking and make ratings automatic",
+      "65cc59b A3 place notification cells explicitly and test other engines",
+      "1ac2738 A4 show the answer on the board when a match is forfeited",
+      "563fc77 A5 lay out the end-of-match actions and make SEARCH AGAIN search",
+      "81e96f1 A6 anchor the forfeit answer assertion to the answer row"
+    ],
+    "migration": "none \u2014 every change is client-side or CSS",
+    "a1": "replaced the one-shot setTimeout that never re-armed on a hidden tab with a ref-driven setInterval keyed on a derived pollableQueue, plus visibilitychange and online re-polls; the regression test overrides document.visibilityState because Playwright keeps background pages visible and the pre-existing scenario therefore passed against the broken code",
+    "a2": "removed UPDATE RATING from every terminal branch and added a latched auto-settle on the v7.3 timeout-settlement shape; both players' rating changes are shown on every ranked ending, the opponent's row read through the two-sided RLS on multiplayer_rating_transactions filtered by matchResultId; colours reuse --correct-text/--danger-text/--present-text with no new values; a cancelled ranked match renders an orange plus-or-minus zero rather than inventing a settlement",
+    "a2Limit": "client-side only \u2014 a force-quit before the effect runs still escapes settlement. Cycle C moves settlement server-side per the owner's \"both\" decision",
+    "a3": "explicit grid-template-areas and grid-template-rows with align-items:start so no baseline group spans rows, and the display:grid specificity raised above .menu-popover a; added visual-firefox and visual-webkit projects filtered to @crossbrowser and wired them into pnpm test:visual",
+    "a3Honesty": "desktop Firefox does not reproduce the Android rendering, so the cross-engine test asserts the structure that made the divergence possible rather than a pixel outcome; those assertions do fail on the old CSS",
+    "a4": "appends one all-red answer row with no evidence glyph when outcome.reason is forfeit, reading revealedAnswers[currentPuzzleIndex] because a GO match returns the whole chain; the prop is optional and off by default so the shared spectator transcript can never leak it",
+    "a5": "two-tier grid for the end-of-match cluster at both widths, definition actions scoped to the answer being viewed so COPY WORD and SEARCH WEB appear once instead of once per revealed answer, SEARCH AGAIN renamed NEW COMBAT, and a genuine ranked-only SEARCH AGAIN that re-enters the queue; applied to the ranked-Daily and legacy branches too",
+    "deliberatelyNotDone": "server-side settlement (C), background queueing (B), buckets/portal/concurrency (C and D), get_public_site_stats_v1 still filtering the pre-v2 async:og/async:go buckets (C), /combat/active copy promising recently completed games its loader filters out",
+    "localGate": "158 domain, 30 browser, 24 fixture, 40 visual; budgets home 193242B JS/23279B CSS, game 198960B JS/28189B CSS",
+    "report": "reports/v8-cycle-a-combat-defects-2026-08-09/README.md"
+  },
+  "v8CycleAHostedAcceptance": {
+    "deployment": "dpl_7M3Bujha9h5p3mmcEZEpDyTQ96jZ",
+    "url": "https://amordle-a7ni6pyzx-ryanjosephkamps-projects.vercel.app",
+    "protection": "deployment protection on",
+    "commit": "81e96f1",
+    "fixture": "24 passed across Chromium, Firefox and WebKit",
+    "services": "3 passed against real Supabase at 1 worker",
+    "visual": "40 passed: 36 Chromium, 2 Firefox, 2 WebKit",
+    "parity": "237/237 ordered atomic clauses acceptance-verified",
+    "residue": "none \u2014 working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
+    "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06\u00b7\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
   }
 }
