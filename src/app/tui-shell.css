@@ -677,6 +677,12 @@ button.primary:hover {
    * The grid this replaced hid the same problem inside `minmax(0, 1fr)`.
    */
   min-width: 0;
+  /*
+   * v8-A3-redux-2. Never shrink. The row is a flex item of a scrolling column, and a
+   * row that gives up height to fit is a row whose second line lands on the next row's
+   * border — which is exactly what a height-constrained grid was doing here before.
+   */
+  flex: 0 0 auto;
   flex-direction: column;
   gap: var(--space-1);
   border-block-start: var(--terminal-rule);

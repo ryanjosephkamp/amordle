@@ -1150,6 +1150,78 @@ test.describe('responsive and alternate presentation evidence', () => {
   });
 
   /*
+   * v8-A3-redux-2. A full notification list must not compress its rows.
+   *
+   * The owner saw the timestamp printing through the row separator in BOTH engines,
+   * after a fix aimed at an engine difference. It was never an engine difference. The
+   * list was `display: grid` with a `max-height`, and a height-constrained grid sizes
+   * its `auto` tracks down to each item's automatic minimum — here the 2.5rem
+   * `min-height` every popover link carries. Past roughly eight rows every row's box
+   * became 40px while its content needed 59px, so the second line overflowed onto the
+   * next row's border.
+   *
+   * It is quantity-specific, so every earlier test missed it: they mounted one row, or
+   * five. This mounts twenty, which is what a real account looks like, and asserts the
+   * property directly — no row's box may be shorter than the content inside it.
+   */
+  test('a full notification list never compresses a row @crossbrowser', async ({ page }) => {
+    const failures: string[] = [];
+    for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      const worst = await page.evaluate(() => {
+        const labels = ['Match result', 'Your turn', 'Rematch update', 'Private match request'];
+        const popover = document.createElement('div');
+        popover.className = 'menu-popover notification-popover';
+        popover.style.opacity = '1';
+        popover.style.animation = 'none';
+        popover.innerHTML =
+          '<div class="notification-list">' +
+          Array.from({ length: 20 }, (_, index) => {
+            const label = labels[index % labels.length];
+            return (
+              '<a class="is-unread" href="#">' +
+              '<span class="notification-head">' +
+              `<strong class="notification-status">${label}</strong>` +
+              '<span class="notification-stamp">' +
+              '<time class="notification-date">8/9/2026</time>' +
+              '<time class="notification-time">7:03:44 PM</time>' +
+              '</span></span></a>'
+            );
+          }).join('') +
+          '</div>';
+        document.body.append(popover);
+        let squeeze = 0;
+        let spill = 0;
+        for (const row of Array.from(
+          popover.querySelectorAll<HTMLElement>('.notification-list a'),
+        )) {
+          const box = row.getBoundingClientRect();
+          squeeze = Math.max(squeeze, Math.round(row.scrollHeight - box.height));
+          const stamp = row.querySelector('.notification-stamp');
+          if (stamp) {
+            spill = Math.max(spill, Math.round(stamp.getBoundingClientRect().bottom - box.bottom));
+          }
+        }
+        const list = popover.querySelector('.notification-list')!;
+        const scrolls = list.scrollHeight > list.clientHeight + 1;
+        popover.remove();
+        return { squeeze, spill, scrolls };
+      });
+      if (worst.squeeze > 0) {
+        failures.push(`${viewport.id}: a row is ${worst.squeeze}px shorter than its content`);
+      }
+      if (worst.spill > 0) {
+        failures.push(`${viewport.id}: the timestamp spills ${worst.spill}px past its row`);
+      }
+      // The list must be the thing that scrolls. If it is not, twenty rows have been
+      // absorbed somewhere they should not fit, which is the same defect wearing a hat.
+      if (!worst.scrolls) failures.push(`${viewport.id}: twenty rows did not make the list scroll`);
+    }
+    expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+  });
+
+  /*
    * v8-A3-redux. The dropdown panels must never paint on top of the header.
    *
    * The owner reported the notification overlap STILL present on Firefox for Android

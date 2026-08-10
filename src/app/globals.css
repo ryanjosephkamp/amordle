@@ -338,16 +338,30 @@ button:disabled,
   gap: var(--space-3);
 }
 
+/*
+ * v8-A3-redux-2. A column that scrolls, not a grid that squeezes.
+ *
+ * This was `display: grid` with a `max-height`, which is a combination that quietly
+ * compresses. A grid whose height is constrained sizes its `auto` tracks to fit, down
+ * to each item's automatic minimum — and the row's minimum is the 2.5rem `min-height`
+ * every popover link carries. So past roughly eight notifications every row's box
+ * became 40px while its content needed 59px, the second line overflowed the bottom
+ * edge, and the following row's top border painted straight through the timestamp.
+ *
+ * It needed a full list to appear, which is why it survived every check here and why
+ * the owner saw it in both engines at once: it was never engine-specific, it was
+ * quantity-specific. Their account has eighteen.
+ *
+ * A flex column with unshrinkable children cannot do this. `100dvh` rather than
+ * `100vh` for the same reason the panels now measure the header: on a phone `100vh` is
+ * the viewport with the browser toolbar retracted, so it overstates what is visible.
+ */
 .notification-list {
-  display: grid;
-  max-height: min(30rem, calc(100vh - 8rem));
+  display: flex;
+  max-height: min(30rem, calc(100dvh - 8rem));
+  flex-direction: column;
   gap: var(--space-2);
-  overflow: auto;
-}
-
-.notification-list a {
-  display: grid;
-  gap: var(--space-1);
+  overflow-y: auto;
 }
 
 .notification-list a.is-unread {
