@@ -32,6 +32,8 @@ import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/mu
 
 interface Props {
   length: number;
+  /** v8-A5. Arrive already searching, for SEARCH AGAIN at the end of a ranked match. */
+  autoQueueRanked?: boolean;
 }
 
 export function PracticeLobby(props: Props) {
@@ -42,7 +44,7 @@ export function PracticeLobby(props: Props) {
   );
 }
 
-function PracticeLobbyInner({ length: routeLength }: Props) {
+function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Props) {
   const auth = useAuth();
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -298,6 +300,25 @@ function PracticeLobbyInner({ length: routeLength }: Props) {
     rankedPoll.current = ranked.mutate;
     rankedPollPending.current = ranked.isPending;
   }, [ranked.isPending, ranked.mutate]);
+
+  /*
+   * v8-A5. SEARCH AGAIN, honouring its own label.
+   *
+   * The old button of that name navigated to this form and stopped, which is not what
+   * "search again" means to anyone reading it. It now arrives with `?requeue=1` and starts
+   * the search on landing.
+   *
+   * Fires once per mount and only when there is nothing already in flight, so it can never
+   * fight the restore effect above — a player who still has a live search recovers that one
+   * instead of stacking a second against the five-request cap.
+   */
+  const autoQueued = useRef(false);
+  useEffect(() => {
+    if (!autoQueueRanked || autoQueued.current) return;
+    if (!auth.user?.id || queue || queuePhase !== 'idle') return;
+    autoQueued.current = true;
+    rankedPoll.current(null);
+  }, [auth.user?.id, autoQueueRanked, queue, queuePhase]);
 
   const pollableQueue =
     queue &&

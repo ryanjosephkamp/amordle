@@ -1149,30 +1149,57 @@ function AuthoritativeMatch({
             />
           )}
           {!game.ranked && game.scope === 'practice' && <RematchActions sourceGameId={game.id} />}
-          <nav className="action-row" aria-label="Next COMBAT actions">
-            {game.scope === 'practice' && (
-              <Link className="button" href={`/combat/practice?length=${game.wordLength}`}>
-                SEARCH AGAIN
+          {/*
+           * v8-A5. Two tiers instead of one pile.
+           *
+           * This was nine-plus controls in a wrapping flex row with no mobile rule at all,
+           * which is why it read as a heap. The split is by what a player does next: one
+           * primary row of "play again" choices, then a quiet row of places to go.
+           *
+           * SEARCH AGAIN used to navigate to the setup form — it did not search. It is now
+           * NEW COMBAT, which is what it always did, and the name is freed for a control
+           * that genuinely re-queues. That one is ranked-only: unranked runs on lobbies and
+           * Daily is once a day, so there is nothing to search for in either.
+           */}
+          <nav className="result-actions" aria-label="Next COMBAT actions">
+            <div className="result-actions-primary">
+              {game.ranked && game.scope === 'practice' && (
+                <Link
+                  className="button primary"
+                  href={`/combat/practice?length=${game.wordLength}&requeue=1`}
+                >
+                  SEARCH AGAIN
+                </Link>
+              )}
+              {game.scope === 'practice' && (
+                <Link className="button" href={`/combat/practice?length=${game.wordLength}`}>
+                  NEW COMBAT
+                </Link>
+              )}
+              {game.scope === 'practice' && (
+                <Link className="button" href="/combat/daily">
+                  PLAY DAILY
+                </Link>
+              )}
+            </div>
+            <div className="result-actions-secondary">
+              <Link className="button" href={`/combat/results/${game.id}`}>
+                VIEW RESULT
               </Link>
-            )}
-            {game.scope === 'practice' && (
-              <Link className="button" href="/combat/daily">
-                PLAY DAILY
+              {opponent?.publicProfileId && (
+                <Link className="button" href={`/players/${opponent.publicProfileId}`}>
+                  VIEW RIVAL
+                </Link>
+              )}
+              {game.status !== 'cancelled' && (
+                <Link className="button" href="/history">
+                  HISTORY
+                </Link>
+              )}
+              <Link className="button" href="/combat/active">
+                ACTIVE
               </Link>
-            )}
-            {opponent?.publicProfileId && (
-              <Link className="button" href={`/players/${opponent.publicProfileId}`}>
-                VIEW RIVAL
-              </Link>
-            )}
-            {game.status !== 'cancelled' && (
-              <Link className="button" href="/history">
-                HISTORY
-              </Link>
-            )}
-            <Link className="button" href="/combat/active">
-              ACTIVE
-            </Link>
+            </div>
           </nav>
         </div>
       )}

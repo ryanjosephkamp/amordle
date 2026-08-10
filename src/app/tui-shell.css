@@ -4392,6 +4392,56 @@ html[data-game-presentation='review'] .game-route {
 }
 
 /*
+ * v8-A5. The end-of-match actions, in two tiers.
+ *
+ * This was nine-plus controls in a single wrapping flex row with NO mobile rule of any
+ * kind — the pile in the owner's screenshot was the browser's default wrapping, not a
+ * layout. Splitting by intent gives it a shape: what to play next, then where to go.
+ *
+ * Both tiers are grids of equal columns rather than wrapping flex, so buttons line up
+ * instead of stranding one on its own row. On a phone the primary tier is a single column,
+ * because those are the choices a player is most likely to want and they should be
+ * full-width targets.
+ */
+.result-actions {
+  display: grid;
+  gap: var(--space-4);
+  margin-block-start: var(--space-5);
+}
+
+.result-actions-primary,
+.result-actions-secondary {
+  display: grid;
+  gap: var(--space-3);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.result-actions-secondary {
+  border-block-start: var(--terminal-rule);
+  padding-block-start: var(--space-4);
+}
+
+.result-actions .button {
+  width: 100%;
+}
+
+@media (max-width: 47.99rem) {
+  .result-actions-primary {
+    grid-auto-flow: row;
+  }
+
+  /*
+   * Two columns rather than one for the quiet tier: these are short labels a player scans
+   * rather than reads, and four full-width bars would push the primary actions off screen.
+   */
+  .result-actions-secondary {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/*
  * v8-A2. What a ranked match did to both players' ratings.
  *
  * There is no button to reveal this and no choice about it: the rating is applied
@@ -4464,6 +4514,26 @@ html[data-game-presentation='review'] .game-route {
 .rating-outcome-note {
   margin: 0;
   color: var(--muted);
+  font-size: var(--text-1);
+}
+
+/*
+ * v8-A5. The definition's own actions are subordinate to the match's.
+ *
+ * COPY WORD and SEARCH WEB come from `WordDefinition`, which repeats once per revealed
+ * answer — up to ten times in a GO match — and rendered at the same weight as the match's
+ * next actions, which is most of why the cluster read as a heap. `WordDefinition` is shared
+ * with Word Explorer and History, so it is scoped from here rather than changed: the
+ * buttons stay, they simply stop competing.
+ */
+.result-definitions .action-row {
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.result-definitions .action-row :is(button, .button) {
+  min-height: 2.25rem;
+  padding-inline: var(--space-4);
   font-size: var(--text-1);
 }
 

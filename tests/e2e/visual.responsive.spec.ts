@@ -1696,6 +1696,56 @@ test.describe('responsive and alternate presentation evidence', () => {
   }
 
   /*
+   * v8-A5. The end-of-match actions had nine-plus controls in one wrapping flex row with no
+   * mobile rule at all. Asserted as structure rather than screenshots: two tiers, buttons
+   * on a shared grid so none is stranded, and no horizontal overflow at the narrowest width.
+   */
+  test('the end-of-match actions are laid out, not piled @crossbrowser', async ({ page }) => {
+    await page.goto('/combat/practice');
+    for (const width of [320, 390, 768, 1440]) {
+      await page.setViewportSize({ width, height: 900 });
+      const layout = await page.evaluate(() => {
+        document.querySelector('[data-actions-probe]')?.remove();
+        const probe = document.createElement('div');
+        probe.setAttribute('data-actions-probe', 'true');
+        probe.className = 'result-panel';
+        probe.innerHTML =
+          '<nav class="result-actions">' +
+          '<div class="result-actions-primary">' +
+          '<a class="button primary" href="#">SEARCH AGAIN</a>' +
+          '<a class="button" href="#">NEW COMBAT</a>' +
+          '<a class="button" href="#">PLAY DAILY</a>' +
+          '</div>' +
+          '<div class="result-actions-secondary">' +
+          '<a class="button" href="#">VIEW RESULT</a><a class="button" href="#">VIEW RIVAL</a>' +
+          '<a class="button" href="#">HISTORY</a><a class="button" href="#">ACTIVE</a>' +
+          '</div></nav>';
+        document.body.append(probe);
+        const widths = (selector: string) =>
+          [...probe.querySelectorAll(`${selector} .button`)].map((node) =>
+            Math.round(node.getBoundingClientRect().width),
+          );
+        const result = {
+          primary: widths('.result-actions-primary'),
+          secondary: widths('.result-actions-secondary'),
+          overflow: probe.scrollWidth - probe.clientWidth,
+          docOverflow: document.documentElement.scrollWidth - document.documentElement.clientWidth,
+        };
+        probe.remove();
+        return result;
+      });
+      const even = (list: number[]) => new Set(list).size === 1;
+      // Equal widths within a tier is the difference between a grid and a wrapped pile.
+      expect(even(layout.primary), `${width}px primary widths ${layout.primary.join()}`).toBe(true);
+      expect(even(layout.secondary), `${width}px secondary widths ${layout.secondary.join()}`).toBe(
+        true,
+      );
+      expect(layout.overflow, `${width}px cluster overflows`).toBeLessThanOrEqual(1);
+      expect(layout.docOverflow, `${width}px document overflows`).toBeLessThanOrEqual(1);
+    }
+  });
+
+  /*
    * v8-A4. The forfeit answer row introduces the first red tile in the game, and no sweep
    * has ever measured a tile — `controlSelector` is controls, and the board only exists on
    * routes the sweep does not visit. Measured here in both schemes.
