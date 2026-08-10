@@ -1311,19 +1311,43 @@ button.calendar-day.is-selected {
   padding: var(--space-4);
 }
 
-.connectivity-status {
+/*
+ * v8-B2. The floating status column.
+ *
+ * The ranked search strip and the connectivity warning used to be two independently
+ * fixed elements in the same corner, which was survivable only while they could not
+ * co-occur. A ranked search that outlives the page it started on can now be running
+ * when the connection drops, so they share one stack and lay out against each other
+ * instead of overlapping.
+ */
+.status-stack {
   position: fixed;
   z-index: var(--z-toast);
   right: 1rem;
-  bottom: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: auto;
   display: flex;
   max-width: min(30rem, calc(100vw - 2rem));
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+  /* An empty column must not intercept clicks on the page beneath it. */
+  pointer-events: none;
+}
+
+.status-stack > * {
+  pointer-events: auto;
+}
+
+.connectivity-status,
+.ranked-search-status {
+  display: flex;
   gap: var(--space-4);
   align-items: center;
   border: var(--rule);
   border-radius: var(--radius-panel);
   background: var(--background);
-  padding: var(--space-4) var(--space-4);
+  padding: var(--space-4);
   font-family: var(--font-geist-mono), monospace;
   font-size: var(--text-2);
 }
@@ -1334,6 +1358,44 @@ button.calendar-day.is-selected {
 
 .connectivity-status span {
   color: var(--muted);
+}
+
+.ranked-search-status {
+  flex-wrap: wrap;
+}
+
+.ranked-search-status > strong {
+  color: var(--present-text);
+  letter-spacing: 0.06em;
+}
+
+.ranked-search-status.is-matched > strong {
+  color: var(--correct-text);
+}
+
+.ranked-search-status > span {
+  flex: 1 1 12rem;
+  color: var(--muted);
+}
+
+.ranked-search-elapsed {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranked-search-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+@media (max-width: 47.99rem) {
+  .status-stack {
+    right: 0.75rem;
+    left: 0.75rem;
+    max-width: none;
+  }
 }
 
 .focus-exit {

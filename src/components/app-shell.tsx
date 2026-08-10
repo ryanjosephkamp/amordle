@@ -15,6 +15,7 @@ import {
   isEditableShortcutTarget,
   matchDirectNavigationShortcut,
 } from '@/application/keyboard-shortcuts';
+import { RankedSearchStatus } from '@/features/combat/ranked-search-status';
 import { AccountMenu } from './account-menu';
 import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
@@ -341,7 +342,20 @@ export function AppShell({ children }: PropsWithChildren) {
           </span>
         </footer>
       )}
-      <ConnectivityStatus />
+      {/*
+        v8-B2. Both floating strips share one stack, so the ranked search and an
+        offline warning cannot land on top of each other. Each was independently
+        fixed to the bottom-right corner before, which was fine only because they
+        could never appear together — and a background search that survives
+        navigation now can appear while the connection drops.
+
+        The stack itself ignores pointer events; its children take them back, so the
+        empty column never swallows a click on the page beneath it.
+      */}
+      <div className="status-stack">
+        <RankedSearchStatus />
+        <ConnectivityStatus />
+      </div>
     </div>
   );
 }

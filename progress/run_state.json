@@ -825,9 +825,7 @@
       "durableFix": "the sweep now measures ::before and ::after wherever they carry content - previously every pseudo-element in the design was unmeasured because getComputedStyle(element) cannot see one. Single-glyph markers are held to the 3:1 non-text floor, real words to 4.5:1."
     },
     "keyboardDimMeasured": "0.548 on the opponent's turn against 0.740 for an ordinary disabled control, identical in both schemes, still clear of the 3:1 disabled floor across all six accents",
-    "tokensAdded": [
-      "--danger-text"
-    ],
+    "tokensAdded": ["--danger-text"],
     "localAcceptance": {
       "check": "green",
       "domainTests": 157,

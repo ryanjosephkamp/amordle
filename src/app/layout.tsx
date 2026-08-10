@@ -3,6 +3,7 @@ import { GeistMono, GeistSans } from 'geist/font';
 import { Suspense } from 'react';
 import { AppProviders } from '@/components/providers';
 import { AppShell } from '@/components/app-shell';
+import { RankedQueueProvider } from '@/features/combat/ranked-queue';
 import { SkeletonRows } from '@/components/workbench';
 import { PwaController } from '@/components/pwa-controller';
 import { LegacyRouteBridge } from '@/components/legacy-route-bridge';
@@ -56,7 +57,15 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
               </main>
             }
           >
-            <AppShell>{children}</AppShell>
+            {/*
+              v8-B1. The ranked search is owned above the shell so it survives every
+              navigation inside it. It lives inside this boundary rather than outside
+              because it reads the pathname, and it lives inside `AppProviders` because
+              it needs the session and the query client.
+            */}
+            <RankedQueueProvider>
+              <AppShell>{children}</AppShell>
+            </RankedQueueProvider>
           </Suspense>
           <PwaController />
           <LegacyRouteBridge />

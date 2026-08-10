@@ -1789,12 +1789,28 @@ button.calendar-day.is-selected {
 }
 
 .update-toast,
-.connectivity-status {
+.connectivity-status,
+.ranked-search-status {
   border: var(--terminal-rule);
   border-radius: 0;
   background: var(--surface-inset);
   box-shadow: var(--elevation-4);
   font-family: var(--tui-font);
+}
+
+/*
+ * v8-B2. The search strip is chrome, not content, so its controls take the same
+ * compact treatment the toolbar's do rather than the page's full-size buttons.
+ */
+.ranked-search-status :is(a, button) {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface);
+  padding: var(--space-2) var(--space-4);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  text-decoration: none;
+  text-transform: lowercase;
 }
 
 .focus-exit {

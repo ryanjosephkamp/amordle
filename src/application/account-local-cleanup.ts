@@ -1,6 +1,7 @@
 'use client';
 
 import { clearAvatarCleanupQueue } from '@/adapters/avatar-storage';
+import { removeRankedQueueIntent } from '@/adapters/durable-combat';
 import {
   deleteEnvelope,
   deleteOwnerEnvelopes,
@@ -34,4 +35,11 @@ export function clearCompetitiveAccountLocalState(userId: string): void {
   removeRankedPracticeQueueIntent(userId);
   removeRankedDailyQueueIntent(userId);
   removeCombatAttentionProjection(userId);
+  /*
+   * v8-B1. The ranked search intent is durable now, so a competitive reset has to
+   * reach IndexedDB too — otherwise the app-wide watcher keeps polling a request the
+   * player just asked to be rid of. Kept fire-and-forget so this stays synchronous
+   * for its one caller, and harmless if the store is unavailable.
+   */
+  void removeRankedQueueIntent(userId).catch(() => undefined);
 }

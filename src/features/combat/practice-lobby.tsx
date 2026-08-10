@@ -5,30 +5,19 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import {
-  cancelRankedPractice,
-  claimRankedPractice,
-  createRankedPractice,
   createUnrankedPractice,
-  finalizeRankedPractice,
-  getRankedPracticeStatus,
   joinUnrankedPractice,
   listUnrankedPractice,
 } from '@/adapters/supabase/combat';
 import type { PublicPracticeLobby } from '@/adapters/supabase/combat';
 import { operationId } from '@/adapters/supabase/shared';
-import {
-  normalizeRankedPracticeConfig,
-  readRankedPracticeQueueIntent,
-  removeRankedPracticeQueueIntent,
-  writeRankedPracticeQueueIntent,
-} from '@/adapters/session-combat';
-import type { RankedPracticeQueueIntent } from '@/adapters/session-combat';
+import { normalizeRankedPracticeConfig } from '@/adapters/session-combat';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { useAuth } from '@/components/providers';
 import { AccountGate } from '@/components/route-states';
 import type { Difficulty } from '@/domain/game';
-import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
 import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/multiplayer';
+import { useRankedQueue } from './ranked-queue';
 
 interface Props {
   length: number;
@@ -83,8 +72,15 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
   const [hardMode, setHardMode] = useState(false);
   const [goCount, setGoCount] = useState<5 | 7 | 10>(5);
   const [timeLimitMs, setTimeLimitMs] = useState<300_000 | null>(null);
-  const [queue, setQueue] = useState<RankedPracticeQueueIntent | null>(null);
-  const [queuePhase, setQueuePhase] = useState<RankedPracticeQueuePhase>('idle');
+  /*
+   * v8-B1. The ranked search is no longer this page's property. It is owned by
+   * `RankedQueueProvider` above the shell, so it keeps running when the player
+   * navigates away and is still here when they come back — including in a second tab.
+   * This page drives it and renders it; it does not hold it.
+   */
+  const rankedQueue = useRankedQueue();
+  const queue = rankedQueue.intent;
+  const queuePhase = rankedQueue.phase;
   const [message, setMessage] = useState('');
   const invalidateCombat = () =>
     Promise.all([
@@ -107,42 +103,36 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     [difficulty, goCount, hardMode, mode, timeLimitMs, wordLength],
   );
 
-  useEffect(() => {
-    const userId = auth.user?.id;
-    queueMicrotask(() => {
-      setQueue(null);
-      setQueuePhase('idle');
-    });
-    if (!userId) return;
-    const restored = readRankedPracticeQueueIntent(userId);
-    if (restored.status === 'corrupt') {
-      queueMicrotask(() =>
-        setMessage('A damaged ranked search record was discarded. You can start a new search.'),
+  /*
+   * Seed the form from a search that is already running, once per search.
+   *
+   * The provider hydrates asynchronously from IndexedDB, so the intent arrives after
+   * the first render rather than during it. Latching on the request id means a player
+   * who edits the form while a search is live is not fought with on every re-render,
+   * and that arriving on the page a second time does not re-seed over their edits.
+   *
+   * Adjusted during render rather than in an effect, the same way `seededFrom` above
+   * handles a changed route: this is React's own pattern for deriving state from a
+   * changed input, and it avoids the extra committed render an effect would cost.
+   */
+  const [seededSearch, setSeededSearch] = useState<string | null>(null);
+  if (!queue && seededSearch !== null) {
+    setSeededSearch(null);
+  } else if (queue && seededSearch !== queue.requestId) {
+    setSeededSearch(queue.requestId);
+    if (queue.config.wordLength === routeLength) {
+      setMode(queue.config.mode);
+      setDifficulty(queue.config.difficulty);
+      setHardMode(queue.config.hardMode);
+      setGoCount(queue.config.goPuzzleCount ?? 5);
+      setTimeLimitMs(queue.config.timeLimitMs);
+      setMessage('Restored your ranked search for this account.');
+    } else {
+      setMessage(
+        `A ranked ${queue.config.wordLength}-letter search is still running. Its settings are on the matching Practice route.`,
       );
-      return;
     }
-    if (restored.status !== 'valid') return;
-    if (restored.intent.config.wordLength !== routeLength) {
-      queueMicrotask(() => {
-        setQueue(restored.intent);
-        setQueuePhase('queued');
-        setMessage(
-          `A ranked ${restored.intent.config.wordLength}-letter search is still recoverable on its matching Practice route.`,
-        );
-      });
-      return;
-    }
-    queueMicrotask(() => {
-      setMode(restored.intent.config.mode);
-      setDifficulty(restored.intent.config.difficulty);
-      setHardMode(restored.intent.config.hardMode);
-      setGoCount(restored.intent.config.goPuzzleCount ?? 5);
-      setTimeLimitMs(restored.intent.config.timeLimitMs);
-      setQueue(restored.intent);
-      setQueuePhase('queued');
-      setMessage('Restored your ranked search for this account and tab.');
-    });
-  }, [auth.user?.id, routeLength]);
+  }
 
   const lobbies = useQuery({
     queryKey: ['combat', 'practice', 'unranked', auth.user?.id],
@@ -188,119 +178,6 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
     },
   });
 
-  const ranked = useMutation({
-    mutationFn: async (existing: RankedPracticeQueueIntent | null) => {
-      const userId = auth.user?.id;
-      if (!userId) throw new Error('Sign in first.');
-      let intent = existing;
-      let status;
-      if (!intent) {
-        const config = currentConfig;
-        const creationKey = operationId('ranked-practice-create');
-        const created = await createRankedPractice({
-          ...config,
-          creationKey,
-        });
-        intent = {
-          schemaVersion: 2,
-          ownerUserId: userId,
-          requestId: created.requestId,
-          creationKey,
-          claimActionId: operationId('ranked-practice-claim'),
-          finalizeActionId: operationId('ranked-practice-finalize'),
-          createdAt: new Date().toISOString(),
-          config,
-        };
-        setQueue(intent);
-        setQueuePhase('queued');
-        writeRankedPracticeQueueIntent(intent);
-        status = created;
-      } else {
-        if (
-          intent.ownerUserId !== userId ||
-          !sameRankedPracticeConfig(intent.config, currentConfig)
-        ) {
-          throw new Error('This ranked search belongs to another account or configuration.');
-        }
-        status = await getRankedPracticeStatus(intent.requestId);
-      }
-
-      if (status.status === 'queued') {
-        status = await claimRankedPractice(intent.requestId, intent.claimActionId);
-      }
-      const transition = rankedPracticeQueueTransition(status.status);
-      if (transition.shouldFinalize) {
-        if (!status.matchedGameId) {
-          throw new Error('The match reservation is missing its game identifier.');
-        }
-        const projection = await finalizeRankedPractice(
-          intent.requestId,
-          status.matchedGameId,
-          intent.finalizeActionId,
-        );
-        return { intent, transition, gameId: projection.id };
-      }
-      return { intent, transition, gameId: null };
-    },
-    onSuccess: ({ gameId, intent, transition }) => {
-      if (auth.user?.id !== intent.ownerUserId) return;
-      void invalidateCombat();
-      setQueuePhase(transition.phase);
-      if (gameId) {
-        removeRankedPracticeQueueIntent(intent.ownerUserId);
-        setQueue(null);
-        router.push(`/combat/match/${gameId}`);
-        return;
-      }
-      if (transition.shouldClearIntent) {
-        removeRankedPracticeQueueIntent(intent.ownerUserId);
-        setQueue(null);
-      }
-      setMessage(queuePhaseMessage(transition.phase));
-    },
-    onError: (error) => {
-      const conflict =
-        error instanceof Error &&
-        /conflict|stale|version|configuration|another account/i.test(error.message);
-      setQueuePhase(conflict ? 'conflict' : 'failed');
-      setMessage(
-        conflict
-          ? 'The ranked search changed. Reread its authoritative status or cancel it.'
-          : 'Ranked matchmaking needs attention. Your account-scoped request remains recoverable.',
-      );
-    },
-  });
-
-  /*
-   * The ranked search poll.
-   *
-   * This was a one-shot `setTimeout` that re-armed only as a side effect of dependency
-   * churn: firing the mutation flipped `isPending`, which re-ran the effect, which
-   * scheduled the next timeout. It also refused to fire while the tab was hidden — and
-   * that combination is a permanent stall, because refusing to fire changes no state, so
-   * nothing re-runs the effect and no further timer is ever scheduled.
-   *
-   * That is the reported bug exactly. The player who creates a ranked search switches to
-   * their opponent's window, their tab goes hidden, one tick is skipped, and their search
-   * is dead until the component remounts — which is why a refresh "fixed" it. The joiner
-   * never saw it because `claim_amordle_ranked_practice_v2` returns the game id
-   * synchronously; only the waiter has to discover the match by polling.
-   *
-   * The server was never at fault: the claim stamps BOTH queue rows with `status='matched'`
-   * and the game id in one transaction.
-   *
-   * A real interval driven through refs, exactly as the ranked-Daily lobby already does —
-   * which is why Daily never had this bug. Nothing is gated on visibility any more, and a
-   * `visibilitychange` listener polls immediately on return so coming back to the tab is
-   * instant rather than waiting out a tick that a hidden tab may have throttled to a minute.
-   */
-  const rankedPoll = useRef(ranked.mutate);
-  const rankedPollPending = useRef(ranked.isPending);
-  useEffect(() => {
-    rankedPoll.current = ranked.mutate;
-    rankedPollPending.current = ranked.isPending;
-  }, [ranked.isPending, ranked.mutate]);
-
   /*
    * v8-A5. SEARCH AGAIN, honouring its own label.
    *
@@ -308,62 +185,17 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
    * "search again" means to anyone reading it. It now arrives with `?requeue=1` and starts
    * the search on landing.
    *
-   * Fires once per mount and only when there is nothing already in flight, so it can never
-   * fight the restore effect above — a player who still has a live search recovers that one
-   * instead of stacking a second against the five-request cap.
+   * Fires once per mount, and only once the provider has finished reading the durable
+   * intent — otherwise a player who already has a live search would stack a second one
+   * against the five-request cap during the hydration gap.
    */
   const autoQueued = useRef(false);
   useEffect(() => {
-    if (!autoQueueRanked || autoQueued.current) return;
+    if (!autoQueueRanked || autoQueued.current || !rankedQueue.hydrated) return;
     if (!auth.user?.id || queue || queuePhase !== 'idle') return;
     autoQueued.current = true;
-    rankedPoll.current(null);
-  }, [auth.user?.id, autoQueueRanked, queue, queuePhase]);
-
-  const pollableQueue =
-    queue &&
-    queue.config.wordLength === wordLength &&
-    ['queued', 'conflict', 'failed'].includes(queuePhase)
-      ? queue
-      : null;
-
-  useEffect(() => {
-    if (!pollableQueue) return;
-    const poll = () => {
-      if (!rankedPollPending.current) rankedPoll.current(pollableQueue);
-    };
-    const pollOnReturn = () => {
-      if (document.visibilityState === 'visible') poll();
-    };
-    const timer = window.setInterval(poll, 5_000);
-    document.addEventListener('visibilitychange', pollOnReturn);
-    window.addEventListener('online', pollOnReturn);
-    return () => {
-      window.clearInterval(timer);
-      document.removeEventListener('visibilitychange', pollOnReturn);
-      window.removeEventListener('online', pollOnReturn);
-    };
-  }, [pollableQueue]);
-
-  const cancelQueue = useMutation({
-    mutationFn: async () => {
-      if (!queue) return;
-      return cancelRankedPractice(queue.requestId, operationId('ranked-practice-cancel'));
-    },
-    onSuccess: (status) => {
-      if (queue) removeRankedPracticeQueueIntent(queue.ownerUserId);
-      setQueue(null);
-      setQueuePhase(status?.status === 'expired' ? 'expired' : 'cancelled');
-      setMessage(
-        status?.status === 'expired' ? 'Ranked search expired.' : 'Ranked search cancelled.',
-      );
-      void invalidateCombat();
-    },
-    onError: () => {
-      setQueuePhase('failed');
-      setMessage('The cancel request needs attention. The ranked search remains recoverable.');
-    },
-  });
+    rankedQueue.start(currentConfig);
+  }, [auth.user?.id, autoQueueRanked, currentConfig, queue, queuePhase, rankedQueue]);
 
   const available = useMemo(
     () => lobbies.data?.filter((row) => !row.capabilities.canCancel) ?? [],
@@ -476,26 +308,18 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
             </button>
             <button
               type="button"
-              disabled={ranked.isPending || Boolean(queue) || !wordLengthValid}
-              onClick={() => ranked.mutate(null)}
+              disabled={rankedQueue.isBusy || Boolean(queue) || !wordLengthValid}
+              onClick={() => rankedQueue.start(currentConfig)}
             >
               {queue ? queueButtonLabel(queuePhase) : 'Find ranked match'}
             </button>
             {queue && ['conflict', 'failed'].includes(queuePhase) && (
-              <button
-                type="button"
-                disabled={ranked.isPending}
-                onClick={() => ranked.mutate(queue)}
-              >
+              <button type="button" disabled={rankedQueue.isBusy} onClick={rankedQueue.poll}>
                 Reread status
               </button>
             )}
             {queue && (
-              <button
-                type="button"
-                disabled={cancelQueue.isPending}
-                onClick={() => cancelQueue.mutate()}
-              >
+              <button type="button" disabled={rankedQueue.isBusy} onClick={rankedQueue.cancel}>
                 Cancel search
               </button>
             )}
@@ -513,7 +337,12 @@ function PracticeLobbyInner({ length: routeLength, autoQueueRanked = false }: Pr
             </Link>
           )}
         </form>
-        <p aria-live="polite">{message}</p>
+        {/*
+         * Two message sources now: this page's own create/join outcomes, and the
+         * app-wide search's phase. The search's own message wins while it has one,
+         * because it is the thing the player is waiting on.
+         */}
+        <p aria-live="polite">{rankedQueue.message || message}</p>
       </section>
       {/*
        * B1. `.open-lobbies` is the only element declaring `container-type: inline-size`,
@@ -582,24 +411,5 @@ function queueButtonLabel(phase: RankedPracticeQueuePhase): string {
     case 'queued':
     case 'idle':
       return 'Searching…';
-  }
-}
-
-function queuePhaseMessage(phase: RankedPracticeQueuePhase): string {
-  switch (phase) {
-    case 'expired':
-      return 'Ranked search expired. Your settings are ready for a new search.';
-    case 'cancelled':
-      return 'Ranked search was cancelled. Your settings are ready for a new search.';
-    case 'matched':
-      return 'A compatible opponent was found. Opening the match…';
-    case 'conflict':
-      return 'The ranked search changed. Its authoritative status was restored.';
-    case 'failed':
-      return 'Ranked matchmaking needs attention. Your request remains recoverable.';
-    case 'queued':
-      return 'Searching for a compatible ranked opponent…';
-    case 'idle':
-      return '';
   }
 }

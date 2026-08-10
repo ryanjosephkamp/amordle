@@ -15,6 +15,11 @@ import {
   writeRankedPracticeQueueIntent,
   writeCombatAttentionProjection,
 } from '@/adapters/session-combat';
+import {
+  readRankedQueueIntent,
+  removeRankedQueueIntent,
+  writeRankedQueueIntent,
+} from '@/adapters/durable-combat';
 import { combatProjectionSchema, privateRequestBlockSchema } from '@/adapters/supabase/combat';
 import { ClockValue } from '@/features/combat/match-clock';
 import { MatchUnavailable } from '@/features/combat/match-unavailable';
@@ -176,6 +181,59 @@ describe('browser components', () => {
     expect(readRankedPracticeQueueIntent(otherUserId)).toEqual({ status: 'missing' });
     expect(readRankedDailyQueueIntent(otherUserId)).toEqual({ status: 'missing' });
     sessionStorage.clear();
+  });
+
+  /*
+   * v8-B1. The ranked search moved from per-tab session storage to the durable
+   * account envelope so it survives navigation and a second tab.
+   *
+   * The promotion path is the part that can silently strand a player: someone with a
+   * live search at the moment this shipped has a server-side queue row counting
+   * against the five-request cap, reachable only through the session-storage record
+   * the new code no longer reads. If the promotion does not happen they cannot resume
+   * that search and cannot cancel it either.
+   */
+  it('promotes a session-storage ranked search onto the durable store, once, per account', async () => {
+    const ownerUserId = '33333333-3333-4333-8333-333333333333';
+    const otherUserId = '44444444-4444-4444-8444-444444444444';
+    const intent = {
+      schemaVersion: 2 as const,
+      ownerUserId,
+      requestId: 'legacy-request',
+      creationKey: 'legacy-create',
+      claimActionId: 'legacy-claim',
+      finalizeActionId: 'legacy-finalize',
+      createdAt: '2026-08-09T12:00:00.000Z',
+      config: {
+        mode: 'og' as const,
+        wordLength: 5,
+        difficulty: 'standard' as const,
+        hardMode: false,
+        goPuzzleCount: null,
+        timeLimitMs: null,
+      },
+    };
+    await removeRankedQueueIntent(ownerUserId);
+    await removeRankedQueueIntent(otherUserId);
+    sessionStorage.clear();
+    writeRankedPracticeQueueIntent(intent);
+
+    const promoted = await readRankedQueueIntent(ownerUserId);
+    expect(promoted).toEqual({ status: 'valid', intent });
+    // The session copy is drained, so the durable record is now the only authority
+    // and a stale tab cannot resurrect an older configuration over it.
+    expect(readRankedPracticeQueueIntent(ownerUserId)).toEqual({ status: 'missing' });
+    expect(await readRankedQueueIntent(ownerUserId)).toEqual({ status: 'valid', intent });
+    expect(await readRankedQueueIntent(otherUserId)).toEqual({ status: 'missing' });
+
+    await writeRankedQueueIntent({ ...intent, requestId: 'durable-request' });
+    expect(await readRankedQueueIntent(ownerUserId)).toEqual({
+      status: 'valid',
+      intent: { ...intent, requestId: 'durable-request' },
+    });
+
+    await removeRankedQueueIntent(ownerUserId);
+    expect(await readRankedQueueIntent(ownerUserId)).toEqual({ status: 'missing' });
   });
 
   it('keeps provisional COMBAT attention display-only and account-scoped', () => {
