@@ -760,11 +760,17 @@ button.primary:hover {
   gap: 1px;
 }
 
+/*
+ * The three fills are the board's own evidence tokens, not new colours, so the
+ * snapshot reads as the same board seen from further away. At this size the tiles are
+ * solid rather than the board's tinted `color-mix` — a 31% wash over four pixels is
+ * indistinguishable from empty.
+ */
 .notification-board-tile {
   display: block;
   block-size: 0.3rem;
-  border: 1px solid var(--border);
-  background: var(--surface-strong);
+  border: 1px solid var(--key-absent-border);
+  background: var(--key-absent-background);
 }
 
 .notification-board-tile.is-correct {
