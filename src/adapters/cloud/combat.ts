@@ -579,6 +579,44 @@ export async function settleRankedPractice(gameId: string, actionId: string) {
   );
 }
 
+export interface SettledRatingRow {
+  userId: string | null;
+  label: string;
+  oldRating: number;
+  newRating: number;
+  ratingDelta: number;
+  outcome: string;
+}
+
+/**
+ * Both seats' rating movement for a settled match.
+ *
+ * The settlement RPC deliberately narrows its receipt to the caller, so the opponent's
+ * numbers are not in it. They are readable anyway, with no migration: RLS on
+ * `multiplayer_rating_transactions` is two-sided —
+ * `using (user_id = auth.uid() or opponent_user_id = auth.uid())` — and settlement writes a
+ * row for each seat carrying `opponent_user_id`, so the viewer can see both rows of a match
+ * they played. The receipt's `matchResultId` is the key.
+ *
+ * Returns an empty list rather than throwing: a missing opponent row must degrade to
+ * showing only the viewer's change, never to breaking the end-of-match panel.
+ */
+export async function loadSettledRatings(matchResultId: string): Promise<SettledRatingRow[]> {
+  const { data, error } = await client()
+    .from('multiplayer_rating_transactions')
+    .select('user_id,player_label,old_rating,new_rating,rating_delta,outcome')
+    .eq('match_result_id', matchResultId);
+  if (error || !data) return [];
+  return data.map((row) => ({
+    userId: row.user_id,
+    label: row.player_label,
+    oldRating: row.old_rating,
+    newRating: row.new_rating,
+    ratingDelta: row.rating_delta,
+    outcome: row.outcome,
+  }));
+}
+
 export async function createRankedDaily(input: {
   mode: 'og' | 'go';
   hardMode: boolean;

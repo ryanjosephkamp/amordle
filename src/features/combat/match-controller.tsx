@@ -16,6 +16,7 @@ import {
   saveLegacyGuess,
   saveRankedDailyAction,
   listPracticeRematches,
+  loadSettledRatings,
   requestPracticeRematch,
   settleLegacyRankedDaily,
   settleRankedDaily,
@@ -27,6 +28,7 @@ import type {
   RankedDailyProjection,
   RankedPracticeSettlement,
   RematchRequest,
+  SettledRatingRow,
 } from '@/adapters/supabase/combat';
 import { getBrowserSupabase } from '@/adapters/supabase/browser';
 import { ServiceError, operationId } from '@/adapters/supabase/shared';
@@ -129,6 +131,7 @@ function MatchControllerInner({
   const [message, setMessage] = useState('');
   const [rankedPracticeSettlement, setRankedPracticeSettlement] =
     useState<RankedPracticeSettlement | null>(null);
+  const [settledRatings, setSettledRatings] = useState<SettledRatingRow[]>([]);
   const match = useQuery({
     queryKey: ['combat', 'match', gameId],
     queryFn: () => loadMatch(gameId),
@@ -341,19 +344,66 @@ function MatchControllerInner({
     onSuccess: (result) => {
       if (result.authority === 2 && result.receipt) {
         setRankedPracticeSettlement(result.receipt);
-        setMessage(
-          `Rating ${result.receipt.ratingDelta >= 0 ? '+' : ''}${result.receipt.ratingDelta} · ${result.receipt.newRating}.`,
-        );
-      } else {
-        setMessage('Rating settled.');
+        // Both seats' movement, for the panel. Never allowed to fail the settlement.
+        void loadSettledRatings(result.receipt.matchResultId)
+          .then(setSettledRatings)
+          .catch(() => undefined);
       }
       void match.refetch();
       if (auth.user?.id) {
         void invalidateAccountProjections(queryClient, auth.user.id, { includeRanked: true });
       }
     },
-    onError: () => setMessage('Rating settlement needs attention. It is safe to retry.'),
+    /*
+     * Silent. Settlement is no longer something a player asks for, so a failure is not
+     * something they did — and it is retried by the effect below rather than by them.
+     */
+    onError: () => undefined,
   });
+
+  /*
+   * v8-A2. Every ranked result counts, automatically.
+   *
+   * Until now `UPDATE RATING` was the ONLY writer of ELO in the entire system: four update
+   * sites, all inside settlement RPCs, each with exactly one call site — that button. No
+   * trigger, no command RPC, no job, and RLS grants only `select`. If neither player pressed
+   * it the match was unrated and invisible to the leaderboard, which meant a player could
+   * decline a loss simply by closing the tab.
+   *
+   * The same latched shape as the W1 timeout settlement: fire once the match is terminal and
+   * settleable, throttle on wall-clock time held in a ref so a re-render storm cannot turn
+   * this into a request flood, and swallow refusals. The RPC is genuinely idempotent — its
+   * key is derived from the game id inside the function, both seats are updated in one
+   * statement, and an advisory lock plus `for update` serialise concurrent callers — so both
+   * clients firing at once is safe and the second gets its own correct numbers back.
+   *
+   * This closes the exploit for anyone who does not deliberately kill their browser at the
+   * exact moment a match ends. Only server-side settlement makes it impossible; that is
+   * Cycle C, and it needs a migration.
+   */
+  const settleAttempt = useRef({ inFlight: false, lastMs: 0 });
+  const canSettle = Boolean(match.data?.game?.capabilities.canSettleRating);
+  const settleRating = settle.mutate;
+  useEffect(() => {
+    if (!canSettle || rankedPracticeSettlement) {
+      settleAttempt.current.lastMs = 0;
+      return;
+    }
+    const fire = () => {
+      const state = settleAttempt.current;
+      if (state.inFlight || Date.now() - state.lastMs < AUTO_SETTLE_RETRY_MS) return;
+      state.inFlight = true;
+      state.lastMs = Date.now();
+      settleRating(undefined, {
+        onSettled: () => {
+          settleAttempt.current.inFlight = false;
+        },
+      });
+    };
+    fire();
+    const timer = window.setInterval(fire, AUTO_SETTLE_RETRY_MS);
+    return () => window.clearInterval(timer);
+  }, [canSettle, rankedPracticeSettlement, settleRating]);
 
   useEffect(() => {
     const userId = auth.user?.id;
@@ -408,7 +458,6 @@ function MatchControllerInner({
             command.mutate('forfeit');
           }
         }}
-        settle={() => settle.mutate()}
         pending={command.isPending || settle.isPending}
         message={message}
       />
@@ -434,8 +483,9 @@ function MatchControllerInner({
         }
       }}
       autoSettleTimeout={autoSettleTimeout}
-      settle={() => settle.mutate()}
       settlement={rankedPracticeSettlement}
+      settledRatings={settledRatings}
+      viewerUserId={auth.user?.id}
       pending={command.isPending || settle.isPending}
       message={message}
     />
@@ -449,7 +499,6 @@ function RankedDailyMatch({
   setDraft,
   submit,
   forfeit,
-  settle,
   pending,
   message,
 }: {
@@ -459,7 +508,6 @@ function RankedDailyMatch({
   setDraft(value: string): void;
   submit(): void;
   forfeit(): void;
-  settle(): void;
   pending: boolean;
   message: string;
 }) {
@@ -539,11 +587,9 @@ function RankedDailyMatch({
       {terminal && game.status !== 'cancelled' && (
         <div className="result-panel">
           <h2>Ranked result</h2>
-          <p>The result is final. Update your rating to finish this match.</p>
+          {/* No button here either: the rating is applied automatically. */}
+          <p>The result is final and your rating has been updated.</p>
           <div className="action-row">
-            <button className="primary" onClick={settle} disabled={pending}>
-              UPDATE RATING
-            </button>
             <Link className="button" href={`/combat/results/${game.id}`}>
               VIEW RESULT
             </Link>
@@ -551,6 +597,94 @@ function RankedDailyMatch({
         </div>
       )}
     </section>
+  );
+}
+
+/**
+ * v8-A2. What a ranked match did to both players' ratings.
+ *
+ * Shown unconditionally at the end of every ranked match — there is no button, because
+ * there is no choice. A cancel before play never settles (`canSettleRating` requires
+ * `status = 'completed'`), so it renders honestly as a pair of unchanged ratings and a `±0`
+ * rather than inventing a settlement that did not happen.
+ *
+ * The diff is the only coloured element, using the same three tokens the History page uses:
+ * a gain is `--correct-text`, a loss `--danger-text`, and no change `--present-text`. The
+ * sign and the numbers carry the meaning on their own, so colour is never the only signal.
+ */
+function RatingOutcome({
+  settlement,
+  rows,
+  viewerUserId,
+  players,
+  viewerSeat,
+  cancelled,
+}: {
+  settlement: RankedPracticeSettlement | null;
+  rows: SettledRatingRow[];
+  viewerUserId: string | undefined;
+  players: CombatProjection['players'];
+  viewerSeat: 'player-one' | 'player-two';
+  cancelled: boolean;
+}) {
+  const nameFor = (seat: 'player-one' | 'player-two') =>
+    players.find((participant) => participant.seat === seat)?.displayName ??
+    (seat === viewerSeat ? 'You' : 'Rival');
+
+  /*
+   * Prefer the two transaction rows, which name both seats. Fall back to the viewer's own
+   * receipt when the opponent's row has not arrived — a partial panel is better than none —
+   * and to a flat pair when nothing settled at all.
+   */
+  const entries: Array<{ key: string; name: string; from: number; to: number; delta: number }> =
+    rows.length > 0
+      ? rows.map((row) => ({
+          key: row.userId ?? row.label,
+          name: row.userId && row.userId === viewerUserId ? `${row.label} (you)` : row.label,
+          from: row.oldRating,
+          to: row.newRating,
+          delta: row.ratingDelta,
+        }))
+      : settlement
+        ? [
+            {
+              key: 'viewer',
+              name: `${nameFor(viewerSeat)} (you)`,
+              from: settlement.oldRating,
+              to: settlement.newRating,
+              delta: settlement.ratingDelta,
+            },
+          ]
+        : [];
+
+  if (entries.length === 0 && !cancelled) return null;
+
+  return (
+    <div className="rating-outcome">
+      <h3>Rating</h3>
+      {cancelled && entries.length === 0 ? (
+        <p className="rating-outcome-note">
+          Cancelled before play — no rating change for either player.
+        </p>
+      ) : null}
+      <ul>
+        {entries.map((entry) => (
+          <li key={entry.key}>
+            <span className="rating-outcome-name">{entry.name}</span>
+            <span className="rating-outcome-move mono">
+              {entry.from} → {entry.to}
+            </span>
+            <strong
+              className="rating-outcome-delta mono"
+              data-direction={entry.delta > 0 ? 'up' : entry.delta < 0 ? 'down' : 'level'}
+            >
+              ({entry.delta >= 0 ? '+' : ''}
+              {entry.delta})
+            </strong>
+          </li>
+        ))}
+      </ul>
+    </div>
   );
 }
 
@@ -780,8 +914,9 @@ function AuthoritativeMatch({
   forfeit,
   cancel,
   autoSettleTimeout,
-  settle,
   settlement,
+  settledRatings,
+  viewerUserId,
   pending,
   message,
 }: {
@@ -793,8 +928,9 @@ function AuthoritativeMatch({
   forfeit(): void;
   cancel(): void;
   autoSettleTimeout(done: () => void): void;
-  settle(): void;
   settlement: RankedPracticeSettlement | null;
+  settledRatings: SettledRatingRow[];
+  viewerUserId: string | undefined;
   pending: boolean;
   message: string;
 }) {
@@ -988,22 +1124,15 @@ function AuthoritativeMatch({
               ))}
             </div>
           )}
-          <div className="action-row">
-            {game.capabilities.canSettleRating && !settlement && (
-              <button className="primary" onClick={settle} disabled={pending}>
-                UPDATE RATING
-              </button>
-            )}
-            <Link className="button" href={`/combat/results/${game.id}`}>
-              VIEW RESULT
-            </Link>
-          </div>
-          {settlement && (
-            <p className="mono" role="status">
-              RATING {settlement.oldRating} → {settlement.newRating} (
-              {settlement.ratingDelta >= 0 ? '+' : ''}
-              {settlement.ratingDelta})
-            </p>
+          {game.ranked && (
+            <RatingOutcome
+              settlement={settlement}
+              rows={settledRatings}
+              viewerUserId={viewerUserId}
+              players={game.players}
+              viewerSeat={game.viewerSeat}
+              cancelled={game.status === 'cancelled'}
+            />
           )}
           {!game.ranked && game.scope === 'practice' && <RematchActions sourceGameId={game.id} />}
           <nav className="action-row" aria-label="Next COMBAT actions">

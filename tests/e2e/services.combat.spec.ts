@@ -1882,11 +1882,40 @@ test.describe.serial('protected Preview services', () => {
       timeout: 15_000,
     });
 
+    /*
+     * v8-A1. The waiting player's tab is forced HIDDEN for the whole match-up.
+     *
+     * Without this the test is vacuous: Playwright keeps background pages reporting
+     * `visible`, so this exact two-player scenario passed while the bug was live. In a real
+     * browser the creator's tab goes hidden the moment they switch to the other window, and
+     * the old one-shot poll refused to fire while hidden — which changed no state, so the
+     * effect never re-ran and no further timer was ever scheduled. The search was dead until
+     * a manual refresh remounted the component.
+     *
+     * Forcing hidden here means the waiter can only reach the match if its poll genuinely
+     * survives being backgrounded.
+     */
+    const setWaiterHidden = (hidden: boolean) =>
+      firstPage.evaluate((value) => {
+        Object.defineProperty(document, 'visibilityState', {
+          configurable: true,
+          get: () => (value ? 'hidden' : 'visible'),
+        });
+        document.dispatchEvent(new Event('visibilitychange'));
+      }, hidden);
+    await setWaiterHidden(true);
+
     await secondPage.goto(`${baseURL}/combat/practice?length=35`);
     await secondPage.getByLabel('Ranked clock').selectOption('300000');
     await secondPage.getByRole('button', { name: 'Find ranked match' }).click();
     const rankedPracticeTwo = await registerLatestQueueRequest(playerTwo!, 'practice', 'og');
     await expect(firstPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });
+    await setWaiterHidden(false);
+    await event('ranked_waiter_matched_while_backgrounded', {
+      scenarioId: rankedDailyScenarioId,
+      waiterTabHidden: true,
+      manualRefreshRequired: false,
+    });
     await expect(secondPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });
     const rankedPracticeGameId = new URL(firstPage.url()).pathname.split('/').at(-1);
     expect(rankedPracticeGameId).toBe(new URL(secondPage.url()).pathname.split('/').at(-1));

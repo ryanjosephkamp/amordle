@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   cancelRankedPractice,
   claimRankedPractice,
@@ -269,18 +269,60 @@ function PracticeLobbyInner({ length: routeLength }: Props) {
     },
   });
 
-  const advanceRanked = ranked.mutate;
+  /*
+   * The ranked search poll.
+   *
+   * This was a one-shot `setTimeout` that re-armed only as a side effect of dependency
+   * churn: firing the mutation flipped `isPending`, which re-ran the effect, which
+   * scheduled the next timeout. It also refused to fire while the tab was hidden — and
+   * that combination is a permanent stall, because refusing to fire changes no state, so
+   * nothing re-runs the effect and no further timer is ever scheduled.
+   *
+   * That is the reported bug exactly. The player who creates a ranked search switches to
+   * their opponent's window, their tab goes hidden, one tick is skipped, and their search
+   * is dead until the component remounts — which is why a refresh "fixed" it. The joiner
+   * never saw it because `claim_amordle_ranked_practice_v2` returns the game id
+   * synchronously; only the waiter has to discover the match by polling.
+   *
+   * The server was never at fault: the claim stamps BOTH queue rows with `status='matched'`
+   * and the game id in one transaction.
+   *
+   * A real interval driven through refs, exactly as the ranked-Daily lobby already does —
+   * which is why Daily never had this bug. Nothing is gated on visibility any more, and a
+   * `visibilitychange` listener polls immediately on return so coming back to the tab is
+   * instant rather than waiting out a tick that a hidden tab may have throttled to a minute.
+   */
+  const rankedPoll = useRef(ranked.mutate);
+  const rankedPollPending = useRef(ranked.isPending);
   useEffect(() => {
-    if (!queue) return;
-    if (queue.config.wordLength !== wordLength) return;
-    if (!['queued', 'conflict', 'failed'].includes(queuePhase)) return;
-    const timer = window.setTimeout(() => {
-      if (!ranked.isPending && document.visibilityState === 'visible') {
-        advanceRanked(queue);
-      }
-    }, 5_000);
-    return () => window.clearTimeout(timer);
-  }, [advanceRanked, queue, queuePhase, ranked.isPending, wordLength]);
+    rankedPoll.current = ranked.mutate;
+    rankedPollPending.current = ranked.isPending;
+  }, [ranked.isPending, ranked.mutate]);
+
+  const pollableQueue =
+    queue &&
+    queue.config.wordLength === wordLength &&
+    ['queued', 'conflict', 'failed'].includes(queuePhase)
+      ? queue
+      : null;
+
+  useEffect(() => {
+    if (!pollableQueue) return;
+    const poll = () => {
+      if (!rankedPollPending.current) rankedPoll.current(pollableQueue);
+    };
+    const pollOnReturn = () => {
+      if (document.visibilityState === 'visible') poll();
+    };
+    const timer = window.setInterval(poll, 5_000);
+    document.addEventListener('visibilitychange', pollOnReturn);
+    window.addEventListener('online', pollOnReturn);
+    return () => {
+      window.clearInterval(timer);
+      document.removeEventListener('visibilitychange', pollOnReturn);
+      window.removeEventListener('online', pollOnReturn);
+    };
+  }, [pollableQueue]);
 
   const cancelQueue = useMutation({
     mutationFn: async () => {

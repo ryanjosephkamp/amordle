@@ -4351,6 +4351,82 @@ html[data-game-presentation='review'] .game-route {
   font-size: var(--text-1);
 }
 
+/*
+ * v8-A2. What a ranked match did to both players' ratings.
+ *
+ * There is no button to reveal this and no choice about it: the rating is applied
+ * automatically, so the panel simply states the outcome for both seats.
+ *
+ * Only the diff is coloured, and it reuses the History page's three tokens exactly rather
+ * than introducing new ones — `--correct-text` for a gain, `--danger-text` for a loss,
+ * `--present-text` for no change. All three are the darker ink counterparts of their fills,
+ * which is what keeps them legible; the fill versions would not be. The sign and the numbers
+ * carry the meaning on their own, so colour is never the only signal.
+ */
+.rating-outcome {
+  width: min(44rem, 100%);
+  margin: var(--space-4) auto 0;
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.rating-outcome h3 {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rating-outcome ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rating-outcome li {
+  display: grid;
+  align-items: baseline;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  font-size: var(--text-2);
+}
+
+.rating-outcome-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-outcome-move {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-outcome-delta {
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-outcome-delta[data-direction='up'] {
+  color: var(--correct-text);
+}
+
+.rating-outcome-delta[data-direction='down'] {
+  color: var(--danger-text);
+}
+
+.rating-outcome-delta[data-direction='level'] {
+  color: var(--present-text);
+}
+
+.rating-outcome-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
 .result-definitions {
   display: grid;
   gap: var(--space-4);
