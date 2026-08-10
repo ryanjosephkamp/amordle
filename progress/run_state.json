@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8-cycle-b-hosted-green",
+  "currentCheckpoint": "stage-2-v8-cycle-c-hosted-green",
   "status": "awaiting-owner-review",
-  "lastGreenCommit": "9fc688d",
+  "lastGreenCommit": "7eaf76d",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8-cycle-b-background-search-notifications-complete-hosted-green",
-  "updatedAt": "2026-08-09T00:00:00Z",
+  "reportStatus": "v8-cycle-c-ranked-standardisation-complete-hosted-green",
+  "updatedAt": "2026-08-10T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1041,5 +1041,32 @@
     "firstRunFailure": "real: the provider phase message had precedence over the lobby message, so the lobby stopped saying \"Restored your ranked search\" after a reload. Precedence inverted and a phase change now clears the page message",
     "secondRunFailure": "harness only: the 35-letter ranked winner needs more than five seconds for the command round-trip, terminal transition, automatic settlement and a 35-column re-render before the draft row clears. The failure screenshot showed the win, the points and both ratings applied with no press. Window widened to 15s, assertion unchanged",
     "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
+  },
+  "v8CycleCMigration": {
+    "file": "20260810020000_amordle_ranked_buckets_v4.sql",
+    "sha256": "84ec8bb0474570878db66091b0565faebd5ee89c4e806ff0b35c72ee9c06c721",
+    "applied": "yes, to the linked project, authorised against reports/v8-cycle-c-migration-decision-2026-08-10.md",
+    "authority": "brrrdle_private.amordle_rating_bucket replaces five hand-written twelve-literal CHECK arrays with foreign keys; retired names seeded inactive so historical rows keep integrity",
+    "standardisation": "ranked Practice fixed at 5 letters, expert, GO 5; unranked and private keep every option; the lobby derives the ranked config so the UI cannot compose a refused search",
+    "clocks": "ladder widened from 2 to 7 (untimed, 1m, 3m, 5m, 10m, 20m, 45m) for unranked as well as ranked; four validators that compared against a literal 300000 now ask the authority",
+    "settlement": "fires at the terminal transition inside save_amordle_combat_command_v2; the Cycle A client auto-settle remains a harmless idempotent replay; failures swallowed so a rating cannot roll back a legitimate move",
+    "siteStatsRepair": "get_public_site_stats_v1 filtered the July bucket names and reported ranked participation as zero; it reads the authority now",
+    "appliedOutcome": "rating profiles 12->0, transactions 12->0, match results 7->0, one live ranked game cancelled, 25 stale queue rows retired; pre-apply dump taken",
+    "firstAttemptAborted": "updated_at does not exist on multiplayer_matchmaking_queue; nothing written because each migration runs in a transaction; corrected to expires_at",
+    "remainingHole": "a game that never reaches a terminal state still never settles, because settlement rides the command that ends the match. Cycle D scheduled job",
+    "report": "reports/v8-cycle-c-ranked-standardisation-2026-08-10/README.md"
+  },
+  "v8CycleCHostedAcceptance": {
+    "url": "https://amordle-mf8zfbglv-ryanjosephkamps-projects.vercel.app",
+    "commit": "7eaf76d",
+    "fixture": "24 passed",
+    "services": "3 passed",
+    "visual": "46 passed",
+    "parity": "237/237",
+    "residue": "none",
+    "standardisationProved": "the GO scenario sets the form to 7 letters and 10 puzzles, then asserts the queue row the server wrote is 5/expert/GO 5 in bucket async:go:untimed:std:v4",
+    "settlementProved": "the ranked match settled with two rating profiles and two transactions summing to zero, with no button pressed",
+    "siteStatsCaveat": "reports zero ranked players, correctly, because the hosted suite cleans up after itself. The repair is verified structurally rather than by a non-zero count",
+    "production": "unchanged, no release"
   }
 }
