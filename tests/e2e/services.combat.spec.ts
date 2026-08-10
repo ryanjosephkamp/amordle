@@ -243,7 +243,9 @@ async function registerLatestQueueRequest(
       async () => {
         const { data, error } = await admin
           .from('multiplayer_matchmaking_queue')
-          .select('id,status,scope,mode,idempotency_key')
+          .select(
+            'id,status,scope,mode,idempotency_key,word_length,difficulty,go_puzzle_count,rating_bucket',
+          )
           .eq('user_id', user.id)
           .eq('scope', scope)
           .eq('mode', mode)
@@ -260,7 +262,9 @@ async function registerLatestQueueRequest(
     .then(async () => {
       const { data, error } = await admin
         .from('multiplayer_matchmaking_queue')
-        .select('id,status,scope,mode,idempotency_key')
+        .select(
+          'id,status,scope,mode,idempotency_key,word_length,difficulty,go_puzzle_count,rating_bucket',
+        )
         .eq('user_id', user.id)
         .eq('scope', scope)
         .eq('mode', mode)
@@ -2100,14 +2104,36 @@ test.describe.serial('protected Preview services', () => {
       ratingTransactionCount: 2,
     });
 
+    /*
+     * v8-C. Ranked is standardised, and this proves it against live services rather
+     * than against the form.
+     *
+     * The page is deliberately set to seven letters and ten puzzles — a perfectly
+     * legal unranked configuration — before the ranked search is started. The search
+     * that reaches the server must still be the ranked format: five letters, expert,
+     * GO fixed at five. A rating only means something if everyone competing for it is
+     * playing the same game, and the lobby derives the ranked configuration precisely
+     * so a player cannot compose one the server would refuse.
+     */
     await firstPage.goto(`${baseURL}/combat/practice?length=7`);
     await firstPage.getByLabel('Mode', { exact: true }).selectOption('go');
     await firstPage.getByLabel('Puzzles').selectOption('10');
     await firstPage.getByRole('button', { name: 'Find ranked match' }).click();
     const cancelledGoPractice = await registerLatestQueueRequest(playerOne!, 'practice', 'go');
-    await expect(firstPage.getByRole('status')).toContainText(
-      /GO · 7 letters · standard · untimed/i,
-    );
+    await expect(firstPage.getByRole('status')).toContainText(/GO · 5 letters · expert · untimed/i);
+    expect(cancelledGoPractice.word_length).toBe(5);
+    expect(cancelledGoPractice.difficulty).toBe('expert');
+    expect(cancelledGoPractice.go_puzzle_count).toBe(5);
+    // And it landed in a v4 bucket, which is the shape the lookup table now enforces.
+    expect(cancelledGoPractice.rating_bucket).toBe('async:go:untimed:std:v4');
+    await event('ranked_standardisation_enforced', {
+      scenarioId: rankedDailyScenarioId,
+      formOfferedWordLength: 7,
+      formOfferedGoPuzzles: 10,
+      requestWordLength: cancelledGoPractice.word_length,
+      requestDifficulty: cancelledGoPractice.difficulty,
+      requestGoPuzzles: cancelledGoPractice.go_puzzle_count,
+    });
     await firstPage.getByRole('button', { name: 'Cancel search' }).click();
     await expect(firstPage.getByText(/Ranked search cancelled/i)).toBeVisible();
     await expect
