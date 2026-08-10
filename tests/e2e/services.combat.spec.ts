@@ -212,11 +212,24 @@ async function submitOnScreenGuess(page: Page, guess: string) {
   const submit = page.getByRole('button', { name: /submit/i });
   await expect(submit).toBeEnabled();
   await submit.click();
+  /*
+   * Fifteen seconds, not the five-second default.
+   *
+   * The heaviest guess in this suite is the 35-letter ranked winner, and accepting it
+   * against hosted services does several things before the draft row goes: the command
+   * round-trip, the terminal transition, automatic rating settlement, and a re-render
+   * of a 35-column board. That legitimately exceeded five seconds on a warm Preview
+   * while every one of those steps succeeded — the failure was the stopwatch, not the
+   * product. The assertion itself is unchanged: the draft must end up empty.
+   */
   await expect
-    .poll(async () => {
-      if ((await draft.count()) === 0) return '';
-      return (await draft.textContent())?.trim() ?? '';
-    })
+    .poll(
+      async () => {
+        if ((await draft.count()) === 0) return '';
+        return (await draft.textContent())?.trim() ?? '';
+      },
+      { timeout: 15_000 },
+    )
     .toBe('');
 }
 
