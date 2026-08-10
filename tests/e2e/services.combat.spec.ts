@@ -2196,7 +2196,30 @@ test.describe.serial('protected Preview services', () => {
     await expect(answerRow).toHaveCount(1);
     await expect(answerRow.locator('.tile.is-answer')).toHaveCount(5);
     await expect(answerRow.locator('.tile-evidence')).toHaveCount(0);
-    await expect(firstPage.locator('.combat-transcript-entry').last()).toContainText('ANSWER');
+    /*
+     * Labelled ANSWER, and sitting immediately after the last real guess — NOT last on the
+     * board, because the transcript always pads to at least six rows, so the final entry is
+     * an empty one.
+     */
+    const answerEntry = firstPage
+      .locator('.combat-transcript-entry')
+      .filter({ has: firstPage.locator('.board-row.is-answer') });
+    await expect(answerEntry).toHaveCount(1);
+    await expect(answerEntry).toContainText('ANSWER');
+    const answerIndex = await firstPage.evaluate(() => {
+      const entries = [...document.querySelectorAll('.combat-transcript-entry')];
+      const index = entries.findIndex((entry) => entry.querySelector('.board-row.is-answer'));
+      const previous = entries[index - 1];
+      return {
+        index,
+        followsAGuess: Boolean(
+          previous?.querySelector('.tile.is-correct, .tile.is-present, .tile.is-absent'),
+        ),
+      };
+    });
+    expect(answerIndex.followsAGuess, 'the answer must sit directly below the last guess').toBe(
+      true,
+    );
     await event('forfeit_reveals_answer_row', {
       scenarioId: rankedDailyScenarioId,
       gameId: rankedDailyGameId,
