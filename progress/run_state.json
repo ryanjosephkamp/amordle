@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8-cycle-c-hosted-green",
+  "currentCheckpoint": "stage-2-v8-cycle-d-hosted-green",
   "status": "awaiting-owner-review",
-  "lastGreenCommit": "7eaf76d",
+  "lastGreenCommit": "7cdc12f",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,7 +361,7 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8-cycle-c-ranked-standardisation-complete-hosted-green",
+  "reportStatus": "v8-cycle-d-combat-portal-complete-hosted-green",
   "updatedAt": "2026-08-10T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
@@ -1067,6 +1067,30 @@
     "standardisationProved": "the GO scenario sets the form to 7 letters and 10 puzzles, then asserts the queue row the server wrote is 5/expert/GO 5 in bucket async:go:untimed:std:v4",
     "settlementProved": "the ranked match settled with two rating profiles and two transactions summing to zero, with no button pressed",
     "siteStatsCaveat": "reports zero ranked players, correctly, because the hosted suite cleans up after itself. The repair is verified structurally rather than by a non-zero count",
+    "production": "unchanged, no release"
+  },
+  "v8CycleDImplementation": {
+    "migration": "20260810090000_amordle_combat_portal_v1.sql, applied",
+    "sha256": "01fd1edc7c06e05d... (registered in the bootstrap ledger)",
+    "portal": "/combat had no page while [4] COMBAT pointed at it; ten time controls by two modes with banded occupancy, one press to queue, and the five existing routes kept as named lanes",
+    "correspondence": "1/3/7 days per move; a per-move deadline is a budget that refills each turn, so the existing materialisation needed no branch. Ladder to ten clocks, buckets to forty",
+    "limits": "ten games overall, five per clock kind, one ranked per bucket, gated in both creation paths because ranked finalize inserts directly",
+    "occupancy": "banded none/few/some/many/busy rather than counted, because exact numbers identify players at this base",
+    "timeoutUnified": "the transition moved into one function that both a player move and the daily sweep call",
+    "cron": "the sweep runs from the existing daily route rather than a fourth endpoint, so the sanctioned interface count stays at three; service-role key confined to src/server/",
+    "remainingHole": "the sweep ends the game but does not apply the rating, because settlement narrows its receipt to auth.uid(). The rating applies when either player next opens it. A system-callable settlement is the honest fix and belongs in its own change",
+    "verifiedAfterApply": "40 active practice buckets, 10 distinct clocks, 12 per-move rows, both RPCs answering",
+    "localGate": "159 domain, 31 browser, 24 fixture, 46 visual; home 198020B JS/24173B CSS",
+    "report": "reports/v8-cycle-d-combat-portal-2026-08-10/README.md"
+  },
+  "v8CycleDHostedAcceptance": {
+    "url": "https://amordle-67xa50t1j-ryanjosephkamps-projects.vercel.app",
+    "commit": "7cdc12f",
+    "fixture": "24 passed",
+    "services": "3 passed",
+    "visual": "46 passed",
+    "parity": "237/237",
+    "residue": "none",
     "production": "unchanged, no release"
   }
 }
