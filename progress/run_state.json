@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8-cycle-d-hosted-green",
+  "currentCheckpoint": "stage-2-v8.1-matchmaking-repair-hosted-green",
   "status": "awaiting-owner-review",
-  "lastGreenCommit": "7cdc12f",
+  "lastGreenCommit": "7ab74fc",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8-cycle-d-combat-portal-complete-hosted-green",
-  "updatedAt": "2026-08-10T00:00:00Z",
+  "reportStatus": "v8.1-matchmaking-repair-complete-hosted-green",
+  "updatedAt": "2026-08-11T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1086,6 +1086,35 @@
   "v8CycleDHostedAcceptance": {
     "url": "https://amordle-67xa50t1j-ryanjosephkamps-projects.vercel.app",
     "commit": "7cdc12f",
+    "fixture": "24 passed",
+    "services": "3 passed",
+    "visual": "46 passed",
+    "parity": "237/237",
+    "residue": "none",
+    "production": "unchanged, no release"
+  },
+  "v81MatchmakingRepair": {
+    "trigger": "owner reported two accounts entering the same ranked time control were not matched",
+    "rootCause": "Cycle D checked capacity in finalize, after claim had paired the players, flipped both queue rows to matched and reserved a game id. A refusal could not undo that, so both players held a row pointing at a game that was never created and retried forever",
+    "evidence": "four queue rows matched against a game id with no game; one account in 12 live games against a limit of 10; eight of those playing with zero moves since July",
+    "compounding": "the failure re-enabled the portal grid, so pressing again minted a second queue request and orphaned the first; the authority pairs oldest-first, so an opponent could match with an orphan no client was watching",
+    "m1": "capacity decided in claim before anything is written; an opponent at their limit is skipped rather than refused so one full player cannot block the queue",
+    "m2": "the limit counts playing/holding with move_count > 0, not open lobbies and abandoned shells",
+    "m3": "finalize lost its copy of the gate entirely; a second gate there could only restore the ability to strand a pair",
+    "m4": "four phantom queue rows expired",
+    "m5": "five abandoned legacy games cancelled, not deleted, as authorised \u2014 the transition the state machine defines for a game that ends unplayed, leaving the ledger referring to rows that exist",
+    "c1": "pressing a second time control switches rather than stacks",
+    "c2": "the portal opens the match it found; auto-navigation was gated on a /combat/practice prefix and the portal is /combat",
+    "c3": "COMBAT_LIMIT names which limit and the way past it",
+    "c4": "Clear all beside Mark all read; dismissal is per revision so a cleared game speaks up again when its state changes",
+    "hostedCoverage": "the two-account scenario now sends the joining player through the portal, the path that was broken and which nothing covered",
+    "verifiedAfterApply": "0 live games, 0 phantom queue rows; still 0 phantoms after a full hosted run creating real matches",
+    "localGate": "161 domain, 31 browser, 24 fixture, 46 visual",
+    "report": "reports/v8.1-matchmaking-repair-2026-08-11/README.md"
+  },
+  "v81HostedAcceptance": {
+    "url": "https://amordle-h402khif2-ryanjosephkamps-projects.vercel.app",
+    "commit": "7ab74fc",
     "fixture": "24 passed",
     "services": "3 passed",
     "visual": "46 passed",
