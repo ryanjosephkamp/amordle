@@ -1948,9 +1948,21 @@ test.describe.serial('protected Preview services', () => {
       /Ranked OG · 5 letters/i,
     );
 
-    await secondPage.goto(`${baseURL}/combat/practice?length=5`);
-    await secondPage.getByLabel('Clock').selectOption('300000');
-    await secondPage.getByRole('button', { name: 'Find ranked match' }).click();
+    /*
+     * v8.1. The joining player comes through the COMBAT portal, which is the path the
+     * owner actually reported broken and which nothing covered.
+     *
+     * Two things are being proved here that the practice form cannot prove. That pressing
+     * a time control tile enters the right queue at all — the portal builds its own
+     * ranked config rather than reading a form. And that a match found while standing on
+     * the portal OPENS, which it did not: auto-navigation was gated on a
+     * `/combat/practice` prefix, so `/combat` — the page whose entire purpose is a button
+     * saying "find me a game" — was the one place the match stayed closed.
+     */
+    await secondPage.goto(`${baseURL}/combat`);
+    await secondPage
+      .getByRole('button', { name: /Find a ranked OG match at 5 minutes per player/i })
+      .click();
     const rankedPracticeTwo = await registerLatestQueueRequest(playerTwo!, 'practice', 'og');
 
     const matchReady = firstPage.locator('.ranked-search-status.is-matched');
@@ -1967,7 +1979,13 @@ test.describe.serial('protected Preview services', () => {
       autoNavigatedAwayFromLobby: false,
       manualRefreshRequired: false,
     });
+    // Opened by itself, from the portal, with nothing else pressed.
     await expect(secondPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });
+    await event('ranked_portal_entry_opened_the_match', {
+      scenarioId: rankedDailyScenarioId,
+      enteredFrom: '/combat',
+      autoOpened: true,
+    });
     const rankedPracticeGameId = new URL(firstPage.url()).pathname.split('/').at(-1);
     expect(rankedPracticeGameId).toBe(new URL(secondPage.url()).pathname.split('/').at(-1));
     if (!rankedPracticeGameId) throw new Error('Ranked Practice game ID was unavailable.');

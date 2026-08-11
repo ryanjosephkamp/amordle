@@ -344,6 +344,7 @@ describe('platform domains', () => {
           route: '/combat/match/g',
           createdAt: '2026-01-01T00:00:00Z',
           read: false,
+          dismissed: false,
         },
         {
           id: 'new',
@@ -353,6 +354,7 @@ describe('platform domains', () => {
           route: '/combat/match/g',
           createdAt: '2026-01-02T00:00:00Z',
           read: false,
+          dismissed: false,
         },
       ],
     );
@@ -384,11 +386,13 @@ describe('platform domains', () => {
       route: '/combat/match/game',
       createdAt: '2026-07-27T12:00:00.000Z',
       read: true,
+      dismissed: false,
     };
     const remoteReplay = {
       ...read,
       id: 'remote-replay',
       read: false,
+      dismissed: false,
       detail: 'Nova · Ranked · OG · 5 letters',
       board: { wordLength: 5, rows: ['aapca'] },
     };
@@ -411,6 +415,7 @@ describe('platform domains', () => {
       route: '/combat/match/game',
       createdAt: '2026-07-27T12:00:00.000Z',
       read: false,
+      dismissed: false,
     };
     const turn = {
       ...base,
@@ -428,6 +433,7 @@ describe('platform domains', () => {
       route: '/combat/match/game',
       createdAt: '2026-07-27T12:00:00.000Z',
       read: false,
+      dismissed: false,
     });
     expect(Object.keys(notificationMetadata(turn))).not.toContain('board');
 
@@ -458,14 +464,71 @@ describe('platform domains', () => {
       route: '/combat/match/game',
       createdAt: '2026-07-27T12:00:00.000Z',
       read: true,
+      dismissed: false,
     };
     const revised = {
       ...previous,
       durableRevision: 'game:8',
       createdAt: '2026-07-27T12:01:00.000Z',
       read: false,
+      dismissed: false,
     };
     expect(mergeNotifications([previous], [revised])).toEqual([revised]);
     expect(mergeNotifications([previous], [])).toEqual([]);
+  });
+
+  /*
+   * v8.1-C4. Clear all dismisses a STATE, not a game.
+   *
+   * If dismissal survived a revision change, a player could clear "your turn" once and
+   * never be told about that game again — losing on time to a button they pressed for
+   * tidiness. So it has to persist across a re-read of the same state, and it has to fall
+   * away the moment the underlying game moves.
+   */
+  it('keeps a cleared notification cleared, until its game changes', () => {
+    const cleared = {
+      id: 'turn:game',
+      accountNamespace: 'account:a',
+      kind: 'turn' as const,
+      durableRevision: 'game:7',
+      route: '/combat/match/game',
+      createdAt: '2026-08-11T12:00:00.000Z',
+      read: true,
+      dismissed: true,
+    };
+    // The feed keeps returning the same state, because the game has not moved.
+    const sameState = { ...cleared, read: false, dismissed: false, detail: 'Nova · Ranked' };
+    expect(mergeNotifications([cleared], [sameState])).toEqual([
+      { ...sameState, read: true, dismissed: true },
+    ]);
+
+    // The opponent moves. A new revision is a new notification, and it must come back.
+    const opponentMoved = {
+      ...sameState,
+      durableRevision: 'game:8',
+      createdAt: '2026-08-11T12:05:00.000Z',
+    };
+    expect(mergeNotifications([cleared], [opponentMoved])).toEqual([opponentMoved]);
+    expect(mergeNotifications([cleared], [opponentMoved])[0]?.dismissed).toBe(false);
+  });
+
+  // The stored projection has to carry the flag, or clearing survives only until reload.
+  it('writes the cleared flag down with the rest of the metadata', () => {
+    const item = {
+      id: 'result:game',
+      accountNamespace: 'account:a',
+      kind: 'result' as const,
+      durableRevision: 'game:9',
+      route: '/combat/results/game',
+      createdAt: '2026-08-11T12:00:00.000Z',
+      read: true,
+      dismissed: true,
+      detail: 'Nova · Ranked',
+      board: { wordLength: 5, rows: ['ccccc'] },
+    };
+    const stored = notificationMetadata(item);
+    expect(stored.dismissed).toBe(true);
+    expect(stored).not.toHaveProperty('board');
+    expect(stored).not.toHaveProperty('detail');
   });
 });

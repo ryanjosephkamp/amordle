@@ -7,6 +7,15 @@ export class ServiceError extends Error {
   constructor(
     message: string,
     readonly code: string,
+    /*
+     * v8.1. The authority's `detail` clause, carried through rather than discarded.
+     *
+     * Every RPC in this project raises with both a message and a detail — `COMBAT_LIMIT`
+     * alongside `COMBAT_LIMIT_OVERALL`, say — and the detail is the half that says which
+     * limit was hit. Dropping it left the client able to report only that something went
+     * wrong, which is how a full account came to be told "matchmaking needs attention".
+     */
+    readonly detail?: string,
   ) {
     super(message);
     this.name = 'ServiceError';
@@ -17,6 +26,7 @@ export function throwServiceError(error: PostgrestError | null): never {
   throw new ServiceError(
     error?.message ?? 'The service did not return data.',
     error?.code ?? 'SERVICE',
+    error?.details ?? undefined,
   );
 }
 

@@ -24,7 +24,7 @@ import {
   removeRankedQueueIntent,
   writeRankedQueueIntent,
 } from '@/adapters/durable-combat';
-import { operationId } from '@/adapters/supabase/shared';
+import { operationId, ServiceError } from '@/adapters/supabase/shared';
 import type { RankedPracticeQueueIntent } from '@/adapters/session-combat';
 import { useAuth } from '@/components/providers';
 import { rankedPracticeQueueTransition, sameRankedPracticeConfig } from '@/domain/multiplayer';
@@ -51,7 +51,44 @@ import type { RankedPracticeConfig, RankedPracticeQueuePhase } from '@/domain/mu
  */
 
 const POLL_INTERVAL_MS = 5_000;
-const LOBBY_ROUTE_PREFIX = '/combat/practice';
+
+/*
+ * v8.1-C2. Where a found match opens itself.
+ *
+ * This used to be a `startsWith('/combat/practice')` test, which meant the portal at
+ * `/combat` — the page whose whole purpose is a button that says "find me a game" — was
+ * the one place a match did NOT open. The player pressed a time control, a match was
+ * made, and nothing visibly happened beyond a small strip in the corner.
+ *
+ * Both waiting rooms qualify; nothing else does. In particular it must never fire on
+ * `/combat/match/...`, where the player is already in a game and being moved out of it
+ * would be indefensible.
+ */
+function autoOpensMatch(pathname: string | null | undefined): boolean {
+  if (!pathname) return false;
+  return pathname === '/combat' || pathname.startsWith('/combat/practice');
+}
+
+/*
+ * v8.1-C3. The limits, said out loud.
+ *
+ * The authority raises `COMBAT_LIMIT` with a detail naming which one was hit. Without
+ * this map every case collapsed into "matchmaking needs attention", which told a player
+ * with ten games in progress nothing they could act on.
+ */
+function limitMessage(detail: string | undefined): string | null {
+  if (!detail?.startsWith('COMBAT_LIMIT')) return null;
+  if (detail === 'COMBAT_LIMIT_BUCKET') {
+    return 'You already have a ranked game at this time control. Finish it before starting another.';
+  }
+  if (detail === 'COMBAT_LIMIT_CORRESPONDENCE') {
+    return 'You have five correspondence games in progress. Finish or forfeit one to start another.';
+  }
+  if (detail === 'COMBAT_LIMIT_TIMED') {
+    return 'You have five timed games in progress. Finish or forfeit one to start another.';
+  }
+  return 'You have ten games in progress, which is the limit. Finish or forfeit one to start another.';
+}
 
 export interface RankedQueueValue {
   /** False until the durable intent has been read, so callers never flash "no search". */
@@ -143,7 +180,7 @@ export function RankedQueueProvider({ children }: PropsWithChildren) {
    */
   const onLobbyRoute = useRef(false);
   useEffect(() => {
-    onLobbyRoute.current = pathname?.startsWith(LOBBY_ROUTE_PREFIX) ?? false;
+    onLobbyRoute.current = autoOpensMatch(pathname);
   }, [pathname]);
 
   const invalidateCombat = useCallback(
@@ -258,6 +295,17 @@ export function RankedQueueProvider({ children }: PropsWithChildren) {
       setMessage(queuePhaseMessage(transition.phase));
     },
     onError: (error) => {
+      /*
+       * v8.1-C3. A limit is not a malfunction, so it does not get the malfunction copy.
+       * It is reported as `failed` because the search genuinely cannot proceed, but with
+       * a sentence that names the limit and the way past it.
+       */
+      const limit = error instanceof ServiceError ? limitMessage(error.detail) : null;
+      if (limit) {
+        setPhase('failed');
+        setMessage(limit);
+        return;
+      }
       const conflict =
         error instanceof Error &&
         /conflict|stale|version|configuration|another account/i.test(error.message);
@@ -266,18 +314,39 @@ export function RankedQueueProvider({ children }: PropsWithChildren) {
     },
   });
 
+  /*
+   * v8.1-C1. Where a switch is remembered while the old search is being cancelled.
+   *
+   * Pressing a second time control used to mint a second queue request and abandon the
+   * first — which stayed `queued` on the server, kept counting against the five-request
+   * cap, and, because the authority pairs candidates oldest-first, could be matched by an
+   * opponent while no client was watching it. That is a game neither player can reach.
+   *
+   * A switch is therefore cancel-then-create, never create-then-forget.
+   */
+  const pendingSwitch = useRef<RankedPracticeConfig | null>(null);
+
   const cancelSearch = useMutation({
     mutationFn: async (current: RankedPracticeQueueIntent) =>
       cancelRankedPractice(current.requestId, operationId('ranked-practice-cancel')),
     onSuccess: (status) => {
       if (intent) void removeRankedQueueIntent(intent.ownerUserId).catch(() => undefined);
       setIntent(null);
+      const queued = pendingSwitch.current;
+      pendingSwitch.current = null;
+      if (queued) {
+        setPhase('queued');
+        setMessage(queuePhaseMessage('queued'));
+        advanceRef.current({ existing: null, config: queued });
+        return;
+      }
       const next = status?.status === 'expired' ? 'expired' : 'cancelled';
       setPhase(next);
       setMessage(queuePhaseMessage(next));
       void invalidateCombat();
     },
     onError: () => {
+      pendingSwitch.current = null;
       setPhase('failed');
       setMessage('The cancel request needs attention. The ranked search remains recoverable.');
     },
@@ -290,6 +359,10 @@ export function RankedQueueProvider({ children }: PropsWithChildren) {
    */
   const advanceRef = useRef(advance.mutate);
   const busyRef = useRef(false);
+  const intentRef = useRef<RankedPracticeQueueIntent | null>(null);
+  useEffect(() => {
+    intentRef.current = intent;
+  }, [intent]);
   useEffect(() => {
     advanceRef.current = advance.mutate;
     busyRef.current = advance.isPending || cancelSearch.isPending;
@@ -315,11 +388,22 @@ export function RankedQueueProvider({ children }: PropsWithChildren) {
     };
   }, [pollable]);
 
-  const start = useCallback((config: RankedPracticeConfig) => {
-    if (busyRef.current) return;
-    setMatchedGameId(null);
-    advanceRef.current({ existing: null, config });
-  }, []);
+  const start = useCallback(
+    (config: RankedPracticeConfig) => {
+      if (busyRef.current) return;
+      setMatchedGameId(null);
+      const current = intentRef.current;
+      if (current) {
+        // Same control pressed again while it is already running: nothing to do.
+        if (sameRankedPracticeConfig(current.config, config)) return;
+        pendingSwitch.current = config;
+        cancelSearch.mutate(current);
+        return;
+      }
+      advanceRef.current({ existing: null, config });
+    },
+    [cancelSearch],
+  );
 
   const poll = useCallback(() => {
     if (busyRef.current || !intent) return;

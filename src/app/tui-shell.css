@@ -5101,3 +5101,27 @@ html[data-game-presentation='review'] .game-route {
   align-items: center;
   white-space: nowrap;
 }
+
+/*
+ * v8.1-C1. The control a search is actually running on.
+ *
+ * The grid stays pressable while searching, because a press now switches. That only works
+ * if the player can see which tile they are already in — otherwise "switch" is indistinct
+ * from "start", which is the confusion that let duplicate queue requests pile up.
+ */
+.portal-cell.is-searching {
+  background: var(--accent-soft);
+  box-shadow: inset 2px 0 var(--accent-text);
+}
+
+.portal-searching {
+  color: var(--accent-text);
+  font-size: var(--text-1);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-cell:hover .portal-searching,
+.portal-cell:focus-visible .portal-searching {
+  color: var(--control-ink-on-selected);
+}

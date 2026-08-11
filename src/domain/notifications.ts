@@ -22,6 +22,15 @@ export interface PlayerNotification {
   route: string;
   createdAt: string;
   read: boolean;
+  /*
+   * v8.1-C4. Cleared by the player, for THIS state of the notification.
+   *
+   * Dismissal is remembered against `durableRevision`, not against the game, so clearing
+   * "your turn" hides it now and your opponent's next move raises a fresh one. Dismissing
+   * a game permanently would let a player silence their own turn alerts with a button
+   * pressed once for tidiness, and then lose on time to a game nobody told them about.
+   */
+  dismissed: boolean;
   /**
    * v8-B3. Who and what, so a row is legible without opening it. Optional because it
    * is derived from the live feed and never persisted — see `mergeNotifications`.
@@ -104,7 +113,7 @@ export function mergeNotifications(
      * for a read item, as this used to, therefore meant every read notification lost
      * its summary and its board on the next merge.
      */
-    return previous.read ? { ...notification, read: true } : notification;
+    return { ...notification, read: previous.read, dismissed: previous.dismissed };
   });
   return merged.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 }
@@ -119,5 +128,6 @@ export function notificationMetadata(notification: PlayerNotification): PlayerNo
     route: notification.route,
     createdAt: notification.createdAt,
     read: notification.read,
+    dismissed: notification.dismissed,
   };
 }

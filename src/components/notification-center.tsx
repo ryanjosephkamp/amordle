@@ -38,6 +38,12 @@ const notificationSchema = z
     route: z.string(),
     createdAt: z.string(),
     read: z.boolean(),
+    /*
+     * v8.1-C4. Optional with a default, because this schema parses records written by
+     * builds that predate the field. A required field would make every stored envelope
+     * fail validation, be treated as corrupt, and silently reset everyone's read state.
+     */
+    dismissed: z.boolean().default(false),
   })
   .strict();
 const stateSchema = z.array(notificationSchema);
@@ -84,10 +90,16 @@ export function NotificationCenter() {
     () => mergeNotifications(metadata, feed.data?.items ?? []).slice(0, 40),
     [feed.data?.items, metadata],
   );
-  const unread = notifications.filter((item) => !item.read).length;
+  /*
+   * v8.1-C4. Dismissed rows leave the list, the lane counts and the badge together. A
+   * cleared notification that still contributed to a count would make the number on the
+   * bell disagree with the panel behind it.
+   */
+  const active = useMemo(() => notifications.filter((item) => !item.dismissed), [notifications]);
+  const unread = active.filter((item) => !item.read).length;
   const visible = useMemo(
-    () => notifications.filter((item) => matchesCategory(item, category)),
-    [category, notifications],
+    () => active.filter((item) => matchesCategory(item, category)),
+    [active, category],
   );
 
   const persist = useCallback(
@@ -219,9 +231,25 @@ export function NotificationCenter() {
             <strong>Notifications</strong>
             <button
               type="button"
+              disabled={!active.length}
               onClick={() => persist(notifications.map((item) => ({ ...item, read: true })))}
             >
               Mark all read
+            </button>
+            {/*
+              v8.1-C4. Clears everything, not just the lane on screen — the two actions
+              act on the same set, which is the only way they read consistently next to
+              each other. Dismissal is remembered per revision, so a cleared game speaks
+              up again the moment its state changes.
+            */}
+            <button
+              type="button"
+              disabled={!active.length}
+              onClick={() =>
+                persist(notifications.map((item) => ({ ...item, read: true, dismissed: true })))
+              }
+            >
+              Clear all
             </button>
           </div>
           {/*
@@ -232,7 +260,7 @@ export function NotificationCenter() {
            */}
           <div className="notification-filters" role="group" aria-label="Filter notifications">
             {notificationCategories.map((option) => {
-              const count = countByCategory(notifications, option.id);
+              const count = countByCategory(active, option.id);
               return (
                 <button
                   key={option.id}
@@ -307,9 +335,7 @@ export function NotificationCenter() {
           ) : (
             <>
               <p>
-                {notifications.length
-                  ? 'Nothing in this lane right now.'
-                  : 'No current notifications.'}
+                {active.length ? 'Nothing in this lane right now.' : 'No current notifications.'}
               </p>
               {(feed.isError || (feed.data?.failedSources ?? 0) > 0) && (
                 <NotificationRefreshNotice
@@ -574,6 +600,7 @@ function notification(
     route,
     createdAt,
     read: false,
+    dismissed: false,
     ...(extra.detail ? { detail: extra.detail } : {}),
     ...(extra.board ? { board: extra.board } : {}),
   };

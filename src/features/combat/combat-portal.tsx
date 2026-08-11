@@ -96,6 +96,7 @@ export function CombatPortal() {
   };
 
   const searching = rankedQueue.phase === 'queued';
+  const live = searching ? rankedQueue.intent : null;
 
   return (
     <div className="combat-portal">
@@ -135,21 +136,38 @@ export function CombatPortal() {
                       : 'per player'}
                 </span>
               </span>
-              {lanes.map(({ mode, occupancy: cell }) => (
-                <button
-                  key={mode}
-                  type="button"
-                  className="portal-cell"
-                  disabled={searching || rankedQueue.isBusy}
-                  aria-label={`Find a ranked ${mode.toUpperCase()} match at ${clock.display}${
-                    hardMode ? ', Hard Mode' : ''
-                  }`}
-                  onClick={() => start(mode, clock.timeLimitMs)}
-                >
-                  <OccupancyDot band={cell?.queued_band ?? 'none'} label="waiting" />
-                  <OccupancyDot band={cell?.playing_band ?? 'none'} label="playing" />
-                </button>
-              ))}
+              {lanes.map(({ mode, occupancy: cell }) => {
+                const isSearchingThis =
+                  live?.config.mode === mode &&
+                  live.config.timeLimitMs === clock.timeLimitMs &&
+                  live.config.hardMode === hardMode;
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    className={isSearchingThis ? 'portal-cell is-searching' : 'portal-cell'}
+                    /*
+                     * v8.1-C1. Deliberately still pressable while a search is running: the
+                     * press switches to this control. It was disabled before, which is why a
+                     * failed search — re-enabling the grid — was the only way to stack a
+                     * second queue request, and stacking is what produced matches neither
+                     * player could reach.
+                     */
+                    disabled={rankedQueue.isBusy}
+                    aria-pressed={isSearchingThis}
+                    aria-label={`${
+                      isSearchingThis ? 'Searching for' : 'Find'
+                    } a ranked ${mode.toUpperCase()} match at ${clock.display}${
+                      hardMode ? ', Hard Mode' : ''
+                    }`}
+                    onClick={() => start(mode, clock.timeLimitMs)}
+                  >
+                    <OccupancyDot band={cell?.queued_band ?? 'none'} label="waiting" />
+                    <OccupancyDot band={cell?.playing_band ?? 'none'} label="playing" />
+                    {isSearchingThis && <span className="portal-searching">searching…</span>}
+                  </button>
+                );
+              })}
             </div>
           ))}
         </div>
