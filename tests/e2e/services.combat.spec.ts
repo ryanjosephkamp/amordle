@@ -1986,6 +1986,32 @@ test.describe.serial('protected Preview services', () => {
       enteredFrom: '/combat',
       autoOpened: true,
     });
+
+    /*
+     * v9-R5. The Daily calendar, opened by a signed-in account with real history.
+     *
+     * The owner hit the route error boundary here and every check this project had said the
+     * page was fine, because every route walk is signed-out — the calendar reads three
+     * account queries and derives from them during render, and none of that runs for a
+     * visitor. That is the gap this closes: the route is now exercised with an account that
+     * has games, entitlements and an economy behind it.
+     *
+     * Asserting the error boundary is ABSENT is the point. A route that throws still
+     * returns 200 with a rendered page, so a status check or a screenshot would pass.
+     */
+    await secondPage.goto(`${baseURL}/calendar`);
+    await expect(secondPage.getByRole('heading', { name: /daily calendar/i })).toBeVisible({
+      timeout: 20_000,
+    });
+    await expect(secondPage.getByText(/this route could not be loaded/i)).toHaveCount(0);
+    await expect(secondPage.locator('.calendar-grid .calendar-day').first()).toBeVisible();
+    await event('signed_in_calendar_rendered', {
+      scenarioId: rankedDailyScenarioId,
+      route: '/calendar',
+      errorBoundaryShown: false,
+    });
+    await secondPage.goBack();
+    await expect(secondPage).toHaveURL(/\/combat\/match\//, { timeout: 30_000 });
     const rankedPracticeGameId = new URL(firstPage.url()).pathname.split('/').at(-1);
     expect(rankedPracticeGameId).toBe(new URL(secondPage.url()).pathname.split('/').at(-1));
     if (!rankedPracticeGameId) throw new Error('Ranked Practice game ID was unavailable.');
