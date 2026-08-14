@@ -595,6 +595,15 @@ export type Database = {
         Returns: boolean;
       };
       amordle_clock_kind: { Args: { p_time_limit_ms: number }; Returns: string };
+      amordle_combat_capacity_block: {
+        Args: {
+          p_ranked: boolean;
+          p_rating_bucket: string;
+          p_time_limit_ms: number;
+          p_user_id: string;
+        };
+        Returns: string;
+      };
       amordle_create_combat_v3: {
         Args: {
           p_created_at?: string;
@@ -631,6 +640,9 @@ export type Database = {
         Args: { p_game_id: string; p_guess: string; p_puzzle_index: number };
         Returns: boolean;
       };
+      amordle_lane_is_public: { Args: { p_bucket: string }; Returns: boolean };
+      amordle_lane_key: { Args: { p_bucket: string }; Returns: string };
+      amordle_lane_public_id: { Args: { p_bucket: string }; Returns: string };
       amordle_ledger_moves: { Args: { p_game_id: string }; Returns: Json };
       amordle_occupancy_band: { Args: { p_count: number }; Returns: string };
       amordle_participant_projection: {
@@ -649,6 +661,7 @@ export type Database = {
         Args: { p_game_id: string; p_player_id: string; p_puzzle_index: number };
         Returns: boolean;
       };
+      amordle_public_lane_storage: { Args: { p_lane: string }; Returns: string };
       amordle_seeded_rows: {
         Args: { p_game_id: string; p_puzzle_index: number };
         Returns: Json;
@@ -661,6 +674,10 @@ export type Database = {
           p_word_length: number;
         };
         Returns: string[];
+      };
+      amordle_settle_ranked_practice: {
+        Args: { p_action_id: string; p_actor: string; p_game_id: string };
+        Returns: Json;
       };
       amordle_storage_bucket:
         | { Args: { p_mode: string; p_time_limit_ms: number }; Returns: string }
@@ -3514,6 +3531,10 @@ export type Database = {
           reveal_one_letter: number;
           revision: number;
         }[];
+      };
+      reap_amordle_abandoned_games_v1: {
+        Args: { p_idle_days?: number; p_limit?: number };
+        Returns: Json;
       };
       release_daily_multiplayer_claim:
         | {

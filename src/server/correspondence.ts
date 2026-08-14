@@ -8,6 +8,10 @@ export interface CorrespondenceSweepResult {
   ran: boolean;
   examined: number;
   settled: number;
+  /** v9-R1. Games whose rating the sweep applied itself, rather than leaving to a player. */
+  rated: number;
+  /** v9-R2. Games nobody ever played, retired in the same run. */
+  reaped: number;
   reason?: string;
 }
 
@@ -29,7 +33,14 @@ export async function sweepExpiredCorrespondence(): Promise<CorrespondenceSweepR
   const config = getPublicSupabaseConfig();
   const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!config || !serviceKey || serviceKey.length < 20) {
-    return { ran: false, examined: 0, settled: 0, reason: 'service_credentials_unavailable' };
+    return {
+      ran: false,
+      examined: 0,
+      settled: 0,
+      rated: 0,
+      reaped: 0,
+      reason: 'service_credentials_unavailable',
+    };
   }
   const client = createClient<Database>(config.url, serviceKey, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -38,12 +49,34 @@ export async function sweepExpiredCorrespondence(): Promise<CorrespondenceSweepR
     p_limit: 200,
   });
   if (error) {
-    return { ran: false, examined: 0, settled: 0, reason: 'sweep_failed' };
+    return { ran: false, examined: 0, settled: 0, rated: 0, reaped: 0, reason: 'sweep_failed' };
   }
-  const result = (data ?? {}) as { examined?: number; settled?: number };
+  const result = (data ?? {}) as { examined?: number; settled?: number; rated?: number };
+
+  /*
+   * v9-R2. The reaper runs beside the sweep, not on a schedule of its own.
+   *
+   * Its failure is reported rather than thrown: retiring games nobody played is the least
+   * urgent thing this route does, and it must not take down the settlement that shares it.
+   */
+  let reaped = 0;
+  try {
+    const reap = await client.rpc('reap_amordle_abandoned_games_v1', {
+      p_idle_days: 14,
+      p_limit: 200,
+    });
+    if (!reap.error) {
+      reaped = Number((reap.data as { reaped?: number } | null)?.reaped ?? 0);
+    }
+  } catch {
+    // Reported as zero rather than thrown — see above.
+  }
+
   return {
     ran: true,
     examined: Number(result.examined ?? 0),
     settled: Number(result.settled ?? 0),
+    rated: Number(result.rated ?? 0),
+    reaped,
   };
 }

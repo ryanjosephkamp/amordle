@@ -27,6 +27,8 @@ export async function GET(request: Request) {
     ran: false,
     examined: 0,
     settled: 0,
+    rated: 0,
+    reaped: 0,
     reason: 'sweep_threw',
   }));
   try {
