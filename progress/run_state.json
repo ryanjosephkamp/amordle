@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8.2-owner-accepted",
-  "status": "owner-accepted",
-  "lastGreenCommit": "c7326ce",
+  "currentCheckpoint": "stage-2-v9-close-out-hosted-green-awaiting-release",
+  "status": "awaiting-owner-action",
+  "lastGreenCommit": "0b20016",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,7 +361,7 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8.2-public-lanes-and-portal-owner-accepted",
+  "reportStatus": "v9-close-out-complete-release-blocked-on-service-key",
   "updatedAt": "2026-08-14T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
@@ -1162,5 +1162,34 @@
     "4_abandonedGameReaper": "nothing retires abandoned games automatically. The backlog that caused the v8.1 deadlock was cleared by hand",
     "5_dailyCrash": "contained, not diagnosed. The route error page now reports the real failure; if it recurs the copied text identifies it",
     "6_ssrSkeleton": "every route first-paints a skeleton because the app shell suspends during SSR. Pre-existing, app-wide, deliberately accepted rather than fixed"
+  },
+  "v9CloseOut": {
+    "migration": "20260814120000_amordle_system_settlement_and_reaper_v1.sql, applied",
+    "r1": "settlement re-emitted once as a private core taking an explicit actor; the public RPC is a thin wrapper supplying auth.uid(). A null actor is the system. Proven: a correspondence game past its deadline ends completed/timeout and both ratings apply, 2 transactions and 2 profiles",
+    "r2": "reaper retires zero-move games idle 14 days, cancelled. Proven both ways: zero-move retired, played game in the same window untouched",
+    "r3": "/combat/active copy no longer promises recently completed games",
+    "r4": "AppShell no longer calls useSearchParams; the ?focus=1 read moved to a leaf under its own Suspense that reports up. /about went from 19.7kB of skeleton with no nav or heading to 23kB with both; /help is 76kB",
+    "r4Correction": "building the focus hrefs from the pathname alone dropped ?generation=19, which identifies which Solo game you are in \u2014 the Solo fixture test caught it and the hrefs now come from the reader",
+    "r5": "signed-in /calendar pass in the hosted suite (every route walk was signed-out, which is why a data-dependent crash reached the owner); a domain test asserts the prerendered document carries the heading and the navigation",
+    "defectsFoundByTesting": "amordle_timeout_game (Cycle D) wrote requested_command = timeout, which the ledger CHECK rejects \u2014 the correspondence timeout had NEVER worked and nothing reported it because no per-move deadline had passed. And my reaper set terminal_reason = abandoned, also rejected, which would have failed silently inside the cron forever",
+    "localGate": "163 domain, 31 browser, 24 fixture, 52 visual",
+    "report": "reports/v9-close-out-2026-08-14/README.md"
+  },
+  "v9HostedAcceptance": {
+    "url": "https://amordle-3rn9p6w27-ryanjosephkamps-projects.vercel.app",
+    "commit": "0b20016",
+    "fixture": "24 passed",
+    "services": "3 passed",
+    "visual": "52 passed",
+    "parity": "237/237",
+    "residue": "none"
+  },
+  "releaseBlocker": {
+    "what": "Production has no SUPABASE_SERVICE_ROLE_KEY, so the correspondence sweep and the reaper would run and do nothing",
+    "who": "the owner \u2014 putting a service credential into a hosting provider is theirs to do",
+    "command": "vercel env add SUPABASE_SERVICE_ROLE_KEY production",
+    "keyLocation": ".codex-internal/evidence/operator/supabase-service-key",
+    "whyBefore": "Vercel applies environment changes to new deployments, so adding it after the release would mean releasing twice",
+    "thenRun": "vercel build --prod && vercel deploy --prebuilt --prod, verify against Production, tag the released commit"
   }
 }
