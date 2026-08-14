@@ -227,30 +227,39 @@ export function NotificationCenter() {
           role="dialog"
           aria-label="Notifications"
         >
-          <div className="section-heading">
+          {/*
+            v8.2-P1. The two actions are one group, not two siblings of the title.
+            `.section-heading` was built for a title and a single button; a third child
+            inside a 24rem panel squeezed the title below its own text width, so it spilled
+            underneath the buttons. Grouping means the heading has two children again and
+            can wrap the pair onto their own row when they do not fit beside the title.
+          */}
+          <div className="section-heading notification-heading">
             <strong>Notifications</strong>
-            <button
-              type="button"
-              disabled={!active.length}
-              onClick={() => persist(notifications.map((item) => ({ ...item, read: true })))}
-            >
-              Mark all read
-            </button>
-            {/*
-              v8.1-C4. Clears everything, not just the lane on screen — the two actions
-              act on the same set, which is the only way they read consistently next to
-              each other. Dismissal is remembered per revision, so a cleared game speaks
-              up again the moment its state changes.
-            */}
-            <button
-              type="button"
-              disabled={!active.length}
-              onClick={() =>
-                persist(notifications.map((item) => ({ ...item, read: true, dismissed: true })))
-              }
-            >
-              Clear all
-            </button>
+            <div className="notification-heading-actions">
+              <button
+                type="button"
+                disabled={!active.length}
+                onClick={() => persist(notifications.map((item) => ({ ...item, read: true })))}
+              >
+                Mark all read
+              </button>
+              {/*
+                v8.1-C4. Clears everything, not just the lane on screen — the two actions
+                act on the same set, which is the only way they read consistently next to
+                each other. Dismissal is remembered per revision, so a cleared game speaks
+                up again the moment its state changes.
+              */}
+              <button
+                type="button"
+                disabled={!active.length}
+                onClick={() =>
+                  persist(notifications.map((item) => ({ ...item, read: true, dismissed: true })))
+                }
+              >
+                Clear all
+              </button>
+            </div>
           </div>
           {/*
            * v8-B3. Lanes, because "notifications" was one undifferentiated list in

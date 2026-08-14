@@ -1697,3 +1697,44 @@ dialog.app-modal[open]::backdrop {
     color: ButtonText;
   }
 }
+
+/*
+ * v8.2-P1. The notification panel's header.
+ *
+ * `.section-heading` is a two-child layout — title, then one action — with no wrap. Adding
+ * Clear all made it three children inside a 24rem panel, so the title was flexed below its
+ * own text width and, with nothing clipping it, spilled underneath the buttons while each
+ * button broke its label across two lines.
+ *
+ * The actions are one group now, restoring the two-child shape, and the heading may wrap so
+ * the group drops to its own row when it cannot sit beside the title. No breakpoint is
+ * involved: the content decides, which is why this holds at any panel width and in any
+ * translation.
+ */
+.notification-heading {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3) var(--space-4);
+}
+
+.notification-heading > strong {
+  flex: 1 1 auto;
+}
+
+.notification-heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/*
+ * A label that wraps mid-phrase reads as broken rather than as tight. The group wraps; the
+ * words inside a button do not.
+ *
+ * Scoped to the heading rather than to the group, so it holds for any action placed there
+ * — including one added as a direct sibling, which is the shape that failed.
+ */
+.notification-heading button {
+  white-space: nowrap;
+}

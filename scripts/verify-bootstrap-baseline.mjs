@@ -53,6 +53,10 @@ const authorizedAdditiveMigrations = new Map([
     '20260811010000_amordle_matchmaking_repair_v1.sql',
     'dd30b1c448ae9a6b8529b0e74f46ad613eca630f2ff0ab93d0f67afe4c456a89',
   ],
+  [
+    '20260814010000_amordle_public_ranked_lanes_v4.sql',
+    '7ee3650210b5e6a2b94006417bde647856497f14e5df89d559f11408f0981f3a',
+  ],
 ]);
 const reviewedPendingMigrations = new Map([]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');

@@ -22,6 +22,12 @@ function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
+/** A date key as words, falling back to the key itself rather than throwing on a bad one. */
+function readableDate(key: string): string {
+  const parsed = new Date(`${key}T12:00:00`);
+  return Number.isNaN(parsed.getTime()) ? key : parsed.toLocaleDateString();
+}
+
 function shiftedMonth(key: string, amount: number): string {
   const [year, month] = key.split('-').map(Number);
   return monthKey(new Date(year!, month! - 1 + amount, 1, 12));
@@ -69,6 +75,11 @@ export function CalendarView() {
   const calendarCells = useMemo(() => {
     if (!visibleMonth) return [];
     const [year, month] = visibleMonth.split('-').map(Number);
+    // A month key that is not `YYYY-MM` would produce `Invalid Date` and, from there, a
+    // `RangeError` out of `toLocaleDateString` further down. An empty grid is recoverable.
+    if (!Number.isInteger(year) || !Number.isInteger(month) || month! < 1 || month! > 12) {
+      return [];
+    }
     const first = new Date(year!, month! - 1, 1, 12);
     const dayCount = new Date(year!, month!, 0, 12).getDate();
     const cells: Array<string | null> = Array.from({ length: first.getDay() }, () => null);
@@ -89,17 +100,37 @@ export function CalendarView() {
     }
   }, []);
 
-  const completed = useMemo(
-    () =>
-      new Set(
-        history.data
-          ?.filter((row) => row.entry.kind === 'solo-daily' && row.entry.dailyDate)
-          .map((row) => `${row.entry.dailyDate}:${row.entry.mode}`) ?? [],
-      ),
-    [history.data],
-  );
+  /*
+   * v8.2-P4. Every read of loaded account data on this route is defensive.
+   *
+   * The owner hit the route error boundary here and `try again` did not help, which means
+   * a deterministic throw during render. I could not reproduce it — the route passes
+   * signed-out in three engines and their own rows parse cleanly — so rather than guess at
+   * a cause, the derivations stop being able to throw at all: a row with a shape we did
+   * not anticipate is skipped, and the calendar renders without it.
+   *
+   * This is containment, not a diagnosis. The error page reports the real failure now, and
+   * that is what will identify anything this does not cover.
+   */
+  const completed = useMemo(() => {
+    const keys = new Set<string>();
+    for (const row of Array.isArray(history.data) ? history.data : []) {
+      const entry = row?.entry;
+      if (!entry || entry.kind !== 'solo-daily' || !entry.dailyDate) continue;
+      keys.add(`${entry.dailyDate}:${entry.mode}`);
+    }
+    return keys;
+  }, [history.data]);
   const entitlementKey = `${selectedDate}:${mode}`;
-  const entitlement = progress.data?.dailyEntitlements?.[entitlementKey];
+  /*
+   * `dailyEntitlements` is optional in the stored progress shape and absent entirely on
+   * accounts that predate it, so it is read through a guard rather than an index.
+   */
+  const entitlements = progress.data?.dailyEntitlements;
+  const entitlement =
+    entitlements && typeof entitlements === 'object'
+      ? (entitlements as Record<string, string | undefined>)[entitlementKey]
+      : undefined;
   const isCurrent = selectedDate === today;
   const isFuture = Boolean(today && selectedDate > today);
   const playable =
@@ -229,7 +260,7 @@ export function CalendarView() {
                 type="button"
                 className={selectedDate === key ? 'calendar-day is-selected' : 'calendar-day'}
                 aria-pressed={selectedDate === key}
-                aria-label={`${new Date(`${key}T12:00:00`).toLocaleDateString()}: ${state}`}
+                aria-label={`${readableDate(key)}: ${state}`}
                 disabled={future}
                 key={key}
                 onClick={() => {

@@ -1164,6 +1164,152 @@ test.describe('responsive and alternate presentation evidence', () => {
    * five. This mounts twenty, which is what a real account looks like, and asserts the
    * property directly — no row's box may be shorter than the content inside it.
    */
+  /*
+   * v8.2-P1. The panel header must not overlap itself.
+   *
+   * `.section-heading` is a two-child layout with no wrap. Adding Clear all made it three
+   * children inside a 24rem panel, so the title was flexed below its own text width and,
+   * with nothing clipping it, printed underneath the buttons — which is what the owner
+   * photographed. The actions are one group now and the heading may wrap.
+   *
+   * Geometry, not class names: the title and the action group must never intersect, and
+   * no button may break its own label across lines.
+   */
+  test('the notification header never overlaps its actions @crossbrowser', async ({ page }) => {
+    const failures: string[] = [];
+    for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {
+      await page.setViewportSize({ width: viewport.width, height: viewport.height });
+      await page.goto('/');
+      const layout = await page.evaluate(() => {
+        const popover = document.createElement('div');
+        popover.className = 'menu-popover notification-popover';
+        popover.style.opacity = '1';
+        popover.style.animation = 'none';
+        /*
+         * Deliberately the BROKEN shape: both buttons as direct siblings of the title,
+         * exactly as they were when the owner photographed the overlap.
+         *
+         * Testing the grouped markup would prove nothing — grouping is itself most of the
+         * repair, so that version passes with or without the stylesheet. Reproducing the
+         * shape that failed is what makes this a regression test: the heading has to wrap
+         * and the labels have to hold together even under the pressure that broke it.
+         */
+        popover.innerHTML =
+          '<div class="section-heading notification-heading">' +
+          '<strong>Notifications</strong>' +
+          '<button type="button">Mark all read</button>' +
+          '<button type="button">Clear all</button>' +
+          '</div>';
+        document.body.append(popover);
+        const title = popover.querySelector('strong')!.getBoundingClientRect();
+        const buttons = [...popover.querySelectorAll<HTMLElement>('button')];
+        /*
+         * Each action is checked against the title on its own. Unioning them into one box
+         * reports a false overlap the moment they wrap onto separate lines, because the
+         * union then spans the title's row as well — measuring the gap between the buttons
+         * rather than anything either of them covers.
+         */
+        const overlap = buttons.reduce((worst, button) => {
+          const box = button.getBoundingClientRect();
+          const area = Math.round(
+            Math.max(0, Math.min(title.right, box.right) - Math.max(title.left, box.left)) *
+              Math.max(0, Math.min(title.bottom, box.bottom) - Math.max(title.top, box.top)),
+          );
+          return Math.max(worst, area);
+        }, 0);
+        /*
+         * A label broken mid-phrase reads as damage, and it is the same squeeze that
+         * produced the overlap. Measured on the TEXT, with a Range: a button's own height
+         * carries padding and a 44px minimum, so comparing that against a line height
+         * reports every button in the app as wrapped.
+         */
+        const wrapped = buttons.filter((button) => {
+          const node = button.firstChild;
+          if (!node) return false;
+          const range = document.createRange();
+          range.selectNodeContents(node);
+          return range.getClientRects().length > 1;
+        }).length;
+        const escapes = title.left < popover.getBoundingClientRect().left - 1;
+        popover.remove();
+        return { overlap, wrapped, escapes };
+      });
+      if (layout.overlap > 0)
+        failures.push(`${viewport.id}: title/actions overlap ${layout.overlap}px²`);
+      if (layout.wrapped > 0)
+        failures.push(`${viewport.id}: ${layout.wrapped} button label(s) wrapped`);
+      if (layout.escapes) failures.push(`${viewport.id}: the title escapes the panel`);
+    }
+    expect(failures, `\n${failures.join('\n')}\n`).toEqual([]);
+  });
+
+  /*
+   * v8.2-P2. An occupied time control must not look like an empty one.
+   *
+   * The portal's whole purpose is showing where players are, and every tile rendered
+   * identically whether anyone was there or not — the owner reported exactly that. So this
+   * asserts the difference is real and that it is not carried by colour alone: the tile's
+   * own text has to change too, or a colour-blind reader and a forced-colors user learn
+   * nothing from the page.
+   */
+  test('an occupied time control reads differently from an empty one @crossbrowser', async ({
+    page,
+  }) => {
+    await page.setViewportSize({ width: 1280, height: 900 });
+    await page.goto('/combat');
+    const tiles = page.locator('.portal-tile');
+    await expect(tiles).toHaveCount(10);
+
+    const before = await page.evaluate(() => {
+      const tile = document.querySelectorAll<HTMLElement>('.portal-tile')[1]!;
+      const style = getComputedStyle(tile);
+      return {
+        text: tile.innerText.replace(/\s+/g, ' ').trim(),
+        border: style.borderTopColor,
+        background: style.backgroundColor,
+        shadow: style.boxShadow,
+      };
+    });
+    const after = await page.evaluate(() => {
+      const tile = document.querySelectorAll<HTMLElement>('.portal-tile')[1]!;
+      tile.classList.add('is-occupied');
+      tile.setAttribute('data-band', 'some');
+      tile.querySelector('.portal-tile-occupancy')!.innerHTML =
+        '<span class="portal-tile-count">3–5 waiting</span>';
+      const style = getComputedStyle(tile);
+      return {
+        text: tile.innerText.replace(/\s+/g, ' ').trim(),
+        border: style.borderTopColor,
+        background: style.backgroundColor,
+        shadow: style.boxShadow,
+      };
+    });
+
+    expect(after.text, 'the occupied tile must say so in words').not.toBe(before.text);
+    expect(after.text).toContain('waiting');
+    const visuallyDifferent =
+      after.border !== before.border ||
+      after.background !== before.background ||
+      after.shadow !== before.shadow;
+    expect(visuallyDifferent, 'an occupied tile must also look different').toBe(true);
+
+    // The grid is a grid, not a strip: four columns at desktop, two on a phone.
+    const desktopColumns = await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector('.portal-tiles')!).gridTemplateColumns.split(' ')
+          .length,
+    );
+    expect(desktopColumns).toBeGreaterThanOrEqual(3);
+    expect(desktopColumns).toBeLessThanOrEqual(5);
+    await page.setViewportSize({ width: 390, height: 900 });
+    const phoneColumns = await page.evaluate(
+      () =>
+        getComputedStyle(document.querySelector('.portal-tiles')!).gridTemplateColumns.split(' ')
+          .length,
+    );
+    expect(phoneColumns).toBe(2);
+  });
+
   test('a full notification list never compresses a row @crossbrowser', async ({ page }) => {
     const failures: string[] = [];
     for (const viewport of [{ id: '1440x1024', width: 1440, height: 1024 }, ...gameViewports]) {

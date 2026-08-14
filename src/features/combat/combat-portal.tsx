@@ -18,14 +18,23 @@ import { useRankedQueue } from './ranked-queue';
  * front door: the `[4] COMBAT` shortcut pointed at `/combat`, which had no page at all.
  * That is the "afterthought" problem stated as a sitemap.
  *
- * This leads with the thing the mode is actually about: pick a time control, see whether
- * anyone is there, and be in a queue in one press. The five existing routes stay
- * reachable from the lanes below, because notifications, results pages and the legacy
- * bridges all link to them, and breaking those to make a navigation point would be a bad
- * trade.
+ * v8.2-P2. Rebuilt as a tile grid, on the owner's instruction, after the reference they
+ * gave: one large tile per time control, chosen at a glance, entered in one press.
+ *
+ * The mode is a segmented control rather than a second column of tiles. Twenty tiles fit
+ * on a desktop and nowhere near a phone, and the previous two-column table is what
+ * produced the misaligned OG/GO headers the owner also asked about — headers that simply
+ * stop existing here. The cost is honest and small: occupancy is shown for the selected
+ * mode, and switching modes is one press away.
  */
 
-const bandLabel: Record<CombatOccupancy['queued_band'], string> = {
+type Band = CombatOccupancy['queued_band'];
+
+/*
+ * Bands, not counts: an exact number at this player base, plus knowing where one friend
+ * is, identifies them. The words carry the meaning; the colour only ranks it.
+ */
+const bandCopy: Record<Band, string> = {
   none: 'empty',
   few: '1–2',
   some: '3–5',
@@ -33,20 +42,26 @@ const bandLabel: Record<CombatOccupancy['queued_band'], string> = {
   busy: '10+',
 };
 
-/** Occupancy is deliberately coarse; a band is the whole signal, not a rounded count. */
-function OccupancyDot({ band, label }: { band: CombatOccupancy['queued_band']; label: string }) {
-  return (
-    <span className={`occupancy occupancy-${band}`}>
-      <span className="occupancy-label">{label}</span>
-      <span className="occupancy-value">{bandLabel[band]}</span>
-    </span>
-  );
+const bandWeight: Record<Band, number> = { none: 0, few: 1, some: 2, many: 3, busy: 4 };
+
+function isOccupied(cell: CombatOccupancy | null): boolean {
+  if (!cell) return false;
+  return cell.queued_band !== 'none' || cell.playing_band !== 'none';
+}
+
+/** The louder of the two bands decides how strongly a tile presents itself. */
+function tileBand(cell: CombatOccupancy | null): Band {
+  if (!cell) return 'none';
+  return bandWeight[cell.queued_band] >= bandWeight[cell.playing_band]
+    ? cell.queued_band
+    : cell.playing_band;
 }
 
 export function CombatPortal() {
   const auth = useAuth();
   const router = useRouter();
   const rankedQueue = useRankedQueue();
+  const [mode, setMode] = useState<'og' | 'go'>('og');
   const [hardMode, setHardMode] = useState(false);
 
   const occupancy = useQuery({
@@ -59,10 +74,10 @@ export function CombatPortal() {
   /*
    * The grid is the ladder, not the server's row list: a control with no row yet must
    * still be offered, and a row for a control this build does not know about must not
-   * invent a cell. Occupancy is attached where it exists and reported as empty where it
+   * invent a tile. Occupancy is attached where it exists and reported as empty where it
    * does not, which is the honest reading of "we have no data" for a queue.
    */
-  const rows = useMemo(() => {
+  const tiles = useMemo(() => {
     const byKey = new Map(
       (occupancy.data ?? []).map((row) => [
         `${row.mode}:${row.time_limit_ms}:${row.hard_mode}`,
@@ -71,14 +86,13 @@ export function CombatPortal() {
     );
     return rankedClockLadder.map((clock) => ({
       clock,
-      lanes: (['og', 'go'] as const).map((mode) => ({
-        mode,
-        occupancy: byKey.get(`${mode}:${clock.timeLimitMs}:${hardMode}`) ?? null,
-      })),
+      cell: byKey.get(`${mode}:${clock.timeLimitMs}:${hardMode}`) ?? null,
     }));
-  }, [hardMode, occupancy.data]);
+  }, [hardMode, mode, occupancy.data]);
 
-  const start = (mode: 'og' | 'go', timeLimitMs: RankedPracticeConfig['timeLimitMs']) => {
+  const live = rankedQueue.phase === 'queued' ? rankedQueue.intent : null;
+
+  const start = (timeLimitMs: RankedPracticeConfig['timeLimitMs']) => {
     if (!auth.user?.id) {
       router.push('/auth');
       return;
@@ -95,81 +109,120 @@ export function CombatPortal() {
     });
   };
 
-  const searching = rankedQueue.phase === 'queued';
-  const live = searching ? rankedQueue.intent : null;
-
   return (
     <div className="combat-portal">
       <section className="portal-ranked" aria-labelledby="portal-ranked-heading">
-        <div className="section-heading">
+        <div className="section-heading portal-heading">
           <h2 id="portal-ranked-heading">Ranked</h2>
-          <label className="checkbox-row">
-            <input
-              type="checkbox"
-              checked={hardMode}
-              disabled={searching}
-              onChange={(event) => setHardMode(event.target.checked)}
-            />
-            Hard Mode
-          </label>
+          <div className="portal-switches">
+            {/*
+              A radiogroup rather than two toggles: OG and GO are one choice with two
+              answers, and `aria-pressed` on a pair of buttons would announce them as two
+              independent switches that happen to disagree with each other.
+            */}
+            <div className="segmented" role="radiogroup" aria-label="Mode">
+              {(['og', 'go'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === option}
+                  className={mode === option ? 'is-selected' : ''}
+                  onClick={() => setMode(option)}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={hardMode}
+                onChange={(event) => setHardMode(event.target.checked)}
+              />
+              Hard Mode
+            </label>
+          </div>
         </div>
         <p className="prose">
-          Five letters, expert words, GO over five puzzles. Every rating is kept per time control,
-          so a result only ever counts against players who chose the same game.
+          Five letters, expert words{mode === 'go' ? ', five puzzles in a chain' : ''}. Every rating
+          is kept per time control, so a result only ever counts against players who chose the same
+          game.
         </p>
 
-        <div className="portal-grid" role="group" aria-label="Ranked time controls">
-          <div className="portal-grid-head" aria-hidden="true">
-            <span>Time control</span>
-            <span>OG</span>
-            <span>GO</span>
-          </div>
-          {rows.map(({ clock, lanes }) => (
-            <div className="portal-row" key={clock.label}>
-              <span className="portal-clock">
-                <strong>{clock.display.replace(' per player', '').replace(' per move', '')}</strong>
-                <span className="portal-clock-kind">
+        <div className="portal-tiles" role="group" aria-label="Ranked time controls">
+          {tiles.map(({ clock, cell }) => {
+            const searching =
+              live?.config.mode === mode &&
+              live.config.timeLimitMs === clock.timeLimitMs &&
+              live.config.hardMode === hardMode;
+            const occupied = isOccupied(cell);
+            const perMove = clock.display.includes('per move');
+            return (
+              <button
+                key={clock.label}
+                type="button"
+                /*
+                 * v8.1-C1. Still pressable while a search runs, because the press switches.
+                 * It was disabled, which is why a failed search re-enabling the grid was
+                 * the only way to stack a second queue request.
+                 */
+                disabled={rankedQueue.isBusy}
+                className={[
+                  'portal-tile',
+                  occupied ? 'is-occupied' : '',
+                  searching ? 'is-searching' : '',
+                ]
+                  .filter(Boolean)
+                  .join(' ')}
+                data-band={tileBand(cell)}
+                aria-label={`${
+                  searching ? 'Searching for' : 'Find'
+                } a ranked ${mode.toUpperCase()} match at ${clock.display}${
+                  hardMode ? ', Hard Mode' : ''
+                }`}
+                onClick={() => start(clock.timeLimitMs)}
+              >
+                <strong className="portal-tile-clock">
                   {clock.timeLimitMs === null
-                    ? 'no clock'
-                    : clock.display.includes('per move')
-                      ? 'per move'
-                      : 'per player'}
+                    ? 'Untimed'
+                    : clock.display.replace(' per player', '').replace(' per move', '')}
+                </strong>
+                <span className="portal-tile-kind">
+                  {clock.timeLimitMs === null ? 'no clock' : perMove ? 'per move' : 'per player'}
                 </span>
-              </span>
-              {lanes.map(({ mode, occupancy: cell }) => {
-                const isSearchingThis =
-                  live?.config.mode === mode &&
-                  live.config.timeLimitMs === clock.timeLimitMs &&
-                  live.config.hardMode === hardMode;
-                return (
-                  <button
-                    key={mode}
-                    type="button"
-                    className={isSearchingThis ? 'portal-cell is-searching' : 'portal-cell'}
-                    /*
-                     * v8.1-C1. Deliberately still pressable while a search is running: the
-                     * press switches to this control. It was disabled before, which is why a
-                     * failed search — re-enabling the grid — was the only way to stack a
-                     * second queue request, and stacking is what produced matches neither
-                     * player could reach.
-                     */
-                    disabled={rankedQueue.isBusy}
-                    aria-pressed={isSearchingThis}
-                    aria-label={`${
-                      isSearchingThis ? 'Searching for' : 'Find'
-                    } a ranked ${mode.toUpperCase()} match at ${clock.display}${
-                      hardMode ? ', Hard Mode' : ''
-                    }`}
-                    onClick={() => start(mode, clock.timeLimitMs)}
-                  >
-                    <OccupancyDot band={cell?.queued_band ?? 'none'} label="waiting" />
-                    <OccupancyDot band={cell?.playing_band ?? 'none'} label="playing" />
-                    {isSearchingThis && <span className="portal-searching">searching…</span>}
-                  </button>
-                );
-              })}
-            </div>
-          ))}
+                {/*
+                  The occupancy line is the reason this page exists, so it is text before it
+                  is colour: a colour-blind reader, a forced-colors user and a greyscale
+                  screenshot all still get the answer.
+                */}
+                <span className="portal-tile-occupancy">
+                  {searching ? (
+                    <span className="portal-tile-searching">searching…</span>
+                  ) : occupied && cell ? (
+                    <>
+                      {/*
+                        Each line appears only when it has something to say. "empty playing"
+                        is noise standing where a real number belongs.
+                      */}
+                      {cell.queued_band !== 'none' && (
+                        <span className="portal-tile-count">
+                          {bandCopy[cell.queued_band]} waiting
+                        </span>
+                      )}
+                      {cell.playing_band !== 'none' && (
+                        <span className="portal-tile-count is-quiet">
+                          {bandCopy[cell.playing_band]} playing
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="portal-tile-count is-quiet">nobody here yet</span>
+                  )}
+                </span>
+              </button>
+            );
+          })}
         </div>
         {occupancy.isError && (
           <p role="status">

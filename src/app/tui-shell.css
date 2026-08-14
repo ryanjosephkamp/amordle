@@ -1731,7 +1731,16 @@ button.primary:hover {
   border-inline-end: 0;
 }
 
-.segmented button[aria-pressed='true'] {
+/*
+ * v8.2-P2. `aria-checked` alongside `aria-pressed`.
+ *
+ * A one-of-two choice is a radiogroup, not two independent toggles — announcing OG and GO
+ * as two switches that happen to disagree is wrong. But the selected style only matched
+ * `aria-pressed`, so the portal's mode control rendered with nothing selected at all.
+ * Both idioms are legitimate; the style follows either.
+ */
+.segmented button[aria-pressed='true'],
+.segmented button[aria-checked='true'] {
   background: var(--terminal-selected);
   color: var(--control-ink-on-selected);
 }
@@ -4902,10 +4911,10 @@ html[data-game-presentation='review'] .game-route {
 /*
  * v8-D. The COMBAT portal.
  *
- * A grid of time controls, because that is the choice the mode is actually about. Each
- * cell is a real button that enters a queue, so it takes the shell's control treatment
- * rather than being a decorated div — and it declares its own ink alongside its own
- * surface, per the rule `.segmented` states above.
+ * v8.2-P2. A tile grid, rebuilt after the owner's reference. Each tile is a real button
+ * that enters a queue, so it takes the shell's control treatment rather than being a
+ * decorated div — and it declares its own ink alongside its own surface, per the rule
+ * `.segmented` states above.
  */
 .combat-portal {
   display: flex;
@@ -4913,112 +4922,164 @@ html[data-game-presentation='review'] .game-route {
   gap: var(--space-7);
 }
 
-.portal-grid {
-  display: flex;
-  flex-direction: column;
-  border: var(--terminal-rule);
-  background: var(--surface-inset);
+.portal-heading {
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
 }
 
-.portal-grid-head,
-.portal-row {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(6rem, 12rem) minmax(6rem, 12rem);
+.portal-switches {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+}
+
+/* OG and GO are acronyms in every other line of copy in the app; the chrome's lowercase
+   idiom is for words like "home" and "menu", not for these. */
+.portal-switches .segmented button {
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-switches .checkbox-row {
+  display: inline-flex;
   gap: var(--space-3);
-  align-items: stretch;
+  align-items: center;
+  white-space: nowrap;
 }
 
-.portal-grid-head {
-  border-block-end: var(--terminal-rule);
-  padding: var(--space-3) var(--space-4);
-  color: var(--muted);
-  font-family: var(--tui-font);
-  font-size: var(--text-1);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
+/*
+ * `auto-fit` with a floor rather than a fixed column count: ten controls should be three
+ * across on a desktop and two on a phone without a breakpoint deciding it, and a tile
+ * narrower than about ten characters cannot hold "45 minutes" on one line.
+ */
+/*
+ * Two columns on a phone and four on a desktop, from one rule.
+ *
+ * `auto-fit` alone cannot express both — a floor low enough to give two columns at 390px
+ * gives seven at 1280px, which is a row of thin slabs rather than the reference's grid of
+ * substantial tiles. The cap is what holds the tile size steady: the grid stops growing
+ * and the page keeps its margin, exactly as the reference does.
+ */
+.portal-tiles {
+  display: grid;
+  max-width: 46rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: var(--space-4);
 }
 
-.portal-row + .portal-row {
-  border-block-start: var(--terminal-rule);
-}
-
-.portal-clock {
+.portal-tile {
   display: flex;
-  min-width: 0;
-  flex-direction: column;
-  justify-content: center;
-  gap: var(--space-1);
-  padding: var(--space-3) var(--space-4);
-}
-
-.portal-clock strong {
-  font-family: var(--tui-font);
-  font-size: var(--text-3);
-}
-
-.portal-clock-kind {
-  color: var(--muted);
-  font-size: var(--text-1);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-.portal-cell {
-  display: flex;
-  min-height: 3.25rem;
+  min-height: 6.5rem;
   flex-direction: column;
   gap: var(--space-1);
-  align-items: stretch;
+  align-items: flex-start;
   justify-content: center;
-  border: 0;
-  border-inline-start: var(--terminal-rule);
+  border: var(--terminal-rule);
   border-radius: 0;
-  background: transparent;
-  padding: var(--space-3) var(--space-4);
+  background: var(--surface-inset);
+  padding: var(--space-5);
   color: var(--ink);
   font-family: var(--tui-font);
+  text-align: start;
   text-transform: none;
 }
 
-.portal-cell:hover,
-.portal-cell:focus-visible {
+.portal-tile-clock {
+  font-size: var(--text-5);
+  font-weight: 650;
+  line-height: var(--leading-tight);
+}
+
+.portal-tile-kind {
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-tile-occupancy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-block-start: var(--space-3);
+}
+
+.portal-tile-count {
+  font-size: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.portal-tile-count.is-quiet {
+  color: var(--muted);
+}
+
+.portal-tile-searching {
+  color: var(--accent-text);
+  font-size: var(--text-1);
+  font-weight: 650;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/*
+ * v8.2-P2. An occupied control has to look different from an empty one.
+ *
+ * Every tile rendered identically whether anyone was there or not, which made live
+ * occupancy — the entire reason this page exists — invisible. Presence now raises the
+ * tile: a full-strength border, the standard surface instead of the recessed one, and an
+ * accent rail down its leading edge that thickens with the band.
+ *
+ * The rail is a `box-shadow` rather than a border so it cannot shift the tile's box, and
+ * `data-band` drives only its weight — the text inside already says "3–5 waiting", so
+ * nothing here is the sole carrier of the meaning.
+ */
+.portal-tile.is-occupied {
+  border-color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.portal-tile.is-occupied[data-band='some'] {
+  box-shadow: inset 5px 0 var(--accent);
+}
+
+.portal-tile.is-occupied[data-band='many'],
+.portal-tile.is-occupied[data-band='busy'] {
+  box-shadow: inset 7px 0 var(--accent);
+}
+
+.portal-tile.is-occupied .portal-tile-count:not(.is-quiet) {
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.portal-tile.is-searching {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.portal-tile:hover,
+.portal-tile:focus-visible {
+  border-color: var(--ink);
   background: var(--terminal-selected);
   color: var(--control-ink-on-selected);
 }
 
-.occupancy {
-  display: flex;
-  gap: var(--space-3);
-  align-items: baseline;
-  justify-content: space-between;
-  font-size: var(--text-1);
-}
-
-.occupancy-label {
-  color: var(--muted);
-  letter-spacing: var(--tracking-label);
-  text-transform: uppercase;
-}
-
-.portal-cell:hover .occupancy-label,
-.portal-cell:focus-visible .occupancy-label {
+/*
+ * On the inverse surface every descendant that declared its own ink has to be brought
+ * back, or it keeps a colour chosen for the light surface underneath. This is the same
+ * defect class as the alerts badge and the notification timestamps.
+ */
+.portal-tile:hover :is(.portal-tile-kind, .portal-tile-count, .portal-tile-searching),
+.portal-tile:focus-visible :is(.portal-tile-kind, .portal-tile-count, .portal-tile-searching) {
   color: var(--terminal-selected-muted);
 }
 
-.occupancy-value {
-  font-variant-numeric: tabular-nums;
-  font-weight: 650;
-}
-
-/* Nobody there is stated quietly; somebody there is stated plainly. */
-.occupancy-none .occupancy-value {
-  color: var(--muted);
-  font-weight: 450;
-}
-
-.portal-cell:hover .occupancy-none .occupancy-value,
-.portal-cell:focus-visible .occupancy-none .occupancy-value {
-  color: var(--terminal-selected-muted);
+.portal-tile:hover .portal-tile-count:not(.is-quiet),
+.portal-tile:focus-visible .portal-tile-count:not(.is-quiet) {
+  color: var(--control-ink-on-selected);
 }
 
 .portal-lane-list {
@@ -5059,69 +5120,84 @@ html[data-game-presentation='review'] .game-route {
   color: var(--terminal-selected-muted);
 }
 
-@media (max-width: 47.99rem) {
-  /*
-   * Two columns of occupancy do not fit beside a label on a phone, so the row becomes
-   * the control name over a pair of full-width lanes rather than a squeezed table.
-   */
-  .portal-grid-head {
-    display: none;
-  }
-
-  .portal-row {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    grid-template-areas:
-      'clock clock'
-      'og go';
-  }
-
-  .portal-clock {
-    grid-area: clock;
-    border-block-end: var(--terminal-rule);
-  }
-
-  .portal-cell:first-of-type {
-    grid-area: og;
-    border-inline-start: 0;
-  }
-
-  .portal-cell:last-of-type {
-    grid-area: go;
-  }
+/*
+ * v8.2-P3. The leaderboard's lane picker.
+ *
+ * The same controls as the COMBAT portal, so choosing a lane to read reads like choosing
+ * one to play. Wrapping matters here: ten time-control buttons cannot sit on one line at
+ * a phone width, and a horizontally scrolling row of them hides the ones off-screen.
+ */
+.leaderboard-lanes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  margin-block-end: var(--space-5);
 }
 
-/*
- * The section heading lays its children out with `justify-content: space-between`, which
- * gives a checkbox and its text no gap of their own. Stated here rather than on
- * `.checkbox-row` globally, because everywhere else it is already a block-level row.
- */
-.section-heading .checkbox-row {
+.leaderboard-lanes .checkbox-row {
   display: inline-flex;
   gap: var(--space-3);
   align-items: center;
   white-space: nowrap;
 }
 
-/*
- * v8.1-C1. The control a search is actually running on.
- *
- * The grid stays pressable while searching, because a press now switches. That only works
- * if the player can see which tile they are already in — otherwise "switch" is indistinct
- * from "start", which is the confusion that let duplicate queue requests pile up.
- */
-.portal-cell.is-searching {
-  background: var(--accent-soft);
-  box-shadow: inset 2px 0 var(--accent-text);
+.leaderboard-lanes .segmented {
+  flex-wrap: wrap;
 }
 
-.portal-searching {
-  color: var(--accent-text);
-  font-size: var(--text-1);
+.leaderboard-lanes .segmented button {
   letter-spacing: var(--tracking-label);
   text-transform: uppercase;
 }
 
-.portal-cell:hover .portal-searching,
-.portal-cell:focus-visible .portal-searching {
-  color: var(--control-ink-on-selected);
+/*
+ * The clock row is its own wrapping group. A `border-inline-end` on every button would
+ * leave a stray divider at the end of each wrapped line, so the separator is drawn as an
+ * inset shadow that a wrapped row cannot strand.
+ */
+.leaderboard-clocks button {
+  border-inline-end: 0;
+  box-shadow: inset -1px 0 var(--border);
+}
+
+.leaderboard-clocks button:last-child {
+  box-shadow: none;
+}
+
+/*
+ * v8.2-P4. The technical half of the error page.
+ *
+ * Closed by default so an ordinary player meets the calm sentence first, and monospace
+ * with wrapping when opened — a stack trace that scrolls sideways on a phone is a stack
+ * trace nobody sends.
+ */
+.error-report {
+  margin-block-start: var(--space-5);
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+  padding: var(--space-4);
+}
+
+.error-report > summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.error-report-detail {
+  overflow-x: auto;
+  margin-block: var(--space-4);
+  border: var(--terminal-rule);
+  background: var(--surface);
+  padding: var(--space-4);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  line-height: var(--leading-snug);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
 }

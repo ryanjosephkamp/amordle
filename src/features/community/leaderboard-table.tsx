@@ -5,22 +5,43 @@ import { useState } from 'react';
 import { getLeaderboard, getSiteStats } from '@/adapters/supabase/public';
 import { PlayerIdentityLink } from '@/components/player-identity-link';
 import { SkeletonRows } from '@/components/route-states';
-import { profileAccentCss } from '@/domain/profile';
+import { profileAccentCss, rankedClockLadder } from '@/domain/profile';
+import type { RankedClockLabel } from '@/domain/profile';
 
 /*
- * W-5. The RPC has always accepted all four public ranked lanes; only two were ever
- * offered. Timed lanes are deliberately absent: the public player-stats projection
- * withholds them (20260801051509), and the leaderboard keeps that boundary.
+ * W-5 offered four hardcoded lanes. v8.2-P3 replaces them, because Cycle C moved every
+ * ranked Practice rating into a per-time-control pool and those four names now match no
+ * rows at all — the leaderboard was empty and had no way to ask for a lane that exists.
+ *
+ * The controls are the COMBAT portal's: mode, Hard Mode, and the time-control ladder, so
+ * picking a lane here reads the same way as entering one there. The ladder is imported
+ * rather than restated — a second copy is how the four stale names survived.
+ *
+ * The old W-5 note said timed lanes were withheld on purpose. That reasoning retired with
+ * Cycle C: every ranked lane now carries an explicit clock, so a rule that hides timed
+ * lanes hides all of them.
  */
-const buckets = [
-  { id: 'multiplayer:og', label: 'Practice · OG' },
-  { id: 'multiplayer:go', label: 'Practice · GO' },
+const dailyLanes = [
   { id: 'multiplayer:og:daily:v1', label: 'Daily · OG' },
   { id: 'multiplayer:go:daily:v1', label: 'Daily · GO' },
 ] as const;
 
+type Scope = 'practice' | 'daily';
+
 export function LeaderboardTable() {
-  const [bucket, setBucket] = useState<(typeof buckets)[number]['id']>('multiplayer:og');
+  const [scope, setScope] = useState<Scope>('practice');
+  const [mode, setMode] = useState<'og' | 'go'>('og');
+  const [hardMode, setHardMode] = useState(false);
+  const [clock, setClock] = useState<RankedClockLabel>('5m');
+  const [dailyLane, setDailyLane] =
+    useState<(typeof dailyLanes)[number]['id']>('multiplayer:og:daily:v1');
+
+  /*
+   * A v4 bucket name is self-describing, so it is the lane id the RPC takes directly.
+   * Daily predates the ladder and keeps its own ids.
+   */
+  const bucket =
+    scope === 'daily' ? dailyLane : `async:${mode}:${clock}:${hardMode ? 'hard' : 'std'}:v4`;
   const leaderboard = useQuery({
     queryKey: ['leaderboard', bucket],
     queryFn: () => getLeaderboard(bucket),
@@ -35,17 +56,81 @@ export function LeaderboardTable() {
   });
   return (
     <>
-      <div className="segmented" aria-label="Leaderboard mode">
-        {buckets.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            aria-pressed={bucket === item.id}
-            onClick={() => setBucket(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
+      <div className="leaderboard-lanes">
+        <div className="segmented" role="radiogroup" aria-label="Leaderboard scope">
+          {(['practice', 'daily'] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              role="radio"
+              aria-checked={scope === option}
+              className={scope === option ? 'is-selected' : ''}
+              onClick={() => setScope(option)}
+            >
+              {option === 'practice' ? 'Ranked' : 'Daily'}
+            </button>
+          ))}
+        </div>
+        {scope === 'daily' ? (
+          <div className="segmented" role="radiogroup" aria-label="Daily mode">
+            {dailyLanes.map((lane) => (
+              <button
+                key={lane.id}
+                type="button"
+                role="radio"
+                aria-checked={dailyLane === lane.id}
+                className={dailyLane === lane.id ? 'is-selected' : ''}
+                onClick={() => setDailyLane(lane.id)}
+              >
+                {lane.label.replace('Daily · ', '')}
+              </button>
+            ))}
+          </div>
+        ) : (
+          <>
+            <div className="segmented" role="radiogroup" aria-label="Mode">
+              {(['og', 'go'] as const).map((option) => (
+                <button
+                  key={option}
+                  type="button"
+                  role="radio"
+                  aria-checked={mode === option}
+                  className={mode === option ? 'is-selected' : ''}
+                  onClick={() => setMode(option)}
+                >
+                  {option.toUpperCase()}
+                </button>
+              ))}
+            </div>
+            <label className="checkbox-row">
+              <input
+                type="checkbox"
+                checked={hardMode}
+                onChange={(event) => setHardMode(event.target.checked)}
+              />
+              Hard Mode
+            </label>
+            <div
+              className="segmented leaderboard-clocks"
+              role="radiogroup"
+              aria-label="Time control"
+            >
+              {rankedClockLadder.map((entry) => (
+                <button
+                  key={entry.label}
+                  type="button"
+                  role="radio"
+                  aria-checked={clock === entry.label}
+                  aria-label={entry.display}
+                  className={clock === entry.label ? 'is-selected' : ''}
+                  onClick={() => setClock(entry.label)}
+                >
+                  {entry.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
       {leaderboard.isPending ? (
         <SkeletonRows label="Loading leaderboard…" rows={6} />
@@ -97,7 +182,10 @@ export function LeaderboardTable() {
           </table>
         </div>
       ) : (
-        <p className="prose">No public ranked results are available for this lane yet.</p>
+        <p className="prose">
+          No public ranked results in this lane yet. Ratings are kept per time control, so a quiet
+          lane means nobody has finished a rated game at this one — not that the board is broken.
+        </p>
       )}
       {site.data && (
         <p className="prose mono">
