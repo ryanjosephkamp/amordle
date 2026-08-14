@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8.2-public-lanes-and-portal-hosted-green",
-  "status": "awaiting-owner-review",
+  "currentCheckpoint": "stage-2-v8.2-owner-accepted",
+  "status": "owner-accepted",
   "lastGreenCommit": "c7326ce",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -361,7 +361,7 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8.2-public-lanes-and-portal-complete-hosted-green",
+  "reportStatus": "v8.2-public-lanes-and-portal-owner-accepted",
   "updatedAt": "2026-08-14T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
@@ -1145,5 +1145,22 @@
     "parity": "237/237",
     "residue": "none",
     "production": "unchanged, no release"
+  },
+  "v82OwnerAcceptance": {
+    "acceptedAt": "2026-08-14",
+    "acceptedCommit": "c7326ce",
+    "recordedAt": "f2b28a7",
+    "scope": "the whole v8 programme through v8.2: Cycles A-D, the matchmaking repair, the public ranked lanes, the portal tile grid, the notification header and the self-reporting error page",
+    "ownerWords": "\"this looks basically perfect now ... please lock this in - it is fully approved\"",
+    "tag": "amordle-stage2-v8.2-public-lanes-and-portal-accepted-2026-08-14",
+    "production": "still frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 acceptance of the Preview, not a release"
+  },
+  "openWorkAtV82Acceptance": {
+    "1_productionRelease": "Production runs code that predates all four applied migrations. Ranked pool names, settlement and limits have all changed underneath it, so ranked play on Production should be assumed unreliable until the release lands. This is the only item with a live cost",
+    "2_systemCallableSettlement": "the correspondence sweep ends an abandoned game but cannot apply its rating, because settlement identifies its caller and a job has no caller. Cannot bite until a correspondence game is actually abandoned",
+    "3_combatActiveCopy": "/combat/active still promises \"recently completed games\" while its loader filters terminal games out. One line in src/app/combat/active/page.tsx; the owner chose to change the words rather than the list",
+    "4_abandonedGameReaper": "nothing retires abandoned games automatically. The backlog that caused the v8.1 deadlock was cleared by hand",
+    "5_dailyCrash": "contained, not diagnosed. The route error page now reports the real failure; if it recurs the copied text identifies it",
+    "6_ssrSkeleton": "every route first-paints a skeleton because the app shell suspends during SSR. Pre-existing, app-wide, deliberately accepted rather than fixed"
   }
 }
