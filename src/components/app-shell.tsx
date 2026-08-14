@@ -2,8 +2,8 @@
 
 import Link from 'next/link';
 import type { Route } from 'next';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useRef, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import type {
   MouseEvent as ReactMouseEvent,
   PointerEvent as ReactPointerEvent,
@@ -16,6 +16,8 @@ import {
   matchDirectNavigationShortcut,
 } from '@/application/keyboard-shortcuts';
 import { RankedSearchStatus } from '@/features/combat/ranked-search-status';
+import { FocusModeReader } from './focus-mode';
+import type { FocusModeState } from './focus-mode';
 import { AccountMenu } from './account-menu';
 import { ConnectivityStatus } from './connectivity-status';
 import { NotificationCenter } from './notification-center';
@@ -72,7 +74,6 @@ function routeContext(pathname: string): string {
 export function AppShell({ children }: PropsWithChildren) {
   const pathname = usePathname();
   const router = useRouter();
-  const search = useSearchParams();
   const auth = useAuth();
   const feedback = useFeedbackPreferences();
   const touchedControl = useRef<HTMLElement | null>(null);
@@ -84,9 +85,23 @@ export function AppShell({ children }: PropsWithChildren) {
 
   const previousPathname = useRef(pathname);
   const [routeAnnouncement, setRouteAnnouncement] = useState('');
-  const focus =
-    search.get('focus') === '1' &&
-    (pathname.includes('/play/solo/') || pathname.includes('/combat/match/'));
+  /*
+   * v9-R4. Focus Mode arrives from a leaf, not from a `useSearchParams()` call here.
+   *
+   * That single call was forcing every route in the app to client-render, so the server
+   * sent a skeleton for all of them. `FocusModeReader` reads the flag under its own
+   * Suspense boundary and reports it up; everything below is unchanged, and the shell now
+   * renders on the server.
+   *
+   * It starts false, which is what the server assumes. A cold load of a Focus Mode link
+   * therefore paints the normal chrome for one frame.
+   */
+  const [focusState, setFocusState] = useState<FocusModeState>({
+    focus: false,
+    focusHref: '',
+    exitFocusHref: '',
+  });
+  const focus = focusState.focus;
   const gameSurface = pathname.includes('/play/solo/') || pathname.includes('/combat/match/');
 
   /*
@@ -127,20 +142,17 @@ export function AppShell({ children }: PropsWithChildren) {
       window.removeEventListener('resize', publish);
       root.style.removeProperty('--chrome-bottom');
     };
-  }, [focus]);
+  }, []);
   const moreOpen = moreOpenedOn === pathname;
-  const focusHref = (() => {
-    const parameters = new URLSearchParams(search.toString());
-    parameters.set('focus', '1');
-    const query = parameters.toString();
-    return `${pathname}${query ? `?${query}` : ''}` as Route;
-  })();
-  const exitFocusHref = (() => {
-    const parameters = new URLSearchParams(search.toString());
-    parameters.delete('focus');
-    const query = parameters.toString();
-    return `${pathname}${query ? `?${query}` : ''}` as Route;
-  })();
+  /*
+   * Reported by the reader, which is the only place the query string is known. The
+   * pathname-only forms are the pre-hydration fallback and nothing more: both links live
+   * behind a menu or a rail, so they are never pressed before the reader has run.
+   */
+  const focusHref = (focusState.focusHref || `${pathname}?focus=1`) as Route;
+  const exitFocusHref = (focusState.exitFocusHref || pathname) as Route;
+
+  const handleFocusChange = useCallback((next: FocusModeState) => setFocusState(next), []);
 
   const rememberTouchControl = (event: ReactPointerEvent<HTMLDivElement>) => {
     if (!event.nativeEvent.isTrusted || event.pointerType !== 'touch') {
@@ -239,6 +251,13 @@ export function AppShell({ children }: PropsWithChildren) {
       onPointerDownCapture={rememberTouchControl}
       onClick={confirmTouchControl}
     >
+      {/*
+        Under its own boundary so its `useSearchParams()` cannot reach the rest of the tree.
+        It renders nothing; it only reports.
+      */}
+      <Suspense fallback={null}>
+        <FocusModeReader onChange={handleFocusChange} />
+      </Suspense>
       {!focus && (
         <header className="global-chrome" ref={chrome}>
           <div className="app-toolbar">
