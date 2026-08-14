@@ -3,7 +3,7 @@
 **Date:** 2026-08-14 · **Range:** `06184b4` → `0b20016`
 **Migration:** `20260814120000_amordle_system_settlement_and_reaper_v1.sql`, **applied**.
 **Preview:** `https://amordle-3rn9p6w27-ryanjosephkamps-projects.vercel.app` (protected)
-**Production:** still frozen at `dpl_739mtwiXc9pZPef3pxsKumwC9DfG` — **one owner action away.**
+**Production:** **RELEASED** — `dpl_2yJG1RZj3qFZreNz9aU23GEwWamw` at https://amordle.vercel.app
 
 ---
 

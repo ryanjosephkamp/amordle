@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v9-close-out-hosted-green-awaiting-release",
-  "status": "awaiting-owner-action",
+  "currentCheckpoint": "stage-2-v9-released-to-production",
+  "status": "released",
   "lastGreenCommit": "0b20016",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v9-close-out-complete-release-blocked-on-service-key",
-  "updatedAt": "2026-08-14T00:00:00Z",
+  "reportStatus": "v9-close-out-released",
+  "updatedAt": "2026-08-15T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1184,12 +1184,18 @@
     "parity": "237/237",
     "residue": "none"
   },
-  "releaseBlocker": {
-    "what": "Production has no SUPABASE_SERVICE_ROLE_KEY, so the correspondence sweep and the reaper would run and do nothing",
-    "who": "the owner \u2014 putting a service credential into a hosting provider is theirs to do",
-    "command": "vercel env add SUPABASE_SERVICE_ROLE_KEY production",
-    "keyLocation": ".codex-internal/evidence/operator/supabase-service-key",
-    "whyBefore": "Vercel applies environment changes to new deployments, so adding it after the release would mean releasing twice",
-    "thenRun": "vercel build --prod && vercel deploy --prebuilt --prod, verify against Production, tag the released commit"
+  "production": {
+    "deployment": "dpl_2yJG1RZj3qFZreNz9aU23GEwWamw",
+    "url": "https://amordle.vercel.app",
+    "commit": "753f6c6",
+    "releasedAt": "2026-08-15",
+    "previousDeployment": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 frozen since before Cycle A, running code that predated five applied migrations",
+    "verified": "all key routes 200 with real server-rendered content and navigation: / (25.9kB), /combat (27.5kB), /calendar (21.6kB, no error boundary), /leaderboards (24.5kB), /help (76.9kB)",
+    "serviceKey": "SUPABASE_SERVICE_ROLE_KEY added to Production by the owner through the Vercel dashboard before the release, so the daily sweep and reaper are live rather than inert",
+    "tag": "amordle-stage2-v9-production-release-2026-08-15"
+  },
+  "openWorkAfterV9": {
+    "none": "all six items the owner listed at v8.2 acceptance are closed",
+    "watch": "the correspondence sweep and reaper have never run against real expired data in production \u2014 there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
   }
 }
