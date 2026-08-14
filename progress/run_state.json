@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v8.1-matchmaking-repair-hosted-green",
+  "currentCheckpoint": "stage-2-v8.2-public-lanes-and-portal-hosted-green",
   "status": "awaiting-owner-review",
-  "lastGreenCommit": "7ab74fc",
+  "lastGreenCommit": "c7326ce",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v8.1-matchmaking-repair-complete-hosted-green",
-  "updatedAt": "2026-08-11T00:00:00Z",
+  "reportStatus": "v8.2-public-lanes-and-portal-complete-hosted-green",
+  "updatedAt": "2026-08-14T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1118,6 +1118,30 @@
     "fixture": "24 passed",
     "services": "3 passed",
     "visual": "46 passed",
+    "parity": "237/237",
+    "residue": "none",
+    "production": "unchanged, no release"
+  },
+  "v82PublicLanesAndPortal": {
+    "migration": "20260814010000_amordle_public_ranked_lanes_v4.sql, applied",
+    "cycleCMiss": "three public read functions still hardcoded pre-Cycle-C bucket names in three places each and were never re-emitted: get_public_ranked_leaderboard (zero rows and rejected v4 ids), list_public_player_directory_v1 (dead ranked filtering), get_public_player_profile_stats_v1 (ratings projected as null). Cycle C repaired the authority and site stats and stopped there",
+    "repair": "all three read the bucket table through one lane vocabulary; a v4 name is self-describing so it is the public lane id directly and no second naming scheme exists to drift",
+    "verifiedAfterApply": "profile stats returns async:og:5m:std:v4 at 1162 with 2 games where it previously projected null; directory accepts a v4 lane; the leaderboard needs a signed-in caller and is covered by the hosted suite",
+    "portal": "tile grid after the owner reference: one tile per time control, OG/GO segmented, which removes the misaligned OG/GO headers entirely. Occupancy now raises the tile and says so in words, so it survives colour blindness and forced colors",
+    "notificationHeader": ".section-heading is a two-child layout with no wrap; Clear all made it three in a 24rem panel so the title flexed below its own text width and printed under the buttons. Actions grouped, heading wraps",
+    "errorPage": "now reports message, digest, page and build behind a disclosure with a copy button. It previously said one sentence whatever the cause and sent the real error to a console nobody had open",
+    "dailyCrash": "NOT diagnosed. Could not reproduce: passes signed-out in three engines and the owner data parses cleanly. The calendar derivations are hardened so they cannot throw; the error page is what will identify anything that misses",
+    "testHonesty": "the header geometry test reproduces the UN-GROUPED shape deliberately, because testing the repaired markup passed with or without the stylesheet",
+    "gitIdentity": "push rejected with GH007 after the owner made their GitHub email private; repository-local user.email set to their noreply address and the one unpushed commit re-authored. Global config untouched",
+    "localGate": "161 domain, 31 browser, 24 fixture, 52 visual",
+    "report": "reports/v8.2-public-lanes-and-portal-2026-08-14/README.md"
+  },
+  "v82HostedAcceptance": {
+    "url": "https://amordle-10g94gn05-ryanjosephkamps-projects.vercel.app",
+    "commit": "c7326ce",
+    "fixture": "24 passed",
+    "services": "3 passed",
+    "visual": "52 passed",
     "parity": "237/237",
     "residue": "none",
     "production": "unchanged, no release"
