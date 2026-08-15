@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10-hosted-acceptance-green",
+  "currentCheckpoint": "stage-2-v10-owner-edits-accepted",
   "status": "v10-accepted-awaiting-production-release",
-  "lastGreenCommit": "ccdd330",
+  "lastGreenCommit": "9735a0a",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v10 implemented; migration applied; hosted acceptance green; Production release not authorized",
-  "updatedAt": "2026-08-15T17:00:00Z",
+  "reportStatus": "v10 implemented and owner-edited; hosted acceptance green; Production release not authorized",
+  "updatedAt": "2026-08-15T19:40:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1272,13 +1272,14 @@
     "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
-    "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained"
+    "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
+    "7_legacyAccountsPendingDeletion": "scripts/retire-legacy-test-accounts.mjs is written and reviewed but not run. Until it is, /players lists 8 accounts that are not people"
   },
   "v10HostedAcceptance": {
     "status": "green",
-    "runId": "e2e_20260815T164937677Z_ccdd330e_79cc29ef",
-    "url": "https://amordle-gt3hz49s3-ryanjosephkamps-projects.vercel.app",
-    "commit": "ccdd330e6e3694b38ad7754be3a9e0acaef1b06b",
+    "runId": "e2e_20260815T193211709Z_9735a0a3_4d1db35b",
+    "url": "https://amordle-q6a7m4t5o-ryanjosephkamps-projects.vercel.app",
+    "commit": "9735a0a3a2bfff40ea9f4db17aa2258069366ebd",
     "previewProtected": true,
     "deployMethod": "vercel build + vercel deploy --prebuilt",
     "fixtureE2E": 24,
@@ -1288,11 +1289,22 @@
     "cleanupAttempt": 1,
     "zeroResidue": true,
     "resourcesCleaned": "6 auth users, 7 games, 3 queue requests, 1 lifecycle queue request, 3 ranked daily requests, 1 private request, 1 rematch request, 25 accent presets, 2 avatar objects, 1 lifecycle result; every residue counter 0",
-    "attemptsNeeded": 3,
+    "attemptsNeeded": 1,
     "firstTwoFailures": "both on /help, on different tests, both strict-mode violations against two identical nodes - the second with two elements sharing one DOM id. The shell suspends during SSR, so React streams the page into <div hidden id=\"S:0\"> and an inline script moves it into place; between arrival and the swap both copies are in the document. Walking the parent chain at the moment of duplication put copy one under MAIN#main-content and copy two under DIV#S:0[HIDDEN], so nothing is user-visible. Counting duplicate ids over cold loads measured 6 in 15 on Production and 2 in 15 on the Preview, so it predates this cycle. The tests were reaching into React's staging area and calling it the page; they now search within #main-content",
     "thirdFailure": "services suite, a draft row that had not cleared inside fifteen seconds. Did not reproduce. Same family as the v8 Cycle B stopwatch failure. Recorded as a flake rather than explained",
     "filterTrap": "inside filter({ has: ... }) the inner locator is re-rooted at each candidate, so it must stay page-relative. Scoping it turned six board entries into zero; the local suite caught it",
     "productionUnchanged": "dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G",
-    "productionReleaseAuthorized": false
+    "productionReleaseAuthorized": false,
+    "note": "re-run after the owner edits; green on the first attempt, zero residue. The three-attempt history below belongs to the first acceptance of this cycle and its findings still stand"
+  },
+  "v10OwnerEdits": {
+    "requestedAt": "2026-08-15, after the owner reviewed the Preview and the changelog",
+    "figureClipping": "the rating figure's outermost tick labels were cut off. PAD_X was 8, putting the first tick at x=8 and the last at x=632 in a 640-wide viewBox; the labels are anchored at their middle, so 600 and 1800 each hung half their width outside the frame. Widened to 26. Verified by measuring every label's bounding box against the SVG's at 1440px and 320px in both schemes - zero overflow on either edge",
+    "americanEnglish": "six fixes in rendered copy: maths, centred, towards, labelled x2, coloured. cancelled deliberately left alone - it is the stored DB value for a match result and history-panel.tsx prints it raw, so changing only the UI messages would spell it both ways on adjacent screens, and both spellings are valid American English. ~190 occurrences in code comments, stylesheets, reports and tests left as internal prose",
+    "about": "rewritten to the owner's copy with four bulleted selling points, a two-mode list and four outbound links through the shared ExternalLink. Credit moved to sit above Accessibility and privacy. 'What has changed' renamed 'Changelog'. The brief cited the methodology page by Preview URL; used an internal route link instead, since a deployment URL would rot on the next deploy",
+    "methodology": "intro shortened, 'Elo system' linked to Wikipedia, 'Three things worth stating plainly' renamed 'A few notes', and the final section regrouped under Server and App headings as 'What's checked and where'. No number changed",
+    "changelogPost": "retitled 'What's under the hood' in the post title, h1, breadcrumb and index card; the filename and URL carry the date and topic so no link broke. Callout lead reworded. New section on the directory cleanout. Video and poster re-rendered - the title is a prop on a generic composition, so it was one line plus two commands",
+    "legacyTestAccounts": "eight of the eleven accounts in the public directory were E2E testing accounts from pre-greenfield specs deleted at 843da4e, whose cleanup ran only in a finally and threw instead of retrying. They showed the same 'PLAYER' label as a real account. scripts/retire-legacy-test-accounts.mjs retires them, keyed on the eight public profile ids rather than the Ember/Frost name pattern that found them, dry-run by default, deleting in the services.combat.spec.ts dependency order and re-probing for residue. Deleting data is the owner's to run",
+    "directoryLabelFinding": "the 'PLAYER' text under each directory row is a flair slot, not a role: player-directory.tsx:157 renders flair_key === 'none' ? 'Player' : flair_key. Labelling bots there would have meant a new marker on every account without a flair; deleting the strays removed the need entirely"
   }
 }

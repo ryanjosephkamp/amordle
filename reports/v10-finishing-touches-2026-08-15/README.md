@@ -1,10 +1,10 @@
 # v10 — the finishing touches
 
-**Date:** 2026-08-15 · **Range:** `f2b28a7` → `ccdd330`
+**Date:** 2026-08-15 · **Range:** `f2b28a7` → `9735a0a`
 **Migration:** `20260815055205_amordle_creator_identity_v1.sql`, **applied**
 **Changelog:** **live** at <https://ryanjosephkamp.github.io/amordle-updates/>
 **Operator manual:** <https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f>
-**Preview:** <https://amordle-gt3hz49s3-ryanjosephkamps-projects.vercel.app> (protected), commit `ccdd330`
+**Preview:** <https://amordle-q6a7m4t5o-ryanjosephkamps-projects.vercel.app> (protected), commit `9735a0a`
 **Production:** unchanged, `dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G` — no release
 
 ---
@@ -184,6 +184,53 @@ rather than explained, which is the honest description.
    halves. Left in place, but it is now next to a page claiming precision.
 
 5. **A services-suite flake** on the draft-clear window, unexplained.
+
+## The owner's review pass
+
+After reading the Preview and the changelog the owner asked for a set of edits,
+all of which are in.
+
+**The rating figure was clipping its outermost labels.** The gutter was 8 units,
+so the first tick sat at `x=8` and the last at `x=632` in a 640-wide viewBox —
+and because the labels are anchored at their middle, "600" and "1800" each hung
+half their width outside the frame. Widened to 26. Measured at 1440px, 320px and
+in both schemes: nothing overflows either edge.
+
+**American spellings.** Six fixes in rendered copy — `maths`, `centred`,
+`towards`, `labelled` twice, `coloured` — across four files. `cancelled` was
+deliberately left: it is the stored database value for a match result and the
+History table prints it raw, so changing only the dozen UI messages would spell
+it both ways on adjacent screens, and both spellings are valid American English.
+Code comments, stylesheets and reports keep theirs; churning roughly 190 of them
+against a release candidate buys nothing.
+
+**About** is rewritten to the owner's copy — what the game is, what it upgrades,
+and why — with Credit moved down to sit above Accessibility and privacy, and
+"What has changed" renamed to "Changelog". The four new outbound links go
+through the shared `ExternalLink` rather than becoming a fourth pattern. One
+judgment call: the brief referenced the methodology page by its Preview URL,
+which is a deployment rather than a route and would rot on the next deploy, so
+the link is internal.
+
+**Methodology** keeps every number and loses a sentence: the intro is shorter,
+"Elo system" links to Wikipedia, "Three things worth stating plainly" is now "A
+few notes", and the last section is regrouped under Server and App headings so
+the split is visible rather than described.
+
+**The changelog post** is retitled "What's under the hood" everywhere it
+appears, and the video was re-rendered rather than left disagreeing with the page
+it sits on — the title is a prop, so that was one line and two commands, which is
+what building the composition generically was for.
+
+**Eight of the eleven accounts in the player directory were not people.** They
+were end-to-end testing accounts from a pre-greenfield harness whose cleanup ran
+only in a `finally` and threw instead of retrying, so an interrupted run left
+public profiles behind with no receipt. They carried the same "PLAYER" label a
+real account gets. `scripts/retire-legacy-test-accounts.mjs` removes them,
+targeting the eight public profile ids rather than the `Ember`/`Frost` name
+pattern that found them — a name is something a player can change and something
+a real player could coincidentally hold, and ids cannot collide. Dry run by
+default; the deletion is the owner's to run.
 
 ## The release, and the one thing only the owner can do
 
