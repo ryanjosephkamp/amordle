@@ -5,7 +5,7 @@
 **Changelog:** **live** at <https://ryanjosephkamp.github.io/amordle-updates/>
 **Operator manual:** <https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f>
 **Preview:** <https://amordle-q6a7m4t5o-ryanjosephkamps-projects.vercel.app> (protected), commit `9735a0a`
-**Production:** unchanged, `dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G` — no release
+**Production:** **RELEASED** — `dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61` at https://amordle.vercel.app
 
 ---
 
@@ -232,12 +232,35 @@ pattern that found them — a name is something a player can change and somethin
 a real player could coincidentally hold, and ids cannot collide. Dry run by
 default; the deletion is the owner's to run.
 
-## The release, and the one thing only the owner can do
+## The release
 
-Everything is staged. Production still runs the pre-v10 build and the release is
-a separate authorization: promote the Preview, then **verify the live build id**
-rather than the deploy exit code, because a prior rollback pins Production until
-`vercel promote` runs.
+Promoted by the owner on 2026-08-15, from the accepted Preview
+`amordle-q6a7m4t5o` at commit `9735a0a`. Production moves from
+`dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G` to `dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61`.
+
+One thing to know for next time: **`vercel promote` created new production
+deployments rather than re-aliasing the accepted Preview.** Two appeared within
+a minute of each other and the alias settled on the second, which is why the id
+the owner first read is not the id now serving. This is exactly why the rule is
+to verify the live build id rather than the command's exit code.
+
+Verified on Production after the alias moved:
+
+- 16 routes checked, all 200, including the new `/methodology` and `/about`.
+- 216 output items with real serverless functions — not the v9 static-copy
+  failure, where a deployment reported Ready and served 404 everywhere.
+- The Supabase project ref is present in the served client chunk — not the v9
+  missing-config failure, where nobody could sign in.
+- About's sections are in the requested order, ending Credit then Accessibility.
+- Methodology carries "A few notes", "What's checked and where" with its Server
+  and App groups, the Elo link, and "the math produces".
+- The figure's widened gutter is in the served markup, so the outer labels fit.
+- The menu is twelve entries ending Help, Methodology, About, Sign in.
+
+**Still outstanding:** the eight legacy test accounts. `--apply` has not taken
+effect — the dry run still reports all eight profiles and eight auth users, and
+`/players` still lists eleven. The changelog post already says they were
+removed, so a public page is ahead of reality until it runs.
 
 ## Rollback
 

@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10-owner-edits-accepted",
-  "status": "v10-accepted-awaiting-production-release",
+  "currentCheckpoint": "stage-2-v10-released",
+  "status": "released",
   "lastGreenCommit": "9735a0a",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v10 implemented and owner-edited; hosted acceptance green; Production release not authorized",
-  "updatedAt": "2026-08-15T19:40:00Z",
+  "reportStatus": "v10 released to Production",
+  "updatedAt": "2026-08-15T20:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1185,12 +1185,22 @@
     "residue": "none"
   },
   "production": {
-    "deployment": "dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G",
+    "deployment": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
     "url": "https://amordle.vercel.app",
-    "commit": "3c2ef4d (built), 046e3b9 records the fix",
-    "buildId": "3c2ef4d4a154",
-    "signInVerified": "a wrong password returns \"We could not sign you in\" from a real /auth/v1/token call; the \"not configured\" message is gone",
-    "routes": "/, /auth, /combat, /calendar, /leaderboards, /players, /help, /history all 200"
+    "deploymentUrl": "https://amordle-qh7n2zukc-ryanjosephkamps-projects.vercel.app",
+    "releasedAt": "2026-08-15",
+    "acceptedArtifact": "Preview amordle-q6a7m4t5o at commit 9735a0a, hosted acceptance green on the first attempt with zero residue",
+    "promoteNote": "`vercel promote` produced NEW production deployments rather than re-aliasing the accepted Preview: two appeared within a minute of each other (amordle-bevofyk4q, then amordle-qh7n2zukc, which took the alias). The owner first read dpl_4mBZeSTAA74ayqbmvETGfzSw7Gy8 and the alias settled on dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61. Verify the live id after promoting, never the command's exit code",
+    "previousProduction": "dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G",
+    "verified": {
+      "routes": "16 checked, all 200, including the new /methodology and /about",
+      "functions": "216 output items with real serverless functions - not the v9 static-copy failure",
+      "supabaseConfig": "the project ref is present in the served client chunk, so the v9 missing-config failure is not present",
+      "aboutOrder": "What it is, How scoring works, Changelog, Report something, Where the words come from, Credit, Accessibility and privacy",
+      "methodology": "'A few notes', \"What's checked and where\" with Server and App subheadings, the Elo Wikipedia link, and 'the math produces'",
+      "figure": "the served markup carries the widened gutter (x1=26), so the 600 and 1800 labels are inside the frame",
+      "menu": "twelve entries ending Help, Methodology, About, Sign in"
+    }
   },
   "openWorkAfterV9": {
     "none": "all six items the owner listed at v8.2 acceptance are closed",
@@ -1273,7 +1283,7 @@
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
     "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
-    "7_legacyAccountsPendingDeletion": "scripts/retire-legacy-test-accounts.mjs is written and reviewed but not run. Until it is, /players lists 8 accounts that are not people"
+    "7_legacyAccountsPendingDeletion": "STILL OPEN. scripts/retire-legacy-test-accounts.mjs --apply has not taken effect: the dry run still reports all 8 profiles and 8 auth users present, and /players still lists 11. The changelog post already states they were removed, so a public page is ahead of reality until this runs"
   },
   "v10HostedAcceptance": {
     "status": "green",
