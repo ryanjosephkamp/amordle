@@ -1283,8 +1283,12 @@ test.describe.serial('protected Preview services', () => {
     await expect(
       secondPage.locator('.stats-metric').filter({ hasText: /^xp\s*375$/i }),
     ).toBeVisible();
+    // The seeded legacy save's newest Daily is 2026-07-20, so its imported streak of 5
+    // has lapsed and must not be shown as live. "start again" rather than "start today"
+    // is the assertion that matters: it can only render if the import carried the date
+    // as well as the number, which is what lets a legacy streak lapse and then continue.
     await expect(
-      secondPage.locator('.stats-metric').filter({ hasText: /daily streak\s*5/i }),
+      secondPage.locator('.stats-metric').filter({ hasText: /daily streak\s*start again/i }),
     ).toBeVisible();
     await expect(secondPage.getByRole('button', { name: 'Account' })).toBeVisible();
     await secondPage.screenshot({
