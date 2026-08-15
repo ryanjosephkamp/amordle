@@ -14,18 +14,22 @@ import {
   upsertMyAccentPreset,
 } from '@/adapters/supabase/public';
 import { myAccentPresetsQueryKey, myProfileQueryKey } from '@/application/query-keys';
+import { CopyButton } from '@/components/copy-button';
 import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import {
   accentCssColors,
+  accentIsSelectableBy,
   accentLabels,
   accentNameSchema,
   accentNames,
   defaultAccentName,
+  flairIsSelectableBy,
   flairLabels,
   flairNameSchema,
   flairNames,
   publicAvatarUrlSchema,
+  publicProfilePath,
 } from '@/domain/profile';
 import type { AccentSelection, FlairName } from '@/domain/profile';
 import { ProfileAvatar } from '@/features/community/profile-avatar';
@@ -422,28 +426,30 @@ function ProfileForm({
         <fieldset className="accent-fieldset">
           <legend>Accent color</legend>
           <div className="accent-options">
-            {accentNames.map((accent) => (
-              <label className="accent-option" key={accent}>
-                <input
-                  type="radio"
-                  name="accent-color"
-                  value={accent}
-                  checked={accentSelection.kind === 'named' && accentSelection.name === accent}
-                  onChange={(event) =>
-                    setAccentSelection({
-                      kind: 'named',
-                      name: accentNameSchema.parse(event.target.value),
-                    })
-                  }
-                />
-                <span
-                  className="accent-swatch"
-                  style={{ '--profile-accent': accentCssColors[accent] } as CSSProperties}
-                  aria-hidden="true"
-                />
-                <span>{accentLabels[accent]}</span>
-              </label>
-            ))}
+            {accentNames
+              .filter((accent) => accentIsSelectableBy(accent, userId))
+              .map((accent) => (
+                <label className="accent-option" key={accent}>
+                  <input
+                    type="radio"
+                    name="accent-color"
+                    value={accent}
+                    checked={accentSelection.kind === 'named' && accentSelection.name === accent}
+                    onChange={(event) =>
+                      setAccentSelection({
+                        kind: 'named',
+                        name: accentNameSchema.parse(event.target.value),
+                      })
+                    }
+                  />
+                  <span
+                    className="accent-swatch"
+                    style={{ '--profile-accent': accentCssColors[accent] } as CSSProperties}
+                    aria-hidden="true"
+                  />
+                  <span>{accentLabels[accent]}</span>
+                </label>
+              ))}
           </div>
 
           <div className="custom-accent-heading">
@@ -507,11 +513,13 @@ function ProfileForm({
             value={flairKey}
             onChange={(event) => setFlairKey(flairNameSchema.parse(event.target.value))}
           >
-            {flairNames.map((flair) => (
-              <option value={flair} key={flair}>
-                {flairLabels[flair]}
-              </option>
-            ))}
+            {flairNames
+              .filter((flair) => flairIsSelectableBy(flair, userId))
+              .map((flair) => (
+                <option value={flair} key={flair}>
+                  {flairLabels[flair]}
+                </option>
+              ))}
           </select>
         </label>
         <dl className="profile-visibility-summary" aria-label="Profile visibility summary">
@@ -528,6 +536,27 @@ function ProfileForm({
           Flair is a self-selected profile label. It does not change matchmaking, rating, rewards,
           or rank.
         </p>
+        {/*
+         * The only route to your own public address. Visiting /players/<your id>
+         * redirects you straight back here, so without this there is no way to
+         * find the link other than asking someone else to look you up.
+         *
+         * Shown only once the profile is public, because a private profile's
+         * link resolves to "Player not found" for everyone you send it to.
+         */}
+        {profile?.public_profile_id && profile.visibility === 'public' && (
+          <div className="profile-share">
+            <p className="field-help">Your public profile address.</p>
+            <div className="action-row">
+              <CopyButton
+                label="COPY MY PROFILE LINK"
+                value={() =>
+                  `${window.location.origin}${publicProfilePath(profile.public_profile_id)}`
+                }
+              />
+            </div>
+          </div>
+        )}
         {profile?.visibility === 'private' && (
           <p className="status-line status-line--warning" role="note">
             This existing profile is private. Saving these fields will publish the profile details

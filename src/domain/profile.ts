@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const accentNames = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber'] as const;
+export const accentNames = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber', 'voltage'] as const;
 
 export const accentNameSchema = z.enum(accentNames);
 
@@ -42,7 +42,7 @@ export interface ResolvedAccentMode {
   keyContrastRatio: number;
 }
 
-export const flairNames = ['none', 'daily', 'combat'] as const;
+export const flairNames = ['none', 'daily', 'combat', 'creator'] as const;
 export const flairNameSchema = z.enum(flairNames);
 export type FlairName = z.infer<typeof flairNameSchema>;
 
@@ -50,7 +50,46 @@ export const flairLabels: Record<FlairName, string> = {
   none: 'No flair',
   daily: 'Daily player',
   combat: 'COMBAT player',
+  creator: 'Creator',
 };
+
+/*
+ * Values one account may use, and everyone else may not.
+ *
+ * This list is a courtesy to the picker, not a security boundary. The authority
+ * is a CHECK constraint binding both values to this user id on the row itself
+ * (20260815055205_amordle_creator_identity_v1.sql), so hiding the option here
+ * changes what is offered, never what is possible.
+ */
+export const creatorUserId = '2bc33680-d9e5-4dd5-9965-24bc4ea43497';
+
+export const restrictedFlairNames = ['creator'] as const satisfies readonly FlairName[];
+
+export const restrictedAccentNames = ['voltage'] as const satisfies readonly AccentName[];
+
+export function flairIsSelectableBy(flair: FlairName, userId: string | null | undefined): boolean {
+  return (
+    !(restrictedFlairNames as readonly FlairName[]).includes(flair) || userId === creatorUserId
+  );
+}
+
+export function accentIsSelectableBy(
+  accent: AccentName,
+  userId: string | null | undefined,
+): boolean {
+  return (
+    !(restrictedAccentNames as readonly AccentName[]).includes(accent) || userId === creatorUserId
+  );
+}
+
+/*
+ * The one place a profile path is spelled. player-identity-link.tsx built this
+ * inline; a share affordance that disagreed with it by a single character would
+ * hand out links that 404.
+ */
+export function publicProfilePath(publicProfileId: string): string {
+  return `/players/${encodeURIComponent(publicProfileId)}`;
+}
 
 export const publicAvatarUrlSchema = z
   .string()
@@ -67,6 +106,7 @@ export const accentLabels: Record<AccentName, string> = {
   violet: 'Violet',
   rose: 'Rose',
   amber: 'Amber',
+  voltage: 'Voltage',
 };
 
 export const accentCssColors: Record<AccentName, string> = {
@@ -76,6 +116,7 @@ export const accentCssColors: Record<AccentName, string> = {
   violet: 'oklch(0.69 0.15 295)',
   rose: 'oklch(0.7 0.15 15)',
   amber: 'oklch(0.78 0.14 80)',
+  voltage: 'oklch(0.75 0.19 173)',
 };
 
 export function accentCssColor(value: AccentName | null | undefined): string {

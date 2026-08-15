@@ -86,7 +86,7 @@ const contrastSchemes = ['light', 'dark'] as const;
 // Every accent the token system can resolve. `custom` is driven by JS-injected
 // variables that only exist for a signed-in account with an active preset, so the
 // named set is the complete signed-out matrix.
-const contrastAccents = ['aurora', 'ice', 'cyan', 'violet', 'rose', 'amber'] as const;
+const contrastAccents = ['aurora', 'ice', 'cyan', 'violet', 'rose', 'amber', 'voltage'] as const;
 /*
  * B2. `custom` is not out of reach after all — ProfileAccentBridge only sets
  * `data-accent` and the fourteen `--custom-*` variables, both of which a page script can

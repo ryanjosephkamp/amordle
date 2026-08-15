@@ -62,7 +62,15 @@ const authorizedAdditiveMigrations = new Map([
     'ee15df3c7d552951edeba97c2526840e19ad75ea4a7598d17684d2b3951212f1',
   ],
 ]);
-const reviewedPendingMigrations = new Map([]);
+// v10: reviewed and awaiting the owner's authorization to apply. Moves up into
+// authorizedAdditiveMigrations once it has been applied to the linked project.
+// See reports/v10-creator-identity-migration-decision-2026-08-15.md.
+const reviewedPendingMigrations = new Map([
+  [
+    '20260815055205_amordle_creator_identity_v1.sql',
+    '7b0600cc0ab501dbe6bcfe4477a66a184ee359e93cb45a338676e51a2317001f',
+  ],
+]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 

@@ -161,6 +161,31 @@
   --key-unknown-ink: oklch(0.2 0.025 75);
 }
 
+/*
+ * Voltage — the animated accent.
+ *
+ * A full seventh named accent rather than a one-off, so it can be opened to
+ * every player later by deleting one line of SQL. It declares the same eight
+ * variables as its neighbours and goes through the same contrast sweep.
+ *
+ * What moves is a glow, and only a glow. The sweep injects
+ * `animation: none !important` before it measures, so whatever the animation
+ * rests at is what gets checked — and an animation that changed --accent-text
+ * would be measured at one frame and unverified at every other. text-shadow and
+ * box-shadow cannot alter the text/background pair the sweep samples, so the
+ * moving part is unmeasurable by construction rather than by luck.
+ */
+[data-accent='voltage'] {
+  --accent: oklch(0.63 0.19 175);
+  --accent-text: oklch(0.44 0.15 175);
+  --accent-ink: oklch(0.12 0.03 180);
+  --accent-soft: oklch(0.89 0.07 175);
+  --focus: oklch(0.6 0.19 175);
+  --key-unknown-background: oklch(0.79 0.05 178);
+  --key-unknown-border: oklch(0.55 0.07 175);
+  --key-unknown-ink: oklch(0.2 0.03 180);
+}
+
 :root[data-accent='custom'] {
   --accent: var(--custom-accent);
   --accent-text: var(--custom-accent-text-light);
@@ -283,6 +308,16 @@
     --key-unknown-background: oklch(0.25 0.04 70);
     --key-unknown-border: oklch(0.48 0.08 70);
     --key-unknown-ink: oklch(0.95 0.01 75);
+  }
+
+  [data-accent='voltage'] {
+    --accent: oklch(0.83 0.19 172);
+    --accent-text: oklch(0.86 0.16 172);
+    --accent-soft: oklch(0.26 0.07 172);
+    --focus: oklch(0.83 0.19 172);
+    --key-unknown-background: oklch(0.25 0.05 176);
+    --key-unknown-border: oklch(0.48 0.08 174);
+    --key-unknown-ink: oklch(0.95 0.015 172);
   }
 
   :root[data-accent='custom'] {
@@ -4117,6 +4152,17 @@ html[data-game-presentation='review'] .game-route {
   color: var(--muted);
   font-size: var(--text-1);
   text-transform: uppercase;
+}
+
+/*
+ * The Creator chip. Distinguished by the accent border and ink the shell
+ * already uses for emphasis rather than by a colour of its own — --accent-text
+ * is measured against the page background by every contrast sweep, so this
+ * inherits that guarantee instead of introducing a pairing nothing checks.
+ */
+.profile-tags span.is-creator {
+  border-color: var(--accent);
+  color: var(--accent-text);
 }
 
 .public-profile-console,

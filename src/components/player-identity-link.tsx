@@ -1,5 +1,7 @@
 'use client';
 
+import { publicProfilePath } from '@/domain/profile';
+
 export function PlayerIdentityLink({
   publicProfileId,
   displayName,
@@ -13,7 +15,7 @@ export function PlayerIdentityLink({
   return (
     <a
       className={['player-identity-link', className].filter(Boolean).join(' ')}
-      href={`/players/${encodeURIComponent(publicProfileId)}`}
+      href={publicProfilePath(publicProfileId)}
       aria-label={`Open ${displayName}'s profile`}
     >
       {displayName}

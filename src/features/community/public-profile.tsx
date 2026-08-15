@@ -10,12 +10,14 @@ import {
   getPublicProfile,
 } from '@/adapters/supabase/public';
 import { myProfileQueryKey } from '@/application/query-keys';
+import { CopyButton } from '@/components/copy-button';
 import { useAuth } from '@/components/providers';
 import { SkeletonRows } from '@/components/route-states';
 import {
   flairLabels,
   flairNameSchema,
   profileAccentCss,
+  publicProfilePath,
   ratingBucketLabel,
 } from '@/domain/profile';
 import { PrivateChallengeForm } from '@/features/combat/private-challenge-form';
@@ -83,7 +85,9 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
           <h2 id="public-player-name">{displayName}</h2>
           <p className="prose">{profile.data.bio || 'No public bio.'}</p>
           <div className="profile-tags">
-            <span>{flair.success ? flairLabels[flair.data] : 'No flair'}</span>
+            <span className={flair.success && flair.data === 'creator' ? 'is-creator' : undefined}>
+              {flair.success ? flairLabels[flair.data] : 'No flair'}
+            </span>
             <span>
               {profile.data.accent_hex
                 ? `${profile.data.accent_hex} custom accent`
@@ -91,11 +95,17 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
             </span>
           </div>
         </div>
-        {isMine && (
-          <Link className="button" href="/profile">
-            EDIT PROFILE
-          </Link>
-        )}
+        {/*
+         * Not gated on `isMine`: the effect above redirects the owner to
+         * /profile, so this slot only ever renders for someone looking at
+         * another player. The EDIT PROFILE link that used to sit here was
+         * unreachable for exactly that reason.
+         */}
+        <CopyButton
+          className="button"
+          label="COPY LINK"
+          value={() => `${window.location.origin}${publicProfilePath(publicProfileId)}`}
+        />
       </section>
 
       <section className="public-stats" aria-labelledby="public-stats-heading">

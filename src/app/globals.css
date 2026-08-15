@@ -1418,6 +1418,83 @@ button.calendar-day.is-selected {
   }
 }
 
+/*
+ * The moving part of the Voltage accent.
+ *
+ * Lives here rather than in tui-shell.css because globals owns the one
+ * authoritative reduced-motion block, and a keyframe declared where that block
+ * cannot see it is a keyframe that ignores the preference. Under reduced motion
+ * the duration collapses to 0.01ms and the glow freezes on frame one, which is
+ * the resting glow — visible, static, and legible.
+ *
+ * Only shadows animate. Nothing here changes a colour that text or a background
+ * is drawn from, so no state of this animation can move a contrast ratio.
+ */
+@keyframes voltage-arc {
+  0%,
+  100% {
+    text-shadow: 0 0 0.4em var(--accent-soft);
+  }
+
+  40% {
+    text-shadow: 0 0 0.9em var(--accent);
+  }
+
+  48% {
+    text-shadow: 0 0 0.15em var(--accent-soft);
+  }
+
+  62% {
+    text-shadow: 0 0 0.75em var(--accent);
+  }
+}
+
+@keyframes voltage-rail {
+  0%,
+  100% {
+    box-shadow: 0 0 0.35em -0.1em var(--accent-soft);
+  }
+
+  40% {
+    box-shadow: 0 0 0.8em -0.05em var(--accent);
+  }
+
+  48% {
+    box-shadow: 0 0 0.1em -0.1em var(--accent-soft);
+  }
+
+  62% {
+    box-shadow: 0 0 0.65em -0.05em var(--accent);
+  }
+}
+
+[data-accent='voltage'] .route-prompt,
+[data-accent='voltage'] .profile-kicker {
+  animation: voltage-arc 3.2s var(--ease-standard) infinite;
+}
+
+[data-accent='voltage'] .route-header,
+[data-accent='voltage'] .profile-tags span.is-creator {
+  animation: voltage-rail 3.2s var(--ease-standard) infinite;
+}
+
+@media (forced-colors: active) {
+  /* Shadows are dropped in forced colors anyway; stop the work rather than
+     animating something the user will never see. */
+  [data-accent='voltage'] .route-prompt,
+  [data-accent='voltage'] .profile-kicker,
+  [data-accent='voltage'] .route-header,
+  [data-accent='voltage'] .profile-tags span.is-creator {
+    animation: none;
+  }
+}
+
+.profile-share {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .admin-refresh {
   margin-top: var(--space-6);
 }
