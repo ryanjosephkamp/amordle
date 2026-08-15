@@ -1185,17 +1185,23 @@
     "residue": "none"
   },
   "production": {
-    "deployment": "dpl_2yJG1RZj3qFZreNz9aU23GEwWamw",
+    "deployment": "dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G",
     "url": "https://amordle.vercel.app",
-    "commit": "753f6c6",
-    "releasedAt": "2026-08-15",
-    "previousDeployment": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 frozen since before Cycle A, running code that predated five applied migrations",
-    "verified": "all key routes 200 with real server-rendered content and navigation: / (25.9kB), /combat (27.5kB), /calendar (21.6kB, no error boundary), /leaderboards (24.5kB), /help (76.9kB)",
-    "serviceKey": "SUPABASE_SERVICE_ROLE_KEY added to Production by the owner through the Vercel dashboard before the release, so the daily sweep and reaper are live rather than inert",
-    "tag": "amordle-stage2-v9-production-release-2026-08-15"
+    "commit": "3c2ef4d (built), 046e3b9 records the fix",
+    "buildId": "3c2ef4d4a154",
+    "signInVerified": "a wrong password returns \"We could not sign you in\" from a real /auth/v1/token call; the \"not configured\" message is gone",
+    "routes": "/, /auth, /combat, /calendar, /leaderboards, /players, /help, /history all 200"
   },
   "openWorkAfterV9": {
     "none": "all six items the owner listed at v8.2 acceptance are closed",
     "watch": "the correspondence sweep and reaper have never run against real expired data in production \u2014 there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
+  },
+  "v9ReleaseIncident": {
+    "what": "the first production release shipped a site nobody could sign in to, and the first attempt to fix it took the whole site down for a few minutes",
+    "cause1": "vercel build --prod was run without pulling the production environment, so no Supabase config reached the client bundle. next.config.ts already falls back from SUPABASE_URL, but there was nothing on disk to fall back to. Every Preview worked because .vercel/.env.preview.local was already there",
+    "cause2": "vercel pull then overwrote .vercel/project.json with the dashboard settings \u2014 framework null, outputDirectory dist. With no framework Vercel skips the Next.js builder and copies a directory as static files: 0 serverless functions, 2 routes, 404 everywhere. It deployed cleanly and reported Ready",
+    "recovery": "vercel rollback to dpl_2yJG restored the site in seconds. Note that a rollback PINS production: the subsequent --prod deploy did not take the alias and vercel promote was required",
+    "durableFix": "framework and outputDirectory now live in vercel.json, which is version-controlled and immune to vercel pull. A build guard in next.config.ts refuses to produce a deployment artifact without Supabase browser configuration, naming which value is missing",
+    "processFix": "the first release went to production without a preview of that exact artifact. The fix was built, checked for functions and config, deployed to a preview, run through full hosted acceptance, and only then promoted"
   }
 }
