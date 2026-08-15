@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10-released",
-  "status": "released",
-  "lastGreenCommit": "9735a0a",
+  "currentCheckpoint": "stage-2-v10.1-accepted-awaiting-promote",
+  "status": "v10.1-accepted-awaiting-production-release",
+  "lastGreenCommit": "70073fe",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v10 released to Production",
-  "updatedAt": "2026-08-15T20:00:00Z",
+  "reportStatus": "v10 released; v10.1 profile fix accepted, awaiting promote",
+  "updatedAt": "2026-08-15T21:45:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1283,7 +1283,9 @@
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
     "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
-    "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER ONLY. Every public table is clean: /players lists exactly 3 real players, all 8 legacy public_player_profiles rows are gone, and 8 of the 10 legacy auth users deleted. Two remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row the app reads. They are the two that HOST 6 terminal legacy games from 2026-07-25; the 8 that deleted cleanly were all non-hosts. Investigated and NOT explained: host_user_id, player_one_user_id and player_two_user_id are all nullable on the live schema and all three FKs are ON DELETE SET NULL, the matchmaking queue cascades, there are no triggers on the table, and the one CHECK tolerates nulls - so no constraint accounts for it. GoTrue returns AuthRetryableFetchError with status 500 and an empty body, which is a server-side failure rather than a data one. Next step if it matters: retry, or read the project's Postgres logs for the real exception"
+    "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER ONLY. Every public table is clean: /players lists exactly 3 real players, all 8 legacy public_player_profiles rows are gone, and 8 of the 10 legacy auth users deleted. Two remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row the app reads. They are the two that HOST 6 terminal legacy games from 2026-07-25; the 8 that deleted cleanly were all non-hosts. Investigated and NOT explained: host_user_id, player_one_user_id and player_two_user_id are all nullable on the live schema and all three FKs are ON DELETE SET NULL, the matchmaking queue cascades, there are no triggers on the table, and the one CHECK tolerates nulls - so no constraint accounts for it. GoTrue returns AuthRetryableFetchError with status 500 and an empty body, which is a server-side failure rather than a data one. Next step if it matters: retry, or read the project's Postgres logs for the real exception",
+    "8_accentPresetCoalesce": "list_my_accent_presets_v2 should coalesce is_active to false at source rather than relying on the client to tolerate null. Needs a migration",
+    "9_aboutLinkSpacing": "fixed, but worth knowing: JSX drops the space between a tag and text that wraps to the next line, and prettier wraps wherever it likes. Any inline link followed by text should carry an explicit {' '}"
   },
   "v10HostedAcceptance": {
     "status": "green",
@@ -1317,5 +1319,28 @@
     "legacyTestAccounts": "eight of the eleven accounts in the public directory were E2E testing accounts from pre-greenfield specs deleted at 843da4e, whose cleanup ran only in a finally and threw instead of retrying. They showed the same 'PLAYER' label as a real account. scripts/retire-legacy-test-accounts.mjs retires them, keyed on the eight public profile ids rather than the Ember/Frost name pattern that found them, dry-run by default, deleting in the services.combat.spec.ts dependency order and re-probing for residue. Deleting data is the owner's to run",
     "directoryLabelFinding": "the 'PLAYER' text under each directory row is a flair slot, not a role: player-directory.tsx:157 renders flair_key === 'none' ? 'Player' : flair_key. Labelling bots there would have meant a new marker on every account without a flair; deleting the strays removed the need entirely",
     "legacyTestAccountsOutcome": "the directory is clean. Three things went wrong on the way and each is recorded in the script: multiplayer_private_match_requests references public_player_profiles with ON DELETE RESTRICT while referencing auth.users with ON DELETE CASCADE, so 4 leftover private challenges blocked every profile delete - and those two are the only restrictive foreign keys in the schema; Supabase errors are unreadable through String() and JSON.stringify(), which cost two round trips reporting [object Object] and then {}, and are now unpacked by own-property name; and keying the script solely on profile ids made it blind to accounts whose profiles it had already deleted, so it also matches the old harness's reserved-domain @example.com addresses. That second rule is deliberately narrow: ryanjosephkampsapps0@gmail.com is a real account with no public profile, so 'auth user without a profile' would have deleted it"
+  },
+  "v10_1ProfileDefect": {
+    "severity": "real production defect on an ordinary path, found by the owner, unrelated to the v10 release",
+    "symptom": "/profile rendered 'Profile unavailable' with a Try again button that could never succeed; every reload repeated it",
+    "cause": "list_my_accent_presets_v2 computes `profile.active_accent_preset_id = preset.preset_id as is_active`. Save a custom accent then switch back to a named one and active_accent_preset_id goes null while the preset row survives, so the comparison is `null = uuid` - NULL in SQL, not false. The client schema demanded a strict boolean, the parse threw, and getMyAccentPresets errored, which is the same branch as the profile query failing",
+    "whoItAffected": "any player who tried a custom accent and changed their mind. The owner created preset #000000 at 03:08 and switched back to cyan at 04:05",
+    "whyNothingCaughtIt": "every account the hosted suite builds leaves a preset active, so is_active was never null in any run. The new tests/domain/accent-preset-contract.test.ts uses the shape the server sends to a player not currently wearing a custom accent",
+    "fix": "accentPresetSchema tolerates null and coerces to false, which is the meaning rather than a workaround - 'no active preset' is exactly 'this preset is not the active one'. Anything that is neither boolean nor null is still rejected, so it is not a widening",
+    "properFix": "the SQL should coalesce at source, which needs a migration. The test asserts the migration still lacks the coalesce, so whoever adds it is told the client tolerance exists",
+    "investigation": "ruled out in order: the owner's profile row parses field by field against the strict schema; both RPCs exist and answer; no migration touched the read path; the account deletion never targeted the owner. The preset row was the only unusual data, and SQL three-valued logic explained it exactly"
+  },
+  "v10_1HostedAcceptance": {
+    "status": "green",
+    "url": "https://amordle-1ck0ghogw-ryanjosephkamps-projects.vercel.app",
+    "commit": "70073fe635973c433eedd5a974c3983b43d70642",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 52,
+    "parity": "237/237 acceptance-verified",
+    "attemptsNeeded": 1,
+    "localGate": "183 domain, 31 browser, 24 fixture, 52 visual",
+    "productionAtTimeOfRun": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
+    "productionReleaseAuthorized": false
   }
 }
