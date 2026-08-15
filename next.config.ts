@@ -63,6 +63,29 @@ const publicSupabaseAnonKey =
   validPublicKey(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ??
   validPublicKey(process.env.SUPABASE_ANON_KEY);
 
+/*
+ * A deployment without this configuration is a site nobody can sign in to.
+ *
+ * These two values are the ONLY way the browser reaches Supabase — `getBrowserSupabase`
+ * reads nothing else, and Next inlines only `NEXT_PUBLIC_*` into the client bundle. When
+ * they are absent the app still builds, still deploys, still renders every page, and every
+ * account is simply unreachable. That is exactly what shipped to production: a local
+ * `vercel build --prod` that had not pulled the production environment produced a bundle
+ * with no Supabase config in it, and nothing anywhere said so.
+ *
+ * Local builds legitimately run without them — the fixture suite mocks the service — so the
+ * check is scoped to a real deployment build, which is the only place it can do harm.
+ */
+if (process.env.VERCEL && (!publicSupabaseUrl || !publicSupabaseAnonKey)) {
+  throw new Error(
+    'Refusing to build a deployment without Supabase browser configuration: ' +
+      `url=${publicSupabaseUrl ? 'present' : 'MISSING'}, ` +
+      `anonKey=${publicSupabaseAnonKey ? 'present' : 'MISSING'}. ` +
+      'Run `vercel pull --environment=<target>` before `vercel build`, or set ' +
+      'NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY for the target environment.',
+  );
+}
+
 const nextConfig: NextConfig = {
   // Vercel's Next.js builder requires the conventional directory when it
   // packages functions. Keep the isolated local build output used by the
