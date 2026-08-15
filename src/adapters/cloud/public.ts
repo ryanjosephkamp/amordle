@@ -127,7 +127,23 @@ export const accentPresetSchema = z
   .object({
     accent_hex: accentHexSchema,
     created_at: z.string(),
-    is_active: z.boolean(),
+    /*
+     * Nullable, because the server computes this as
+     * `profile.active_accent_preset_id = preset.preset_id`
+     * (list_my_accent_presets_v2). When a player has saved a custom accent but
+     * is not currently wearing one, that comparison is `null = uuid`, which in
+     * SQL is NULL rather than false — so the column arrives null and a bare
+     * z.boolean() rejected the whole response, taking the Profile page down
+     * with it.
+     *
+     * Coercing to false is the meaning, not a workaround: "no active preset"
+     * is precisely "this preset is not the active one". The SQL should still
+     * coalesce at source, which needs a migration and is recorded as open work.
+     */
+    is_active: z
+      .boolean()
+      .nullable()
+      .transform((value) => value ?? false),
     name: z.string().min(1).max(32),
     preset_id: z.string().uuid(),
     updated_at: z.string(),

@@ -42,9 +42,14 @@ export default function AboutPage() {
             </li>
             <li>
               <strong>Multiplayer:</strong> Amordle is the{' '}
-              <ExternalLink href="https://lichess.org/">Lichess</ExternalLink> of Wordle &ndash;
-              play public or private Practice matches, or play ranked Amordle COMBAT to earn an Elo
-              and climb the leaderboards.
+              <ExternalLink href="https://lichess.org/">Lichess</ExternalLink>{' '}
+              {/*
+               * Explicit, because JSX drops the space between a tag and text
+               * that wraps to the next line and this one rendered as
+               * "Lichessof Wordle" in production.
+               */}
+              of Wordle &ndash; play public or private Practice matches, or play ranked Amordle
+              COMBAT to earn an Elo and climb the leaderboards.
             </li>
           </ul>
           <p>Two modes:</p>
