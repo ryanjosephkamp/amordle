@@ -1,11 +1,11 @@
 # v10 — the finishing touches
 
-**Date:** 2026-08-15 · **Range:** `f2b28a7` → `683fad9`
-**Migration:** `20260815055205_amordle_creator_identity_v1.sql` — written, reviewed, **pending apply**
+**Date:** 2026-08-15 · **Range:** `f2b28a7` → `ccdd330`
+**Migration:** `20260815055205_amordle_creator_identity_v1.sql`, **applied**
 **Changelog:** **live** at <https://ryanjosephkamp.github.io/amordle-updates/>
 **Operator manual:** <https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f>
-**Preview:** not yet deployed
-**Production:** unchanged, `dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G`
+**Preview:** <https://amordle-gt3hz49s3-ryanjosephkamps-projects.vercel.app> (protected), commit `ccdd330`
+**Production:** unchanged, `dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G` — no release
 
 ---
 
@@ -133,7 +133,7 @@ later is a props change.
 ## Verified
 
 Local gate green: **179 domain · 31 browser · 24 fixture · 52 visual**, bootstrap
-107/107, migrations 45/45 immutable plus 13 authorized and 1 reviewed-pending,
+107/107, migrations 45/45 immutable plus 14 authorized additive,
 parity 237/237, three HTTP interfaces, 99 CSS custom properties resolving.
 
 Budgets: home 198804 B JS / 25178 B CSS, game 205205 B JS / 30088 B CSS — inside
@@ -143,25 +143,59 @@ One caution worth recording: a stale `pnpm start` left on port 3000 caused 43
 visual failures that looked like real regressions and were the suite testing an
 older build. Free the port before believing a visual failure.
 
+## Hosted acceptance
+
+**Green**, run `e2e_20260815T164937677Z_ccdd330e_79cc29ef` against the protected
+Preview at commit `ccdd330`: **24 fixture · 3 services · 52 visual · 237/237
+parity acceptance-verified**, cleanup on attempt 1 with **zero residue** across
+every tracked resource — 6 auth users, 7 games, 3 queue requests, 25 accent
+presets and 2 avatar objects all removed, and every residue counter at 0.
+
+Three runs were needed and the two failures are worth reading, because neither
+was what it looked like.
+
+**Two runs died on /help**, on different tests, both with strict-mode violations
+against two identical nodes — the second with two elements sharing one DOM id,
+which is what made it worth chasing rather than retrying. The shell suspends
+during SSR, so React streams the page into `<div hidden id="S:0">` and an inline
+script moves it into place; between arrival and the swap both copies are in the
+document. Walking the parent chain at the moment of duplication put copy one
+under `MAIN#main-content` and copy two under `DIV#S:0[HIDDEN]`, so **nothing is
+user-visible** — the second copy is inside `hidden`. Counting duplicate ids over
+cold loads measured it at **6 in 15 on Production** and **2 in 15 on the
+Preview**, so it predates this cycle and the release does not worsen it. The
+tests were reaching into React's staging area and calling it the page; they now
+search within `#main-content`, which is what they always meant.
+
+**One run died in the services suite** on a draft row that had not cleared
+inside fifteen seconds. It did not reproduce, and the same family is recorded in
+v8 Cycle B as a stopwatch failure rather than a product one. Recorded as a flake
+rather than explained, which is the honest description.
+
 ## What is still open
 
-1. **The migration is not applied.** Authorized by the owner, but
-   `supabase db push --linked` needs the database password, which is the owner's
-   to enter. Until it runs, `creator` and `voltage` are refused by the server —
-   harmless, since the picker only offers them to that one account.
-2. **No Preview deployment yet**, and therefore no hosted acceptance. The
-   release path is Preview → full hosted acceptance → promote.
-3. **The daily streak** is displayed and never advanced. It should either start
+1. **The daily streak** is displayed and never advanced. It should either start
    working or stop being shown.
-4. **Continuation pricing and the Daily unlock price are client-side.** The
+3. **Continuation pricing and the Daily unlock price are client-side.** The
    Methodology page says so plainly. Moving them server-side is a migration and
    its own change.
-5. **`src/domain/rating.ts`** is a dead second copy of the Elo constants,
+4. **`src/domain/rating.ts`** is a dead second copy of the Elo constants,
    imported only by a test. Its `Math.round` differs from Postgres on exact
    halves. Left in place, but it is now next to a page claiming precision.
 
+5. **A services-suite flake** on the draft-clear window, unexplained.
+
+## The release, and the one thing only the owner can do
+
+Everything is staged. Production still runs the pre-v10 build and the release is
+a separate authorization: promote the Preview, then **verify the live build id**
+rather than the deploy exit code, because a prior rollback pins Production until
+`vercel promote` runs.
+
 ## Rollback
 
-`git revert` any of the three commits independently; they do not depend on each
-other. The migration has not been applied, so there is nothing to reverse in the
-database. The changelog repository is separate and affects nothing in the game.
+`git revert` any of the application commits independently; they do not depend on
+each other. Reversing the migration is three `drop constraint` statements plus
+re-emitting the two validators from their previous definitions — nothing would
+be lost, since no row holds the new values until the owner selects them. The
+changelog repository is separate and affects nothing in the game.
