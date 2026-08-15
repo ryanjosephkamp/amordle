@@ -5,32 +5,67 @@ import { RouteHeader } from '@/components/route-states';
 const CHANGELOG = 'https://ryanjosephkamp.github.io/amordle-updates/';
 const REPOSITORY = 'https://github.com/ryanjosephkamp/amordle';
 const ISSUES = `${REPOSITORY}/issues/new`;
+const OPENLIST = 'https://english-openlist.pages.dev/';
 
 export default function AboutPage() {
   return (
     <div className="route-frame is-narrow">
       <RouteHeader title="About Amordle">
-        <p>A precise, approachable word game for Solo routines and thoughtful competition.</p>
+        <p>The ultimate Wordle-Hurdle hybrid.</p>
+        <p>No ads. No distractions. No BS.</p>
       </RouteHeader>
       <div className="prose-sections">
         <section>
           <h2>What it is</h2>
           <p>
-            Amordle combines a focused one-answer game with linked GO puzzles, local-day Solo
-            challenges, and asynchronous COMBAT. The interface stays restrained so the evidence,
-            turn, and next action remain easy to read.
+            Amordle doesn&rsquo;t just combine{' '}
+            <ExternalLink href="https://en.wikipedia.org/wiki/Wordle">Wordle</ExternalLink> and{' '}
+            <ExternalLink href="https://www.arkadium.com/games/hurdle/">Hurdle</ExternalLink> into
+            one platform. It <em>upgrades</em> the games:
           </p>
+          <ul>
+            <li>
+              <strong>
+                No ads, no paywalls, no nonsense. Amordle is completely free &ndash; forever.
+              </strong>
+            </li>
+            <li>
+              <strong>Comprehensive word lists:</strong> Solutions come from the{' '}
+              <ExternalLink href={OPENLIST}>English OpenList</ExternalLink>, the world&rsquo;s
+              largest list of Scrabble-compatible (and Wordle-compatible) English words. No valid
+              English word is off-limits.
+            </li>
+            <li>
+              <strong>Game customization:</strong> Choose your own word lengths, solution
+              difficulty, and puzzle count (for GO/Hurdle). Want to play 2-letter Wordle, or
+              something crazy like 35-letter Hurdle? Amordle has you covered.
+            </li>
+            <li>
+              <strong>Multiplayer:</strong> Amordle is the{' '}
+              <ExternalLink href="https://lichess.org/">Lichess</ExternalLink> of Wordle &ndash;
+              play public or private Practice matches, or play ranked Amordle COMBAT to earn an Elo
+              and climb the leaderboards.
+            </li>
+          </ul>
+          <p>Two modes:</p>
+          <ol>
+            <li>
+              <strong>OG:</strong> an upgraded Wordle experience.
+            </li>
+            <li>
+              <strong>GO:</strong> an upgraded Hurdle experience.
+            </li>
+          </ol>
         </section>
         <section>
           <h2>How scoring works</h2>
           <p>
-            Ratings, experience, and coins are all calculated by published formulas rather than by
-            judgement. <Link href="/methodology">The methodology page</Link> sets out every one of
-            them, taken from the code that runs.
+            Full transparency. Read <Link href="/methodology">the methodology page</Link> for how
+            ratings, experience, and coins are all calculated.
           </p>
         </section>
         <section>
-          <h2>What has changed</h2>
+          <h2>Changelog</h2>
           <p>
             Updates are written up as they ship, with a short video when the change is something you
             can see. <ExternalLink href={CHANGELOG}>Read the changelog</ExternalLink>.
@@ -61,6 +96,31 @@ export default function AboutPage() {
           </p>
         </section>
         <section>
+          <h2>Where the words come from</h2>
+          <p>
+            Every word in the game is drawn from the English OpenList, an open dataset of English
+            words also built by Ryan Kamp. It is published in full, so the vocabulary this game
+            draws on can be inspected rather than taken on trust.
+          </p>
+          <div className="action-row">
+            <ExternalLink href={OPENLIST} variant="button">
+              THE OPENLIST
+            </ExternalLink>
+            <ExternalLink
+              href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist"
+              variant="button"
+            >
+              DATASET
+            </ExternalLink>
+            <ExternalLink
+              href="https://github.com/ryanjosephkamp/english-openlist"
+              variant="button"
+            >
+              SOURCE
+            </ExternalLink>
+          </div>
+        </section>
+        <section>
           <h2>Credit</h2>
           <p>
             Built by <ExternalLink href="https://ryanjosephkamp.github.io">Ryan Kamp</ExternalLink>.
@@ -77,31 +137,6 @@ export default function AboutPage() {
             </ExternalLink>
             <ExternalLink href="https://www.linkedin.com/in/ryanjosephkamp" variant="button">
               LINKEDIN
-            </ExternalLink>
-          </div>
-        </section>
-        <section>
-          <h2>Where the words come from</h2>
-          <p>
-            Every word in the game is drawn from the English OpenList, an open dataset of English
-            words also built by Ryan Kamp. It is published in full, so the vocabulary this game
-            draws on can be inspected rather than taken on trust.
-          </p>
-          <div className="action-row">
-            <ExternalLink href="https://english-openlist.pages.dev/" variant="button">
-              THE OPENLIST
-            </ExternalLink>
-            <ExternalLink
-              href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist"
-              variant="button"
-            >
-              DATASET
-            </ExternalLink>
-            <ExternalLink
-              href="https://github.com/ryanjosephkamp/english-openlist"
-              variant="button"
-            >
-              SOURCE
             </ExternalLink>
           </div>
         </section>

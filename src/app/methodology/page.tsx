@@ -1,3 +1,4 @@
+import { ExternalLink } from '@/components/external-link';
 import { RouteHeader } from '@/components/route-states';
 import { RatingSpreadFigure } from './rating-spread-figure';
 
@@ -68,19 +69,20 @@ export default function MethodologyPage() {
   return (
     <div className="route-frame is-narrow">
       <RouteHeader title="Methodology">
-        <p>
-          Exactly how ratings, experience, and coins are calculated. Every figure on this page is
-          taken from the code that runs, not from a description of it.
-        </p>
+        <p>Exactly how ratings, experience, and coins are calculated.</p>
       </RouteHeader>
       <div className="prose-sections">
         <section>
           <h2>Rating</h2>
           <p>
-            Ranked play uses the Elo system, devised by Arpad Elo for chess and used by rating
-            bodies since the 1960s. The idea is that a rating is a prediction: the gap between two
-            ratings says how likely each player is to win. Play to that prediction and your rating
-            holds. Beat it and your rating rises by the amount the result was a surprise.
+            Ranked play uses the{' '}
+            <ExternalLink href="https://en.wikipedia.org/wiki/Elo_rating_system">
+              Elo system
+            </ExternalLink>
+            , devised by Arpad Elo for chess and used by rating bodies since the 1960s. The idea is
+            that a rating is a prediction: the gap between two ratings says how likely each player
+            is to win. Play to that prediction and your rating holds. Beat it and your rating rises
+            by the amount the result was a surprise.
           </p>
           <p>
             After a ranked match ends, the server computes an expected score for each player and
@@ -134,7 +136,7 @@ export default function MethodologyPage() {
                 <tr>
                   <td data-label="Value">10 games</td>
                   <td data-label="What it is">
-                    The point at which a rating stops being labelled provisional. The two players in
+                    The point at which a rating stops being labeled provisional. The two players in
                     a match are counted separately, so one can still be provisional while the other
                     is not.
                   </td>
@@ -165,7 +167,7 @@ export default function MethodologyPage() {
               </tbody>
             </table>
           </div>
-          <h3>Three things worth stating plainly</h3>
+          <h3>A few notes</h3>
           <ul>
             <li>
               There is no floor and no ceiling. A rating is not clamped at either end, and no result
@@ -300,7 +302,7 @@ export default function MethodologyPage() {
           <p>
             Peak rating is the true historical high, read from the rating ledger rather than from
             the current value. To appear at all you need at least one settled game in that pool and
-            a public profile. Provisional players are listed and labelled rather than hidden.
+            a public profile. Provisional players are listed and labeled rather than hidden.
           </p>
         </section>
 
@@ -456,29 +458,33 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
         </section>
 
         <section>
-          <h2>What is checked where</h2>
+          <h2>What&rsquo;s checked and where</h2>
           <p>
-            Some of this is enforced by the server, which no client can talk out of it, and some is
-            calculated by the app on your device. The difference matters, so here it is.
+            Some of this is enforced by the server, and some is calculated by the app on your
+            device.
           </p>
+          <h3>Server</h3>
           <ul>
             <li>
-              <b>Ratings</b> are entirely the server&rsquo;s. Points are recomputed from the
-              recorded evidence, the winner is checked against them, and the rating change is
-              written in the same transaction as the result.
+              <b>Ratings:</b> Points are recomputed from the recorded evidence, the winner is
+              checked against them, and the rating change is written in the same transaction as the
+              result.
             </li>
             <li>
-              <b>Experience and coins earned</b> are calculated by the app and applied through an
-              operation that is keyed so it cannot be applied twice.
+              <b>The price of a reveal, a removal, and your balance:</b> The server knows the two
+              prices and refuses a purchase you cannot afford.
+            </li>
+          </ul>
+          <h3>App</h3>
+          <ul>
+            <li>
+              <b>Experience and coins earned:</b> Applied through an operation that is keyed so it
+              cannot be applied twice.
             </li>
             <li>
-              <b>The price of a reveal, a removal, and your balance</b> are the server&rsquo;s. It
-              knows the two prices and refuses a purchase you cannot afford.
-            </li>
-            <li>
-              <b>The price of another guess, and of unlocking a past Daily</b>, are calculated by
-              the app; the server checks only that you have the coins. The formula above is what the
-              game charges, but it is the app that applies it.
+              <b>The price of another guess, and of unlocking a past Daily:</b> The server checks
+              only that you have the coins. The formula above is what the game charges, but it is
+              the app that applies it.
             </li>
           </ul>
         </section>

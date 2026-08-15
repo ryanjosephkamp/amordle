@@ -13,7 +13,15 @@
 
 const WIDTH = 640;
 const HEIGHT = 220;
-const PAD_X = 8;
+/*
+ * Wide enough for half of an outermost tick label.
+ *
+ * At 8 the first tick sat at x=8 and the last at x=632, and because the labels
+ * are anchored at their middle, "600" and "1800" each hung half their width
+ * outside the viewBox and were clipped. A four-digit label at this figure's
+ * 13px monospace is roughly 34 units wide, so the gutter has to clear 17.
+ */
+const PAD_X = 26;
 const BASE_Y = 176;
 const PEAK = 132;
 
@@ -49,7 +57,7 @@ export function RatingSpreadFigure() {
       <svg
         viewBox={`0 0 ${WIDTH} ${HEIGHT}`}
         role="img"
-        aria-label="An illustrative bell curve of ratings, centred on 1200. Most players sit between 1000 and 1400, with progressively fewer towards 600 and 1800."
+        aria-label="An illustrative bell curve of ratings, centered on 1200. Most players sit between 1000 and 1400, with progressively fewer toward 600 and 1800."
         preserveAspectRatio="xMidYMid meet"
       >
         <path d={area} className="rating-spread-fill" />
@@ -83,7 +91,7 @@ export function RatingSpreadFigure() {
       <figcaption>
         Where ratings tend to settle. Everyone begins at 1200 and spreads out from there — winning
         against the prediction moves you right, losing to it moves you left. This curve is drawn
-        from the shape the maths produces, not from real games.
+        from the shape the math produces, not from real games.
       </figcaption>
     </figure>
   );

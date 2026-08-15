@@ -296,7 +296,7 @@ export function buildRevealFrames(): Frame[] {
     { rows: compose(-1), note: 'Spend the coins.', hold: TOOL_MS, firing: true },
     {
       rows: compose(0),
-      note: 'W is locked into position 1 of your next guess — outlined, not coloured. You bought it, so it is not evidence you earned.',
+      note: 'W is locked into position 1 of your next guess — outlined, not colored. You bought it, so it is not evidence you earned.',
       hold: PUZZLE_HOLD,
     },
   ];
