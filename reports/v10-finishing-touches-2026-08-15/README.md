@@ -257,10 +257,35 @@ Verified on Production after the alias moved:
 - The figure's widened gutter is in the served markup, so the outer labels fit.
 - The menu is twelve entries ending Help, Methodology, About, Sign in.
 
-**Still outstanding:** the eight legacy test accounts. `--apply` has not taken
-effect — the dry run still reports all eight profiles and eight auth users, and
-`/players` still lists eleven. The changelog post already says they were
-removed, so a public page is ahead of reality until it runs.
+### The legacy test accounts
+
+**The directory is clean.** `/players` lists exactly three real players, the
+eight public profile rows are gone, and the changelog post's claim is now true.
+
+Getting there took three attempts and each failure is worth recording.
+
+1. **A restrictive foreign key.** `multiplayer_private_match_requests`
+   references `public_player_profiles(public_profile_id)` with `ON DELETE
+   RESTRICT` while referencing `auth.users` with `ON DELETE CASCADE`, so four
+   leftover private challenges blocked every profile delete. Those are the only
+   two restrictive foreign keys in the entire schema.
+2. **Unreadable errors.** Supabase returns plain objects from PostgREST and
+   Error subclasses with non-enumerable fields from GoTrue, so `String()`
+   printed `[object Object]` and `JSON.stringify()` printed `{}`. Two round
+   trips were spent learning nothing. The script now reads every own property by
+   name.
+3. **A blind spot of its own making.** Keying on profile ids alone meant that
+   once the profiles were deleted the script reported "already retired" and
+   skipped the accounts it had half-removed. It now also matches the old
+   harness's reserved-domain `@example.com` addresses — deliberately narrow,
+   because `ryanjosephkampsapps0@gmail.com` is a real account with no public
+   profile and "auth user without a profile" would have deleted it.
+
+**Outstanding:** ten legacy auth users remain, invisible to every surface
+because they hold no row in `public`. Two of them were never in the profile-id
+list and still carry two `progress_snapshots` and two `settings` rows. The
+reason the auth deletion is refused is not yet known — the next run will print
+it.
 
 ## Rollback
 

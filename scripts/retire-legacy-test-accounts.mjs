@@ -84,20 +84,43 @@ const TABLES_BY_USER = [
 ];
 
 /*
- * Supabase returns plain objects, not Errors. `String(err)` on one prints
- * "[object Object]", which is exactly what the first failed run reported and
- * exactly why it took a second round trip to learn anything. Pull the fields
- * out by hand.
+ * The legacy harness minted every account at `@example.com`, which is IANA
+ * reserved and can never belong to a person, under a run-scoped local part.
+ *
+ * This is the second identifier this script needs, and it exists because the
+ * profile rows are now gone: the first --apply run deleted them and then failed
+ * on the auth users, leaving accounts that nothing in `public` points at any
+ * more. Keying only on profile ids would make the script report "already
+ * retired" and quietly skip the half that is left.
+ *
+ * It is deliberately narrow. `ryanjosephkampsapps0@gmail.com` is a real
+ * account of the owner's that also has no public profile, so "an auth user with
+ * no profile" would have been the wrong rule and would have deleted it.
+ */
+const LEGACY_EMAIL = /^amordle\.e2e_[0-9a-z]+_[0-9a-z]+\.[a-z]+@example\.com$/i;
+
+/*
+ * Supabase hands back several error shapes: plain objects from PostgREST, and
+ * Error subclasses from GoTrue whose fields are non-enumerable. The first
+ * failed run printed "[object Object]" and the second printed "{}", because
+ * neither String() nor JSON.stringify() reaches either shape. Read every own
+ * property by name instead, enumerable or not.
  */
 function describeError(error) {
-  if (error instanceof Error) return error.message;
-  if (error && typeof error === 'object') {
-    const { message, code, details, hint } = error;
-    const parts = [message, code ? `code ${code}` : null, details, hint].filter(Boolean);
-    if (parts.length) return parts.join(' · ');
-    return JSON.stringify(error);
+  if (error === null || error === undefined) return 'unknown error';
+  if (typeof error !== 'object') return String(error);
+  const fields = {};
+  for (const key of Object.getOwnPropertyNames(error)) {
+    if (key === 'stack') continue;
+    const value = error[key];
+    if (value === undefined || value === null || typeof value === 'function') continue;
+    fields[key] = typeof value === 'object' ? JSON.stringify(value) : String(value);
   }
-  return String(error);
+  const name = error.name && error.name !== 'Error' ? `${error.name}: ` : '';
+  const rendered = Object.entries(fields)
+    .map(([key, value]) => `${key}=${value}`)
+    .join(' · ');
+  return `${name}${rendered || '(no readable fields)'}`;
 }
 
 function fail(context, error) {
@@ -129,31 +152,57 @@ async function main() {
     .from('public_player_profiles')
     .select('public_profile_id,user_id,display_name,visibility')
     .in('public_profile_id', LEGACY_PUBLIC_PROFILE_IDS);
-  if (profileError) throw profileError;
-
-  if (!profiles?.length) {
-    process.stdout.write('Nothing found. These accounts have already been retired.\n');
-    return;
-  }
+  if (profileError) fail('reading public_player_profiles', profileError);
 
   /*
    * A hard stop rather than a warning. If the ids resolve to more rows than were
    * listed, something is wrong with an assumption and the safe move is to look
    * rather than to delete.
    */
-  if (profiles.length > LEGACY_PUBLIC_PROFILE_IDS.length) {
+  if ((profiles?.length ?? 0) > LEGACY_PUBLIC_PROFILE_IDS.length) {
     throw new Error(
       `Expected at most ${LEGACY_PUBLIC_PROFILE_IDS.length} profiles, found ${profiles.length}. Refusing to continue.`,
     );
   }
 
-  const userIds = profiles.map((profile) => profile.user_id);
+  const { data: listed, error: listError } = await admin.auth.admin.listUsers({
+    page: 1,
+    perPage: 200,
+  });
+  if (listError) fail('listing auth users', listError);
+  const legacyUsers = (listed?.users ?? []).filter((user) => LEGACY_EMAIL.test(user.email ?? ''));
 
-  process.stdout.write(`${profiles.length} account(s) matched:\n`);
-  for (const profile of profiles) {
+  const userIds = [
+    ...new Set([...(profiles ?? []).map((p) => p.user_id), ...legacyUsers.map((u) => u.id)]),
+  ];
+
+  if (!userIds.length) {
+    process.stdout.write('Nothing found. These accounts have already been retired.\n');
+    return;
+  }
+
+  /*
+   * Last gate before anything is written. Every targeted account must either
+   * still carry one of the listed profile ids or hold a reserved-domain address
+   * from the old harness. Anything else means a rule has drifted, and this stops
+   * rather than deleting on a maybe.
+   */
+  const profileUserIds = new Set((profiles ?? []).map((p) => p.user_id));
+  const legacyUserIds = new Set(legacyUsers.map((u) => u.id));
+  const unaccounted = userIds.filter((id) => !profileUserIds.has(id) && !legacyUserIds.has(id));
+  if (unaccounted.length) {
+    throw new Error(`Refusing to continue: ${unaccounted.join(', ')} matched neither rule.`);
+  }
+
+  process.stdout.write(`${userIds.length} account(s) matched:\n`);
+  for (const profile of profiles ?? []) {
     process.stdout.write(
       `  ${profile.display_name}  (${profile.visibility})  profile ${profile.public_profile_id}\n`,
     );
+  }
+  for (const user of legacyUsers) {
+    const note = profileUserIds.has(user.id) ? '' : '  [no profile row — auth only]';
+    process.stdout.write(`  ${user.email}${note}\n`);
   }
 
   process.stdout.write('\nRows that belong to them:\n');
@@ -205,12 +254,27 @@ async function main() {
   if (profilesError) fail('deleting from profiles', profilesError);
   process.stdout.write('  cleared profiles\n');
 
+  /*
+   * Reported one at a time and collected, rather than thrown on the first
+   * failure. The run that stopped here had already emptied every table, so
+   * aborting on user one left the other nine untouched for no reason — and each
+   * of these deletions is independent of the others.
+   */
+  const authFailures = [];
   for (const userId of userIds) {
     const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error && !/not found/i.test(describeError(error)))
-      fail(`deleting auth user ${userId}`, error);
+    if (!error) {
+      process.stdout.write(`  deleted auth user ${userId}\n`);
+      continue;
+    }
+    const described = describeError(error);
+    if (/not found/i.test(described)) {
+      process.stdout.write(`  auth user ${userId} was already gone\n`);
+      continue;
+    }
+    process.stdout.write(`  FAILED  ${userId}: ${described}\n`);
+    authFailures.push(userId);
   }
-  process.stdout.write('  deleted auth users\n');
 
   process.stdout.write('\nVerifying…\n');
   const residue = {};
@@ -233,6 +297,19 @@ async function main() {
   const remaining = Object.entries(residue).filter(([, count]) => count !== 0);
   if (remaining.length) {
     for (const [name, count] of remaining) process.stdout.write(`  RESIDUE ${name}: ${count}\n`);
+    /*
+     * Public tables empty but auth users left is the state after the run that
+     * failed here: nobody can see these accounts, since every surface reads
+     * `public`, but they are still occupying the auth table. Say which of the
+     * two situations this is rather than reporting an undifferentiated failure.
+     */
+    const tableResidue = remaining.filter(([name]) => !name.startsWith('auth:'));
+    if (!tableResidue.length) {
+      process.stdout.write(
+        `\n  Every public table is clean, so nothing is visible to players.\n` +
+          `  ${authFailures.length} auth user(s) could not be deleted; the reason is printed above.\n`,
+      );
+    }
     throw new Error('Residue remained. Re-run to retry.');
   }
 
