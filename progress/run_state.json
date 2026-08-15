@@ -1274,7 +1274,7 @@
   },
   "v10OperatorManual": "https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f - a prompt template with one ALL-CAPS slot, the four-step working pattern, what to attach, and the actions reserved to the owner",
   "openWorkAfterV10": {
-    "1_productionRelease": "Production still runs the pre-v10 build. The Preview is accepted; promoting is a separate authorization, and the live build id must be verified rather than the deploy exit code because a prior rollback pins Production until vercel promote runs",
+    "0_note": "Production is RELEASED and current at dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F. The former item 1 said Production ran a pre-v10 build; that is no longer true and was removed rather than left to mislead.",
     "2_dailyStreak": "displayed on the private stats panel and never advanced by any current code path. Should either start working or stop being shown. Deliberately omitted from the Methodology page",
     "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
@@ -1363,5 +1363,12 @@
     "attemptsNeeded": 1,
     "localGate": "188 domain, 31 browser, 24 fixture, 52 visual",
     "productionReleaseAuthorized": true
+  },
+  "nextSession": {
+    "topic": "the daily streak",
+    "problem": "progressSchema declares dailyStreak (src/domain/account-continuity.ts:8), it initialises to 0 (:135), private-stats.tsx:109 renders it as a Metric, and the ONLY writer is the legacy-save import at :192 via legacyDailyStreak(). No code path advances it during play, so a new account's streak is 0 forever",
+    "references": "4 in total: account-continuity.ts:8, :135, :192, and private-stats.tsx:109. legacyDailyStreak is defined at :153",
+    "decisionNeeded": "make it work or remove it. If it works, decide what counts (OG only, GO only, or either), which day boundary (the game uses local-day Daily challenges), and whether it is client-computed like XP and coins or server-authoritative",
+    "deliberatelyOmittedFrom": "the Methodology page, because documenting a dead number on a transparency page invites the suspicion the page exists to prevent"
   }
 }
