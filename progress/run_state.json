@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10.1-accepted-awaiting-promote",
-  "status": "v10.1-accepted-awaiting-production-release",
-  "lastGreenCommit": "70073fe",
+  "currentCheckpoint": "stage-2-v10.2-accepted-awaiting-promote",
+  "status": "v10.2-accepted-awaiting-production-release",
+  "lastGreenCommit": "5f0e503",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v10 released; v10.1 profile fix accepted, awaiting promote",
-  "updatedAt": "2026-08-15T21:45:00Z",
+  "reportStatus": "v10.1 released; v10.2 creator mark accepted, awaiting promote",
+  "updatedAt": "2026-08-15T22:40:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1285,7 +1285,8 @@
     "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
     "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER ONLY. Every public table is clean: /players lists exactly 3 real players, all 8 legacy public_player_profiles rows are gone, and 8 of the 10 legacy auth users deleted. Two remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row the app reads. They are the two that HOST 6 terminal legacy games from 2026-07-25; the 8 that deleted cleanly were all non-hosts. Investigated and NOT explained: host_user_id, player_one_user_id and player_two_user_id are all nullable on the live schema and all three FKs are ON DELETE SET NULL, the matchmaking queue cascades, there are no triggers on the table, and the one CHECK tolerates nulls - so no constraint accounts for it. GoTrue returns AuthRetryableFetchError with status 500 and an empty body, which is a server-side failure rather than a data one. Next step if it matters: retry, or read the project's Postgres logs for the real exception",
     "8_accentPresetCoalesce": "list_my_accent_presets_v2 should coalesce is_active to false at source rather than relying on the client to tolerate null. Needs a migration",
-    "9_aboutLinkSpacing": "fixed, but worth knowing: JSX drops the space between a tag and text that wraps to the next line, and prettier wraps wherever it likes. Any inline link followed by text should carry an explicit {' '}"
+    "9_aboutLinkSpacing": "fixed, but worth knowing: JSX drops the space between a tag and text that wraps to the next line, and prettier wraps wherever it likes. Any inline link followed by text should carry an explicit {' '}",
+    "10_creatorPageUnreachableToOwner": "the creator sees the tricolour page treatment only when signed out, because opening your own public profile redirects you to /profile. Worth deciding whether that redirect should stay"
   },
   "v10HostedAcceptance": {
     "status": "green",
@@ -1341,6 +1342,29 @@
     "attemptsNeeded": 1,
     "localGate": "183 domain, 31 browser, 24 fixture, 52 visual",
     "productionAtTimeOfRun": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
+    "productionReleaseAuthorized": false
+  },
+  "v10_2CreatorMark": {
+    "voltageRemoved": "the owner judged it too simple - it pulsed one colour on and off rather than moving through any. Removed from the enum, labels, swatches, both stylesheet blocks, its two keyframes and the contrast sweep. No profile was using it, so nothing had to be migrated off",
+    "migrationLeftAlone": "the applied migration still permits 'voltage' in the accent CHECK. A value the database tolerates but no client can select is inert, and a forward migration plus a production credential to delete a string is not worth it. tests/domain/creator-identity.test.ts pins the constraint so the two cannot silently disagree",
+    "nameMark": "PlayerIdentityLink is the single place every player name is rendered - leaderboard, directory, COMBAT transcript, lobbies, request centre - so the mark reaches all ten surfaces without any caller knowing, and shows the same thing to every viewer. The public profile heading is tagged separately since it does not route through that component",
+    "identifiedBy": "public profile id, not flair. No surface that renders a name also carries the user id and several deliberately never will. Equally exclusive: the id is unique, stable and database-issued",
+    "palette": "red, white, blue - per scheme. The middle beat is white in dark and near-black in light, because white text on a light page is unreadable; the red and blue bookends carry the identity either way. Every beat clears 4.5:1 against its own background, asserted from the hexes the stylesheet declares",
+    "restFrame": "the cycle rests on red. The contrast sweep disables animation and reduced motion collapses it to 0.01ms, so both observe the 0% frame - and red is the tightest of the three ratios, making that the worst case rather than a lucky mid-cycle moment. A test asserts the 0% frame stays red",
+    "inversionGuard": "a CSS animation outranks every normal declaration, including the rules that invert text on a selected surface. The animation is switched off inside button:hover, aria-current, aria-selected and unread notification rows so the existing inversion wins - a name unreadable for three seconds in six is worse than an undecorated one",
+    "pageTreatment": "a tricolour gradient travelling along the profile rules with the avatar frame cycling in step. Every selector is a descendant of .creator-console, asserted by test, so it cannot reach the shell, a board, the keyboard or another player's profile. Forced colors restores the plain rule and stops the animation",
+    "verifiedOnPreview": "the console renders, the name colour changes between samples in both schemes (dark rgb(255,113,113) to rgb(246,249,255); light rgb(197,16,46) to rgb(16,23,31)), and the directory shows the mark where other players see it"
+  },
+  "v10_2HostedAcceptance": {
+    "status": "green",
+    "url": "https://amordle-539o5wtmk-ryanjosephkamps-projects.vercel.app",
+    "commit": "5f0e503070eca241b6bef6c0ae30e671929f14b0",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 52,
+    "parity": "237/237 acceptance-verified",
+    "attemptsNeeded": 1,
+    "localGate": "188 domain, 31 browser, 24 fixture, 52 visual",
     "productionReleaseAuthorized": false
   }
 }
