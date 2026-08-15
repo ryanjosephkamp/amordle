@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v9-released-to-production",
-  "status": "released",
+  "currentCheckpoint": "stage-2-v9-released-v10-backlog-captured",
+  "status": "released-awaiting-v10",
   "lastGreenCommit": "0b20016",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -361,7 +361,7 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v9-close-out-released",
+  "reportStatus": "v9-released; v10 finishing-touches backlog captured",
   "updatedAt": "2026-08-15T00:00:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
@@ -1203,5 +1203,15 @@
     "recovery": "vercel rollback to dpl_2yJG restored the site in seconds. Note that a rollback PINS production: the subsequent --prod deploy did not take the alias and vercel promote was required",
     "durableFix": "framework and outputDirectory now live in vercel.json, which is version-controlled and immune to vercel pull. A build guard in next.config.ts refuses to produce a deployment artifact without Supabase browser configuration, naming which value is missing",
     "processFix": "the first release went to production without a preview of that exact artifact. The fix was built, checked for functions and config, deployed to a preview, run through full hosted acceptance, and only then promoted"
+  },
+  "v10Backlog": {
+    "source": "docs/v10-finishing-touches-backlog.md \u2014 captured from the owner 2026-08-15, nothing started",
+    "a_about": "new About page in the menu: changelog link, GitHub issue routes, repository, terse credit with personal site/GitHub/Sponsors/LinkedIn/player-profile buttons, and the English OpenList with its three links",
+    "b_methodology": "new Methodology page disclosing Elo (equation, concept, per-time-control pools, provisional K, a figure), XP, and coins including the variable cost of an extra guess. Everything read from code, never recalled. Leaderboards links here",
+    "c_changelog": "a separately published changelog, GitHub Pages, one post per significant update, Amordle visual language rather than the reference site. 15-30s Remotion video embedded when a change is visual; light music, no jarring sound",
+    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
+    "e_menu": "Methodology between Help and About; About above Sign In/Profile",
+    "operatorManual": "a reusable artifact with a single-placeholder prompt template for future sessions: plan mode, paste, attach screenshots, plan, execute, then a changelog post and a video if visual",
+    "ownerNote": "the owner walked every page and found almost nothing else worth reporting"
   }
 }
