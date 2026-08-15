@@ -124,8 +124,25 @@ Very minor updates may not warrant a post at all. Use judgement.
 
 ## D · Creator flair, dynamic accent, shareable profiles
 
-**The account:** `ryanjosephkampsapps@gmail.com`. Created after this session, so the
-next session must look up its user id and public profile id rather than assume.
+**The account** exists and its identifiers are known — no lookup needed:
+
+|                   |                                                                         |
+| ----------------- | ----------------------------------------------------------------------- |
+| Email             | `ryanjosephkampsapps@gmail.com`                                         |
+| User id           | `2bc33680-d9e5-4dd5-9965-24bc4ea43497`                                  |
+| Public profile id | `f08161d7-6d57-4142-b42d-7bcf86b983fc`                                  |
+| Display name      | `pmak nayr`                                                             |
+| Profile URL       | https://amordle.vercel.app/players/f08161d7-6d57-4142-b42d-7bcf86b983fc |
+| Today             | accent `cyan`, flair `none`                                             |
+
+Verified: that URL returns 200 on production. **This is the link the About page should
+use** for "visit my player profile".
+
+One thing to know before touching it: this user id is not new. It appeared earlier in
+this project's data as a player called `apples`, and three of the abandoned zero-move
+games the reaper retired belonged to it. So the account carries history — which is
+fine, and arguably better than a blank profile, but it means the Creator flair is going
+onto a real account rather than an empty one.
 
 **Creator flair.** A fourth flair alongside the current three (`none`, `daily`,
 `combat` — see `flairLabels` in `src/domain/profile.ts`). Restricted to that one

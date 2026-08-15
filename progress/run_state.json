@@ -1212,6 +1212,17 @@
     "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
     "e_menu": "Methodology between Help and About; About above Sign In/Profile",
     "operatorManual": "a reusable artifact with a single-placeholder prompt template for future sessions: plan mode, paste, attach screenshots, plan, execute, then a changelog post and a video if visual",
-    "ownerNote": "the owner walked every page and found almost nothing else worth reporting"
+    "ownerNote": "the owner walked every page and found almost nothing else worth reporting",
+    "creatorAccount": {
+      "email": "ryanjosephkampsapps@gmail.com",
+      "userId": "2bc33680-d9e5-4dd5-9965-24bc4ea43497",
+      "publicProfileId": "f08161d7-6d57-4142-b42d-7bcf86b983fc",
+      "displayName": "pmak nayr",
+      "profileUrl": "https://amordle.vercel.app/players/f08161d7-6d57-4142-b42d-7bcf86b983fc",
+      "verified": "URL returns 200 on production",
+      "note": "not a new user id \u2014 it appeared earlier as the player \"apples\" and owned three of the abandoned zero-move games the reaper retired, so the account carries history",
+      "today": "accent cyan, flair none"
+    },
+    "blockers": "none \u2014 the account existed and was confirmed by the owner, so every workstream can be planned and built"
   }
 }
