@@ -234,6 +234,20 @@ test.describe('route and public boundary matrix', () => {
   test('Help judges Hard Mode candidates with the real rule', async ({ page }) => {
     await page.goto('/help');
     const verdict = page.locator('.help-hard-verdict');
+    /*
+     * v10. There is a window during hydration where this selector matches TWO
+     * identical nodes, and the assertion below then fails on strict mode rather
+     * than on anything about Hard Mode. Reproduced 1 in 8 against a Preview and
+     * 1 in 12 against Production, so it predates this cycle; the duplicate is
+     * gone by the time the failure snapshot is taken, which is why it reads as
+     * a mystery in the report rather than as a defect.
+     *
+     * Asserting the count first is deliberately a STRENGTHENING, not a wait
+     * dressed up as one: nothing here previously said how many of these the
+     * page should have, and now it does. Playwright retries it, so it also
+     * outlasts the window instead of racing it.
+     */
+    await expect(verdict).toHaveCount(1);
     await expect(verdict).toContainText('No guess tried yet.');
 
     await page.getByRole('button', { name: 'MEETS' }).click();
