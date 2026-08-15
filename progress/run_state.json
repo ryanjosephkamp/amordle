@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v9-released-v10-backlog-captured",
-  "status": "released-awaiting-v10",
-  "lastGreenCommit": "0b20016",
+  "currentCheckpoint": "stage-2-v10-finishing-touches-implemented",
+  "status": "v10-implemented-awaiting-migration-and-preview",
+  "lastGreenCommit": "683fad9",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v9-released; v10 finishing-touches backlog captured",
-  "updatedAt": "2026-08-15T00:00:00Z",
+  "reportStatus": "v10 implemented; migration pending apply, no Preview yet",
+  "updatedAt": "2026-08-15T06:30:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -980,10 +980,10 @@
       "563fc77 A5 lay out the end-of-match actions and make SEARCH AGAIN search",
       "81e96f1 A6 anchor the forfeit answer assertion to the answer row"
     ],
-    "migration": "none \u2014 every change is client-side or CSS",
+    "migration": "none — every change is client-side or CSS",
     "a1": "replaced the one-shot setTimeout that never re-armed on a hidden tab with a ref-driven setInterval keyed on a derived pollableQueue, plus visibilitychange and online re-polls; the regression test overrides document.visibilityState because Playwright keeps background pages visible and the pre-existing scenario therefore passed against the broken code",
     "a2": "removed UPDATE RATING from every terminal branch and added a latched auto-settle on the v7.3 timeout-settlement shape; both players' rating changes are shown on every ranked ending, the opponent's row read through the two-sided RLS on multiplayer_rating_transactions filtered by matchResultId; colours reuse --correct-text/--danger-text/--present-text with no new values; a cancelled ranked match renders an orange plus-or-minus zero rather than inventing a settlement",
-    "a2Limit": "client-side only \u2014 a force-quit before the effect runs still escapes settlement. Cycle C moves settlement server-side per the owner's \"both\" decision",
+    "a2Limit": "client-side only — a force-quit before the effect runs still escapes settlement. Cycle C moves settlement server-side per the owner's \"both\" decision",
     "a3": "explicit grid-template-areas and grid-template-rows with align-items:start so no baseline group spans rows, and the display:grid specificity raised above .menu-popover a; added visual-firefox and visual-webkit projects filtered to @crossbrowser and wired them into pnpm test:visual",
     "a3Honesty": "desktop Firefox does not reproduce the Android rendering, so the cross-engine test asserts the structure that made the divergence possible rather than a pixel outcome; those assertions do fail on the old CSS",
     "a4": "appends one all-red answer row with no evidence glyph when outcome.reason is forfeit, reading revealedAnswers[currentPuzzleIndex] because a GO match returns the whole chain; the prop is optional and off by default so the shared spectator transcript can never leak it",
@@ -1001,9 +1001,9 @@
     "services": "3 passed against real Supabase at 1 worker",
     "visual": "40 passed: 36 Chromium, 2 Firefox, 2 WebKit",
     "parity": "237/237 ordered atomic clauses acceptance-verified",
-    "residue": "none \u2014 working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
-    "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06\u00b7\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
-    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
+    "residue": "none — working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
+    "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06·\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — no release"
   },
   "v8CycleBImplementation": {
     "scope": "background ranked searching that survives navigation, a persistent search affordance, and the notification centre rework",
@@ -1040,7 +1040,7 @@
     "scenarioStrengthened": "the hosted ranked scenario now forces the waiter hidden AND navigates them to Home before the opponent claims, then asserts the search is still visibly running there, the match announces itself, the player is not dragged off the page, and opening it by hand works",
     "firstRunFailure": "real: the provider phase message had precedence over the lobby message, so the lobby stopped saying \"Restored your ranked search\" after a reload. Precedence inverted and a phase change now clears the page message",
     "secondRunFailure": "harness only: the 35-letter ranked winner needs more than five seconds for the command round-trip, terminal transition, automatic settlement and a 35-column re-render before the draft row clears. The failure screenshot showed the win, the points and both ratings applied with no press. Window widened to 15s, assertion unchanged",
-    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — no release"
   },
   "v8CycleCMigration": {
     "file": "20260810020000_amordle_ranked_buckets_v4.sql",
@@ -1102,7 +1102,7 @@
     "m2": "the limit counts playing/holding with move_count > 0, not open lobbies and abandoned shells",
     "m3": "finalize lost its copy of the gate entirely; a second gate there could only restore the ability to strand a pair",
     "m4": "four phantom queue rows expired",
-    "m5": "five abandoned legacy games cancelled, not deleted, as authorised \u2014 the transition the state machine defines for a game that ends unplayed, leaving the ledger referring to rows that exist",
+    "m5": "five abandoned legacy games cancelled, not deleted, as authorised — the transition the state machine defines for a game that ends unplayed, leaving the ledger referring to rows that exist",
     "c1": "pressing a second time control switches rather than stacks",
     "c2": "the portal opens the match it found; auto-navigation was gated on a /combat/practice prefix and the portal is /combat",
     "c3": "COMBAT_LIMIT names which limit and the way past it",
@@ -1153,7 +1153,7 @@
     "scope": "the whole v8 programme through v8.2: Cycles A-D, the matchmaking repair, the public ranked lanes, the portal tile grid, the notification header and the self-reporting error page",
     "ownerWords": "\"this looks basically perfect now ... please lock this in - it is fully approved\"",
     "tag": "amordle-stage2-v8.2-public-lanes-and-portal-accepted-2026-08-14",
-    "production": "still frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 acceptance of the Preview, not a release"
+    "production": "still frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — acceptance of the Preview, not a release"
   },
   "openWorkAtV82Acceptance": {
     "1_productionRelease": "Production runs code that predates all four applied migrations. Ranked pool names, settlement and limits have all changed underneath it, so ranked play on Production should be assumed unreliable until the release lands. This is the only item with a live cost",
@@ -1169,9 +1169,9 @@
     "r2": "reaper retires zero-move games idle 14 days, cancelled. Proven both ways: zero-move retired, played game in the same window untouched",
     "r3": "/combat/active copy no longer promises recently completed games",
     "r4": "AppShell no longer calls useSearchParams; the ?focus=1 read moved to a leaf under its own Suspense that reports up. /about went from 19.7kB of skeleton with no nav or heading to 23kB with both; /help is 76kB",
-    "r4Correction": "building the focus hrefs from the pathname alone dropped ?generation=19, which identifies which Solo game you are in \u2014 the Solo fixture test caught it and the hrefs now come from the reader",
+    "r4Correction": "building the focus hrefs from the pathname alone dropped ?generation=19, which identifies which Solo game you are in — the Solo fixture test caught it and the hrefs now come from the reader",
     "r5": "signed-in /calendar pass in the hosted suite (every route walk was signed-out, which is why a data-dependent crash reached the owner); a domain test asserts the prerendered document carries the heading and the navigation",
-    "defectsFoundByTesting": "amordle_timeout_game (Cycle D) wrote requested_command = timeout, which the ledger CHECK rejects \u2014 the correspondence timeout had NEVER worked and nothing reported it because no per-move deadline had passed. And my reaper set terminal_reason = abandoned, also rejected, which would have failed silently inside the cron forever",
+    "defectsFoundByTesting": "amordle_timeout_game (Cycle D) wrote requested_command = timeout, which the ledger CHECK rejects — the correspondence timeout had NEVER worked and nothing reported it because no per-move deadline had passed. And my reaper set terminal_reason = abandoned, also rejected, which would have failed silently inside the cron forever",
     "localGate": "163 domain, 31 browser, 24 fixture, 52 visual",
     "report": "reports/v9-close-out-2026-08-14/README.md"
   },
@@ -1194,22 +1194,22 @@
   },
   "openWorkAfterV9": {
     "none": "all six items the owner listed at v8.2 acceptance are closed",
-    "watch": "the correspondence sweep and reaper have never run against real expired data in production \u2014 there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
+    "watch": "the correspondence sweep and reaper have never run against real expired data in production — there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
   },
   "v9ReleaseIncident": {
     "what": "the first production release shipped a site nobody could sign in to, and the first attempt to fix it took the whole site down for a few minutes",
     "cause1": "vercel build --prod was run without pulling the production environment, so no Supabase config reached the client bundle. next.config.ts already falls back from SUPABASE_URL, but there was nothing on disk to fall back to. Every Preview worked because .vercel/.env.preview.local was already there",
-    "cause2": "vercel pull then overwrote .vercel/project.json with the dashboard settings \u2014 framework null, outputDirectory dist. With no framework Vercel skips the Next.js builder and copies a directory as static files: 0 serverless functions, 2 routes, 404 everywhere. It deployed cleanly and reported Ready",
+    "cause2": "vercel pull then overwrote .vercel/project.json with the dashboard settings — framework null, outputDirectory dist. With no framework Vercel skips the Next.js builder and copies a directory as static files: 0 serverless functions, 2 routes, 404 everywhere. It deployed cleanly and reported Ready",
     "recovery": "vercel rollback to dpl_2yJG restored the site in seconds. Note that a rollback PINS production: the subsequent --prod deploy did not take the alias and vercel promote was required",
     "durableFix": "framework and outputDirectory now live in vercel.json, which is version-controlled and immune to vercel pull. A build guard in next.config.ts refuses to produce a deployment artifact without Supabase browser configuration, naming which value is missing",
     "processFix": "the first release went to production without a preview of that exact artifact. The fix was built, checked for functions and config, deployed to a preview, run through full hosted acceptance, and only then promoted"
   },
   "v10Backlog": {
-    "source": "docs/v10-finishing-touches-backlog.md \u2014 captured from the owner 2026-08-15, nothing started",
+    "source": "docs/v10-finishing-touches-backlog.md — captured from the owner 2026-08-15, nothing started",
     "a_about": "new About page in the menu: changelog link, GitHub issue routes, repository, terse credit with personal site/GitHub/Sponsors/LinkedIn/player-profile buttons, and the English OpenList with its three links",
     "b_methodology": "new Methodology page disclosing Elo (equation, concept, per-time-control pools, provisional K, a figure), XP, and coins including the variable cost of an extra guess. Everything read from code, never recalled. Leaderboards links here",
     "c_changelog": "a separately published changelog, GitHub Pages, one post per significant update, Amordle visual language rather than the reference site. 15-30s Remotion video embedded when a change is visual; light music, no jarring sound",
-    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
+    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links — /players/[publicProfileId] already exists, finding your own does not",
     "e_menu": "Methodology between Help and About; About above Sign In/Profile",
     "operatorManual": "a reusable artifact with a single-placeholder prompt template for future sessions: plan mode, paste, attach screenshots, plan, execute, then a changelog post and a video if visual",
     "ownerNote": "the owner walked every page and found almost nothing else worth reporting",
@@ -1220,9 +1220,55 @@
       "displayName": "pmak nayr",
       "profileUrl": "https://amordle.vercel.app/players/f08161d7-6d57-4142-b42d-7bcf86b983fc",
       "verified": "URL returns 200 on production",
-      "note": "not a new user id \u2014 it appeared earlier as the player \"apples\" and owned three of the abandoned zero-move games the reaper retired, so the account carries history",
+      "note": "not a new user id — it appeared earlier as the player \"apples\" and owned three of the abandoned zero-move games the reaper retired, so the account carries history",
       "today": "accent cyan, flair none"
     },
-    "blockers": "none \u2014 the account existed and was confirmed by the owner, so every workstream can be planned and built"
+    "blockers": "none — the account existed and was confirmed by the owner, so every workstream can be planned and built"
+  },
+  "v10Implementation": {
+    "report": "reports/v10-finishing-touches-2026-08-15/README.md",
+    "range": "f2b28a7 -> 683fad9",
+    "commits": [
+      "73bd6c2 fix(economy): make signed-in consumables reach the server, and unblock the gate",
+      "95c7479 feat(pages): publish the methodology and expand About, both in the menu",
+      "683fad9 feat(profile): add the Creator flair, the Voltage accent, and shareable links"
+    ],
+    "bootstrapRebaseline": "vercel.json was entry 107 of the frozen manifest and its hash was never updated after 046e3b9 added the framework and outputDirectory. pnpm check was already red on HEAD before this cycle. Re-baselined to the shipped bytes rather than reverting the v9 incident's durable fix. reports/v10-bootstrap-rebaseline-decision-2026-08-15.md",
+    "consumablesDefect": "the signed-in consumable path had NEVER worked. The client sent the player_economy_state column names and scope 'solo-practice'; the RPCs branch on revealOneLetter/removeIncorrectLetters and refuse any scope but 'practice'. Every signed-in purchase raised Invalid consumable and every hint raised Practice only, in production, since the economy shipped. Guests were unaffected because they never leave the local adapter, which is why it looked fine signed out. Nothing could have caught it: both sides were internally consistent and no test compared them. The new test compares the client constants against the MIGRATION TEXT rather than a restated copy, which would have drifted the same way",
+    "methodology": "/methodology publishes the Elo expected-score equation, K=40 provisional / 24 after ten games, the 1200 seed, the forty rating pools and the v4 bucket scheme, COMBAT points, leaderboard ordering and tiebreaks, the XP formula, the square level curve, coins, and the continuation-cost formula with a worked table. Every value read from code; the file header names file and line for each. States plainly that there is no rating floor or ceiling, that a match is not always zero-sum when the two K values differ, and which prices are server-enforced versus client-computed",
+    "dailyStreakOmitted": "private-stats.tsx:109 displays dailyStreak and no current code path advances it - only a legacy import sets it. Deliberately left off the Methodology page: documenting a dead number on a page about honesty invites the suspicion the page exists to prevent",
+    "about": "/about already existed at src/app/about/page.tsx and was in no menu, reachable only by the legacy redirect. Expanded with the changelog, three GitHub issue routes, the repository, terse credit with profile/GitHub/Sponsors/LinkedIn, and the English OpenList with its three links",
+    "menu": "Methodology and About appended to `secondary` in app-shell.tsx. The Sign in / Profile item is hardcoded after the map so it stayed last with no restructuring. Nothing pinned the menu's contents or count, so no test changed",
+    "creatorIdentity": "restricted by a CHECK constraint on the row rather than a test of the caller. Flair has always been self-assertion; a caller-based gate would need repeating in all three write paths and the service role bypasses auth.uid() entirely. Binding the value to a user id makes the rule a property of the data, so no code path can violate it including ones that do not exist yet. The picker filter and the validators' readable refusal are courtesy",
+    "voltage": "a real seventh named accent, not a one-off, so opening it to everyone later is deleting one line of SQL. Only shadows animate: the sweep injects `animation: none` before measuring, so an animation touching --accent-text would be verified at one frame and unverified at every other. text-shadow and box-shadow cannot alter the pair the sweep samples, so the moving part is unmeasurable by construction. A domain test enforces that no future keyframe smuggles in a colour property",
+    "shareLinks": "unique profile URLs already existed; there was no way to find your own, because opening your own public profile redirects to /profile. Copy affordances on both surfaces; the dead EDIT PROFILE button the redirect had made unreachable removed. One CopyButton replaces four raw clipboard calls - only one of the four guarded for an absent clipboard or reported success",
+    "newRouteRegistration": "canonicalRoutes in fixture.routes.spec.ts, overflowSurfaces in visual.responsive.spec.ts (aliased to contrastSurfaces), and the it.each in server-render.test.ts. voltage added to contrastAccents",
+    "localGate": "179 domain, 31 browser, 24 fixture, 52 visual; bootstrap 107/107; parity 237/237; budgets home 198804B JS/25178B CSS, game 205205B JS/30088B CSS",
+    "harnessCaution": "a stale `pnpm start` left on port 3000 produced 43 visual failures that looked like regressions and were the suite testing an older build. Free the port before believing a visual failure"
+  },
+  "v10Migration": {
+    "file": "20260815055205_amordle_creator_identity_v1.sql",
+    "sha256": "7b0600cc0ab501dbe6bcfe4477a66a184ee359e93cb45a338676e51a2317001f",
+    "decisionPacket": "reports/v10-creator-identity-migration-decision-2026-08-15.md",
+    "ownerAuthorized": true,
+    "applied": false,
+    "blocker": "supabase db push --linked prompts for the database password, which is the owner's to enter. No Supabase access token or password is stored in the environment",
+    "registeredAs": "reviewedPendingMigrations in scripts/verify-bootstrap-baseline.mjs; moves to authorizedAdditiveMigrations (13 -> 14) on apply, and pnpm generate:types is re-run"
+  },
+  "v10Changelog": {
+    "repository": "https://github.com/ryanjosephkamp/amordle-updates (public, created 2026-08-15 with owner authorization)",
+    "site": "https://ryanjosephkamp.github.io/amordle-updates/",
+    "verified": "index, post, stylesheet and the 1690086-byte video all return 200 from the live Pages deployment",
+    "why": "the game repository is private and GitHub Pages on a private repo needs a paid plan; a separate public repo avoids forcing a decision about the game's source visibility",
+    "look": "tokens lifted from src/app/tui-shell.css rather than approximated. Hand-written HTML and one stylesheet, no build step for the pages",
+    "video": "Remotion, 24 seconds, composition generic so the props are the script. Figures drawn rather than screen-recorded. NO audio track, deliberately - the captions carry the whole message and silence is more honest than a stock loop"
+  },
+  "v10OperatorManual": "https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f - a prompt template with one ALL-CAPS slot, the four-step working pattern, what to attach, and the actions reserved to the owner",
+  "openWorkAfterV10": {
+    "1_migrationNotApplied": "authorized but not applied; needs the owner to run supabase db push --linked. Until then creator and voltage are refused by the server, which is harmless",
+    "2_noPreview": "no Preview deployment and therefore no hosted acceptance for this cycle. Release path remains Preview -> full hosted acceptance -> promote",
+    "3_dailyStreak": "displayed on the private stats panel and never advanced by any current code path. Should either start working or stop being shown",
+    "4_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
+    "5_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves"
   }
 }
