@@ -1295,6 +1295,19 @@ button.calendar-day.is-selected {
   font-size: var(--text-4);
 }
 
+/*
+ * No prose page had a third heading level before Methodology, and preflight
+ * resets headings to inherit, so an <h3> here would have been indistinguishable
+ * from a paragraph. One step below h2 on the existing scale, inheriting the
+ * section's ink so it is already covered by the contrast sweep.
+ */
+.prose-sections h3 {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-3);
+  font-weight: 650;
+}
+
 .prose-sections p {
   color: var(--muted);
   line-height: 1.7;
@@ -1309,6 +1322,100 @@ button.calendar-day.is-selected {
   padding: var(--space-5);
   white-space: pre-wrap;
   overflow-wrap: anywhere;
+}
+
+/*
+ * A displayed equation. Scrolls inside its own box rather than widening the
+ * document, because the responsive suite asserts no route ever creates
+ * horizontal document scrolling and an equation is the one thing on a prose
+ * page that cannot be made to wrap sensibly.
+ */
+.equation {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+  font-size: var(--text-3);
+  line-height: 1.9;
+}
+
+.equation b {
+  font-weight: 650;
+  color: var(--accent-text);
+}
+
+.rating-spread {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+}
+
+/*
+ * Capped at the viewBox width so the figure renders 1:1 on a wide screen. The
+ * labels are sized in user units, so letting it stretch to a 96rem column would
+ * scale 13px text up past the page's largest heading.
+ */
+.rating-spread svg {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.rating-spread-fill {
+  fill: var(--accent-soft);
+}
+
+.rating-spread-curve {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.rating-spread-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.rating-spread-mean {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.rating-spread-label {
+  fill: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+}
+
+.rating-spread figcaption {
+  margin-top: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-2);
+  line-height: 1.7;
+}
+
+@media (forced-colors: active) {
+  /* Fills and strokes are ignored in forced colors; keep the figure legible as
+     outlines rather than letting the curve disappear into the background. */
+  .rating-spread-fill {
+    fill: none;
+  }
+
+  .rating-spread-curve,
+  .rating-spread-axis,
+  .rating-spread-mean {
+    stroke: CanvasText;
+  }
+
+  .rating-spread-label {
+    fill: CanvasText;
+  }
 }
 
 .admin-refresh {

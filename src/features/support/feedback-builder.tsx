@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { ExternalLink } from '@/components/external-link';
 import { WorkbenchRegion } from '@/components/workbench';
 
 function sanitize(value: string): string {
@@ -76,9 +77,9 @@ export function FeedbackBuilder() {
         <pre className="feedback-preview">{template}</pre>
         <div className="action-row">
           <button onClick={() => void navigator.clipboard.writeText(template)}>COPY PREVIEW</button>
-          <a className="button primary" href={issueUrl} target="_blank" rel="noreferrer">
+          <ExternalLink href={issueUrl} variant="button-primary">
             OPEN GITHUB ISSUE
-          </a>
+          </ExternalLink>
         </div>
         <p className="prose">Nothing is submitted automatically.</p>
       </WorkbenchRegion>

@@ -23,6 +23,7 @@ describe('server-rendered documents', () => {
   it.each([
     ['about', 'About Amordle'],
     ['help', 'Help'],
+    ['methodology', 'Methodology'],
   ])('sends real content for /%s rather than a placeholder', (route, heading) => {
     const html = prerendered(route);
 

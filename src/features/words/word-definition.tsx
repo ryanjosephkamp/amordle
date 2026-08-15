@@ -3,6 +3,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useId, useRef } from 'react';
 import { lookupDefinition } from '@/adapters/definitions';
+import { ExternalLink } from '@/components/external-link';
 import type { DefinitionLookupResult } from '@/domain/definitions';
 
 export function WordDefinition({
@@ -98,9 +99,9 @@ export function WordDefinition({
             RETRY
           </button>
         )}
-        <a className="button" href={searchUrl} target="_blank" rel="noopener noreferrer">
+        <ExternalLink href={searchUrl} variant="button">
           SEARCH WEB
-        </a>
+        </ExternalLink>
       </div>
     </section>
   );

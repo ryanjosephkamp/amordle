@@ -75,6 +75,7 @@ const overflowSurfaces = [
   '/settings',
   '/help',
   '/feedback',
+  '/methodology',
   '/about',
   '/auth',
   '/admin',

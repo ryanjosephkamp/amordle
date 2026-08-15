@@ -29,6 +29,7 @@ const canonicalRoutes = [
   '/settings',
   '/help',
   '/feedback',
+  '/methodology',
   '/about',
   '/auth',
   '/auth/callback',

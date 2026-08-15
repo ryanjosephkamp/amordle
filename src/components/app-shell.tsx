@@ -58,6 +58,8 @@ const secondary = [
   { href: '/marketplace', label: 'Marketplace' },
   { href: '/settings', label: 'Settings' },
   { href: '/help', label: 'Help' },
+  { href: '/methodology', label: 'Methodology' },
+  { href: '/about', label: 'About' },
 ] as const;
 
 function isCurrent(pathname: string, href: string): boolean {
