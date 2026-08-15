@@ -281,11 +281,23 @@ Getting there took three attempts and each failure is worth recording.
    because `ryanjosephkampsapps0@gmail.com` is a real account with no public
    profile and "auth user without a profile" would have deleted it.
 
-**Outstanding:** ten legacy auth users remain, invisible to every surface
-because they hold no row in `public`. Two of them were never in the profile-id
-list and still carry two `progress_snapshots` and two `settings` rows. The
-reason the auth deletion is refused is not yet known — the next run will print
-it.
+**Outstanding, and cosmetic.** Eight of the ten legacy auth users deleted. Two
+remain, invisible to every surface because they hold no row the app reads.
+
+They are the two that **host** six terminal games from 2026-07-25; the eight
+that deleted cleanly were all non-hosts, which is the only pattern in it. That
+lead was investigated and did not hold up: `host_user_id`,
+`player_one_user_id` and `player_two_user_id` are all nullable on the live
+schema, all three foreign keys are `ON DELETE SET NULL`, the matchmaking queue
+cascades, there are no triggers on the table, and the single `CHECK` tolerates
+nulls. The opponents' own deletions already set `player_two_user_id` to null
+successfully, which proves the mechanism works.
+
+So no constraint accounts for it. GoTrue returns `AuthRetryableFetchError`,
+status 500, empty body — a server-side failure rather than a data one, and its
+own name says retryable. Left unexplained rather than given a plausible cause;
+the project's Postgres logs would name the real exception if it is ever worth
+chasing. Nothing player-facing depends on it.
 
 ## Rollback
 
