@@ -233,41 +233,46 @@ test.describe('route and public boundary matrix', () => {
    */
   test('Help judges Hard Mode candidates with the real rule', async ({ page }) => {
     await page.goto('/help');
-    const verdict = page.locator('.help-hard-verdict');
     /*
-     * v10. There is a window during hydration where this selector matches TWO
-     * identical nodes, and the assertion below then fails on strict mode rather
-     * than on anything about Hard Mode. Reproduced 1 in 8 against a Preview and
-     * 1 in 12 against Production, so it predates this cycle; the duplicate is
-     * gone by the time the failure snapshot is taken, which is why it reads as
-     * a mystery in the report rather than as a defect.
+     * v10. Scoped to the document's own main landmark, and that scoping is the
+     * assertion rather than a convenience.
      *
-     * Asserting the count first is deliberately a STRENGTHENING, not a wait
-     * dressed up as one: nothing here previously said how many of these the
-     * page should have, and now it does. Playwright retries it, so it also
-     * outlasts the window instead of racing it.
+     * The app shell suspends during SSR, so React streams this page's resolved
+     * content into `<div hidden id="S:0">` at the end of <body> and an inline
+     * script then moves it into the boundary. Between arrival and that swap
+     * BOTH copies are in the DOM, and a page-wide locator matches them: strict
+     * mode then fails on the count before visibility is ever considered.
+     * Measured on Production at 6 loads in 15, and on a Preview at 2 in 15, so
+     * it predates this cycle and is not something the release introduced.
+     *
+     * Nothing about it is user-visible — the second copy is inside `hidden`.
+     * The defect was in the selector, which was reaching into React's staging
+     * area and calling it the page. Searching within #main-content asks for
+     * what the test always meant: the tree the reader is actually looking at.
      */
+    const help = page.locator('#main-content');
+    const verdict = help.locator('.help-hard-verdict');
     await expect(verdict).toHaveCount(1);
     await expect(verdict).toContainText('No guess tried yet.');
 
-    await page.getByRole('button', { name: 'MEETS' }).click();
+    await help.getByRole('button', { name: 'MEETS' }).click();
     await expect(verdict).toContainText('ACCEPTED');
 
-    await page.getByRole('button', { name: 'MATES' }).click();
+    await help.getByRole('button', { name: 'MATES' }).click();
     await expect(verdict).toContainText('Use at least 2 Es.');
 
-    await page.getByRole('button', { name: 'GLEES' }).click();
+    await help.getByRole('button', { name: 'GLEES' }).click();
     await expect(verdict).toContainText('G has already been ruled out.');
 
-    await page.getByRole('button', { name: 'MELEE' }).click();
+    await help.getByRole('button', { name: 'MELEE' }).click();
     await expect(verdict).toContainText('Keep S in position 5.');
-    await expect(page.getByRole('button', { name: 'MELEE' })).toHaveAttribute(
+    await expect(help.getByRole('button', { name: 'MELEE' })).toHaveAttribute(
       'aria-pressed',
       'true',
     );
 
     // Operable without a pointer.
-    await page.getByRole('button', { name: 'MEETS' }).focus();
+    await help.getByRole('button', { name: 'MEETS' }).focus();
     await page.keyboard.press('Enter');
     await expect(verdict).toContainText('ACCEPTED');
   });
@@ -283,6 +288,8 @@ test.describe('route and public boundary matrix', () => {
   }) => {
     await page.emulateMedia({ reducedMotion: 'reduce', forcedColors: 'active' });
     await page.goto('/help');
+    // Same streaming-window scoping as the two tests above.
+    const help = page.locator('#main-content');
 
     /*
      * W5.1 and W5.3 removed the sequences from these two figures, so they no longer rest
@@ -291,15 +298,15 @@ test.describe('route and public boundary matrix', () => {
      * unchanged: a reader with reduced motion sees the whole figure.
      */
     for (const state of ['is-correct', 'is-present', 'is-absent']) {
-      await expect(page.locator(`.help-tile-row .tile.${state}`)).toHaveCount(1);
+      await expect(help.locator(`.help-tile-row .tile.${state}`)).toHaveCount(1);
     }
     // The pending treatment and the blinking cursor belonged to the sequence and are gone.
-    await expect(page.locator('.help-tile-row .tile.is-pending')).toHaveCount(0);
-    await expect(page.locator('.help-tile-row .tile[data-cursor]')).toHaveCount(0);
+    await expect(help.locator('.help-tile-row .tile.is-pending')).toHaveCount(0);
+    await expect(help.locator('.help-tile-row .tile[data-cursor]')).toHaveCount(0);
     // The lane rail is unconditional now, so it must paint without any attribute at all.
-    const lanes = page.locator('.help-lane-comparison > div');
+    const lanes = help.locator('.help-lane-comparison > div');
     await expect(lanes).toHaveCount(2);
-    await expect(page.locator('.help-lane-comparison > div[data-reached]')).toHaveCount(0);
+    await expect(help.locator('.help-lane-comparison > div[data-reached]')).toHaveCount(0);
     for (const index of [0, 1]) {
       await expect(lanes.nth(index)).toHaveCSS('border-inline-start-width', '2px');
     }
@@ -310,8 +317,11 @@ test.describe('route and public boundary matrix', () => {
      * so it has to be the frame worth seeing, and these assert exactly that rather than
      * that "something rendered".
      */
+    // The figure set is scoped to main; the `has:` stays page-rooted because
+    // filter() re-roots it at each candidate figure, and an absolute locator
+    // there matches nothing.
     const figureOf = (caption: RegExp) =>
-      page.locator('figure.help-figure').filter({ has: page.getByText(caption) });
+      help.locator('figure.help-figure').filter({ has: page.getByText(caption) });
 
     // GO: six board entries, and puzzle five's four seeded rows carried forward.
     const go = figureOf(/ONE ANSWER BECOMES THE NEXT PUZZLE/i);
@@ -341,7 +351,7 @@ test.describe('route and public boundary matrix', () => {
 
     // The figures are decorative subtrees with the lesson in the caption, so they must not
     // put 56 keyboard keys and 45 tiles into the tab order.
-    await expect(page.locator('.help-stage button')).toHaveCount(0);
+    await expect(help.locator('.help-stage button')).toHaveCount(0);
 
     /*
      * v7.4. The figure keyboards must be the real keyboard, not an approximation of it.
@@ -473,13 +483,16 @@ test.describe('route and public boundary matrix', () => {
 
   test('Help separates core teaching aids from collapsed advanced shortcuts', async ({ page }) => {
     await page.goto('/help');
-    await expect(page.getByText(/ONE ANSWER BECOMES THE NEXT PUZZLE/i)).toBeVisible();
-    await expect(page.getByText(/BUILD A COMPATIBLE HARD MODE GUESS/i)).toBeVisible();
-    const advanced = page.getByText(/Mouse-free mode — for keyboard diehards/i);
+    // Scoped for the streaming reason documented on the Hard Mode test above:
+    // a page-wide locator here also matches React's hidden staging copy.
+    const help = page.locator('#main-content');
+    await expect(help.getByText(/ONE ANSWER BECOMES THE NEXT PUZZLE/i)).toBeVisible();
+    await expect(help.getByText(/BUILD A COMPATIBLE HARD MODE GUESS/i)).toBeVisible();
+    const advanced = help.getByText(/Mouse-free mode — for keyboard diehards/i);
     await expect(advanced).toBeVisible();
-    await expect(page.locator('#keyboard-navigation')).not.toHaveAttribute('open', '');
+    await expect(help.locator('#keyboard-navigation')).not.toHaveAttribute('open', '');
     await advanced.click();
-    await expect(page.locator('#keyboard-navigation')).toHaveAttribute('open', '');
-    await expect(page.getByRole('columnheader', { name: 'Keys' })).toBeVisible();
+    await expect(help.locator('#keyboard-navigation')).toHaveAttribute('open', '');
+    await expect(help.getByRole('columnheader', { name: 'Keys' })).toBeVisible();
   });
 });
