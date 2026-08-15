@@ -1,6 +1,7 @@
 'use client';
 
 import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import {
   getEconomy,
@@ -20,8 +21,9 @@ import {
   buildResultTimeline,
   nextLevelProgress,
 } from '@/domain/account-stats';
-import type { AccountHistoryRow } from '@/domain/account-continuity';
+import type { AccountHistoryRow, AccountProgress } from '@/domain/account-continuity';
 import type { DifficultyBreakdownRow, ResultTimelineDay } from '@/domain/account-stats';
+import { currentDailyStreak, localDayKey } from '@/domain/daily-streak';
 import { ratingBucketLabel, resolveRatingLane } from '@/domain/profile';
 
 export function PrivateStats() {
@@ -66,6 +68,13 @@ function PrivateStatsInner() {
     refetchOnMount: 'always',
   });
 
+  // Deferred past the first render for the same reason the calendar defers it: computing
+  // the local day during SSR would bake in the server's day rather than the player's.
+  const [today, setToday] = useState('');
+  useEffect(() => {
+    queueMicrotask(() => setToday(localDayKey(new Date())));
+  }, []);
+
   const queries = [progress, history, pending, economy, ratings];
   if (queries.every((query) => query.isPending)) {
     return <SkeletonRows label="Loading statistics…" rows={5} />;
@@ -106,7 +115,7 @@ function PrivateStatsInner() {
         <Metric label="level" value={accountProgress.level} />
         <Metric label="xp" value={accountProgress.xp} />
         <Metric label="next level" value={`${Math.round(level.percentage)}%`} />
-        <Metric label="daily streak" value={accountProgress.dailyStreak} />
+        <Metric label="daily streak" value={dailyStreakValue(accountProgress, today)} />
         <Metric label="coins" value={economy.data?.coins ?? '—'} />
         <Metric label="reveal letters" value={economy.data?.reveal_one_letter ?? '—'} />
         <Metric label="remove letters" value={economy.data?.remove_incorrect_letters ?? '—'} />
@@ -302,6 +311,19 @@ function StatsSection({
       <div className="stats-metrics">{children}</div>
     </section>
   );
+}
+
+/**
+ * Zero is a real value here rather than a missing one, and the two ways of reaching it
+ * are different situations: a player who has never finished a Daily and one whose streak
+ * has lapsed need different prompts. The em-dash is only for the moment before the local
+ * day is known.
+ */
+function dailyStreakValue(progress: AccountProgress, today: string): string | number {
+  if (!today) return '—';
+  const streak = currentDailyStreak(progress, today);
+  if (streak > 0) return streak;
+  return progress.lastDailyDate ? 'start again' : 'start today';
 }
 
 function Metric({ label, value }: { label: string; value: string | number }) {

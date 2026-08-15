@@ -68,6 +68,9 @@ describe('account continuity', () => {
         xp: 375,
         level: 4,
         dailyStreak: 5,
+        // Dated from the newest Daily in the imported history, so the streak can lapse
+        // and can continue on the same rules a native one follows.
+        lastDailyDate: '2026-07-20',
         dailyEntitlements: {
           '2026-07-18:og': 'unlocked',
           '2026-07-19:go': 'unlocked',
@@ -88,6 +91,16 @@ describe('account continuity', () => {
       },
     });
     expect(JSON.stringify(row)).not.toContain('never-expose-this');
+  });
+
+  it('imports a legacy streak undated when the save holds no Daily history', () => {
+    const legacy = legacyProgress();
+    legacy.history[0]!.gameId = 'og:practice:17';
+    legacy.history[0]!.scope = 'practice';
+    const result = normalizeAccountProgress(legacy);
+    expect(result.kind).toBe('legacy');
+    expect(result.kind === 'legacy' && result.progress.lastDailyDate).toBeUndefined();
+    expect(result.kind === 'legacy' && result.progress.dailyStreak).toBe(5);
   });
 
   it('fails closed for unknown progress and drops invalid history rows', () => {

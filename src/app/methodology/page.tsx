@@ -28,6 +28,7 @@ import { RatingSpreadFigure } from './rating-spread-figure';
  *                  supabase/migrations/20260814010000_amordle_public_ranked_lanes_v4.sql:203-224
  *   XP and coins   soloReward, src/adapters/cloud/solo.ts:157-172
  *   Levels         levelForXp, src/domain/economy.ts:10-13
+ *   Daily streak   advanceDailyStreak / currentDailyStreak, src/domain/daily-streak.ts
  *   Prices         supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql:101-103
  *   Continuation   continuationCost, src/domain/economy.ts:20-42 (see also
  *                  completionPercentage, src/domain/game.ts:485)
@@ -458,6 +459,37 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
         </section>
 
         <section>
+          <h2>The daily streak</h2>
+          <p>
+            Your streak counts consecutive days on which you finished a Daily. The rules are short
+            enough to state completely:
+          </p>
+          <ul>
+            <li>
+              <b>Either Daily counts.</b> The OG and the GO are two ways to keep the same streak,
+              not two streaks. Finishing both on one day counts once.
+            </li>
+            <li>
+              <b>Finishing counts, not winning.</b> A Daily you lose keeps the streak. Showing up is
+              the thing being measured.
+            </li>
+            <li>
+              <b>The day is your local day</b>, the same one the Daily calendar uses, so your streak
+              turns over at your midnight rather than anybody else&rsquo;s.
+            </li>
+            <li>
+              <b>Miss a day and it lapses.</b> Your next finished Daily starts a new streak at one.
+              The panel shows the streak as zero from the moment a day has gone by without one.
+            </li>
+            <li>
+              <b>Unlocking a past Daily cannot repair it.</b> Playing an older date records the
+              result and pays the usual coins and experience, but the streak only ever moves
+              forward. A streak you have lost cannot be bought back.
+            </li>
+          </ul>
+        </section>
+
+        <section>
           <h2>What&rsquo;s checked and where</h2>
           <p>
             Some of this is enforced by the server, and some is calculated by the app on your
@@ -480,6 +512,11 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
             <li>
               <b>Experience and coins earned:</b> Applied through an operation that is keyed so it
               cannot be applied twice.
+            </li>
+            <li>
+              <b>The daily streak:</b> Computed on your device from the date of the Daily you
+              finished and written to the same saved record as your experience. It is keyed to the
+              day, which is what makes finishing both Dailies count once.
             </li>
             <li>
               <b>The price of another guess, and of unlocking a past Daily:</b> The server checks

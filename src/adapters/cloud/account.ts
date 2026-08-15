@@ -18,6 +18,7 @@ import {
   progressSchema,
 } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
+import { advanceDailyStreak } from '@/domain/daily-streak';
 import {
   defaultPlayerSettings,
   normalizePlayerSettings,
@@ -225,17 +226,27 @@ export async function finalizeAccountHistoryRow(row: AccountHistoryRow) {
   if (parsed.entry.rewardCoins > 0) {
     await creditCoins(parsed.entry.rewardCoins, operationId);
   }
-  if (parsed.entry.rewardXp > 0) {
+
+  const appliesXp = parsed.entry.rewardXp > 0;
+  // `kind`, not `lane`: V1 entries carry no lane, and the COMBAT Daily is keyed to UTC
+  // rather than the player's local day, so it must not feed a local-day streak.
+  const dailyDate = parsed.entry.kind === 'solo-daily' ? parsed.entry.dailyDate : undefined;
+  // A Daily loss with nothing solved earns no XP, and it still keeps the streak, so this
+  // cannot stay gated on the XP alone. One write carries both.
+  if (appliesXp || dailyDate) {
     await writeAccountProgressCas(parsed.user_id, (snapshot) => {
-      if (snapshot.appliedRewards?.[operationId] !== undefined) return snapshot;
-      const xp = snapshot.xp + parsed.entry.rewardXp;
-      return {
-        ...snapshot,
-        xp,
-        level: levelForXp(xp),
-        revision: snapshot.revision + 1,
-        appliedRewards: { ...snapshot.appliedRewards, [operationId]: parsed.entry.rewardXp },
-      };
+      let next = snapshot;
+      if (appliesXp && next.appliedRewards?.[operationId] === undefined) {
+        const xp = next.xp + parsed.entry.rewardXp;
+        next = {
+          ...next,
+          xp,
+          level: levelForXp(xp),
+          appliedRewards: { ...next.appliedRewards, [operationId]: parsed.entry.rewardXp },
+        };
+      }
+      if (dailyDate) next = advanceDailyStreak(next, dailyDate);
+      return next === snapshot ? snapshot : { ...next, revision: snapshot.revision + 1 };
     });
   }
   return parsed;

@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react';
 import { loadProgress } from '@/adapters/supabase/account';
 import { useAuth } from '@/components/providers';
 import { StatusPanel } from '@/components/route-states';
+import { localDayKey } from '@/domain/daily-streak';
 import type { PropsWithChildren } from 'react';
 
 export function DailyAccessGate({
@@ -23,13 +24,7 @@ export function DailyAccessGate({
   });
 
   useEffect(() => {
-    queueMicrotask(() => {
-      const date = new Date();
-      const year = date.getFullYear();
-      const month = String(date.getMonth() + 1).padStart(2, '0');
-      const day = String(date.getDate()).padStart(2, '0');
-      setToday(`${year}-${month}-${day}`);
-    });
+    queueMicrotask(() => setToday(localDayKey(new Date())));
   }, []);
 
   if (!today || auth.status === 'loading') {

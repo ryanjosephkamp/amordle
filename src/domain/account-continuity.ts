@@ -6,6 +6,13 @@ export const progressSchema = z
     xp: z.number().int().nonnegative(),
     level: z.number().int().positive(),
     dailyStreak: z.number().int().nonnegative(),
+    // The newest local day already counted towards dailyStreak. Optional, because every
+    // record written before this field existed must still parse — progressSchema is
+    // strict and pinned to schemaVersion 1, so a required field would reject them all.
+    lastDailyDate: z
+      .string()
+      .regex(/^\d{4}-\d{2}-\d{2}$/)
+      .optional(),
     revision: z.number().int().nonnegative(),
     solo: z.record(z.string(), z.unknown()).optional(),
     appliedRewards: z.record(z.string(), z.number().int().nonnegative()).optional(),
@@ -162,6 +169,21 @@ function legacyDailyStreak(stats: unknown): number {
   );
 }
 
+/**
+ * The newest Daily in a legacy save. A streak imported without a date could never lapse
+ * and could never continue correctly, so it is dated from the history that produced it.
+ */
+function legacyLastDailyDate(
+  history: readonly { gameId: string; scope: 'practice' | 'daily' }[],
+): string | undefined {
+  let newest: string | undefined;
+  for (const entry of history) {
+    const date = legacyDailyDate(entry.gameId, entry.scope);
+    if (date && (newest === undefined || date > newest)) newest = date;
+  }
+  return newest;
+}
+
 function legacyDailyEntitlements(
   values: readonly string[] | undefined,
 ): AccountProgress['dailyEntitlements'] {
@@ -183,6 +205,7 @@ export function normalizeAccountProgress(
   if (native.success) return { kind: 'native', progress: native.data };
   const legacy = legacyProgressSchema.safeParse(value);
   if (!legacy.success) return { kind: 'unknown' };
+  const lastDailyDate = legacyLastDailyDate(legacy.data.history);
   return {
     kind: 'legacy',
     progress: {
@@ -190,6 +213,7 @@ export function normalizeAccountProgress(
       xp: legacy.data.progression.xp,
       level: legacy.data.progression.level,
       dailyStreak: legacyDailyStreak(legacy.data.stats),
+      ...(lastDailyDate ? { lastDailyDate } : {}),
       dailyEntitlements: legacyDailyEntitlements(legacy.data.unlockedDailies),
     },
   };

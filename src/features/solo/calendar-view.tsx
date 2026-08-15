@@ -8,15 +8,9 @@ import { getEconomy, loadHistory, loadProgress, spendCoins } from '@/adapters/su
 import { setDailyEntitlement } from '@/adapters/supabase/solo';
 import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
+import { localDayKey } from '@/domain/daily-streak';
 
 const floor = '2025-01-01';
-
-function dateKey(date: Date): string {
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const day = String(date.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
-}
 
 function monthKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
@@ -63,7 +57,7 @@ export function CalendarView() {
 
   useEffect(() => {
     queueMicrotask(() => {
-      const localToday = dateKey(new Date());
+      const localToday = localDayKey(new Date());
       const requested =
         selectedDate >= floor && selectedDate <= localToday ? selectedDate : localToday;
       setToday(localToday);
@@ -84,7 +78,7 @@ export function CalendarView() {
     const dayCount = new Date(year!, month!, 0, 12).getDate();
     const cells: Array<string | null> = Array.from({ length: first.getDay() }, () => null);
     for (let day = 1; day <= dayCount; day += 1) {
-      cells.push(dateKey(new Date(year!, month! - 1, day, 12)));
+      cells.push(localDayKey(new Date(year!, month! - 1, day, 12)));
     }
     while (cells.length % 7 !== 0) cells.push(null);
     return cells;
