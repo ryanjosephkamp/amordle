@@ -1,6 +1,18 @@
-import type { AccountProgress } from './account-continuity';
+import type { AccountHistoryRow, AccountProgress } from './account-continuity';
 
 export const DAY_KEY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+
+/**
+ * The day a completed game counts towards, or nothing if it does not count.
+ *
+ * `kind` rather than `lane`, for two reasons: V1 entries carry no lane at all, and the
+ * COMBAT Daily is keyed to UTC rather than to the player's local day, so it must never
+ * feed a local-day streak. Named and exported so that a test can compare it against a
+ * row the real builder produced, rather than against a restated copy of one.
+ */
+export function streakDateForEntry(entry: AccountHistoryRow['entry']): string | undefined {
+  return entry.kind === 'solo-daily' ? entry.dailyDate : undefined;
+}
 
 /**
  * The player's local calendar day, which is how Daily puzzles are keyed. Callers must

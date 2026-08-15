@@ -1,15 +1,36 @@
 import { describe, expect, it } from 'vitest';
+import { buildSoloHistoryRow } from '@/adapters/cloud/solo';
 import { defaultAccountProgress, progressSchema } from '@/domain/account-continuity';
+import { createGameSession, reduceGame } from '@/domain/game';
 import {
   advanceDailyStreak,
   currentDailyStreak,
   localDayKey,
   previousDayKey,
+  streakDateForEntry,
 } from '@/domain/daily-streak';
 import type { AccountProgress } from '@/domain/account-continuity';
 
+const userId = 'f75cc9a7-8983-4ee6-b7fa-790830202b61';
+
 function progress(overrides: Partial<AccountProgress> = {}): AccountProgress {
   return { ...defaultAccountProgress(), ...overrides };
+}
+
+/** A real finished game, played through the reducer rather than hand-written. */
+function playedSession(id: string) {
+  const now = '2026-08-15T12:00:00.000Z';
+  let session = createGameSession({
+    id,
+    ownerNamespace: `account:${userId}`,
+    settings: { mode: 'og', length: 5, difficulty: 'standard', hardMode: false, goCount: 1 },
+    answers: ['crane'],
+    now,
+  });
+  for (const letter of 'crane') {
+    session = reduceGame(session, { type: 'insert', letter, now });
+  }
+  return reduceGame(session, { type: 'submit', sanctionedWords: new Set(['crane']), now });
 }
 
 describe('previousDayKey', () => {
@@ -152,6 +173,41 @@ describe('currentDailyStreak', () => {
   it('reads zero for an account that has never finished a Daily', () => {
     expect(currentDailyStreak(progress(), '2026-08-15')).toBe(0);
     expect(currentDailyStreak(progress({ dailyStreak: 4 }), '2026-08-15')).toBe(0);
+  });
+});
+
+describe('streakDateForEntry', () => {
+  // Compared against rows the real builder produces rather than against restated copies.
+  // Two internally consistent sides that disagree is exactly how the signed-in shop went
+  // unnoticed in production, and nothing in TypeScript would catch it here either.
+  it('reads the day off a Daily row the app actually builds', () => {
+    const session = playedSession('daily:2026-08-15:og:0');
+    expect(session.status).toBe('won');
+    const row = buildSoloHistoryRow(userId, session, 'solo-daily', '2026-08-15');
+    expect(streakDateForEntry(row.entry)).toBe('2026-08-15');
+    expect(advanceDailyStreak(progress(), streakDateForEntry(row.entry)!).dailyStreak).toBe(1);
+  });
+
+  it('ignores a Practice row the app actually builds', () => {
+    const row = buildSoloHistoryRow(userId, playedSession('practice:0'), 'solo-practice');
+    expect(streakDateForEntry(row.entry)).toBeUndefined();
+  });
+
+  it('ignores the COMBAT Daily, which is keyed to UTC rather than the local day', () => {
+    expect(
+      streakDateForEntry({
+        schemaVersion: 1,
+        kind: 'combat-daily',
+        mode: 'og',
+        result: 'won',
+        wordLength: 5,
+        acceptedGuesses: 3,
+        puzzlesSolved: 1,
+        rewardCoins: 12,
+        rewardXp: 60,
+        dailyDate: '2026-08-15',
+      }),
+    ).toBeUndefined();
   });
 });
 

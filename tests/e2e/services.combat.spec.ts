@@ -5,6 +5,7 @@ import { createHash, randomBytes } from 'node:crypto';
 import { appendFile, mkdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { selectPracticeAnswers } from '../../src/domain/selectors';
+import { localDayKey } from '../../src/domain/daily-streak';
 import type { Database, Json } from '../../src/types/database';
 
 const projectRef = 'squqdstdvbsvhagfuzgj';
@@ -1442,6 +1443,69 @@ test.describe.serial('protected Preview services', () => {
       idempotentReload: true,
     });
 
+    // The daily streak, end to end on the deployed build. The Daily is played to a LOSS
+    // deliberately: nothing solved earns no XP and no coins, so this is exactly the case
+    // the old `rewardXp > 0` gate would have skipped, and the streak still has to move.
+    // The account's imported streak of 5 is dated 2026-07-20, so this also proves the
+    // lapse-then-restart path rather than a simple increment.
+    // Read from the browser rather than from Node, because the streak is keyed to the
+    // player's local day and the two only agree while the runner and the browser share a
+    // timezone. Asserting they do makes a future divergence a clear failure.
+    const localToday = await secondPage.evaluate(() => {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${now.getFullYear()}-${month}-${day}`;
+    });
+    expect(localToday).toBe(localDayKey(new Date()));
+    // Guesses drawn from outside the answer catalog entirely, so the game cannot be won
+    // by accident and the test never has to agree with the server about which word today
+    // holds.
+    const dailyWrongGuesses = publicBank.validGuesses
+      .filter((word) => !answerWords.has(word))
+      .slice(0, 6);
+    expect(dailyWrongGuesses).toHaveLength(6);
+    await secondPage.goto(`${baseURL}/play/solo/daily/${localToday}/og`);
+    for (const guess of dailyWrongGuesses) {
+      await submitOnScreenGuess(secondPage, guess);
+    }
+    await expect(secondPage.getByText(/History, XP, and coins are synced/i)).toBeVisible({
+      timeout: 15_000,
+    });
+    const streakState = async () => {
+      const { data, error } = await admin
+        .from('game_history')
+        .select('entry')
+        .eq('id', `amordle-account-state-v1:${playerTwo!.id}`)
+        .eq('user_id', playerTwo!.id)
+        .single();
+      if (error) throw error;
+      const entry = data.entry as Record<string, Json>;
+      const progress = entry.progress as Record<string, Json>;
+      return { streak: progress.dailyStreak, lastDailyDate: progress.lastDailyDate };
+    };
+    await expect.poll(streakState, { timeout: 20_000 }).toEqual({
+      streak: 1,
+      lastDailyDate: localToday,
+    });
+    // Nothing was earned, and the streak moved anyway.
+    const afterDailyLoss = await completionState();
+    expect(afterDailyLoss).toEqual(firstCompletionState);
+    await secondPage.goto(`${baseURL}/stats`);
+    await expect(secondPage.locator('.skeleton-stack')).toHaveCount(0);
+    await expect(
+      secondPage.locator('.stats-metric').filter({ hasText: /^daily streak\s*1$/i }),
+    ).toBeVisible();
+    await event('daily_streak_verified', {
+      userId: playerTwo!.id,
+      localDate: localToday,
+      result: 'lost',
+      rewardedXp: 0,
+      rewardedCoins: 0,
+      streakAfter: 1,
+      lapsedFrom: '2026-07-20',
+    });
+
     await firstPage.setViewportSize({ width: 1440, height: 1024 });
     await firstPage.emulateMedia({ colorScheme: 'light' });
     await secondPage.setViewportSize({ width: 1440, height: 1024 });
@@ -1729,8 +1793,10 @@ test.describe.serial('protected Preview services', () => {
     await firstPage.goto(`${baseURL}/history`);
     await expect(firstPage.getByText(/combat practice · OG/i)).toHaveCount(1);
     await secondPage.goto(`${baseURL}/stats`);
+    // Four: the imported legacy game, the Solo practice win, the Daily played for the
+    // streak, and this COMBAT match.
     await expect(
-      secondPage.locator('.stats-metric').filter({ hasText: /completed\s*3/i }),
+      secondPage.locator('.stats-metric').filter({ hasText: /completed\s*4/i }),
     ).toBeVisible();
     await event('combat_completion_continuity_verified', {
       gameId,

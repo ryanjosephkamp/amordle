@@ -18,7 +18,7 @@ import {
   progressSchema,
 } from '@/domain/account-continuity';
 import type { AccountHistoryRow } from '@/domain/account-continuity';
-import { advanceDailyStreak } from '@/domain/daily-streak';
+import { advanceDailyStreak, streakDateForEntry } from '@/domain/daily-streak';
 import {
   defaultPlayerSettings,
   normalizePlayerSettings,
@@ -228,9 +228,7 @@ export async function finalizeAccountHistoryRow(row: AccountHistoryRow) {
   }
 
   const appliesXp = parsed.entry.rewardXp > 0;
-  // `kind`, not `lane`: V1 entries carry no lane, and the COMBAT Daily is keyed to UTC
-  // rather than the player's local day, so it must not feed a local-day streak.
-  const dailyDate = parsed.entry.kind === 'solo-daily' ? parsed.entry.dailyDate : undefined;
+  const dailyDate = streakDateForEntry(parsed.entry);
   // A Daily loss with nothing solved earns no XP, and it still keeps the streak, so this
   // cannot stay gated on the XP alone. One write carries both.
   if (appliesXp || dailyDate) {
