@@ -2,15 +2,16 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
-  accentIsSelectableBy,
   accentLabels,
   accentNames,
+  contrastRatio,
+  creatorPublicProfileId,
   creatorUserId,
+  isCreatorProfile,
   flairIsSelectableBy,
   flairLabels,
   flairNames,
   publicProfilePath,
-  restrictedAccentNames,
   restrictedFlairNames,
 } from '@/domain/profile';
 
@@ -30,11 +31,6 @@ describe('the restricted values', () => {
       expect(flairIsSelectableBy(flair, null)).toBe(false);
       expect(flairIsSelectableBy(flair, '')).toBe(false);
     }
-    for (const accent of restrictedAccentNames) {
-      expect(accentIsSelectableBy(accent, creatorUserId)).toBe(true);
-      expect(accentIsSelectableBy(accent, 'de305d54-75b4-431b-adb2-eb6b9e546014')).toBe(false);
-      expect(accentIsSelectableBy(accent, null)).toBe(false);
-    }
   });
 
   it('leaves every other value open to everyone', () => {
@@ -43,12 +39,6 @@ describe('the restricted values', () => {
     ];
     expect(open.length).toBeGreaterThan(0);
     for (const flair of open) expect(flairIsSelectableBy(flair, 'anyone-at-all')).toBe(true);
-
-    for (const accent of accentNames.filter(
-      (accent) => !(restrictedAccentNames as readonly string[]).includes(accent),
-    )) {
-      expect(accentIsSelectableBy(accent, 'anyone-at-all')).toBe(true);
-    }
   });
 });
 
@@ -89,39 +79,110 @@ describe('the migration that actually enforces it', () => {
   });
 });
 
-describe('the voltage accent', () => {
-  it('declares every variable its neighbours declare, in both schemes', () => {
-    const cyanLight = [...stylesheet.matchAll(/\[data-accent='cyan'\] \{([^}]*)\}/g)];
-    const voltageLight = [...stylesheet.matchAll(/\[data-accent='voltage'\] \{([^}]*)\}/g)];
-    expect(voltageLight).toHaveLength(cyanLight.length);
-    const names = (block: string) =>
-      [...block.matchAll(/(--[a-z-]+):/g)].map(([, name]) => name).sort();
-    for (const [index, block] of voltageLight.entries()) {
-      expect(names(block[1] ?? '')).toEqual(names(cyanLight[index]?.[1] ?? ''));
+/*
+ * The voltage accent was removed after the owner judged it too simple — it
+ * pulsed one colour rather than moving through any. The creator treatment that
+ * replaced it lives in creator-identity CSS and is asserted below.
+ *
+ * The migration is NOT re-emitted to drop 'voltage' from the accent CHECK. A
+ * value the database tolerates but no client can select is inert, and spending
+ * a forward migration plus a production credential to delete a string is not
+ * worth it. These assertions pin that the constraint still reads the way the
+ * applied file reads, so the two cannot silently disagree.
+ */
+describe('the retired voltage accent', () => {
+  it('is gone from every surface a player can reach', () => {
+    expect(accentNames).not.toContain('voltage');
+    expect(stylesheet).not.toContain("[data-accent='voltage']");
+    expect(globals).not.toContain('voltage-arc');
+    expect(globals).not.toContain('voltage-rail');
+  });
+
+  it('is still permitted by the applied migration, which is inert and deliberate', () => {
+    expect(migration).toContain(
+      "check (accent_color in ('ice', 'aurora', 'cyan', 'violet', 'rose', 'amber', 'voltage'))",
+    );
+  });
+
+  it('has a label and a swatch for every accent that remains', () => {
+    for (const accent of accentNames) expect(accentLabels[accent]).toBeTruthy();
+    for (const flair of flairNames) expect(flairLabels[flair]).toBeTruthy();
+  });
+});
+
+describe('the creator mark', () => {
+  /*
+   * The name cycles colour on every surface it appears on, so each beat has to
+   * be legible on its own scheme's page background — not just the one that
+   * happened to be checked by eye. These ratios are computed from the hexes the
+   * stylesheet actually declares, so editing a colour without re-checking it
+   * fails here rather than in front of a player.
+   */
+  const declared = (block: string, name: string) => {
+    const match = new RegExp(`--${name}:\\s*(#[0-9a-f]{6})`, 'i').exec(block);
+    expect(match, `${name} must be declared`).not.toBeNull();
+    return match![1]!;
+  };
+
+  // The light :root block, then the dark one inside the scheme media query.
+  const lightBlock = stylesheet.slice(stylesheet.indexOf('--creator-a'));
+  const darkBlock = lightBlock.slice(lightBlock.indexOf('prefers-color-scheme: dark'));
+
+  const LIGHT_PAGE = '#F5F8F9';
+  const DARK_PAGE = '#0A0E12';
+
+  it('keeps every beat readable on its own scheme background', () => {
+    for (const name of ['creator-a', 'creator-b', 'creator-c']) {
+      const light = declared(lightBlock, name);
+      const dark = declared(darkBlock, name);
+      expect(
+        contrastRatio(light, LIGHT_PAGE) ?? 0,
+        `${name} light ${light}`,
+      ).toBeGreaterThanOrEqual(4.5);
+      expect(contrastRatio(dark, DARK_PAGE) ?? 0, `${name} dark ${dark}`).toBeGreaterThanOrEqual(
+        4.5,
+      );
     }
   });
 
-  it('animates only shadows, so no frame of it can move a contrast ratio', () => {
-    const keyframes = [...globals.matchAll(/@keyframes voltage-[a-z]+ \{([\s\S]*?)\n\}/g)];
-    expect(keyframes.length).toBeGreaterThan(0);
-    for (const frame of keyframes) {
-      const properties = [...(frame[1] ?? '').matchAll(/^\s{4}([a-z-]+):/gm)].map(
-        ([, property]) => property,
-      );
-      expect(properties.length).toBeGreaterThan(0);
-      expect([...new Set(properties)].sort()).toEqual(
-        ['box-shadow', 'text-shadow'].filter((p) => properties.includes(p)),
+  it('rests on the beat that both the sweep and reduced motion will freeze', () => {
+    /*
+     * The contrast sweep disables animation and reduced motion collapses it to
+     * 0.01ms, so both observe the 0% frame. If that frame were the white beat,
+     * light scheme would be measuring an unreadable colour as though it passed.
+     */
+    expect(stylesheet).toMatch(/\.is-creator-name \{[^}]*color: var\(--creator-a\)/);
+    for (const frame of ['creator-name', 'creator-frame']) {
+      const block = new RegExp(`@keyframes ${frame} \\{([\\s\\S]*?)\\n\\}`).exec(globals);
+      expect(block, `${frame} keyframes`).not.toBeNull();
+      expect(block![1]).toMatch(
+        /0%,\s*\n\s*100% \{\s*\n\s*(color|border-color): var\(--creator-a\)/,
       );
     }
   });
 
-  it('has a label and a swatch like every other accent', () => {
-    for (const accent of accentNames) {
-      expect(accentLabels[accent]).toBeTruthy();
-    }
-    for (const flair of flairNames) {
-      expect(flairLabels[flair]).toBeTruthy();
-    }
+  it('stops animating where the surface inverts the ink', () => {
+    // A CSS animation outranks normal declarations, so without this the mark
+    // would paint over the inversion rules and sit unreadable on a selected row.
+    expect(stylesheet).toMatch(/button:hover \.is-creator-name/);
+    expect(stylesheet).toMatch(/animation: none;\s*\n\s*color: inherit;/);
+  });
+
+  it('confines the page treatment to the creator console', () => {
+    // Every rule that draws the tricolour must be a descendant of the console,
+    // so it cannot reach the shell, a board, the keyboard, or another profile.
+    const rails = [...stylesheet.matchAll(/^\.creator-console[^{]*\{/gm)].map((m) => m[0]);
+    expect(rails.length).toBeGreaterThan(0);
+    for (const selector of rails) expect(selector.startsWith('.creator-console')).toBe(true);
+    expect(stylesheet).not.toMatch(/^\.is-creator-name[^{]*\.key/m);
+  });
+
+  it('marks the creator by public profile id and nobody else', () => {
+    expect(isCreatorProfile(creatorPublicProfileId)).toBe(true);
+    expect(isCreatorProfile('38636674-df3b-4313-a5d8-727db14454f8')).toBe(false);
+    expect(isCreatorProfile(null)).toBe(false);
+    expect(isCreatorProfile(undefined)).toBe(false);
+    expect(isCreatorProfile('')).toBe(false);
   });
 });
 

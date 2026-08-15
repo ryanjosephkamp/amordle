@@ -161,31 +161,6 @@
   --key-unknown-ink: oklch(0.2 0.025 75);
 }
 
-/*
- * Voltage — the animated accent.
- *
- * A full seventh named accent rather than a one-off, so it can be opened to
- * every player later by deleting one line of SQL. It declares the same eight
- * variables as its neighbours and goes through the same contrast sweep.
- *
- * What moves is a glow, and only a glow. The sweep injects
- * `animation: none !important` before it measures, so whatever the animation
- * rests at is what gets checked — and an animation that changed --accent-text
- * would be measured at one frame and unverified at every other. text-shadow and
- * box-shadow cannot alter the text/background pair the sweep samples, so the
- * moving part is unmeasurable by construction rather than by luck.
- */
-[data-accent='voltage'] {
-  --accent: oklch(0.63 0.19 175);
-  --accent-text: oklch(0.44 0.15 175);
-  --accent-ink: oklch(0.12 0.03 180);
-  --accent-soft: oklch(0.89 0.07 175);
-  --focus: oklch(0.6 0.19 175);
-  --key-unknown-background: oklch(0.79 0.05 178);
-  --key-unknown-border: oklch(0.55 0.07 175);
-  --key-unknown-ink: oklch(0.2 0.03 180);
-}
-
 :root[data-accent='custom'] {
   --accent: var(--custom-accent);
   --accent-text: var(--custom-accent-text-light);
@@ -308,16 +283,6 @@
     --key-unknown-background: oklch(0.25 0.04 70);
     --key-unknown-border: oklch(0.48 0.08 70);
     --key-unknown-ink: oklch(0.95 0.01 75);
-  }
-
-  [data-accent='voltage'] {
-    --accent: oklch(0.83 0.19 172);
-    --accent-text: oklch(0.86 0.16 172);
-    --accent-soft: oklch(0.26 0.07 172);
-    --focus: oklch(0.83 0.19 172);
-    --key-unknown-background: oklch(0.25 0.05 176);
-    --key-unknown-border: oklch(0.48 0.08 174);
-    --key-unknown-ink: oklch(0.95 0.015 172);
   }
 
   :root[data-accent='custom'] {
@@ -4344,6 +4309,118 @@ html[data-game-presentation='review'] .game-route {
   color: var(--accent-text);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+}
+
+/*
+ * The creator mark.
+ *
+ * Three colours, chosen per scheme against the page background and measured in
+ * tests/domain/creator-identity.test.ts rather than eyeballed. The middle beat
+ * is white in dark scheme and near-black in light, because white text on a
+ * light page is not a colour choice, it is an unreadable one — the red and blue
+ * bookends carry the identity either way.
+ */
+:root {
+  --creator-a: #c8102e;
+  --creator-b: #10161b;
+  --creator-c: #0b3d91;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --creator-a: #ff6b6b;
+    --creator-b: #ffffff;
+    --creator-c: #7fa9ff;
+  }
+}
+
+/*
+ * Rests on --creator-a, which is the frame the contrast sweep samples once it
+ * disables animation, and the frame reduced motion freezes on. Both are red,
+ * and red is the tightest of the three ratios, so whatever those two see is the
+ * worst case rather than a lucky moment mid-cycle.
+ */
+.is-creator-name {
+  color: var(--creator-a);
+  font-weight: 650;
+  animation: creator-name 6s var(--ease-standard) infinite;
+}
+
+/*
+ * A CSS animation outranks every normal declaration, including the rules that
+ * invert text on a selected surface. Where a name sits on inverted ink, the
+ * animation is switched off entirely so the existing inversion wins — a name
+ * that is unreadable for three seconds out of six is worse than one that is not
+ * decorated at all.
+ */
+button:hover .is-creator-name,
+[aria-current='page'] .is-creator-name,
+[aria-selected='true'] .is-creator-name,
+.notification-list a.is-unread .is-creator-name {
+  animation: none;
+  color: inherit;
+}
+
+/*
+ * The profile page treatment, scoped to one console on one page. Nothing here
+ * can reach the shell, a board, the keyboard, or another player's profile,
+ * because every selector below is a descendant of `.creator-console`.
+ */
+.creator-console .public-profile {
+  position: relative;
+  border-block-color: transparent;
+}
+
+.creator-console .public-profile::before,
+.creator-console .public-profile::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--creator-a),
+    var(--creator-b),
+    var(--creator-c),
+    var(--creator-b),
+    var(--creator-a)
+  );
+  background-size: 200% 100%;
+  animation: creator-rail 7s linear infinite;
+}
+
+.creator-console .public-profile::before {
+  top: -1px;
+}
+
+.creator-console .public-profile::after {
+  bottom: -1px;
+}
+
+.creator-console .profile-avatar--large {
+  animation: creator-frame 6s var(--ease-standard) infinite;
+}
+
+@media (forced-colors: active) {
+  /*
+   * Gradients and border colours are replaced by the system palette here, so
+   * the rails would render as flat blocks and the frame would stop meaning
+   * anything. Restore the ordinary rule and stop the work.
+   */
+  .creator-console .public-profile {
+    border-block-color: CanvasText;
+  }
+
+  .creator-console .public-profile::before,
+  .creator-console .public-profile::after {
+    display: none;
+  }
+
+  .creator-console .profile-avatar--large,
+  .is-creator-name {
+    animation: none;
+  }
 }
 
 .directory-list article > div:first-child > span {

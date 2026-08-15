@@ -19,7 +19,6 @@ import { useAuth } from '@/components/providers';
 import { AccountGate, SkeletonRows } from '@/components/route-states';
 import {
   accentCssColors,
-  accentIsSelectableBy,
   accentLabels,
   accentNameSchema,
   accentNames,
@@ -426,30 +425,28 @@ function ProfileForm({
         <fieldset className="accent-fieldset">
           <legend>Accent color</legend>
           <div className="accent-options">
-            {accentNames
-              .filter((accent) => accentIsSelectableBy(accent, userId))
-              .map((accent) => (
-                <label className="accent-option" key={accent}>
-                  <input
-                    type="radio"
-                    name="accent-color"
-                    value={accent}
-                    checked={accentSelection.kind === 'named' && accentSelection.name === accent}
-                    onChange={(event) =>
-                      setAccentSelection({
-                        kind: 'named',
-                        name: accentNameSchema.parse(event.target.value),
-                      })
-                    }
-                  />
-                  <span
-                    className="accent-swatch"
-                    style={{ '--profile-accent': accentCssColors[accent] } as CSSProperties}
-                    aria-hidden="true"
-                  />
-                  <span>{accentLabels[accent]}</span>
-                </label>
-              ))}
+            {accentNames.map((accent) => (
+              <label className="accent-option" key={accent}>
+                <input
+                  type="radio"
+                  name="accent-color"
+                  value={accent}
+                  checked={accentSelection.kind === 'named' && accentSelection.name === accent}
+                  onChange={(event) =>
+                    setAccentSelection({
+                      kind: 'named',
+                      name: accentNameSchema.parse(event.target.value),
+                    })
+                  }
+                />
+                <span
+                  className="accent-swatch"
+                  style={{ '--profile-accent': accentCssColors[accent] } as CSSProperties}
+                  aria-hidden="true"
+                />
+                <span>{accentLabels[accent]}</span>
+              </label>
+            ))}
           </div>
 
           <div className="custom-accent-heading">

@@ -16,6 +16,7 @@ import { SkeletonRows } from '@/components/route-states';
 import {
   flairLabels,
   flairNameSchema,
+  isCreatorProfile,
   profileAccentCss,
   publicProfilePath,
   ratingBucketLabel,
@@ -64,9 +65,16 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
 
   const displayName = profile.data.display_name || 'Player';
   const flair = flairNameSchema.safeParse(profile.data.flair_key);
+  /*
+   * The tricolour treatment is confined to this one page and this one account.
+   * It is a class on the console, so every rule that draws it is scoped under
+   * `.creator-console` and cannot reach the shell, the keyboard, a board, or
+   * anybody else's profile.
+   */
+  const creator = isCreatorProfile(publicProfileId);
   return (
     <div
-      className="public-profile-console"
+      className={creator ? 'public-profile-console creator-console' : 'public-profile-console'}
       style={
         {
           '--profile-accent': profileAccentCss(profile.data.accent_color, profile.data.accent_hex),
@@ -82,7 +90,9 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
         />
         <div className="public-profile-copy">
           <span className="profile-kicker">PUBLIC PLAYER</span>
-          <h2 id="public-player-name">{displayName}</h2>
+          <h2 id="public-player-name" className={creator ? 'is-creator-name' : undefined}>
+            {displayName}
+          </h2>
           <p className="prose">{profile.data.bio || 'No public bio.'}</p>
           <div className="profile-tags">
             <span className={flair.success && flair.data === 'creator' ? 'is-creator' : undefined}>

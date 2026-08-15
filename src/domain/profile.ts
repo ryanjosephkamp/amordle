@@ -1,6 +1,6 @@
 import { z } from 'zod';
 
-export const accentNames = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber', 'voltage'] as const;
+export const accentNames = ['ice', 'aurora', 'cyan', 'violet', 'rose', 'amber'] as const;
 
 export const accentNameSchema = z.enum(accentNames);
 
@@ -63,22 +63,31 @@ export const flairLabels: Record<FlairName, string> = {
  */
 export const creatorUserId = '2bc33680-d9e5-4dd5-9965-24bc4ea43497';
 
-export const restrictedFlairNames = ['creator'] as const satisfies readonly FlairName[];
+/*
+ * The same account seen from the public side.
+ *
+ * Player names are rendered from a public profile id and nothing else — no
+ * surface that shows a name also has the user id, and several (a COMBAT
+ * transcript, a spectator projection) deliberately never will. Matching on the
+ * public id is what lets the creator's name be marked everywhere it appears
+ * without widening a single projection.
+ *
+ * It is exactly as exclusive as the flair: the id is unique, stable, and issued
+ * by the database. `flair_key = 'creator'` would be the more self-describing
+ * signal, but it is not carried by every surface that renders a name, and
+ * threading it through would mean changing RPCs that are deliberately narrow.
+ */
+export const creatorPublicProfileId = 'f08161d7-6d57-4142-b42d-7bcf86b983fc';
 
-export const restrictedAccentNames = ['voltage'] as const satisfies readonly AccentName[];
+export function isCreatorProfile(publicProfileId: string | null | undefined): boolean {
+  return publicProfileId === creatorPublicProfileId;
+}
+
+export const restrictedFlairNames = ['creator'] as const satisfies readonly FlairName[];
 
 export function flairIsSelectableBy(flair: FlairName, userId: string | null | undefined): boolean {
   return (
     !(restrictedFlairNames as readonly FlairName[]).includes(flair) || userId === creatorUserId
-  );
-}
-
-export function accentIsSelectableBy(
-  accent: AccentName,
-  userId: string | null | undefined,
-): boolean {
-  return (
-    !(restrictedAccentNames as readonly AccentName[]).includes(accent) || userId === creatorUserId
   );
 }
 
@@ -106,7 +115,6 @@ export const accentLabels: Record<AccentName, string> = {
   violet: 'Violet',
   rose: 'Rose',
   amber: 'Amber',
-  voltage: 'Voltage',
 };
 
 export const accentCssColors: Record<AccentName, string> = {
@@ -116,7 +124,6 @@ export const accentCssColors: Record<AccentName, string> = {
   violet: 'oklch(0.69 0.15 295)',
   rose: 'oklch(0.7 0.15 15)',
   amber: 'oklch(0.78 0.14 80)',
-  voltage: 'oklch(0.75 0.19 173)',
 };
 
 export function accentCssColor(value: AccentName | null | undefined): string {

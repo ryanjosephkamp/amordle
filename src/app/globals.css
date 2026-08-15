@@ -1419,73 +1419,58 @@ button.calendar-day.is-selected {
 }
 
 /*
- * The moving part of the Voltage accent.
+ * The creator mark's motion.
  *
- * Lives here rather than in tui-shell.css because globals owns the one
- * authoritative reduced-motion block, and a keyframe declared where that block
- * cannot see it is a keyframe that ignores the preference. Under reduced motion
- * the duration collapses to 0.01ms and the glow freezes on frame one, which is
- * the resting glow — visible, static, and legible.
- *
- * Only shadows animate. Nothing here changes a colour that text or a background
- * is drawn from, so no state of this animation can move a contrast ratio.
+ * Here rather than in tui-shell.css because globals owns the one authoritative
+ * reduced-motion block, and a keyframe declared where that block cannot see it
+ * is a keyframe that ignores the preference. Under reduced motion the duration
+ * collapses to 0.01ms and each of these freezes on its 0% frame, which is why
+ * every 0% below is the red — the readable resting state rather than whichever
+ * colour the cycle happened to be passing through.
  */
-@keyframes voltage-arc {
+@keyframes creator-name {
   0%,
   100% {
-    text-shadow: 0 0 0.4em var(--accent-soft);
+    color: var(--creator-a);
   }
 
-  40% {
-    text-shadow: 0 0 0.9em var(--accent);
+  33% {
+    color: var(--creator-b);
   }
 
-  48% {
-    text-shadow: 0 0 0.15em var(--accent-soft);
-  }
-
-  62% {
-    text-shadow: 0 0 0.75em var(--accent);
+  66% {
+    color: var(--creator-c);
   }
 }
 
-@keyframes voltage-rail {
+@keyframes creator-frame {
   0%,
   100% {
-    box-shadow: 0 0 0.35em -0.1em var(--accent-soft);
+    border-color: var(--creator-a);
   }
 
-  40% {
-    box-shadow: 0 0 0.8em -0.05em var(--accent);
+  33% {
+    border-color: var(--creator-b);
   }
 
-  48% {
-    box-shadow: 0 0 0.1em -0.1em var(--accent-soft);
-  }
-
-  62% {
-    box-shadow: 0 0 0.65em -0.05em var(--accent);
+  66% {
+    border-color: var(--creator-c);
   }
 }
 
-[data-accent='voltage'] .route-prompt,
-[data-accent='voltage'] .profile-kicker {
-  animation: voltage-arc 3.2s var(--ease-standard) infinite;
-}
+/*
+ * The rails travel rather than blink: the gradient is twice the width of the
+ * element and slides one full width, so the three colours sweep along the rule
+ * continuously with no seam. Frozen, it is a static tricolour gradient, which
+ * still reads as deliberate.
+ */
+@keyframes creator-rail {
+  from {
+    background-position: 0% 50%;
+  }
 
-[data-accent='voltage'] .route-header,
-[data-accent='voltage'] .profile-tags span.is-creator {
-  animation: voltage-rail 3.2s var(--ease-standard) infinite;
-}
-
-@media (forced-colors: active) {
-  /* Shadows are dropped in forced colors anyway; stop the work rather than
-     animating something the user will never see. */
-  [data-accent='voltage'] .route-prompt,
-  [data-accent='voltage'] .profile-kicker,
-  [data-accent='voltage'] .route-header,
-  [data-accent='voltage'] .profile-tags span.is-creator {
-    animation: none;
+  to {
+    background-position: 200% 50%;
   }
 }
 
