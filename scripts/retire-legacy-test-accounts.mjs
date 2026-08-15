@@ -53,21 +53,56 @@ const LEGACY_PUBLIC_PROFILE_IDS = [
 ];
 
 /*
- * Dependency order, copied from the cleanup in tests/e2e/services.combat.spec.ts.
- * That code deletes exactly this class of account on every hosted run and is the
- * only ordering in this repository that is known to work.
+ * Dependency order, based on the cleanup in tests/e2e/services.combat.spec.ts —
+ * with one addition that cleanup did not need.
+ *
+ * `multiplayer_private_match_requests` points at `public_player_profiles`
+ * (public_profile_id) with ON DELETE RESTRICT, while pointing at `auth.users`
+ * with ON DELETE CASCADE. So a leftover private challenge blocks the profile
+ * delete outright, and the database is right to refuse: the request row names
+ * two profiles and would be left describing a player that no longer exists.
+ *
+ * The E2E suite never hit this because it deletes its private requests by run
+ * id, in a separate earlier pass. Deleting by user, as this script does, has to
+ * clear them explicitly and first. Found the hard way — the first --apply run
+ * failed here.
+ *
+ * Each entry is [table, columns[]]: a row is ours if ANY of those columns names
+ * one of our users.
  */
 const TABLES_BY_USER = [
-  'game_history',
-  'multiplayer_daily_claims',
-  'progress_snapshots',
-  'settings',
-  'player_economy_operations',
-  'player_economy_state',
-  'public_player_profiles',
-  'multiplayer_private_request_preferences',
-  'multiplayer_rating_profiles',
+  ['multiplayer_private_match_requests', ['requester_user_id', 'opponent_user_id']],
+  ['game_history', ['user_id']],
+  ['multiplayer_daily_claims', ['user_id']],
+  ['progress_snapshots', ['user_id']],
+  ['settings', ['user_id']],
+  ['player_economy_operations', ['user_id']],
+  ['player_economy_state', ['user_id']],
+  ['public_player_profiles', ['user_id']],
+  ['multiplayer_private_request_preferences', ['user_id']],
+  ['multiplayer_rating_profiles', ['user_id']],
 ];
+
+/*
+ * Supabase returns plain objects, not Errors. `String(err)` on one prints
+ * "[object Object]", which is exactly what the first failed run reported and
+ * exactly why it took a second round trip to learn anything. Pull the fields
+ * out by hand.
+ */
+function describeError(error) {
+  if (error instanceof Error) return error.message;
+  if (error && typeof error === 'object') {
+    const { message, code, details, hint } = error;
+    const parts = [message, code ? `code ${code}` : null, details, hint].filter(Boolean);
+    if (parts.length) return parts.join(' · ');
+    return JSON.stringify(error);
+  }
+  return String(error);
+}
+
+function fail(context, error) {
+  throw new Error(`${context}: ${describeError(error)}`);
+}
 
 const apply = process.argv.includes('--apply');
 
@@ -123,20 +158,24 @@ async function main() {
 
   process.stdout.write('\nRows that belong to them:\n');
   let total = 0;
-  for (const table of TABLES_BY_USER) {
-    const { count, error } = await admin
-      .from(table)
-      .select('user_id', { count: 'exact', head: true })
-      .in('user_id', userIds);
-    if (error) throw error;
-    total += count ?? 0;
-    process.stdout.write(`  ${String(count ?? 0).padStart(4)}  ${table}\n`);
+  for (const [table, columns] of TABLES_BY_USER) {
+    let subtotal = 0;
+    for (const column of columns) {
+      const { count, error } = await admin
+        .from(table)
+        .select(column, { count: 'exact', head: true })
+        .in(column, userIds);
+      if (error) fail(`counting ${table}.${column}`, error);
+      subtotal += count ?? 0;
+    }
+    total += subtotal;
+    process.stdout.write(`  ${String(subtotal).padStart(4)}  ${table}\n`);
   }
   const { count: profileRowCount, error: profileCountError } = await admin
     .from('profiles')
     .select('id', { count: 'exact', head: true })
     .in('id', userIds);
-  if (profileCountError) throw profileCountError;
+  if (profileCountError) fail('counting profiles', profileCountError);
   total += profileRowCount ?? 0;
   process.stdout.write(`  ${String(profileRowCount ?? 0).padStart(4)}  profiles\n`);
   process.stdout.write(`  ${String(userIds.length).padStart(4)}  auth users\n`);
@@ -155,30 +194,37 @@ async function main() {
   }
 
   process.stdout.write('\nDeleting…\n');
-  for (const table of TABLES_BY_USER) {
-    const { error } = await admin.from(table).delete().in('user_id', userIds);
-    if (error) throw error;
+  for (const [table, columns] of TABLES_BY_USER) {
+    for (const column of columns) {
+      const { error } = await admin.from(table).delete().in(column, userIds);
+      if (error) fail(`deleting from ${table} by ${column}`, error);
+    }
     process.stdout.write(`  cleared ${table}\n`);
   }
   const { error: profilesError } = await admin.from('profiles').delete().in('id', userIds);
-  if (profilesError) throw profilesError;
+  if (profilesError) fail('deleting from profiles', profilesError);
   process.stdout.write('  cleared profiles\n');
 
   for (const userId of userIds) {
     const { error } = await admin.auth.admin.deleteUser(userId);
-    if (error && !/not found/i.test(error.message)) throw error;
+    if (error && !/not found/i.test(describeError(error)))
+      fail(`deleting auth user ${userId}`, error);
   }
   process.stdout.write('  deleted auth users\n');
 
   process.stdout.write('\nVerifying…\n');
   const residue = {};
-  for (const table of TABLES_BY_USER) {
-    const { count, error } = await admin
-      .from(table)
-      .select('user_id', { count: 'exact', head: true })
-      .in('user_id', userIds);
-    if (error) throw error;
-    residue[table] = count ?? 0;
+  for (const [table, columns] of TABLES_BY_USER) {
+    let subtotal = 0;
+    for (const column of columns) {
+      const { count, error } = await admin
+        .from(table)
+        .select(column, { count: 'exact', head: true })
+        .in(column, userIds);
+      if (error) fail(`verifying ${table}.${column}`, error);
+      subtotal += count ?? 0;
+    }
+    residue[table] = subtotal;
   }
   for (const userId of userIds) {
     const { data } = await admin.auth.admin.getUserById(userId);
@@ -194,6 +240,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  process.stderr.write(`\n${error instanceof Error ? error.message : String(error)}\n`);
+  process.stderr.write(`\n${describeError(error)}\n`);
   process.exitCode = 1;
 });
