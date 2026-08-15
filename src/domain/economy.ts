@@ -7,6 +7,30 @@ export const ECONOMY_PRICES = {
   dailyUnlock: 60,
 } as const;
 
+/**
+ * Two vocabularies meet at the economy RPC boundary, and nowhere else.
+ *
+ * Everything in the app names a consumable after its `player_economy_state`
+ * column — `reveal_one_letter`, `remove_incorrect_letters` — and so do the
+ * guest adapter and the marketplace. The RPCs name them in camelCase and
+ * require a use to declare scope `practice`; see the `case` and the scope guard
+ * in supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql
+ * (lines 101-111). Sending a column name to those RPCs raises `Invalid
+ * consumable`, and any other scope raises `Practice only`.
+ *
+ * The translation lives here so there is one place to change if either side
+ * moves, and so tests/domain/economy-rpc-contract.test.ts can pin both sides
+ * against the migration text.
+ */
+export type ConsumableProduct = 'reveal_one_letter' | 'remove_incorrect_letters';
+
+export const CONSUMABLE_RPC_TYPE = {
+  reveal_one_letter: 'revealOneLetter',
+  remove_incorrect_letters: 'removeIncorrectLetters',
+} as const satisfies Record<ConsumableProduct, string>;
+
+export const CONSUMABLE_RPC_SCOPE = 'practice';
+
 export function levelForXp(xp: number): number {
   if (!Number.isInteger(xp) || xp < 0) throw new Error('XP must be non-negative.');
   return Math.floor(Math.sqrt(xp / 100)) + 1;

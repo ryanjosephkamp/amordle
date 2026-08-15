@@ -2,7 +2,12 @@
 
 import { z } from 'zod';
 import type { Json } from '@/types/database';
-import { levelForXp } from '@/domain/economy';
+import {
+  CONSUMABLE_RPC_SCOPE,
+  CONSUMABLE_RPC_TYPE,
+  levelForXp,
+  type ConsumableProduct,
+} from '@/domain/economy';
 import {
   ACCOUNT_STATE_KIND,
   accountStateEntrySchema,
@@ -77,12 +82,9 @@ export async function getEconomy() {
   return parseServiceResult(economySchema, data?.[0]);
 }
 
-export async function purchaseConsumable(
-  type: 'reveal_one_letter' | 'remove_incorrect_letters',
-  operationId: string,
-) {
+export async function purchaseConsumable(type: ConsumableProduct, operationId: string) {
   const { data, error } = await client().rpc('purchase_solo_practice_consumable', {
-    p_consumable_type: type,
+    p_consumable_type: CONSUMABLE_RPC_TYPE[type],
     p_operation_id: operationId,
   });
   if (error) throwServiceError(error);
@@ -144,14 +146,11 @@ export async function loadRatingProfiles(userId: string) {
   return z.array(ratingProfileSchema).parse(data ?? []);
 }
 
-export async function consumeConsumable(
-  type: 'reveal_one_letter' | 'remove_incorrect_letters',
-  operationId: string,
-) {
+export async function consumeConsumable(type: ConsumableProduct, operationId: string) {
   const { data, error } = await client().rpc('consume_solo_practice_consumable', {
-    p_consumable_type: type,
+    p_consumable_type: CONSUMABLE_RPC_TYPE[type],
     p_operation_id: operationId,
-    p_scope: 'solo-practice',
+    p_scope: CONSUMABLE_RPC_SCOPE,
   });
   if (error) throwServiceError(error);
   return parseServiceResult(economySchema, data?.[0]);
