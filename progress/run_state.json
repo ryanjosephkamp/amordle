@@ -4,8 +4,8 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10.2-accepted-awaiting-promote",
-  "status": "v10.2-accepted-awaiting-production-release",
+  "currentCheckpoint": "stage-2-v10.2-released",
+  "status": "released",
   "lastGreenCommit": "5f0e503",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
@@ -361,8 +361,8 @@
     "productionDevelopmentBindingUnchanged": true,
     "oldBlobStoreDeleted": false
   },
-  "reportStatus": "v10.1 released; v10.2 creator mark accepted, awaiting promote",
-  "updatedAt": "2026-08-15T22:40:00Z",
+  "reportStatus": "v10.2 released to Production",
+  "updatedAt": "2026-08-15T22:55:00Z",
   "v6_7Implementation": {
     "goldenBaseline": "16d7a510a15ab5eaf254bc2c163f77b9059854cc",
     "applicationCandidateCommit": "0fbcb4d83532901c32d8db12850f4679f3582500",
@@ -1185,21 +1185,18 @@
     "residue": "none"
   },
   "production": {
-    "deployment": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
+    "deployment": "dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
     "url": "https://amordle.vercel.app",
-    "deploymentUrl": "https://amordle-qh7n2zukc-ryanjosephkamps-projects.vercel.app",
+    "deploymentUrl": "https://amordle-8x7o9inck-ryanjosephkamps-projects.vercel.app",
     "releasedAt": "2026-08-15",
-    "acceptedArtifact": "Preview amordle-q6a7m4t5o at commit 9735a0a, hosted acceptance green on the first attempt with zero residue",
-    "promoteNote": "`vercel promote` produced NEW production deployments rather than re-aliasing the accepted Preview: two appeared within a minute of each other (amordle-bevofyk4q, then amordle-qh7n2zukc, which took the alias). The owner first read dpl_4mBZeSTAA74ayqbmvETGfzSw7Gy8 and the alias settled on dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61. Verify the live id after promoting, never the command's exit code",
-    "previousProduction": "dpl_CdUNmm9RzxF3fgLCkMoewUkjMC3G",
+    "acceptedArtifact": "Preview amordle-539o5wtmk at commit 5f0e503, hosted acceptance green on the first attempt with zero residue",
+    "previousProduction": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
     "verified": {
-      "routes": "16 checked, all 200, including the new /methodology and /about",
-      "functions": "216 output items with real serverless functions - not the v9 static-copy failure",
-      "supabaseConfig": "the project ref is present in the served client chunk, so the v9 missing-config failure is not present",
-      "aboutOrder": "What it is, How scoring works, Changelog, Report something, Where the words come from, Credit, Accessibility and privacy",
-      "methodology": "'A few notes', \"What's checked and where\" with Server and App subheadings, the Elo Wikipedia link, and 'the math produces'",
-      "figure": "the served markup carries the widened gutter (x1=26), so the 600 and 1800 labels are inside the frame",
-      "menu": "twelve entries ending Help, Methodology, About, Sign in"
+      "routes": "8 checked, all 200",
+      "supabaseConfig": "project ref present in the served client chunk",
+      "voltage": "no longer offered anywhere in the app",
+      "creatorMark": "the console renders on the creator profile in both schemes and the name's computed colour changes between samples - dark rgb(255,111,111) to rgb(249,251,255), light rgb(198,16,46) to rgb(16,23,31)",
+      "exclusivity": "the directory marks exactly 1 of 3 names"
     }
   },
   "openWorkAfterV9": {
@@ -1283,7 +1280,7 @@
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
     "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
-    "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER ONLY. Every public table is clean: /players lists exactly 3 real players, all 8 legacy public_player_profiles rows are gone, and 8 of the 10 legacy auth users deleted. Two remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row the app reads. They are the two that HOST 6 terminal legacy games from 2026-07-25; the 8 that deleted cleanly were all non-hosts. Investigated and NOT explained: host_user_id, player_one_user_id and player_two_user_id are all nullable on the live schema and all three FKs are ON DELETE SET NULL, the matchmaking queue cascades, there are no triggers on the table, and the one CHECK tolerates nulls - so no constraint accounts for it. GoTrue returns AuthRetryableFetchError with status 500 and an empty body, which is a server-side failure rather than a data one. Next step if it matters: retry, or read the project's Postgres logs for the real exception",
+    "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER. Two legacy auth users remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row in public. Every public table is clean and /players lists 3 real players. GoTrue refuses the delete with AuthRetryableFetchError, status 500, empty body; the schema was checked and no constraint accounts for it. Run scripts/retire-legacy-test-accounts.mjs --apply to retry; nothing depends on it",
     "8_accentPresetCoalesce": "list_my_accent_presets_v2 should coalesce is_active to false at source rather than relying on the client to tolerate null. Needs a migration",
     "9_aboutLinkSpacing": "fixed, but worth knowing: JSX drops the space between a tag and text that wraps to the next line, and prettier wraps wherever it likes. Any inline link followed by text should carry an explicit {' '}",
     "10_creatorPageUnreachableToOwner": "the creator sees the tricolour page treatment only when signed out, because opening your own public profile redirects you to /profile. Worth deciding whether that redirect should stay"
@@ -1365,6 +1362,6 @@
     "parity": "237/237 acceptance-verified",
     "attemptsNeeded": 1,
     "localGate": "188 domain, 31 browser, 24 fixture, 52 visual",
-    "productionReleaseAuthorized": false
+    "productionReleaseAuthorized": true
   }
 }
