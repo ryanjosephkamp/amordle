@@ -1439,6 +1439,29 @@
     "localGate": "220 domain, 31 browser, 24 fixture, 52 visual; bootstrap 107/107; migrations 45/45 + 14 authorized + 1 reviewed pending; parity 237/237; MP audit 73/73",
     "ownerActionsOutstanding": "apply the accent-preset migration (supabase db push --linked, desktop), run the legacy auth user deletion (Supabase SQL editor, works from a phone - docs/operations/RETIRE-LEGACY-AUTH-USERS.md), and promote the Preview"
   },
+  "v10_5SharePlacement": {
+    "why": "the owner promoted the streak build, went to /profile, found no new buttons and reported the feature had not shipped. Two separate causes, neither a defect: production was still the pre-profile build because promoting is the owner's step, and a Preview is a different origin so the owner's Amordle session does not carry across - signed out, /profile renders the sign-in gate, which is literally no buttons. Diagnosed by grepping the served chunks of both deployments for the literal button text: present on the Preview, absent on Production",
+    "realFinding": "the placement was genuinely poor and the owner's failure to find it is the evidence. The buttons sat below the flair select and above SAVE PROFILE - on a phone a long scroll past the avatar, the accent picker and the flair select",
+    "fix": "moved into a section-heading row beside the PUBLIC PROFILE heading, reusing the space-between pattern the public profile page already uses rather than inventing a layout. section-heading does not wrap by default and a heading plus two buttons does not fit a phone on one line, so the form's instance wraps",
+    "measured": "at a REAL 320px viewport in a harness loading the shipped stylesheets: the row drops below the heading, the buttons stack, widest right edge 161px, docScrollWidth equals the viewport so nothing overflows. Two earlier measurements were wrong and worth remembering - setting documentElement.style.width does not change the viewport, and a harness without a viewport meta tag emulates mobile at the 980px fallback, both of which reported a false overflow",
+    "alsoRemoved": ".profile-share, unused once the block moved, and the help sentence - two labels reading COPY MY PROFILE LINK and VIEW PUBLIC PROFILE do not need a line explaining that they copy and view"
+  },
+  "v10_5HostedAcceptance": {
+    "status": "green",
+    "url": "https://amordle-784p669uc-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_9CFR9dTWDJYxG9JyhJB23oNWjeNj",
+    "commit": "b6b520a4cd0d4f231a87b4fdc4ef054038940733",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 52,
+    "parity": "237/237 acceptance-verified",
+    "attemptsNeeded": 1,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "localGate": "220 domain, 31 browser, 24 fixture, 52 visual",
+    "productionAtTimeOfRun": "dpl_4bhcWYsyDSKGfj16xLuvPyC5ZBMf",
+    "productionReleaseAuthorized": false
+  },
   "v10_4HostedAcceptance": {
     "status": "green",
     "url": "https://amordle-owvesbjni-ryanjosephkamps-projects.vercel.app",
@@ -1455,7 +1478,7 @@
   },
   "nextSession": {
     "topic": "server-side pricing, the one item the owner deferred",
-    "state": "Preview amordle-owvesbjni at commit 96de2fa is accepted with zero residue and waits on the owner to promote. Production is dpl_HtzTTEomEP6UHeLYs4kKQ53gCJPJ, which carries the daily streak but not this sweep",
+    "state": "Production is dpl_4bhcWYsyDSKGfj16xLuvPyC5ZBMf, promoted by the owner 2026-08-16, carrying the daily streak and the v10.4 sweep. Preview amordle-784p669uc (dpl_9CFR9dTWDJYxG9JyhJB23oNWjeNj) at commit b6b520a adds the share-button placement move and is accepted with zero residue, waiting on the owner to promote",
     "problem": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly, under an App heading, so the page stays truthful either way. Moving them server-side is a migration and its own change",
     "ownerNote": "the owner considers the pricing arithmetic private rather than something to disclose further, and deferred it deliberately rather than skipping it",
     "everythingElseClosed": "openWorkAfterV10 items 2, 4 and 10 are closed; 5 and 9 were always knowledge rather than work; 6 now self-diagnoses; 7 and 8 are written and waiting on the owner to run",
