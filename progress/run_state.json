@@ -1401,7 +1401,25 @@
     "localGate": "213 domain, 31 browser, 24 fixture, 52 visual",
     "flake": "the first hosted visual run timed out on Firefox on the text-only-zoom dropdown test - a 30s timeout rather than an assertion failure, on a cold Preview, in a path this change does not touch. Did not reproduce; the re-run was 52 passed",
     "productionAtTimeOfRun": "dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
-    "productionReleaseAuthorized": false
+    "productionReleaseAuthorized": true
+  },
+  "v10_3Release": {
+    "releasedAt": "2026-08-15",
+    "releasedBy": "owner",
+    "production": "dpl_HtzTTEomEP6UHeLYs4kKQ53gCJPJ",
+    "url": "https://amordle-rir9jdsxl-ryanjosephkamps-projects.vercel.app",
+    "previousProduction": "dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
+    "promotedFrom": "the accepted Preview dpl_EzGa493NDi4vo9DvpdqSMrB1bcez at commit a263de8",
+    "promoteBehaviour": "vercel promote of a Preview REBUILDS rather than re-aliasing - the CLI prompts that the deployment is not a production one and that a new deployment will be built using the production environment. So the released artifact is a fresh build of the accepted commit against production env, not the accepted bytes. The build guard in next.config.ts is what makes that safe: it refuses to produce an artifact without Supabase browser configuration",
+    "aliasLag": "the owner's vercel inspect immediately after promote still reported the OLD production id, because the new deployment had not finished building. This is expected and is exactly why the rule is to verify the live build id rather than the command's exit code - but it also means verifying too EARLY reads as a failure. Wait for the build, then inspect",
+    "verified": {
+      "routes": "12 checked, all 200, including /methodology",
+      "functions": "real serverless functions, 216 output items - not the v9 static-copy failure",
+      "supabaseConfig": "project ref present in the served client chunk /_next/static/chunks/20xwety0ymm7-.js - not the v9 missing-config failure",
+      "streakSection": "the methodology page serves all five rules, including 'Either Daily counts' and 'A streak you have lost cannot be bought back', plus the App-side entry under What's checked and where",
+      "profileRoute": "/profile resolves to the normal signed-out gate rather than an error"
+    },
+    "verificationNote": "a bash sweep of chunk URLs scraped from the server HTML did NOT find the Supabase ref and looked like the v9 failure. It was the method: the accepted Preview, whose signed-in services suite passes, produced the same negative. Enumerating scripts from the live DOM found it immediately. Check a suspected regression against the accepted Preview before believing it"
   },
   "nextSession": {
     "topic": "open - the streak is closed",
