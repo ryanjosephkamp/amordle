@@ -343,7 +343,34 @@ function ProfileForm({
           });
         }}
       >
-        <h2>PUBLIC PROFILE</h2>
+        {/*
+         * Beside the heading rather than at the foot of the form. These were
+         * below the flair select and above SAVE PROFILE, which on a phone is a
+         * long scroll past the avatar and the accent picker — far enough down
+         * that the owner went looking for them and concluded they had not
+         * shipped.
+         *
+         * Shown only once the profile is public, because a private profile's
+         * link resolves to "Player not found" for everyone you send it to.
+         */}
+        <div className="section-heading">
+          <h2>PUBLIC PROFILE</h2>
+          {profile?.public_profile_id && profile.visibility === 'public' && (
+            <div className="action-row">
+              <CopyButton
+                label="COPY MY PROFILE LINK"
+                value={() =>
+                  `${window.location.origin}${publicProfilePath(profile.public_profile_id)}`
+                }
+              />
+              {/* A plain anchor, matching PlayerIdentityLink: the profile path is
+                  built at runtime and typed routes will not accept a string. */}
+              <a className="button" href={publicProfilePath(profile.public_profile_id)}>
+                VIEW PUBLIC PROFILE
+              </a>
+            </div>
+          )}
+        </div>
         <div className="profile-editor-intro">
           <ProfileAvatar
             avatarUrl={(avatarPreviewUrl ?? avatarUrl) || null}
@@ -533,33 +560,6 @@ function ProfileForm({
           Flair is a self-selected profile label. It does not change matchmaking, rating, rewards,
           or rank.
         </p>
-        {/*
-         * The route to your own public address, and the only way to find it
-         * short of asking someone else to look you up.
-         *
-         * Shown only once the profile is public, because a private profile's
-         * link resolves to "Player not found" for everyone you send it to.
-         */}
-        {profile?.public_profile_id && profile.visibility === 'public' && (
-          <div className="profile-share">
-            <p className="field-help">
-              Your public profile address. Viewing it shows exactly what a visitor sees.
-            </p>
-            <div className="action-row">
-              <CopyButton
-                label="COPY MY PROFILE LINK"
-                value={() =>
-                  `${window.location.origin}${publicProfilePath(profile.public_profile_id)}`
-                }
-              />
-              {/* A plain anchor, matching PlayerIdentityLink: the profile path is
-                  built at runtime and typed routes will not accept a string. */}
-              <a className="button" href={publicProfilePath(profile.public_profile_id)}>
-                VIEW PUBLIC PROFILE
-              </a>
-            </div>
-          </div>
-        )}
         {profile?.visibility === 'private' && (
           <p className="status-line status-line--warning" role="note">
             This existing profile is private. Saving these fields will publish the profile details

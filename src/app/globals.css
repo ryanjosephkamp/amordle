@@ -1474,12 +1474,6 @@ button.calendar-day.is-selected {
   }
 }
 
-.profile-share {
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-3);
-}
-
 .admin-refresh {
   margin-top: var(--space-6);
 }

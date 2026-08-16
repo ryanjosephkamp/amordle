@@ -3976,6 +3976,16 @@ html[data-game-presentation='review'] .game-route {
   gap: var(--space-3);
 }
 
+/*
+ * A heading and two buttons do not share one line on a phone. section-heading
+ * does not wrap by default, and an unwrapped row here would push the page wider
+ * than the viewport, which the responsive suite asserts against.
+ */
+.form-panel > .section-heading {
+  flex-wrap: wrap;
+  row-gap: var(--space-3);
+}
+
 .profile-visibility-summary {
   display: grid;
   margin: 0;
