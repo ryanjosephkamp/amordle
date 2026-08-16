@@ -733,7 +733,9 @@
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
-        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+        "tests/domain/rating-contract.test.ts::seeds a new rating at 1200",
+        "tests/domain/rating-contract.test.ts::uses K = 40 while provisional and K = 24 after ten games, per player",
+        "tests/domain/rating-contract.test.ts::computes the expected score on a 400-point scale"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
       "actualEvidence": "Clause-specific local authority test \"proves MP-09 rating settlement and account continuity\" passes and the mapped protected hosted scenario (V6.1-HOSTED-RANKED-PRACTICE-DAILY) exercises the corresponding real-service family.",
@@ -759,7 +761,9 @@
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
-        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+        "tests/domain/rating-contract.test.ts::seeds a new rating at 1200",
+        "tests/domain/rating-contract.test.ts::uses K = 40 while provisional and K = 24 after ten games, per player",
+        "tests/domain/rating-contract.test.ts::computes the expected score on a 400-point scale"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
       "actualEvidence": "Clause-specific local authority test \"proves MP-09 rating settlement and account continuity\" passes and the mapped protected hosted scenario (V6.1-HOSTED-RANKED-PRACTICE-DAILY) exercises the corresponding real-service family.",
@@ -785,7 +789,9 @@
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
-        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+        "tests/domain/rating-contract.test.ts::seeds a new rating at 1200",
+        "tests/domain/rating-contract.test.ts::uses K = 40 while provisional and K = 24 after ten games, per player",
+        "tests/domain/rating-contract.test.ts::computes the expected score on a 400-point scale"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
       "actualEvidence": "Clause-specific local authority test \"proves MP-09 rating settlement and account continuity\" passes and the mapped protected hosted scenario (V6.1-HOSTED-RANKED-PRACTICE-DAILY) exercises the corresponding real-service family.",
@@ -811,7 +817,9 @@
       "automatedEvidence": [
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
         "tests/domain/multiplayer-acceptance.test.ts::proves MP-09 rating settlement and account continuity",
-        "tests/domain/platform.test.ts::settles Elo with distinct provisional and established factors"
+        "tests/domain/rating-contract.test.ts::seeds a new rating at 1200",
+        "tests/domain/rating-contract.test.ts::uses K = 40 while provisional and K = 24 after ten games, per player",
+        "tests/domain/rating-contract.test.ts::computes the expected score on a 400-point scale"
       ],
       "hostedEvidence": ["V6.1-HOSTED-RANKED-PRACTICE-DAILY"],
       "actualEvidence": "Clause-specific local authority test \"proves MP-09 rating settlement and account continuity\" passes and the mapped protected hosted scenario (V6.1-HOSTED-RANKED-PRACTICE-DAILY) exercises the corresponding real-service family.",
