@@ -1275,7 +1275,7 @@
   "v10OperatorManual": "https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f - a prompt template with one ALL-CAPS slot, the four-step working pattern, what to attach, and the actions reserved to the owner",
   "openWorkAfterV10": {
     "0_note": "Production is RELEASED and current at dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F. The former item 1 said Production ran a pre-v10 build; that is no longer true and was removed rather than left to mislead.",
-    "2_dailyStreak": "displayed on the private stats panel and never advanced by any current code path. Should either start working or stop being shown. Deliberately omitted from the Methodology page",
+    "2_dailyStreak": "CLOSED at v10.3. It advances, it lapses, it is documented on the Methodology page, and it is proven end to end on a deployed build. See v10_3DailyStreak",
     "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
     "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
@@ -1364,11 +1364,49 @@
     "localGate": "188 domain, 31 browser, 24 fixture, 52 visual",
     "productionReleaseAuthorized": true
   },
+  "v10_3DailyStreak": {
+    "report": "reports/v10-3-daily-streak-2026-08-15/README.md",
+    "range": "dcfb19d -> a263de8",
+    "migration": "none",
+    "commits": [
+      "8e2caae feat(daily): make the daily streak count",
+      "a3116bb test(daily): assert the legacy streak lapses rather than reading live",
+      "a263de8 test(daily): prove the streak end to end on the deployed build"
+    ],
+    "ownerDecisions": "either Daily counts; finishing rather than winning; the player's local day; forward only, so an unlocked past Daily cannot repair a lapsed streak; one release rather than two; document it on Methodology",
+    "design": "one optional field, lastDailyDate, on the durable progress record. Optional is load-bearing: progressSchema is strict and pinned to schemaVersion 1, so a required field would reject every record written before it existed - the same way appliedRewards and dailyEntitlements were added. New domain module src/domain/daily-streak.ts holds localDayKey, previousDayKey, advanceDailyStreak, currentDailyStreak and streakDateForEntry, all pure, with today passed in rather than read",
+    "idempotencyByDate": "keyed on the day rather than on an operation id, deliberately. That is the same property that makes finishing both the OG and the GO on one day count once and makes a retried finalize a no-op. An operation id would have counted the second mode as a second day",
+    "noMigrationReason": "the record is JSON inside a game_history sentinel row, so a new field is not a schema change. The one place SQL touches it is the account reset (20260802193000_amordle_account_lifecycle_v1.sql:280-300), which zeroes dailyStreak and cannot know about a field added later. Rather than a forward migration, the transform reads a stored streak of 0 as 'no streak' and restarts at 1 whatever date is on record. This is why two fields beat a set of recent dates: a set survives the reset and would resurrect a streak the owner had just cleared, and THAT would need a migration",
+    "xpGateDefectAvoided": "the XP write was gated on rewardXp > 0, and a Daily loss with nothing solved earns no XP - exactly the case the owner asked to count. Hanging the streak off that gate would have shipped a streak that silently ignored every bad day. The two now share one writeAccountProgressCas call: one round trip, one revision bump, and a no-op stays a no-op",
+    "displayLapses": "a stored streak is only current while lastDailyDate is today or yesterday, so the panel cannot show a stale 7 to somebody who stopped a month ago. The apply rule restarts at 1 after a gap, so store and display can never disagree. Zero reads 'start today' when no Daily was ever finished and 'start again' when one was",
+    "duplicateDayKey": "the local day key existed twice, copy-pasted between calendar-view.tsx and daily-access-gate.tsx. Both now import one function. Neither changed WHEN it runs - both still defer behind queueMicrotask, because computing the local day during SSR bakes in the server's day",
+    "endToEndProof": "the suite had never played a Daily; it seeded one through the legacy import and asserted the panel, leaving play -> outbox -> finalize -> CAS -> record -> panel unproven against a deployment. services.combat.spec.ts now plays today's OG Daily TO A LOSS on the deployed build: nothing solved earns no XP and no coins, so it is precisely the case the old gate would have skipped, and the run asserts the balances are untouched while the streak still moves. The account's imported streak is dated 2026-07-20, so it also proves lapse-then-restart rather than an increment. Recorded: result lost, rewardedXp 0, rewardedCoins 0, streakAfter 1, lapsedFrom 2026-07-20, lastDailyDate 2026-08-15. Guesses are drawn from outside the answer catalog, so the game cannot be won by accident and the test never has to agree with the server about which word today holds",
+    "gateAsDomainRule": "streakDateForEntry is a named domain rule compared by test against rows buildSoloHistoryRow actually produces, not a restated copy. kind === 'solo-daily' rather than lane === 'daily', because V1 entries carry no lane and the COMBAT Daily is UTC-keyed and must never feed a local-day streak. Two internally consistent sides that disagree is how the signed-in shop went unnoticed in production",
+    "testCorrected": "the services suite pinned 'daily streak 5' from a legacy save whose newest Daily is 2026-07-20. A month stale, and the panel now says so. The assertion is 'start again', which is stronger: an import carrying the number without the date would render 'start today', so this pins the date coming across",
+    "vercelBuildSideEffect": "vercel build rewrites tsconfig.json and next-env.d.ts - reformatting the arrays and repointing the types path from dist to .next. A git add -A after a build sweeps both in, which turns format:check red and would break the bootstrap baseline. Restore both after every vercel build",
+    "localGate": "213 domain, 31 browser, 24 fixture, 52 visual; bootstrap 107/107; migrations 45/45 + 14 authorized additive, none added; parity 237/237; budgets home 199192B JS/25030B CSS, game 205593B JS/29940B CSS",
+    "rolloutProperty": "the progress record is strict, so a tab left open across the deploy that then reads a record written by the new build sees 'Account progress could not be read safely' until reload. Owner-accepted in exchange for one release rather than two",
+    "rollback": "three independently revertable commits, no migration to reverse and no data to undo - a record carrying lastDailyDate still parses against the previous schema, since the field is optional in both directions"
+  },
+  "v10_3HostedAcceptance": {
+    "status": "green",
+    "url": "https://amordle-72e4gd1ww-ryanjosephkamps-projects.vercel.app",
+    "commit": "a263de8",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 52,
+    "parity": "237/237 acceptance-verified",
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "localGate": "213 domain, 31 browser, 24 fixture, 52 visual",
+    "flake": "the first hosted visual run timed out on Firefox on the text-only-zoom dropdown test - a 30s timeout rather than an assertion failure, on a cold Preview, in a path this change does not touch. Did not reproduce; the re-run was 52 passed",
+    "productionAtTimeOfRun": "dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
+    "productionReleaseAuthorized": false
+  },
   "nextSession": {
-    "topic": "the daily streak",
-    "problem": "progressSchema declares dailyStreak (src/domain/account-continuity.ts:8), it initialises to 0 (:135), private-stats.tsx:109 renders it as a Metric, and the ONLY writer is the legacy-save import at :192 via legacyDailyStreak(). No code path advances it during play, so a new account's streak is 0 forever",
-    "references": "4 in total: account-continuity.ts:8, :135, :192, and private-stats.tsx:109. legacyDailyStreak is defined at :153",
-    "decisionNeeded": "make it work or remove it. If it works, decide what counts (OG only, GO only, or either), which day boundary (the game uses local-day Daily challenges), and whether it is client-computed like XP and coins or server-authoritative",
-    "deliberatelyOmittedFrom": "the Methodology page, because documenting a dead number on a transparency page invites the suspicion the page exists to prevent"
+    "topic": "open - the streak is closed",
+    "state": "Preview at commit a263de8 is accepted with zero residue and is waiting on the owner to promote. Production is still dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
+    "candidates": "openWorkAfterV10 items 3 through 10, none of which has a live cost. The two with real substance are moving continuation pricing and the 60-coin Daily unlock server-side (a migration, and its own change) and the accent-preset coalesce (also a migration)",
+    "reminder": "verify the live build id after promote rather than the command's exit code - vercel promote mints a new deployment rather than re-aliasing the accepted Preview"
   }
 }
