@@ -1277,13 +1277,13 @@
     "0_note": "Production is RELEASED and current at dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F. The former item 1 said Production ran a pre-v10 build; that is no longer true and was removed rather than left to mislead.",
     "2_dailyStreak": "CLOSED at v10.3. It advances, it lapses, it is documented on the Methodology page, and it is proven end to end on a deployed build. See v10_3DailyStreak",
     "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
-    "4_deadRatingModule": "src/domain/rating.ts is a dead second copy of the Elo constants imported only by tests/domain/platform.test.ts; its Math.round differs from Postgres on exact halves",
+    "4_deadRatingModule": "CLOSED at v10.4. Deleted, and replaced by tests/domain/rating-contract.test.ts which reads the settlement migration instead of a TypeScript copy. The MP v6 audit caught four MP-09 clauses citing the deleted test by name and they now cite the new ones",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
-    "6_servicesDraftFlake": "one services run failed on the draft-clear window and did not reproduce. Unexplained",
+    "6_servicesDraftFlake": "still unexplained, but the next occurrence will explain itself: the poll now carries the board state into its failure value, so a future failure says whether the guess was accepted and the draft lingered or the round trip never landed. Deliberately NOT made deterministic by waiting on the accepted row - submitOnScreenGuess serves Solo and COMBAT, whose accepted rows carry different markup, and one locator for both is the filter-trap mistake again",
     "7_legacyAccountsPendingDeletion": "COSMETIC REMAINDER, DETERMINISTIC, UNEXPLAINED. Two legacy auth users remain - 1060009f-a896-4abc-b132-1cac2abe8983 and 051e6f74-4169-46b8-bf5e-eb1db503e686 - invisible to every surface because they hold no row in public. Every public table is clean and /players lists 3 real players. Two --apply runs produced byte-identical failures, so this is not the transient fault AuthRetryableFetchError implies. Ruled out with evidence: zero rows in all eleven public tables; every FK to auth.users is cascade or set null and the only two restrictive ones (multiplayer_private_match_requests) are cleared; host_user_id, player_one_user_id and player_two_user_id are all nullable on the live schema; no triggers on async_multiplayer_games; no storage objects owned; and their auth records are normal - email confirmed, one email identity with a sub, no MFA factors, not banned, identical in shape to a healthy account. The error is a 500 with an empty body from GoTrue, so the exception is inside its delete transaction where no client can see it. NEXT STEP if it is ever worth closing: run `delete from auth.users where id in (...)` in the Supabase SQL editor, which bypasses GoTrue entirely - it either succeeds, proving the fault is in GoTrue, or prints the exact Postgres constraint, which is the one fact missing. Nothing depends on it",
-    "8_accentPresetCoalesce": "list_my_accent_presets_v2 should coalesce is_active to false at source rather than relying on the client to tolerate null. Needs a migration",
+    "8_accentPresetCoalesce": "MIGRATION WRITTEN, NOT APPLIED - the owner's to authorize and push. supabase/migrations/20260816013000_amordle_accent_preset_is_active_coalesce_v1.sql, sha256 6e7aa2ba3a8450359d7bb7009d176b1fa708b26d40a28227a4c3ab375409dbf5, registered in reviewedPendingMigrations so the gate reports 1/1 pending. Decision packet at reports/v10-4-accent-preset-coalesce-migration-decision-2026-08-15.md. The client tolerance stays after it lands, deliberately, and the test says so",
     "9_aboutLinkSpacing": "fixed, but worth knowing: JSX drops the space between a tag and text that wraps to the next line, and prettier wraps wherever it likes. Any inline link followed by text should carry an explicit {' '}",
-    "10_creatorPageUnreachableToOwner": "the creator sees the tricolour page treatment only when signed out, because opening your own public profile redirects you to /profile. Worth deciding whether that redirect should stay"
+    "10_creatorPageUnreachableToOwner": "CLOSED at v10.4. The redirect is gone rather than made conditional, so every player - the creator included - reads their own public page as visitors do. VIEW PUBLIC PROFILE on /profile, EDIT PROFILE on the public page when it is yours, and a named panel when your own profile is private. Proven in the hosted suite in both directions"
   },
   "v10HostedAcceptance": {
     "status": "green",
@@ -1421,10 +1421,44 @@
     },
     "verificationNote": "a bash sweep of chunk URLs scraped from the server HTML did NOT find the Supabase ref and looked like the v9 failure. It was the method: the accepted Preview, whose signed-in services suite passes, produced the same negative. Enumerating scripts from the live DOM found it immediately. Check a suspected regression against the accepted Preview before believing it"
   },
+  "v10_4OpenItemSweep": {
+    "report": "reports/v10-4-open-item-sweep-2026-08-15/README.md",
+    "range": "48d677b -> 96de2fa",
+    "scope": "every open item after v10 except server-side pricing, which the owner deferred to its own session",
+    "commits": [
+      "3dca7a2 refactor(rating): delete the duplicate Elo constants, check the real ones",
+      "c63565a feat(profile): let a player see their own public profile",
+      "b34867f feat(accents): write the is_active coalesce migration, not yet applied",
+      "5dfbb3e docs(ops): a runbook for the last two legacy auth users",
+      "0b27f7d test(services): prove the profile round trip, and make the flake explain itself",
+      "96de2fa chore(audit): repoint MP-09 evidence at the rating contract test"
+    ],
+    "profilePreview": "the redirect on /players/<your id> is REMOVED rather than made conditional, so the property 'your public link opens for you' holds from every entry point rather than only from one button. PrivateChallengeForm was already gated on !isMine so no challenge-yourself path opened. The narrow-width rule targeted .public-profile > .button, which stopped being a direct child - it would have silently broken the mobile layout and now targets the wrapper",
+    "ratingModule": "the duplicate was not merely dead, it was subtly wrong: JavaScript Math.round breaks exact halves upward, Postgres round() on numeric breaks them away from zero, so a settlement landing on .5 would have disagreed by a point. The replacement reads the migration text",
+    "commitRegroupIncident": "the first pass grouped the work wrongly - a git rm staged before an unrelated commit put the rating.ts deletion inside the profile commit, so reverting the profile feature would have restored the dead module. Regrouped with a backup ref and proved lossless by diffing the rewritten HEAD against it (identical tree) before deleting the ref",
+    "localGate": "220 domain, 31 browser, 24 fixture, 52 visual; bootstrap 107/107; migrations 45/45 + 14 authorized + 1 reviewed pending; parity 237/237; MP audit 73/73",
+    "ownerActionsOutstanding": "apply the accent-preset migration (supabase db push --linked, desktop), run the legacy auth user deletion (Supabase SQL editor, works from a phone - docs/operations/RETIRE-LEGACY-AUTH-USERS.md), and promote the Preview"
+  },
+  "v10_4HostedAcceptance": {
+    "status": "green",
+    "url": "https://amordle-owvesbjni-ryanjosephkamps-projects.vercel.app",
+    "commit": "96de2fa8d80092ad4d5d188a609cf34458d94447",
+    "fixtureE2E": 24,
+    "serviceE2E": 3,
+    "visualE2E": 52,
+    "parity": "237/237 acceptance-verified",
+    "attemptsNeeded": 1,
+    "cleanupAttempt": 1,
+    "zeroResidue": true,
+    "productionAtTimeOfRun": "dpl_HtzTTEomEP6UHeLYs4kKQ53gCJPJ",
+    "productionReleaseAuthorized": false
+  },
   "nextSession": {
-    "topic": "open - the streak is closed",
-    "state": "Preview at commit a263de8 is accepted with zero residue and is waiting on the owner to promote. Production is still dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
-    "candidates": "openWorkAfterV10 items 3 through 10, none of which has a live cost. The two with real substance are moving continuation pricing and the 60-coin Daily unlock server-side (a migration, and its own change) and the accent-preset coalesce (also a migration)",
-    "reminder": "verify the live build id after promote rather than the command's exit code - vercel promote mints a new deployment rather than re-aliasing the accepted Preview"
+    "topic": "server-side pricing, the one item the owner deferred",
+    "state": "Preview amordle-owvesbjni at commit 96de2fa is accepted with zero residue and waits on the owner to promote. Production is dpl_HtzTTEomEP6UHeLYs4kKQ53gCJPJ, which carries the daily streak but not this sweep",
+    "problem": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly, under an App heading, so the page stays truthful either way. Moving them server-side is a migration and its own change",
+    "ownerNote": "the owner considers the pricing arithmetic private rather than something to disclose further, and deferred it deliberately rather than skipping it",
+    "everythingElseClosed": "openWorkAfterV10 items 2, 4 and 10 are closed; 5 and 9 were always knowledge rather than work; 6 now self-diagnoses; 7 and 8 are written and waiting on the owner to run",
+    "reminder": "verify the live build id after promote rather than the command's exit code, and wait for the rebuild before inspecting - promote builds a new deployment rather than re-aliasing the accepted Preview"
   }
 }
