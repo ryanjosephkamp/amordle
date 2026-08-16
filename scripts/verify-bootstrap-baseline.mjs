@@ -69,18 +69,18 @@ const authorizedAdditiveMigrations = new Map([
     '20260815055205_amordle_creator_identity_v1.sql',
     '7b0600cc0ab501dbe6bcfe4477a66a184ee359e93cb45a338676e51a2317001f',
   ],
-]);
-// Written and reviewed, NOT yet applied to the linked project. Moves the
-// is_active coalesce in list_my_accent_presets_v2 from the client to the source.
-// The owner applies it; until then it ships in the repository and the deployed
-// client's tolerance is what keeps /profile working. See
-// reports/v10-4-accent-preset-coalesce-migration-decision-2026-08-15.md.
-const reviewedPendingMigrations = new Map([
+  // Moves the is_active coalesce in list_my_accent_presets_v2 from the client to
+  // the source. Authorized by the owner and applied to the linked project on
+  // 2026-08-16, verified in pg_proc rather than trusted from the CLI's output.
+  // See reports/v10-4-accent-preset-coalesce-migration-decision-2026-08-15.md.
   [
     '20260816013000_amordle_accent_preset_is_active_coalesce_v1.sql',
     '6e7aa2ba3a8450359d7bb7009d176b1fa708b26d40a28227a4c3ab375409dbf5',
   ],
 ]);
+// Reviewed and written but NOT yet applied to the linked project. Empty is the
+// normal state; an entry here means the repository is ahead of the database.
+const reviewedPendingMigrations = new Map([]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 
