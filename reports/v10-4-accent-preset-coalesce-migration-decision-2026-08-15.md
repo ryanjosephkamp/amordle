@@ -83,7 +83,7 @@ difference.
 The owner's to run, from the repository root, on the desktop:
 
 ```bash
-supabase db push --linked
+pnpm exec supabase db push --linked
 ```
 
 Exactly one file should be pushed. Afterwards, regenerate types and re-run the gate:
