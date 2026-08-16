@@ -17,7 +17,6 @@ import {
   mergeNotifications,
   notificationMetadata,
 } from '@/domain/notifications';
-import { INITIAL_RATING, expectedScore, ratingDelta } from '@/domain/rating';
 import { reconcileRevisioned } from '@/domain/reconciliation';
 import { AuthTransitionCoordinator } from '@/application/auth-transition';
 
@@ -311,11 +310,8 @@ describe('platform domains', () => {
     ).toBe(true);
   });
 
-  it('settles Elo with distinct provisional and established factors', () => {
-    expect(expectedScore(INITIAL_RATING, INITIAL_RATING)).toBe(0.5);
-    expect(ratingDelta({ rating: 1200, opponentRating: 1200, score: 1, gamesPlayed: 0 })).toBe(20);
-    expect(ratingDelta({ rating: 1200, opponentRating: 1200, score: 1, gamesPlayed: 10 })).toBe(12);
-  });
+  // Elo moved to tests/domain/rating-contract.test.ts, which reads the migration
+  // that actually settles ratings rather than a TypeScript copy of it.
 
   it('reconciles revision first and timestamps second', () => {
     expect(
