@@ -1,9 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import { useQuery } from '@tanstack/react-query';
-import { useEffect } from 'react';
 import {
   getMyPublicProfile,
   getPublicPlayerStats,
@@ -26,7 +24,6 @@ import { ProfileAvatar } from './profile-avatar';
 
 export function PublicProfile({ publicProfileId }: { publicProfileId: string }) {
   const auth = useAuth();
-  const router = useRouter();
   const userId = auth.user?.id ?? '';
   const profile = useQuery({
     queryKey: ['public-profile', publicProfileId],
@@ -41,10 +38,13 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
     queryFn: getMyPublicProfile,
     enabled: auth.status === 'signed-in' && Boolean(userId),
   });
+  /*
+   * This page used to redirect its owner to /profile, which meant nobody could
+   * ever see their own public profile as a visitor sees it — and made the link
+   * they are invited to copy the one address they could not open. The owner now
+   * reads the same page everyone else does, with a way back to the editor.
+   */
   const isMine = mine.data?.public_profile_id === publicProfileId;
-  useEffect(() => {
-    if (isMine) router.replace('/profile');
-  }, [isMine, router]);
   if (profile.isPending) return <SkeletonRows label="Loading player…" />;
   if (profile.isError) {
     return (
@@ -55,6 +55,25 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
     );
   }
   if (!profile.data) {
+    /*
+     * Your own private profile resolves to nothing here, exactly as it does for
+     * everybody else — which is the correct answer and a baffling one to read
+     * about yourself. Say which it is, and offer the way to change it.
+     */
+    if (isMine) {
+      return (
+        <section className="status-panel">
+          <h2>Your profile is not public</h2>
+          <p>
+            This is your public address, and it shows nothing to visitors while your profile is
+            private. Publishing it in the editor is what makes this page appear.
+          </p>
+          <Link className="button primary" href="/profile">
+            EDIT PROFILE
+          </Link>
+        </section>
+      );
+    }
     return (
       <section className="status-panel">
         <h2>Player not found</h2>
@@ -105,17 +124,24 @@ export function PublicProfile({ publicProfileId }: { publicProfileId: string }) 
             </span>
           </div>
         </div>
-        {/*
-         * Not gated on `isMine`: the effect above redirects the owner to
-         * /profile, so this slot only ever renders for someone looking at
-         * another player. The EDIT PROFILE link that used to sit here was
-         * unreachable for exactly that reason.
-         */}
-        <CopyButton
-          className="button"
-          label="COPY LINK"
-          value={() => `${window.location.origin}${publicProfilePath(publicProfileId)}`}
-        />
+        <div className="action-row">
+          <CopyButton
+            className="button"
+            label="COPY LINK"
+            value={() => `${window.location.origin}${publicProfilePath(publicProfileId)}`}
+          />
+          {/*
+           * Reachable again. This link existed before the redirect made it
+           * impossible to arrive here, and it is the way back out of the
+           * preview — the reason it is safe to leave a player on their own
+           * public page rather than bouncing them to the editor.
+           */}
+          {isMine && (
+            <Link className="button" href="/profile">
+              EDIT PROFILE
+            </Link>
+          )}
+        </div>
       </section>
 
       <section className="public-stats" aria-labelledby="public-stats-heading">

@@ -3966,6 +3966,16 @@ html[data-game-presentation='review'] .game-route {
   margin: 0;
 }
 
+/*
+ * The third grid column is content-sized, so laying COPY LINK and EDIT PROFILE
+ * out side by side would widen it and squeeze the name and bio. Stacked, they
+ * cost the column one button's width whether there are one or two.
+ */
+.public-profile > .action-row {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
 .profile-visibility-summary {
   display: grid;
   margin: 0;
@@ -4926,8 +4936,10 @@ button:hover .is-creator-name,
     grid-template-columns: auto minmax(0, 1fr);
   }
 
-  .public-profile > .button {
+  /* Full width below the avatar and the name, where a row fits and wraps. */
+  .public-profile > .action-row {
     grid-column: 1 / -1;
+    flex-direction: row;
   }
 
   .profile-visibility-summary > div {

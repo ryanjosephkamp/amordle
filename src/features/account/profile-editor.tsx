@@ -534,16 +534,17 @@ function ProfileForm({
           or rank.
         </p>
         {/*
-         * The only route to your own public address. Visiting /players/<your id>
-         * redirects you straight back here, so without this there is no way to
-         * find the link other than asking someone else to look you up.
+         * The route to your own public address, and the only way to find it
+         * short of asking someone else to look you up.
          *
          * Shown only once the profile is public, because a private profile's
          * link resolves to "Player not found" for everyone you send it to.
          */}
         {profile?.public_profile_id && profile.visibility === 'public' && (
           <div className="profile-share">
-            <p className="field-help">Your public profile address.</p>
+            <p className="field-help">
+              Your public profile address. Viewing it shows exactly what a visitor sees.
+            </p>
             <div className="action-row">
               <CopyButton
                 label="COPY MY PROFILE LINK"
@@ -551,6 +552,11 @@ function ProfileForm({
                   `${window.location.origin}${publicProfilePath(profile.public_profile_id)}`
                 }
               />
+              {/* A plain anchor, matching PlayerIdentityLink: the profile path is
+                  built at runtime and typed routes will not accept a string. */}
+              <a className="button" href={publicProfilePath(profile.public_profile_id)}>
+                VIEW PUBLIC PROFILE
+              </a>
             </div>
           </div>
         )}
