@@ -223,11 +223,26 @@ async function submitOnScreenGuess(page: Page, guess: string) {
    * while every one of those steps succeeded — the failure was the stopwatch, not the
    * product. The assertion itself is unchanged: the draft must end up empty.
    */
+  /*
+   * The polled value is '' the moment the draft is gone, so the passing path is
+   * exactly what it was. When it does NOT clear, the value carries the board
+   * state with it, because the one failure this has ever produced could not be
+   * explained afterwards: nothing recorded whether the guess had been accepted
+   * and the draft merely lingered, or the round trip never landed at all.
+   *
+   * Deliberately not made deterministic by waiting on the accepted row instead.
+   * This helper serves Solo and COMBAT, whose accepted rows carry different
+   * markup, so a single locator for both would be the same reach-into-the-DOM
+   * guess that turned six board entries into zero once already.
+   */
   await expect
     .poll(
       async () => {
         if ((await draft.count()) === 0) return '';
-        return (await draft.textContent())?.trim() ?? '';
+        const text = (await draft.textContent())?.trim() ?? '';
+        if (!text) return '';
+        const rows = await page.locator('.board-row').count();
+        return `${text} (draft still populated after submit; ${rows} board rows present, submitted ${guess.toUpperCase()})`;
       },
       { timeout: 15_000 },
     )
@@ -859,6 +874,30 @@ test.describe.serial('protected Preview services', () => {
       visibility: 'public',
     });
 
+    // The round trip between the editor and the public page. This page used to
+    // redirect its owner straight back to /profile, which made the link they are
+    // invited to copy the one address they could not open.
+    const publicProfileUrl = `${baseURL}/players/${savedProfile.public_profile_id}`;
+    await firstPage.getByRole('link', { name: 'VIEW PUBLIC PROFILE' }).click();
+    await expect(firstPage).toHaveURL(publicProfileUrl);
+    // EDIT PROFILE only renders once the "is this me" query has resolved and
+    // matched — which is exactly the moment the old redirect fired. Waiting for
+    // it and then reading the URL is what proves the redirect is gone rather
+    // than merely slow.
+    await expect(firstPage.getByRole('link', { name: 'EDIT PROFILE' })).toBeVisible({
+      timeout: 15_000,
+    });
+    await expect(firstPage.getByRole('button', { name: 'COPY LINK' })).toBeVisible();
+    await expect(firstPage.getByRole('heading', { name: 'E2E Operator' })).toBeVisible();
+    await expect(firstPage).toHaveURL(publicProfileUrl);
+    await firstPage.getByRole('link', { name: 'EDIT PROFILE' }).click();
+    await expect(firstPage).toHaveURL(`${baseURL}/profile`);
+    await event('public_profile_preview_verified', {
+      publicProfileId: savedProfile.public_profile_id,
+      redirectRemoved: true,
+      returnedToEditor: true,
+    });
+
     const avatarPng = Buffer.from(
       'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=',
       'base64',
@@ -1068,6 +1107,11 @@ test.describe.serial('protected Preview services', () => {
       'V6.2 public profile proof.',
     );
     await expect(spectatorPage.locator('.public-profile')).toContainText('COMBAT player');
+    // A visitor gets the link and nothing else. EDIT PROFILE is the one thing on
+    // this page that depends on who is reading it, so it is the one thing worth
+    // asserting is absent for somebody else.
+    await expect(spectatorPage.getByRole('button', { name: 'COPY LINK' })).toBeVisible();
+    await expect(spectatorPage.getByRole('link', { name: 'EDIT PROFILE' })).toHaveCount(0);
     await expect(
       spectatorPage.locator('.public-stat-grid').filter({ hasText: /completed\s*0/i }),
     ).toBeVisible();
