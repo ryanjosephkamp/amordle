@@ -26,6 +26,14 @@ const migration = readFileSync(
   'utf8',
 );
 
+const coalesceMigration = readFileSync(
+  path.resolve(
+    process.cwd(),
+    'supabase/migrations/20260816013000_amordle_accent_preset_is_active_coalesce_v1.sql',
+  ),
+  'utf8',
+);
+
 const preset = {
   accent_hex: '#000000',
   created_at: '2026-08-15T03:08:14.493843+00:00',
@@ -52,16 +60,30 @@ describe('a saved accent preset that is not the active one', () => {
     expect(() => accentPresetSchema.parse({ ...preset, is_active: 1 })).toThrow();
   });
 
-  it('is still reading a server column that can be null', () => {
-    /*
-     * The guard on the guard. If the migration is ever re-emitted with a
-     * coalesce — the proper fix — this assertion fails and whoever did it can
-     * decide whether the client tolerance is still wanted. Until then it
-     * documents that the null is real and comes from here.
-     */
+  it('names where the null came from', () => {
+    // The original, which is immutable and stays exactly as it shipped.
     expect(migration).toContain('profile.active_accent_preset_id = preset.preset_id as is_active');
-    expect(migration).not.toContain(
-      'coalesce(profile.active_accent_preset_id = preset.preset_id, false)',
+  });
+
+  it('has a forward migration that fixes it at source', () => {
+    /*
+     * The proper fix, written and awaiting the owner's apply. Note that the
+     * client tolerance above is deliberately KEPT rather than removed once this
+     * lands: a deployed client is not upgraded in step with the database, and
+     * "no active preset" genuinely means false, so reading it that way is the
+     * meaning rather than a workaround.
+     */
+    expect(coalesceMigration).toContain(
+      'coalesce(profile.active_accent_preset_id = preset.preset_id, false) as is_active',
+    );
+    // Re-emitted, not altered: the signature and the guards must come across
+    // intact, or the fix quietly changes who can call it.
+    expect(coalesceMigration).toContain('security definer');
+    expect(coalesceMigration).toContain("set search_path = ''");
+    expect(coalesceMigration).toContain("where auth.role() = 'authenticated'");
+    expect(coalesceMigration).toContain('limit 24');
+    expect(coalesceMigration).toContain(
+      'grant execute on function public.list_my_accent_presets_v2() to authenticated;',
     );
   });
 });
