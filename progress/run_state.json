@@ -1274,7 +1274,7 @@
   },
   "v10OperatorManual": "https://claude.ai/code/artifact/96411a8b-f9bb-4627-aa4f-fb8b04c5894f - a prompt template with one ALL-CAPS slot, the four-step working pattern, what to attach, and the actions reserved to the owner",
   "openWorkAfterV10": {
-    "0_note": "Production is RELEASED and current at dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F. The former item 1 said Production ran a pre-v10 build; that is no longer true and was removed rather than left to mislead.",
+    "0_note": "Production is RELEASED and current at dpl_3LRGfds9XffaEFMi22RTBNVDA8yp (2026-08-16), carrying the daily streak, the v10.4 sweep and the share-button placement. Every item in this list is closed except 3_clientSidePricing, which the owner deferred to its own session, and 6_servicesDraftFlake, which cannot be closed without a recurrence and now self-diagnoses when one happens.",
     "2_dailyStreak": "CLOSED at v10.3. It advances, it lapses, it is documented on the Methodology page, and it is proven end to end on a deployed build. See v10_3DailyStreak",
     "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
     "4_deadRatingModule": "CLOSED at v10.4. Deleted, and replaced by tests/domain/rating-contract.test.ts which reads the settlement migration instead of a TypeScript copy. The MP v6 audit caught four MP-09 clauses citing the deleted test by name and they now cite the new ones",
