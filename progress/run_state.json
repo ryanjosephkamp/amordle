@@ -4,9 +4,9 @@
   "branch": "codex/amordle-terminal-greenfield-implementation-2026-07-27",
   "bootstrapCommit": "328714102c8a170a850f287fca48d1e7f599ddc8",
   "currentStage": "stage-2",
-  "currentCheckpoint": "stage-2-v10.2-released",
+  "currentCheckpoint": "stage-2-v10.6-released",
   "status": "released",
-  "lastGreenCommit": "5f0e503",
+  "lastGreenCommit": "1209c0a",
   "v6Implementation": {
     "truthfulMpAuditCommit": "7f33829803eb93b560307b4b859d8109e1998db7",
     "rankedPracticeCommit": "7b71bdcba897c4717afcf7560fbe9a1022e7d6fe",
@@ -322,14 +322,15 @@
     "status": "green"
   },
   "preview": {
-    "deploymentId": "dpl_4ZarqhJytpLMw5eEMmsw9Nz8kvnr",
-    "url": "https://amordle-eri2l45fw-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_3n4RfiudzojbvCSHLMYgYuzTjsFh",
+    "url": "https://amordle-q6w7cvnov-ryanjosephkamps-projects.vercel.app",
     "protected": true,
     "target": "preview",
-    "applicationCommit": "7d3ce9b78c47375596cd1644bdaf4eac8d51c383",
+    "applicationCommit": "1209c0a99ffe571da1e289000edb6351fe2267e6",
     "evidenceCommit": null,
     "productionUnchanged": "dpl_739mtwiXc9pZPef3pxsKumwC9DfG",
-    "supersededPreview": "dpl_9Pcy6Q5EAA5xZi976EN4MH2Ag6vX"
+    "supersededPreview": "dpl_4ZarqhJytpLMw5eEMmsw9Nz8kvnr",
+    "note": "v10.6 economy authority and polling cost. Built with vercel build + vercel deploy --prebuilt from the local commit, so the build id is derived from .git/HEAD rather than VERCEL_GIT_COMMIT_SHA"
   },
   "cleanup": {
     "lastRunId": "e2e_20260803T010541643Z_f0a3a10c_110a3c24",
@@ -1185,19 +1186,12 @@
     "residue": "none"
   },
   "production": {
-    "deployment": "dpl_3ZitdmxrKGeqCizQ3k8et2xLTW8F",
+    "deploymentId": "dpl_k59UA6JL9iTihepf3h7Wk9euizoN",
     "url": "https://amordle.vercel.app",
-    "deploymentUrl": "https://amordle-8x7o9inck-ryanjosephkamps-projects.vercel.app",
-    "releasedAt": "2026-08-15",
-    "acceptedArtifact": "Preview amordle-539o5wtmk at commit 5f0e503, hosted acceptance green on the first attempt with zero residue",
-    "previousProduction": "dpl_6iJpNK2XVyiBuDpKSjFLZcfwLS61",
-    "verified": {
-      "routes": "8 checked, all 200",
-      "supabaseConfig": "project ref present in the served client chunk",
-      "voltage": "no longer offered anywhere in the app",
-      "creatorMark": "the console renders on the creator profile in both schemes and the name's computed colour changes between samples - dark rgb(255,111,111) to rgb(249,251,255), light rgb(198,16,46) to rgb(16,23,31)",
-      "exclusivity": "the directory marks exactly 1 of 3 names"
-    }
+    "commit": "1209c0a99ffe571da1e289000edb6351fe2267e6",
+    "promotedAt": "2026-08-18",
+    "carries": "v10.6 economy authority and polling cost",
+    "previous": "dpl_3LRGfds9XffaEFMi22RTBNVDA8yp"
   },
   "openWorkAfterV9": {
     "none": "all six items the owner listed at v8.2 acceptance are closed",
@@ -1565,5 +1559,29 @@
       "v10_6Report": "https://claude.ai/code/artifact/3d12327f-376d-44ce-84a5-86a9e8e975a8 - the v10.6 migration decision packet",
       "hardeningBrief": "https://claude.ai/code/artifact/f248d826-a21d-44ac-8ebc-ec01e2d76d05 - the 2026-08-18 assessment's what-is-left-to-fix brief"
     }
+  },
+  "v10_6HostedAcceptance": {
+    "date": "2026-08-18",
+    "result": "GREEN",
+    "runId": "e2e_20260818T222436575Z_1209c0a9_0659a967",
+    "commit": "1209c0a99ffe571da1e289000edb6351fe2267e6",
+    "preview": "https://amordle-q6w7cvnov-ryanjosephkamps-projects.vercel.app",
+    "deploymentId": "dpl_3n4RfiudzojbvCSHLMYgYuzTjsFh",
+    "suites": "All four harness stages passed: test:e2e:fixture, test:e2e:services, test:visual, verify:parity:acceptance. run-hosted-acceptance.mjs runs them sequentially and exits non-zero on the first failure, so exit code 0 plus the final PASS line covers all four. VISUAL 52 passed and PARITY 237/237 acceptance-verified were captured verbatim; the fixture and services counts scrolled past a tail -60 in the capture and were NOT read directly - the evidence for those two is the harness's control flow, the zero-residue receipt, and the served-build checks below",
+    "cleanup": "ZERO RESIDUE on attempt 1, from .codex-internal/evidence/e2e_20260818T222436575Z_1209c0a9_0659a967/cleanup.json. Created and removed 6 auth users, 7 games, 3 queue requests, 1 lifecycle queue request, 3 ranked daily requests, 1 private request, 1 rematch request, 25 accent presets, 2 avatar objects, 1 lifecycle result. Every residue counter 0, including player_economy_operations and player_economy_state, and authResidue 0. status zero-residue",
+    "servedBuildVerified": "Verified against the DEPLOYED bundle rather than the build's exit code. The served client chunks contain ZERO occurrences of credit_player_economy_coins and all four new RPC names - claim_game_reward_v1, unlock_daily_entitlement_v1, get_player_notification_feed_v1, list_my_daily_entitlements_v1. /methodology serves the rewritten Server and App sections. The commit prefix 1209c0a appears in the served shell, which is the build stamp: this was a CLI deploy so next.config falls back from the empty VERCEL_GIT_COMMIT_SHA to .git/HEAD",
+    "notProvenByThisRun": "the Daily entitlement BACKFILL. It ran once, against the linked project, on the owner's own account - the harness creates fresh accounts, which have nothing to backfill. Its five rows were verified by query, not by test. A second account with legacy entitlements would be the only way to exercise it again, and there is no longer one"
+  },
+  "v10_6Release": {
+    "date": "2026-08-18",
+    "status": "RELEASED",
+    "promotedFrom": "the accepted Preview amordle-q6w7cvnov (dpl_3n4RfiudzojbvCSHLMYgYuzTjsFh) at commit 1209c0a",
+    "productionWas": "dpl_3LRGfds9XffaEFMi22RTBNVDA8yp (amordle-dsau8tg92, 2026-08-16)",
+    "productionNow": "dpl_k59UA6JL9iTihepf3h7Wk9euizoN (amordle-mhcsw8oqc)",
+    "promoteBehaviour": "vercel promote again CREATED A NEW DEPLOYMENT rather than re-aliasing the accepted Preview, exactly as v10 recorded. Unlike v10 only ONE appeared, and the alias settled on it and stayed there across two checks. The id the promote command printed is the id now serving, which is not something to assume - it was verified",
+    "verifiedOnProduction": "13 routes all 200, including /methodology and /calendar - not the v9 static-copy failure. The served client bundle carries ZERO occurrences of credit_player_economy_coins and all four new RPC names. The 120000 ms notification interval is in the served bundle. /methodology serves its rewritten Server and App sections. The commit stamp 1209c0a is in the served shell",
+    "payoutVerifiedReadOnly": "brrrdle_private.amordle_solo_reward_coins was run against EVERY real game_history row carrying a rewardCoins field: 38 of 38 rows agree with what the row itself recorded, across 13 Solo rows and 25 COMBAT rows. This is a pure read of an immutable function and mutates nothing. It proves the server derives the same numbers on real data. IT DOES NOT PROVE THE ROUND TRIP - client calls the RPC, the RPC awards, the balance moves. That last mile needs an actual signed-in game, which cannot be done from here without creating real player data in Production, and is left to the owner as a 30-second check",
+    "pushed": "branch codex/amordle-terminal-greenfield-implementation-2026-07-27 pushed to github.com/ryanjosephkamp/amordle. The public-repo sequencing concern is now satisfied: the migration comments describe an exposure that is applied, deployed and closed rather than one that is live and unpatched",
+    "buildDetritus": "vercel build sets VERCEL=1, so next.config switches distDir from dist to .next, and Next rewrites next-env.d.ts and tsconfig.json to match. Both were reverted before pushing - they are not part of the change and committing them would break the local dist-based build. Neither is in the frozen manifest, which is why the baseline stayed green while they were dirty. Expect this after every CLI Preview build"
   }
 }
