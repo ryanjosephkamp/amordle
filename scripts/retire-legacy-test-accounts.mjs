@@ -93,7 +93,7 @@ const TABLES_BY_USER = [
  * more. Keying only on profile ids would make the script report "already
  * retired" and quietly skip the half that is left.
  *
- * It is deliberately narrow. `ryanjosephkampsapps0@gmail.com` is a real
+ * It is deliberately narrow. the owner's second app account is a real
  * account of the owner's that also has no public profile, so "an auth user with
  * no profile" would have been the wrong rule and would have deleted it.
  */

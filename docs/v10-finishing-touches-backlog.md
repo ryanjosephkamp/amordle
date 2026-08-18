@@ -128,7 +128,7 @@ Very minor updates may not warrant a post at all. Use judgement.
 
 |                   |                                                                         |
 | ----------------- | ----------------------------------------------------------------------- |
-| Email             | `ryanjosephkampsapps@gmail.com`                                         |
+| Email             | the owner's dedicated app account (held privately)                      |
 | User id           | `2bc33680-d9e5-4dd5-9965-24bc4ea43497`                                  |
 | Public profile id | `f08161d7-6d57-4142-b42d-7bcf86b983fc`                                  |
 | Display name      | `pmak nayr`                                                             |

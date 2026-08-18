@@ -108,7 +108,8 @@ try {
       );
       const provisional = /then\s+(\d+)\s+else\s+(\d+)\s+end/.exec(sql);
       const scale = /\/\s*(\d+)\)\)/.exec(sql.slice(sql.indexOf('v_left_expected')));
-      if (!provisional || !scale) throw new Error('could not read Elo constants from the migration');
+      if (!provisional || !scale)
+        throw new Error('could not read Elo constants from the migration');
       return {
         provisionalK: Number(provisional[1]),
         standardK: Number(provisional[2]),

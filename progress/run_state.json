@@ -825,9 +825,7 @@
       "durableFix": "the sweep now measures ::before and ::after wherever they carry content - previously every pseudo-element in the design was unmeasured because getComputedStyle(element) cannot see one. Single-glyph markers are held to the 3:1 non-text floor, real words to 4.5:1."
     },
     "keyboardDimMeasured": "0.548 on the opponent's turn against 0.740 for an ordinary disabled control, identical in both schemes, still clear of the 3:1 disabled floor across all six accents",
-    "tokensAdded": [
-      "--danger-text"
-    ],
+    "tokensAdded": ["--danger-text"],
     "localAcceptance": {
       "check": "green",
       "domainTests": 157,
@@ -1218,12 +1216,12 @@
     "a_about": "new About page in the menu: changelog link, GitHub issue routes, repository, terse credit with personal site/GitHub/Sponsors/LinkedIn/player-profile buttons, and the English OpenList with its three links",
     "b_methodology": "new Methodology page disclosing Elo (equation, concept, per-time-control pools, provisional K, a figure), XP, and coins including the variable cost of an extra guess. Everything read from code, never recalled. Leaderboards links here",
     "c_changelog": "a separately published changelog, GitHub Pages, one post per significant update, Amordle visual language rather than the reference site. 15-30s Remotion video embedded when a change is visual; light music, no jarring sound",
-    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
+    "d_creator": "Creator flair restricted to the owner's app account, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
     "e_menu": "Methodology between Help and About; About above Sign In/Profile",
     "operatorManual": "a reusable artifact with a single-placeholder prompt template for future sessions: plan mode, paste, attach screenshots, plan, execute, then a changelog post and a video if visual",
     "ownerNote": "the owner walked every page and found almost nothing else worth reporting",
     "creatorAccount": {
-      "email": "ryanjosephkampsapps@gmail.com",
+      "email": "the owner's app account",
       "userId": "2bc33680-d9e5-4dd5-9965-24bc4ea43497",
       "publicProfileId": "f08161d7-6d57-4142-b42d-7bcf86b983fc",
       "displayName": "pmak nayr",
@@ -1319,7 +1317,7 @@
     "changelogPost": "retitled 'What's under the hood' in the post title, h1, breadcrumb and index card; the filename and URL carry the date and topic so no link broke. Callout lead reworded. New section on the directory cleanout. Video and poster re-rendered - the title is a prop on a generic composition, so it was one line plus two commands",
     "legacyTestAccounts": "eight of the eleven accounts in the public directory were E2E testing accounts from pre-greenfield specs deleted at 843da4e, whose cleanup ran only in a finally and threw instead of retrying. They showed the same 'PLAYER' label as a real account. scripts/retire-legacy-test-accounts.mjs retires them, keyed on the eight public profile ids rather than the Ember/Frost name pattern that found them, dry-run by default, deleting in the services.combat.spec.ts dependency order and re-probing for residue. Deleting data is the owner's to run",
     "directoryLabelFinding": "the 'PLAYER' text under each directory row is a flair slot, not a role: player-directory.tsx:157 renders flair_key === 'none' ? 'Player' : flair_key. Labelling bots there would have meant a new marker on every account without a flair; deleting the strays removed the need entirely",
-    "legacyTestAccountsOutcome": "the directory is clean. Three things went wrong on the way and each is recorded in the script: multiplayer_private_match_requests references public_player_profiles with ON DELETE RESTRICT while referencing auth.users with ON DELETE CASCADE, so 4 leftover private challenges blocked every profile delete - and those two are the only restrictive foreign keys in the schema; Supabase errors are unreadable through String() and JSON.stringify(), which cost two round trips reporting [object Object] and then {}, and are now unpacked by own-property name; and keying the script solely on profile ids made it blind to accounts whose profiles it had already deleted, so it also matches the old harness's reserved-domain @example.com addresses. That second rule is deliberately narrow: ryanjosephkampsapps0@gmail.com is a real account with no public profile, so 'auth user without a profile' would have deleted it"
+    "legacyTestAccountsOutcome": "the directory is clean. Three things went wrong on the way and each is recorded in the script: multiplayer_private_match_requests references public_player_profiles with ON DELETE RESTRICT while referencing auth.users with ON DELETE CASCADE, so 4 leftover private challenges blocked every profile delete - and those two are the only restrictive foreign keys in the schema; Supabase errors are unreadable through String() and JSON.stringify(), which cost two round trips reporting [object Object] and then {}, and are now unpacked by own-property name; and keying the script solely on profile ids made it blind to accounts whose profiles it had already deleted, so it also matches the old harness's reserved-domain @example.com addresses. That second rule is deliberately narrow: the owner's second app account is a real account with no public profile, so 'auth user without a profile' would have deleted it"
   },
   "v10_1ProfileDefect": {
     "severity": "real production defect on an ordinary path, found by the owner, unrelated to the v10 release",

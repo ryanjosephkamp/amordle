@@ -54,7 +54,7 @@ const darkTokens = new Map();
 
   const darkRanges = [];
   const darkOpen = /@media[^{]*prefers-color-scheme:\s*dark[^{]*\{/gi;
-  for (let match; (match = darkOpen.exec(source)); ) {
+  for (let match; (match = darkOpen.exec(source));) {
     let depth = 1;
     let index = match.index + match[0].length;
     while (index < source.length && depth > 0) {
@@ -151,7 +151,8 @@ const darkOverrides = new Map(
  * that is true regardless of what the rendering browser happens to prefer.
  */
 const darkOnly = process.argv.includes('--dark');
-const out = process.argv.slice(2).find((a) => !a.startsWith('--')) ?? resolve(root, 'amordle-figures.css');
+const out =
+  process.argv.slice(2).find((a) => !a.startsWith('--')) ?? resolve(root, 'amordle-figures.css');
 
 writeFileSync(
   out,

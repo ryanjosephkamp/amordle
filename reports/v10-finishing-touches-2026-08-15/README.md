@@ -278,7 +278,7 @@ Getting there took three attempts and each failure is worth recording.
    once the profiles were deleted the script reported "already retired" and
    skipped the accounts it had half-removed. It now also matches the old
    harness's reserved-domain `@example.com` addresses — deliberately narrow,
-   because `ryanjosephkampsapps0@gmail.com` is a real account with no public
+   because the owner's second app account is a real account with no public
    profile and "auth user without a profile" would have deleted it.
 
 **Outstanding, and cosmetic.** Eight of the ten legacy auth users deleted. Two
