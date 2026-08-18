@@ -825,7 +825,9 @@
       "durableFix": "the sweep now measures ::before and ::after wherever they carry content - previously every pseudo-element in the design was unmeasured because getComputedStyle(element) cannot see one. Single-glyph markers are held to the 3:1 non-text floor, real words to 4.5:1."
     },
     "keyboardDimMeasured": "0.548 on the opponent's turn against 0.740 for an ordinary disabled control, identical in both schemes, still clear of the 3:1 disabled floor across all six accents",
-    "tokensAdded": ["--danger-text"],
+    "tokensAdded": [
+      "--danger-text"
+    ],
     "localAcceptance": {
       "check": "green",
       "domainTests": 157,
@@ -980,10 +982,10 @@
       "563fc77 A5 lay out the end-of-match actions and make SEARCH AGAIN search",
       "81e96f1 A6 anchor the forfeit answer assertion to the answer row"
     ],
-    "migration": "none — every change is client-side or CSS",
+    "migration": "none \u2014 every change is client-side or CSS",
     "a1": "replaced the one-shot setTimeout that never re-armed on a hidden tab with a ref-driven setInterval keyed on a derived pollableQueue, plus visibilitychange and online re-polls; the regression test overrides document.visibilityState because Playwright keeps background pages visible and the pre-existing scenario therefore passed against the broken code",
     "a2": "removed UPDATE RATING from every terminal branch and added a latched auto-settle on the v7.3 timeout-settlement shape; both players' rating changes are shown on every ranked ending, the opponent's row read through the two-sided RLS on multiplayer_rating_transactions filtered by matchResultId; colours reuse --correct-text/--danger-text/--present-text with no new values; a cancelled ranked match renders an orange plus-or-minus zero rather than inventing a settlement",
-    "a2Limit": "client-side only — a force-quit before the effect runs still escapes settlement. Cycle C moves settlement server-side per the owner's \"both\" decision",
+    "a2Limit": "client-side only \u2014 a force-quit before the effect runs still escapes settlement. Cycle C moves settlement server-side per the owner's \"both\" decision",
     "a3": "explicit grid-template-areas and grid-template-rows with align-items:start so no baseline group spans rows, and the display:grid specificity raised above .menu-popover a; added visual-firefox and visual-webkit projects filtered to @crossbrowser and wired them into pnpm test:visual",
     "a3Honesty": "desktop Firefox does not reproduce the Android rendering, so the cross-engine test asserts the structure that made the divergence possible rather than a pixel outcome; those assertions do fail on the old CSS",
     "a4": "appends one all-red answer row with no evidence glyph when outcome.reason is forfeit, reading revealedAnswers[currentPuzzleIndex] because a GO match returns the whole chain; the prop is optional and off by default so the shared spectator transcript can never leak it",
@@ -1001,9 +1003,9 @@
     "services": "3 passed against real Supabase at 1 worker",
     "visual": "40 passed: 36 Chromium, 2 Firefox, 2 WebKit",
     "parity": "237/237 ordered atomic clauses acceptance-verified",
-    "residue": "none — working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
-    "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06·\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
-    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — no release"
+    "residue": "none \u2014 working tree clean after reverting the tsconfig.json and next-env.d.ts churn vercel build writes",
+    "firstRunFailure": "the forfeit assertion anchored the ANSWER label to .combat-transcript-entry .last(), but the transcript pads to at least six rows so the final entry was empty padding reading \"06\u00b7\"; the feature itself was correct (five .tile.is-answer, zero .tile-evidence, both asserted and both passing). Re-anchored to the entry carrying .board-row.is-answer and added an assertion that it sits directly below the last real guess",
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
   },
   "v8CycleBImplementation": {
     "scope": "background ranked searching that survives navigation, a persistent search affordance, and the notification centre rework",
@@ -1040,7 +1042,7 @@
     "scenarioStrengthened": "the hosted ranked scenario now forces the waiter hidden AND navigates them to Home before the opponent claims, then asserts the search is still visibly running there, the match announces itself, the player is not dragged off the page, and opening it by hand works",
     "firstRunFailure": "real: the provider phase message had precedence over the lobby message, so the lobby stopped saying \"Restored your ranked search\" after a reload. Precedence inverted and a phase change now clears the page message",
     "secondRunFailure": "harness only: the 35-letter ranked winner needs more than five seconds for the command round-trip, terminal transition, automatic settlement and a 35-column re-render before the draft row clears. The failure screenshot showed the win, the points and both ratings applied with no press. Window widened to 15s, assertion unchanged",
-    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — no release"
+    "production": "unchanged, frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 no release"
   },
   "v8CycleCMigration": {
     "file": "20260810020000_amordle_ranked_buckets_v4.sql",
@@ -1102,7 +1104,7 @@
     "m2": "the limit counts playing/holding with move_count > 0, not open lobbies and abandoned shells",
     "m3": "finalize lost its copy of the gate entirely; a second gate there could only restore the ability to strand a pair",
     "m4": "four phantom queue rows expired",
-    "m5": "five abandoned legacy games cancelled, not deleted, as authorised — the transition the state machine defines for a game that ends unplayed, leaving the ledger referring to rows that exist",
+    "m5": "five abandoned legacy games cancelled, not deleted, as authorised \u2014 the transition the state machine defines for a game that ends unplayed, leaving the ledger referring to rows that exist",
     "c1": "pressing a second time control switches rather than stacks",
     "c2": "the portal opens the match it found; auto-navigation was gated on a /combat/practice prefix and the portal is /combat",
     "c3": "COMBAT_LIMIT names which limit and the way past it",
@@ -1153,7 +1155,7 @@
     "scope": "the whole v8 programme through v8.2: Cycles A-D, the matchmaking repair, the public ranked lanes, the portal tile grid, the notification header and the self-reporting error page",
     "ownerWords": "\"this looks basically perfect now ... please lock this in - it is fully approved\"",
     "tag": "amordle-stage2-v8.2-public-lanes-and-portal-accepted-2026-08-14",
-    "production": "still frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG — acceptance of the Preview, not a release"
+    "production": "still frozen at dpl_739mtwiXc9pZPef3pxsKumwC9DfG \u2014 acceptance of the Preview, not a release"
   },
   "openWorkAtV82Acceptance": {
     "1_productionRelease": "Production runs code that predates all four applied migrations. Ranked pool names, settlement and limits have all changed underneath it, so ranked play on Production should be assumed unreliable until the release lands. This is the only item with a live cost",
@@ -1169,9 +1171,9 @@
     "r2": "reaper retires zero-move games idle 14 days, cancelled. Proven both ways: zero-move retired, played game in the same window untouched",
     "r3": "/combat/active copy no longer promises recently completed games",
     "r4": "AppShell no longer calls useSearchParams; the ?focus=1 read moved to a leaf under its own Suspense that reports up. /about went from 19.7kB of skeleton with no nav or heading to 23kB with both; /help is 76kB",
-    "r4Correction": "building the focus hrefs from the pathname alone dropped ?generation=19, which identifies which Solo game you are in — the Solo fixture test caught it and the hrefs now come from the reader",
+    "r4Correction": "building the focus hrefs from the pathname alone dropped ?generation=19, which identifies which Solo game you are in \u2014 the Solo fixture test caught it and the hrefs now come from the reader",
     "r5": "signed-in /calendar pass in the hosted suite (every route walk was signed-out, which is why a data-dependent crash reached the owner); a domain test asserts the prerendered document carries the heading and the navigation",
-    "defectsFoundByTesting": "amordle_timeout_game (Cycle D) wrote requested_command = timeout, which the ledger CHECK rejects — the correspondence timeout had NEVER worked and nothing reported it because no per-move deadline had passed. And my reaper set terminal_reason = abandoned, also rejected, which would have failed silently inside the cron forever",
+    "defectsFoundByTesting": "amordle_timeout_game (Cycle D) wrote requested_command = timeout, which the ledger CHECK rejects \u2014 the correspondence timeout had NEVER worked and nothing reported it because no per-move deadline had passed. And my reaper set terminal_reason = abandoned, also rejected, which would have failed silently inside the cron forever",
     "localGate": "163 domain, 31 browser, 24 fixture, 52 visual",
     "report": "reports/v9-close-out-2026-08-14/README.md"
   },
@@ -1201,22 +1203,22 @@
   },
   "openWorkAfterV9": {
     "none": "all six items the owner listed at v8.2 acceptance are closed",
-    "watch": "the correspondence sweep and reaper have never run against real expired data in production — there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
+    "watch": "the correspondence sweep and reaper have never run against real expired data in production \u2014 there is none yet. The first correspondence game to pass its deadline is the real proof, and the cron reports settled/rated/reaped counts"
   },
   "v9ReleaseIncident": {
     "what": "the first production release shipped a site nobody could sign in to, and the first attempt to fix it took the whole site down for a few minutes",
     "cause1": "vercel build --prod was run without pulling the production environment, so no Supabase config reached the client bundle. next.config.ts already falls back from SUPABASE_URL, but there was nothing on disk to fall back to. Every Preview worked because .vercel/.env.preview.local was already there",
-    "cause2": "vercel pull then overwrote .vercel/project.json with the dashboard settings — framework null, outputDirectory dist. With no framework Vercel skips the Next.js builder and copies a directory as static files: 0 serverless functions, 2 routes, 404 everywhere. It deployed cleanly and reported Ready",
+    "cause2": "vercel pull then overwrote .vercel/project.json with the dashboard settings \u2014 framework null, outputDirectory dist. With no framework Vercel skips the Next.js builder and copies a directory as static files: 0 serverless functions, 2 routes, 404 everywhere. It deployed cleanly and reported Ready",
     "recovery": "vercel rollback to dpl_2yJG restored the site in seconds. Note that a rollback PINS production: the subsequent --prod deploy did not take the alias and vercel promote was required",
     "durableFix": "framework and outputDirectory now live in vercel.json, which is version-controlled and immune to vercel pull. A build guard in next.config.ts refuses to produce a deployment artifact without Supabase browser configuration, naming which value is missing",
     "processFix": "the first release went to production without a preview of that exact artifact. The fix was built, checked for functions and config, deployed to a preview, run through full hosted acceptance, and only then promoted"
   },
   "v10Backlog": {
-    "source": "docs/v10-finishing-touches-backlog.md — captured from the owner 2026-08-15, nothing started",
+    "source": "docs/v10-finishing-touches-backlog.md \u2014 captured from the owner 2026-08-15, nothing started",
     "a_about": "new About page in the menu: changelog link, GitHub issue routes, repository, terse credit with personal site/GitHub/Sponsors/LinkedIn/player-profile buttons, and the English OpenList with its three links",
     "b_methodology": "new Methodology page disclosing Elo (equation, concept, per-time-control pools, provisional K, a figure), XP, and coins including the variable cost of an extra guess. Everything read from code, never recalled. Leaderboards links here",
     "c_changelog": "a separately published changelog, GitHub Pages, one post per significant update, Amordle visual language rather than the reference site. 15-30s Remotion video embedded when a change is visual; light music, no jarring sound",
-    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links — /players/[publicProfileId] already exists, finding your own does not",
+    "d_creator": "Creator flair restricted to ryanjosephkampsapps@gmail.com, an animated accent selectable only by that account, and a copy/share affordance for profile links \u2014 /players/[publicProfileId] already exists, finding your own does not",
     "e_menu": "Methodology between Help and About; About above Sign In/Profile",
     "operatorManual": "a reusable artifact with a single-placeholder prompt template for future sessions: plan mode, paste, attach screenshots, plan, execute, then a changelog post and a video if visual",
     "ownerNote": "the owner walked every page and found almost nothing else worth reporting",
@@ -1227,10 +1229,10 @@
       "displayName": "pmak nayr",
       "profileUrl": "https://amordle.vercel.app/players/f08161d7-6d57-4142-b42d-7bcf86b983fc",
       "verified": "URL returns 200 on production",
-      "note": "not a new user id — it appeared earlier as the player \"apples\" and owned three of the abandoned zero-move games the reaper retired, so the account carries history",
+      "note": "not a new user id \u2014 it appeared earlier as the player \"apples\" and owned three of the abandoned zero-move games the reaper retired, so the account carries history",
       "today": "accent cyan, flair none"
     },
-    "blockers": "none — the account existed and was confirmed by the owner, so every workstream can be planned and built"
+    "blockers": "none \u2014 the account existed and was confirmed by the owner, so every workstream can be planned and built"
   },
   "v10Implementation": {
     "report": "reports/v10-finishing-touches-2026-08-15/README.md",
@@ -1276,7 +1278,7 @@
   "openWorkAfterV10": {
     "0_note": "Production is RELEASED and current at dpl_3LRGfds9XffaEFMi22RTBNVDA8yp (2026-08-16), carrying the daily streak, the v10.4 sweep and the share-button placement. Every item in this list is closed except 3_clientSidePricing, which the owner deferred to its own session, and 6_servicesDraftFlake, which cannot be closed without a recurrence and now self-diagnoses when one happens.",
     "2_dailyStreak": "CLOSED at v10.3. It advances, it lapses, it is documented on the Methodology page, and it is proven end to end on a deployed build. See v10_3DailyStreak",
-    "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. Moving them server-side is a migration and its own change",
+    "3_clientSidePricing": "continuation cost and the 60-coin Daily unlock are computed client-side and not re-derived by the server. The Methodology page states this plainly. NEXT SESSION: assessment and plan only - what moving them server-side would take (a migration), and separately what it costs to run and scale the hosting. Nothing to be migrated, deployed or purchased without the owner's say-so",
     "4_deadRatingModule": "CLOSED at v10.4. Deleted, and replaced by tests/domain/rating-contract.test.ts which reads the settlement migration instead of a TypeScript copy. The MP v6 audit caught four MP-09 clauses citing the deleted test by name and they now cite the new ones",
     "5_helpStreamingDuplicate": "not a defect, but now measured and documented: /help transiently carries a second copy of its content inside React's hidden streaming container, 6 loads in 15 on Production. Invisible to readers. Any future selector on that page should be scoped to #main-content",
     "6_servicesDraftFlake": "still unexplained, but the next occurrence will explain itself: the poll now carries the board state into its failure value, so a future failure says whether the guess was accepted and the draft lingered or the round trip never landed. Deliberately NOT made deterministic by waiting on the accepted row - submitOnScreenGuess serves Solo and COMBAT, whose accepted rows carry different markup, and one locator for both is the filter-trap mistake again",
@@ -1496,5 +1498,16 @@
       "placement": "the served chunk carries VIEW PUBLIC PROFILE inside a section-heading row; the old build's help sentence 'Your public profile address' and the .profile-share class are both absent, which is what distinguishes the new placement from the old one"
     },
     "note": "promote again reported that a Preview cannot be promoted directly and built a new production deployment. Expected - it is the same behaviour recorded at v10.3 - and the third id is the correct outcome rather than a failure"
+  },
+  "v10_5BlogPost": {
+    "published": "https://ryanjosephkamp.github.io/blog/articles/amordle/",
+    "date": "2026-08-17",
+    "repo": "github.com/ryanjosephkamp/blog, commits 35c1878 and eff0741",
+    "approach": "the article embeds the game's OWN Help figures and drives a 62s explainer video from the same data. scripts/export-help-figures.mjs and scripts/export-help-figure-css.mjs export the frames and the token-resolved stylesheet from the game repo, so every tile colour, keyboard state and price on the page and in the video is computed by scoreGuess, deriveKeyboardEvidence and continuationCost. Re-run either exporter and both follow",
+    "video": "amordle-updates remotion `explainer` composition, 62.5s. Scene lengths derived from the figure data's own hold values so a scene cannot cut a solve mid-word. Music synthesised by scripts/make-music.mjs (siege-dark -> siege-drums, bar-aligned crossfade, --keys=none), no samples and no licence",
+    "publishBug": "every figure rendered its could-not-load fallback on the FIRST published version while working locally. Kramdown only passes through block-level HTML; the data URL sat on a multi-line <span>, which is inline, so kramdown escaped the tag, smart-quoted the attribute into curly quotes and read `></span>` as a blockquote. Moved onto the film-review div. Fixed in eff0741",
+    "privateRepoLinks": "the two links to github.com/ryanjosephkamp/amordle were REMOVED before publishing - the repo is private, so both returned 404 to a reader. They go back unchanged if it is ever made public. NOTE: the live game's own /about page still carries the same dead link",
+    "youtubePlaceholder": "deliberately left in place; the owner has not recorded that video yet",
+    "videoOnlyPressedKey": "the video amplifies the pressed-key treatment because the game's 2px inset ring is invisible at 1280x720. Scoped to the composition, NOT to figures.css, so the Help page and the blog's embedded copy keep the game's own restrained version"
   }
 }
