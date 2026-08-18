@@ -250,12 +250,29 @@ describe('MP-01 through MP-21 acceptance authority', () => {
 
   it('proves MP-16 durable exactly-once alerts', () => {
     includesAll(notifications, ['durableRevision', 'accountNamespace', 'currentByTransition']);
+    /*
+     * v10.6. This clause used to pin `refetchInterval: 30_000` and the
+     * `notification-projection` realtime channel. Both are gone, and the clause
+     * follows the code rather than the code being held to a stale clause:
+     *
+     *   - the poll is 120 s, because the component is mounted on every page and
+     *     the interval was the largest single driver of Supabase egress
+     *   - the channel is removed, because none of its three subscriptions could
+     *     deliver a change for a game played today — two tables are not in the
+     *     `supabase_realtime` publication and the third admits only
+     *     `authority_version = 0` rows to a reader
+     *   - the whole feed is one RPC rather than four to twenty-four requests
+     *
+     * What MP-16 is actually about — exactly-once, durable alerts that survive a
+     * reload — is unchanged and is what the first assertion still pins.
+     */
     includesAll(notificationCenter, [
-      'refetchInterval: 30_000',
-      '.channel(`notification-projection:${userId}`)',
+      'refetchInterval: 120_000',
+      'loadCombatNotificationFeed',
       "window.addEventListener('online', onOnline)",
       "document.addEventListener('visibilitychange', onVisibility)",
     ]);
+    expect(notificationCenter).not.toContain('.channel(`notification-projection:${userId}`)');
   });
 
   it('proves MP-17 results, rematches and contextual next actions', () => {

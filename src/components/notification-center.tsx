@@ -7,14 +7,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { CSSProperties } from 'react';
 import { z } from 'zod';
 import { readEnvelope, writeEnvelope } from '@/adapters/indexeddb';
-import { loadSettings } from '@/adapters/supabase/account';
-import {
-  listLegacyRecent,
-  listPracticeRematches,
-  listPrivateRequests,
-  listRecentCombat,
-} from '@/adapters/supabase/combat';
-import { getBrowserSupabase } from '@/adapters/supabase/browser';
+import { loadCombatNotificationFeed } from '@/adapters/supabase/combat';
 import {
   countByCategory,
   matchesCategory,
@@ -69,7 +62,15 @@ export function NotificationCenter() {
     queryKey: ['notifications', userId],
     queryFn: () => loadNotificationFeed(userId, namespace),
     enabled: Boolean(userId),
-    refetchInterval: 30_000,
+    /*
+     * v10.6. Was 30 seconds. This component is mounted on every page for every
+     * signed-in player, so the interval is the single largest driver of the
+     * project's Supabase egress — and nothing here is time-critical: a match
+     * invitation that arrives two minutes later is still an invitation. The
+     * realtime subscription below covers the cases where latency matters, and
+     * a refetch fires on focus and on reconnect regardless.
+     */
+    refetchInterval: 120_000,
   });
 
   useEffect(() => {
@@ -137,28 +138,36 @@ export function NotificationCenter() {
 
   useEffect(() => {
     if (!userId) return;
-    const supabase = getBrowserSupabase();
-    if (!supabase) return;
     const refresh = () =>
       void queryClient.invalidateQueries({ queryKey: ['notifications', userId] });
-    const channel = supabase
-      .channel(`notification-projection:${userId}`)
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'async_multiplayer_games' },
-        refresh,
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'multiplayer_private_match_requests' },
-        refresh,
-      )
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'multiplayer_practice_rematch_requests' },
-        refresh,
-      )
-      .subscribe();
+    /*
+     * v10.6. The three postgres_changes subscriptions that used to sit here are
+     * gone, because none of them could deliver a change for a game played
+     * today. This was checked rather than assumed:
+     *
+     *   - `multiplayer_private_match_requests` and
+     *     `multiplayer_practice_rematch_requests` are not members of the
+     *     `supabase_realtime` publication. Only six tables were ever added to
+     *     it, in the Phase 23 migrations, and neither of these is one of them.
+     *     A subscription to an unpublished table connects, reports SUBSCRIBED,
+     *     and then never fires.
+     *   - `async_multiplayer_games` IS published, but its select policy admits
+     *     only `authority_version = 0` rows
+     *     (20260724222000_amordle_authoritative_combat_v2.sql:2858-2871), and
+     *     Realtime authorizes each change against that policy per subscriber.
+     *     Every game created since the v2 authority is invisible to it. It
+     *     could still fire for a surviving legacy row, which is the one case
+     *     this removal gives up.
+     *
+     * So the app was holding a websocket and paying for a subscription that
+     * did the work of a no-op, next to a poll that did the work. The poll now
+     * runs at 120 s and still refreshes immediately on focus and on reconnect,
+     * which is what the two listeners below are for.
+     *
+     * Restoring realtime here means publishing the request tables and giving
+     * the v2 authority a readable projection — a schema change, and its own
+     * piece of work rather than a side effect of this one.
+     */
     const onOnline = () => refresh();
     const onVisibility = () => {
       if (document.visibilityState === 'visible') refresh();
@@ -168,7 +177,6 @@ export function NotificationCenter() {
     return () => {
       window.removeEventListener('online', onOnline);
       document.removeEventListener('visibilitychange', onVisibility);
-      void supabase.removeChannel(channel);
     };
   }, [queryClient, userId]);
 
@@ -411,27 +419,35 @@ function NotificationRefreshNotice({
   );
 }
 
+/*
+ * v10.6. One request, where there were four to twenty-four.
+ *
+ * The settings read, the two game lists, the private requests and the
+ * per-game rematch lookups are now a single RPC. The shapes are unchanged, so
+ * everything below this line reads exactly as it did — what changed is that
+ * the joins happen in the database instead of over the network, and that a
+ * player with notifications switched off costs one empty response instead of a
+ * full feed that was fetched and then discarded.
+ *
+ * `failedSources` is now zero or one rather than zero to four. It feeds a
+ * "some notifications may be missing" line, and one failed source is still
+ * exactly that.
+ */
 async function loadNotificationFeed(userId: string, namespace: string): Promise<NotificationFeed> {
-  const [settingsResult, gamesResult, legacyResult, requestsResult] = await Promise.allSettled([
-    loadSettings(userId),
-    listRecentCombat(),
-    listLegacyRecent(userId),
-    listPrivateRequests(),
-  ]);
-  let failedSources = 0;
-  const enabled = settingsResult.status === 'fulfilled' ? settingsResult.value.notifications : true;
-  if (settingsResult.status === 'rejected') failedSources += 1;
-  if (!enabled) return { items: [], failedSources };
+  let feed;
+  try {
+    feed = await loadCombatNotificationFeed();
+  } catch {
+    return { items: [], failedSources: 1 };
+  }
+  const failedSources = 0;
+  if (!feed.notificationsEnabled) return { items: [], failedSources };
 
-  const games = gamesResult.status === 'fulfilled' ? gamesResult.value : [];
-  const legacy = legacyResult.status === 'fulfilled' ? legacyResult.value : [];
-  const requests = requestsResult.status === 'fulfilled' ? requestsResult.value : [];
-  if (gamesResult.status === 'rejected') failedSources += 1;
-  if (legacyResult.status === 'rejected') failedSources += 1;
-  if (requestsResult.status === 'rejected') failedSources += 1;
+  const games = feed.combat;
+  const legacy = feed.legacy;
+  const requests = feed.requests;
 
   const items: PlayerNotification[] = [];
-  const terminalPracticeIds = new Set<string>();
   for (const request of requests) {
     const status = request.request_status.toLowerCase();
     /*
@@ -481,7 +497,6 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
 
   for (const game of games) {
     const terminal = game.outcome.terminal;
-    if (terminal && game.scope === 'practice') terminalPracticeIds.add(game.id);
     const isTurn = !terminal && game.status === 'playing' && game.currentTurn === game.viewerSeat;
     const isMatch =
       !terminal && !isTurn && (game.status === 'waiting' || game.status === 'playing');
@@ -523,7 +538,6 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
     const hasPlay = row.projection.moves.length > 0;
     const isTurn = !terminal && row.status === 'playing' && row.current_turn === seat;
     const isMatch = !terminal && !isTurn && (row.status === 'waiting' || row.status === 'playing');
-    if (terminal && hasPlay) terminalPracticeIds.add(row.id);
     if ((!terminal && !isTurn && !isMatch) || (terminal && !hasPlay)) continue;
     const kind = terminal ? 'result' : isTurn ? 'turn' : 'match';
     const puzzleIndex = row.projection.currentPuzzleIndex ?? 0;
@@ -553,15 +567,8 @@ async function loadNotificationFeed(userId: string, namespace: string): Promise<
     );
   }
 
-  const rematchResults = await Promise.allSettled(
-    [...terminalPracticeIds].slice(0, 20).map((gameId) => listPracticeRematches(gameId)),
-  );
-  for (const result of rematchResults) {
-    if (result.status === 'rejected') {
-      failedSources += 1;
-      continue;
-    }
-    for (const request of result.value) {
+  for (const request of feed.rematches) {
+    {
       if (
         request.request_status === 'pending' ||
         request.request_status === 'accepted' ||

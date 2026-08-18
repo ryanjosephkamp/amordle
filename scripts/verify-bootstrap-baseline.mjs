@@ -77,6 +77,22 @@ const authorizedAdditiveMigrations = new Map([
     '20260816013000_amordle_accent_preset_is_active_coalesce_v1.sql',
     '6e7aa2ba3a8450359d7bb7009d176b1fa708b26d40a28227a4c3ab375409dbf5',
   ],
+  // v10.6. Economy authority and polling cost. Authorized by the owner and
+  // applied to the linked project on 2026-08-18, verified in pg_proc and in
+  // has_function_privilege rather than trusted from the CLI's output. See
+  // reports/v10-6-economy-and-polling-migration-decision-2026-08-18.md.
+  [
+    '20260818120000_amordle_solo_reward_authority_v1.sql',
+    '16a39fbc8c39c86f1e436aa3f2ac6082f50c5cdcc7b65bc56c3f7db3640d07ac',
+  ],
+  [
+    '20260818121000_amordle_daily_entitlement_authority_v1.sql',
+    'a272ff4a19281fb284714b288068de0bea181bcebd42aedb730a8f0607e5365f',
+  ],
+  [
+    '20260818122000_amordle_notification_feed_v1.sql',
+    'a539ff731513fef3e7a992e5a66f6d76dfc77ccf8a74b02259f58771363aa502',
+  ],
 ]);
 // Reviewed and written but NOT yet applied to the linked project. Empty is the
 // normal state; an entry here means the repository is ahead of the database.

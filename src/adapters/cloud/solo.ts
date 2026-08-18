@@ -73,21 +73,16 @@ async function writeSnapshotCas(
   return writeAccountProgressCas(userId, transform);
 }
 
-export async function setDailyEntitlement(
-  userId: string,
-  key: string,
-  state: 'pending' | 'unlocked',
-) {
-  return writeSnapshotCas(userId, (snapshot) => {
-    const current = snapshot.dailyEntitlements?.[key];
-    if (current === 'unlocked' || current === state) return snapshot;
-    return {
-      ...snapshot,
-      revision: snapshot.revision + 1,
-      dailyEntitlements: { ...snapshot.dailyEntitlements, [key]: state },
-    };
-  });
-}
+/*
+ * `setDailyEntitlement` is gone rather than deprecated.
+ *
+ * It wrote the entitlement into the owner-writable progress snapshot, which is
+ * the thing the 2026-08-18 migration moved out. Leaving a working writer next
+ * to the new authority would have kept the old grant path open, and a caller
+ * that still compiled would have kept using it. The replacements live in
+ * ./account: unlockDailyEntitlement charges and grants together, and
+ * markDailyEntitlementUnlocked advances a grant that already exists.
+ */
 
 export async function saveCloudSolo(userId: string, envelope: VersionedEnvelope<GameSession>) {
   const parsed = envelopeSchema.parse(envelope);

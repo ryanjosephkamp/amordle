@@ -1155,6 +1155,37 @@ export const privateRequestSchema = z
 
 export type PrivateRequest = z.infer<typeof privateRequestSchema>;
 
+/*
+ * v10.6. The whole notification feed in one round trip.
+ *
+ * This replaces four parallel requests plus one per terminal Practice game — up
+ * to twenty-four per poll cycle, on every page, for every signed-in player. The
+ * server does the same joins and returns the same shapes, so the schemas below
+ * are the ones already in use rather than new ones: if the RPC and the client
+ * ever disagree about a field, this parse fails loudly instead of quietly
+ * dropping notifications.
+ *
+ * See supabase/migrations/20260818122000_amordle_notification_feed_v1.sql.
+ */
+export const notificationFeedSchema = z
+  .object({
+    notificationsEnabled: z.boolean(),
+    combat: z.array(combatProjectionSchema),
+    legacy: z.array(legacyRowSchema),
+    requests: z.array(privateRequestSchema),
+    rematches: z.array(rematchRequestSchema),
+  })
+  .strict();
+
+export type CombatNotificationFeed = z.infer<typeof notificationFeedSchema>;
+
+export async function loadCombatNotificationFeed(): Promise<CombatNotificationFeed> {
+  return parseServiceResult(
+    notificationFeedSchema,
+    await jsonRpc('get_player_notification_feed_v1', { p_limit: 100 }),
+  );
+}
+
 export async function listPrivateRequests() {
   const { data, error } = await client().rpc('get_private_multiplayer_match_requests', {
     p_limit: 100,

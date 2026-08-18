@@ -628,6 +628,7 @@ export type Database = {
         };
         Returns: string;
       };
+      amordle_daily_unlock_price: { Args: never; Returns: number };
       amordle_difficulty_answers: {
         Args: {
           p_difficulty: string;
@@ -662,6 +663,10 @@ export type Database = {
         Returns: boolean;
       };
       amordle_public_lane_storage: { Args: { p_lane: string }; Returns: string };
+      amordle_reward_operation_id: {
+        Args: { p_history_row_id: string };
+        Returns: string;
+      };
       amordle_seeded_rows: {
         Args: { p_game_id: string; p_puzzle_index: number };
         Returns: Json;
@@ -679,6 +684,7 @@ export type Database = {
         Args: { p_action_id: string; p_actor: string; p_game_id: string };
         Returns: Json;
       };
+      amordle_solo_reward_coins: { Args: { p_entry: Json }; Returns: number };
       amordle_storage_bucket:
         | { Args: { p_mode: string; p_time_limit_ms: number }; Returns: string }
         | {
@@ -1730,6 +1736,33 @@ export type Database = {
           },
         ];
       };
+      player_daily_entitlements: {
+        Row: {
+          created_at: string;
+          local_date: string;
+          mode: string;
+          state: string;
+          updated_at: string;
+          user_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          local_date: string;
+          mode: string;
+          state?: string;
+          updated_at?: string;
+          user_id: string;
+        };
+        Update: {
+          created_at?: string;
+          local_date?: string;
+          mode?: string;
+          state?: string;
+          updated_at?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       player_economy_operations: {
         Row: {
           amount: number;
@@ -2318,6 +2351,17 @@ export type Database = {
             };
             Returns: undefined;
           };
+      claim_game_reward_v1: {
+        Args: { p_history_row_id: string };
+        Returns: {
+          applied: boolean;
+          coins: number;
+          operation_id: string;
+          remove_incorrect_letters: number;
+          reveal_one_letter: number;
+          revision: number;
+        }[];
+      };
       claim_ranked_async_matchmaking_pair: {
         Args: { p_matched_game_id?: string; p_request_id: string };
         Returns: {
@@ -2887,6 +2931,10 @@ export type Database = {
           revision: number;
         }[];
       };
+      get_player_notification_feed_v1: {
+        Args: { p_limit?: number };
+        Returns: Json;
+      };
       get_practice_multiplayer_rematch_requests: {
         Args: { p_limit?: number; p_source_game_id?: string };
         Returns: {
@@ -3224,6 +3272,14 @@ export type Database = {
           updated_at: string;
         }[];
       };
+      list_my_daily_entitlements_v1: {
+        Args: never;
+        Returns: {
+          local_date: string;
+          mode: string;
+          state: string;
+        }[];
+      };
       list_public_player_directory_v1: {
         Args: {
           p_bucket?: string;
@@ -3277,6 +3333,14 @@ export type Database = {
           rating_updated_at: string;
           total_count: number;
           wins: number;
+        }[];
+      };
+      mark_daily_entitlement_unlocked_v1: {
+        Args: { p_local_date: string; p_mode: string };
+        Returns: {
+          local_date: string;
+          mode: string;
+          state: string;
         }[];
       };
       phase27_expected_score: {
@@ -3707,6 +3771,18 @@ export type Database = {
           remove_incorrect_letters: number;
           reveal_one_letter: number;
           revision: number;
+        }[];
+      };
+      unlock_daily_entitlement_v1: {
+        Args: { p_local_date: string; p_mode: string };
+        Returns: {
+          applied: boolean;
+          coins: number;
+          operation_id: string;
+          remove_incorrect_letters: number;
+          reveal_one_letter: number;
+          revision: number;
+          state: string;
         }[];
       };
       update_private_multiplayer_request_preference: {

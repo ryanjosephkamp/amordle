@@ -26,10 +26,15 @@ import { RatingSpreadFigure } from './rating-spread-figure';
  *                  supabase/migrations/20260724222000_amordle_authoritative_combat_v2.sql:399
  *   Leaderboard    public.get_public_ranked_leaderboard
  *                  supabase/migrations/20260814010000_amordle_public_ranked_lanes_v4.sql:203-224
- *   XP and coins   soloReward, src/adapters/cloud/solo.ts:157-172
+ *   XP and coins   soloReward, src/adapters/cloud/solo.ts:157-172, and the server copy
+ *                  that decides what is actually paid,
+ *                  brrrdle_private.amordle_solo_reward_coins in
+ *                  supabase/migrations/20260818120000_amordle_solo_reward_authority_v1.sql
  *   Levels         levelForXp, src/domain/economy.ts:10-13
  *   Daily streak   advanceDailyStreak / currentDailyStreak, src/domain/daily-streak.ts
  *   Prices         supabase/migrations/20260711051818_phase57_solo_practice_marketplace_and_consumables.sql:101-103
+ *   Daily unlock   brrrdle_private.amordle_daily_unlock_price in
+ *                  supabase/migrations/20260818121000_amordle_daily_entitlement_authority_v1.sql
  *   Continuation   continuationCost, src/domain/economy.ts:20-42 (see also
  *                  completionPercentage, src/domain/game.ts:485)
  */
@@ -506,12 +511,21 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
               <b>The price of a reveal, a removal, and your balance:</b> The server knows the two
               prices and refuses a purchase you cannot afford.
             </li>
+            <li>
+              <b>Unlocking a past Daily:</b> The server holds the price, takes the coins, and
+              records the unlock in a single step. Neither half can happen without the other, and
+              the record of what you have unlocked is kept where the app cannot write it.
+            </li>
+            <li>
+              <b>The coins a finished game pays:</b> The server reads the game you just recorded and
+              works out what it is worth, rather than being told an amount. Each game pays once.
+            </li>
           </ul>
           <h3>App</h3>
           <ul>
             <li>
-              <b>Experience and coins earned:</b> Applied through an operation that is keyed so it
-              cannot be applied twice.
+              <b>Experience earned:</b> Applied through an operation that is keyed so it cannot be
+              applied twice.
             </li>
             <li>
               <b>The daily streak:</b> Computed on your device from the date of the Daily you
@@ -519,9 +533,15 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
               day, which is what makes finishing both Dailies count once.
             </li>
             <li>
-              <b>The price of another guess, and of unlocking a past Daily:</b> The server checks
-              only that you have the coins. The formula above is what the game charges, but it is
-              the app that applies it.
+              <b>The price of another guess:</b> The server checks only that you have the coins. The
+              formula above is what the game charges, but it is the app that applies it. This one
+              stays here on purpose: the price depends on the state of a Solo game, and Solo games
+              are played on your device rather than on the server.
+            </li>
+            <li>
+              <b>What a game records about itself:</b> Your history is written by the app, so the
+              coins a game pays are bounded by what that record says. A game cannot pay more than
+              the most generous real game would.
             </li>
           </ul>
         </section>

@@ -4,7 +4,6 @@ import { createHash } from 'node:crypto';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import type { Database } from '@/types/database';
-import { accountStateEntrySchema, normalizeAccountProgress } from '@/domain/account-continuity';
 import { getPublicSupabaseConfig } from './config';
 
 export async function getOwnerNamespace(): Promise<string> {
@@ -45,21 +44,25 @@ export async function canLoadDailyAnswers(localDate: string, mode: 'og' | 'go'):
   });
   const { data } = await client.auth.getUser();
   if (!data.user) return false;
-  const [state, snapshot] = await Promise.all([
-    client
-      .from('game_history')
-      .select('entry')
-      .eq('id', `amordle-account-state-v1:${data.user.id}`)
-      .eq('user_id', data.user.id)
-      .maybeSingle(),
-    client.from('progress_snapshots').select('progress').eq('user_id', data.user.id).maybeSingle(),
-  ]);
-  const current = accountStateEntrySchema.safeParse(state.data?.entry);
-  const normalized = normalizeAccountProgress(snapshot.data?.progress);
-  const entitlements = current.success
-    ? current.data.progress.dailyEntitlements
-    : normalized.kind === 'unknown'
-      ? undefined
-      : normalized.progress.dailyEntitlements;
-  return Boolean(entitlements?.[`${localDate}:${mode}`]);
+  /*
+   * This is the gate that decides whether the server ships a past Daily's
+   * answers to the browser, so it is the one place where the entitlement is
+   * load-bearing rather than cosmetic. It used to read the account-state row
+   * and the progress snapshot — both owner-writable — which meant a player
+   * could grant themselves the answers by writing a key into their own
+   * progress. It now asks the table only the server can write. See
+   * supabase/migrations/20260818121000_amordle_daily_entitlement_authority_v1.sql.
+   *
+   * A failed read denies rather than allows. The answers are the thing being
+   * protected, and the cost of a false denial is that a player who paid has to
+   * reload; the cost of a false grant is the puzzle.
+   */
+  const { data: entitlements, error } = await client.rpc('list_my_daily_entitlements_v1');
+  if (error || !Array.isArray(entitlements)) return false;
+  return entitlements.some(
+    (row) =>
+      row.local_date === localDate &&
+      row.mode === mode &&
+      (row.state === 'pending' || row.state === 'unlocked'),
+  );
 }

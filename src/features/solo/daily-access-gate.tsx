@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useQuery } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
-import { loadProgress } from '@/adapters/supabase/account';
+import { listDailyEntitlements } from '@/adapters/supabase/account';
 import { useAuth } from '@/components/providers';
 import { StatusPanel } from '@/components/route-states';
 import { localDayKey } from '@/domain/daily-streak';
@@ -17,9 +17,9 @@ export function DailyAccessGate({
   const auth = useAuth();
   const [today, setToday] = useState('');
   const userId = auth.user?.id ?? '';
-  const progress = useQuery({
-    queryKey: ['progress', userId],
-    queryFn: () => loadProgress(userId),
+  const entitlements = useQuery({
+    queryKey: ['daily-entitlements', userId],
+    queryFn: listDailyEntitlements,
     enabled: Boolean(userId),
   });
 
@@ -45,7 +45,7 @@ export function DailyAccessGate({
     );
   }
   if (localDate === today) return children;
-  const entitlement = progress.data?.dailyEntitlements?.[`${localDate}:${mode}`];
+  const entitlement = entitlements.data?.[`${localDate}:${mode}`];
   if (entitlement === 'pending' || entitlement === 'unlocked') return children;
   return (
     <StatusPanel

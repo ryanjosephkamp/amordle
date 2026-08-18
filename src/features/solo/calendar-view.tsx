@@ -4,8 +4,12 @@ import Link from 'next/link';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useSearchParams } from 'next/navigation';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { getEconomy, loadHistory, loadProgress, spendCoins } from '@/adapters/supabase/account';
-import { setDailyEntitlement } from '@/adapters/supabase/solo';
+import {
+  getEconomy,
+  listDailyEntitlements,
+  loadHistory,
+  unlockDailyEntitlement,
+} from '@/adapters/supabase/account';
 import { accountEconomyNamespace, economyQueryKey } from '@/application/query-keys';
 import { useAuth } from '@/components/providers';
 import { localDayKey } from '@/domain/daily-streak';
@@ -39,14 +43,20 @@ export function CalendarView() {
   const [visibleMonth, setVisibleMonth] = useState('');
   const touchStartX = useRef<number | null>(null);
   const userId = auth.user?.id ?? '';
-  const progress = useQuery({
-    queryKey: ['progress', userId],
-    queryFn: () => loadProgress(userId),
-    enabled: Boolean(userId),
-  });
   const economy = useQuery({
     queryKey: economyQueryKey(accountEconomyNamespace(userId)),
     queryFn: getEconomy,
+    enabled: Boolean(userId),
+  });
+  /*
+   * Daily entitlements are their own read now. They used to be a field inside
+   * the progress snapshot, which the account owner may write directly — so the
+   * record of having paid was kept by the party who was supposed to pay. They
+   * now come from a table only the server writes.
+   */
+  const entitlements = useQuery({
+    queryKey: ['daily-entitlements', userId],
+    queryFn: listDailyEntitlements,
     enabled: Boolean(userId),
   });
   const history = useQuery({
@@ -116,15 +126,7 @@ export function CalendarView() {
     return keys;
   }, [history.data]);
   const entitlementKey = `${selectedDate}:${mode}`;
-  /*
-   * `dailyEntitlements` is optional in the stored progress shape and absent entirely on
-   * accounts that predate it, so it is read through a guard rather than an index.
-   */
-  const entitlements = progress.data?.dailyEntitlements;
-  const entitlement =
-    entitlements && typeof entitlements === 'object'
-      ? (entitlements as Record<string, string | undefined>)[entitlementKey]
-      : undefined;
+  const entitlement = entitlements.data?.[entitlementKey];
   const isCurrent = selectedDate === today;
   const isFuture = Boolean(today && selectedDate > today);
   const playable =
@@ -143,18 +145,23 @@ export function CalendarView() {
   };
 
   const unlock = useMutation({
+    /*
+     * One call. The charge and the grant are a single transaction on the
+     * server, and the price is the server's — the 60 in ECONOMY_PRICES is what
+     * the confirmation dialog says, not what is billed. Previously this spent
+     * the coins and then wrote the entitlement as a second, unrelated
+     * operation, so a failure between them left a player charged with nothing
+     * to show for it.
+     */
     mutationFn: async () => {
       if (!userId || !selectedDate || selectedDate >= today) {
         throw new Error('Choose a past Daily and sign in first.');
       }
-      const operation = `daily-unlock:${selectedDate}:${mode}`;
-      const nextEconomy = await spendCoins(60, operation);
-      const nextProgress = await setDailyEntitlement(userId, entitlementKey, 'pending');
-      return { nextEconomy, nextProgress };
+      return unlockDailyEntitlement(selectedDate, mode);
     },
-    onSuccess: ({ nextEconomy, nextProgress }) => {
-      queryClient.setQueryData(economyQueryKey(accountEconomyNamespace(userId)), nextEconomy);
-      queryClient.setQueryData(['progress', userId], nextProgress);
+    onSuccess: ({ economy }) => {
+      queryClient.setQueryData(economyQueryKey(accountEconomyNamespace(userId)), economy);
+      void queryClient.invalidateQueries({ queryKey: ['daily-entitlements', userId] });
       setConfirmingUnlock(false);
       setMessage('Unlocked. It becomes permanent after your first accepted saved guess.');
     },
@@ -244,7 +251,7 @@ export function CalendarView() {
               ? 'Complete'
               : key === today
                 ? 'Today'
-                : progress.data?.dailyEntitlements?.[`${key}:${mode}`]
+                : entitlements.data?.[`${key}:${mode}`]
                   ? 'Unlocked'
                   : future
                     ? 'Future'

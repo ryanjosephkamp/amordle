@@ -15,13 +15,13 @@ import {
   getLocalEconomy,
   spendLocalCoins,
 } from '@/adapters/local-account';
-import { consumeConsumable, getEconomy, spendCoins } from '@/adapters/supabase/account';
 import {
-  buildSoloHistoryRow,
-  loadCloudSolo,
-  saveCloudSolo,
-  setDailyEntitlement,
-} from '@/adapters/supabase/solo';
+  consumeConsumable,
+  getEconomy,
+  markDailyEntitlementUnlocked,
+  spendCoins,
+} from '@/adapters/supabase/account';
+import { buildSoloHistoryRow, loadCloudSolo, saveCloudSolo } from '@/adapters/supabase/solo';
 import { operationId } from '@/adapters/supabase/shared';
 import { GameHistoryViewport } from '@/components/game-history-viewport';
 import { GameKeyboard } from '@/components/game-keyboard';
@@ -407,10 +407,10 @@ export function SoloGame({
           setSession(next);
           void syncRegistry(next).catch(() => undefined);
           if (dailyDate && signedInUserId) {
-            void setDailyEntitlement(signedInUserId, `${dailyDate}:${settings.mode}`, 'unlocked')
+            void markDailyEntitlementUnlocked(dailyDate, settings.mode)
               .then(() =>
                 queryClient.invalidateQueries({
-                  queryKey: ['progress', signedInUserId],
+                  queryKey: ['daily-entitlements', signedInUserId],
                 }),
               )
               .catch(() =>

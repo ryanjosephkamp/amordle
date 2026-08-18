@@ -17,7 +17,7 @@ import {
   normalizeLegacyHistory,
   progressSchema,
 } from '@/domain/account-continuity';
-import type { AccountHistoryRow } from '@/domain/account-continuity';
+import type { AccountHistoryRow, AccountProgress } from '@/domain/account-continuity';
 import { advanceDailyStreak, streakDateForEntry } from '@/domain/daily-streak';
 import {
   defaultPlayerSettings,
@@ -133,6 +133,70 @@ export async function saveSettings(userId: string, settings: PlayerSettings) {
   return parsed;
 }
 
+const dailyEntitlementRowSchema = z
+  .object({
+    local_date: z.string(),
+    mode: z.enum(['og', 'go']),
+    state: z.enum(['pending', 'unlocked']),
+  })
+  .strict();
+
+/*
+ * Daily entitlements no longer live in the progress snapshot.
+ *
+ * They used to be a field inside `progress_snapshots.progress`, which the owner
+ * may update directly — so the record of having paid was written by the same
+ * party that was supposed to pay. They now live in `player_daily_entitlements`,
+ * which no browser role can write, and this reads them back into the shape the
+ * calendar and the access gate already expect. See
+ * supabase/migrations/20260818121000_amordle_daily_entitlement_authority_v1.sql.
+ */
+export async function listDailyEntitlements(): Promise<
+  NonNullable<AccountProgress['dailyEntitlements']>
+> {
+  const { data, error } = await client().rpc('list_my_daily_entitlements_v1');
+  if (error) throwServiceError(error);
+  const rows = parseServiceResult(z.array(dailyEntitlementRowSchema), data ?? []);
+  return Object.fromEntries(rows.map((row) => [`${row.local_date}:${row.mode}`, row.state]));
+}
+
+const unlockResultSchema = economySchema.extend({
+  state: z.enum(['pending', 'unlocked']),
+});
+
+export async function unlockDailyEntitlement(localDate: string, mode: 'og' | 'go') {
+  const { data, error } = await client().rpc('unlock_daily_entitlement_v1', {
+    p_local_date: localDate,
+    p_mode: mode,
+  });
+  if (error) throwServiceError(error);
+  const parsed = parseServiceResult(unlockResultSchema, data?.[0]);
+  const { state, ...economy } = parsed;
+  return { economy, state };
+}
+
+export async function markDailyEntitlementUnlocked(localDate: string, mode: 'og' | 'go') {
+  const { error } = await client().rpc('mark_daily_entitlement_unlocked_v1', {
+    p_local_date: localDate,
+    p_mode: mode,
+  });
+  if (error) throwServiceError(error);
+}
+
+/*
+ * Deliberately NOT merged into loadProgress.
+ *
+ * loadProgress is read on almost every screen and polled on the home page, and
+ * it is called three times inside the Solo adapter alone. Folding the
+ * entitlement read into it would have added a request everywhere progress is
+ * read — which is the opposite of what the rest of this change is for. The two
+ * surfaces that actually need entitlements ask for them, and React Query
+ * dedupes the result across both.
+ *
+ * The snapshot's own `dailyEntitlements` is no longer read anywhere. It is
+ * owner-writable, so honouring it would leave the old grant path open beside
+ * the new one; the migration backfilled its contents and nothing reads it now.
+ */
 export async function loadProgress(userId: string) {
   return (await readAccountProgress(userId)).progress;
 }
@@ -166,10 +230,24 @@ export async function spendCoins(amount: number, operationId: string) {
   return parseServiceResult(economySchema, data?.[0]);
 }
 
-export async function creditCoins(amount: number, operationId: string) {
-  const { data, error } = await client().rpc('credit_player_economy_coins', {
-    p_amount: amount,
-    p_operation_id: operationId,
+/*
+ * The award is no longer an amount the browser chooses.
+ *
+ * `credit_player_economy_coins` took both the amount and the operation id from
+ * the caller and is no longer granted to a browser role; see
+ * supabase/migrations/20260818120000_amordle_solo_reward_authority_v1.sql. This
+ * names the game instead, and the server reads the row, derives what it is
+ * worth, and derives the operation id from the row id so one game pays once.
+ *
+ * This bounds the path rather than closing it. `game_history` is still
+ * owner-writable, so a fabricated row still earns what a real one would — at
+ * most 48 coins, once, and visible in the player's own History. Closing it
+ * completely means the server holding the Solo session, which is deliberately
+ * not what this is.
+ */
+export async function claimGameReward(historyRowId: string) {
+  const { data, error } = await client().rpc('claim_game_reward_v1', {
+    p_history_row_id: historyRowId,
   });
   if (error) throwServiceError(error);
   return parseServiceResult(economySchema, data?.[0]);
@@ -223,8 +301,15 @@ export async function finalizeAccountHistoryRow(row: AccountHistoryRow) {
   if (error) throwServiceError(error);
 
   const operationId = rewardOperationId(parsed.id);
+  /*
+   * The row is written first and then named, because the server derives the
+   * award from the stored row. `rewardCoins` in the entry is now what the client
+   * believes it earned; the coins actually paid are whatever the server derives
+   * from the same row. The two agree for any game the app itself produced, and
+   * tests/domain/solo-reward-contract.test.ts is what keeps them agreeing.
+   */
   if (parsed.entry.rewardCoins > 0) {
-    await creditCoins(parsed.entry.rewardCoins, operationId);
+    await claimGameReward(parsed.id);
   }
 
   const appliesXp = parsed.entry.rewardXp > 0;
