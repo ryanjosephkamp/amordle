@@ -44,7 +44,8 @@
     "generate:mp-audit": "scripts/node24.sh scripts/finalize-mp-v6-audit.mjs && scripts/node24.sh scripts/reconcile-mp-parity.mjs",
     "generate:word-parity": "scripts/node24.sh scripts/reconcile-word-authority-parity.mjs",
     "generate:word-assets": "scripts/node24.sh scripts/generate-word-assets.mjs",
-    "generate:types": "scripts/node24.sh scripts/generate-database-types.mjs"
+    "generate:types": "scripts/node24.sh scripts/generate-database-types.mjs",
+    "measure:feed": "scripts/node24.sh scripts/measure-notification-feed.mjs"
   },
   "dependencies": {
     "@supabase/ssr": "0.12.3",
