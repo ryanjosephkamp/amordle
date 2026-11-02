@@ -1,0 +1,1489 @@
+'use client';
+
+import Link from 'next/link';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { CSSProperties } from 'react';
+import {
+  acceptPracticeRematch,
+  advanceLegacyGo,
+  cancelPracticeRematch,
+  declinePracticeRematch,
+  getCombatGame,
+  getLegacyPractice,
+  getRankedDailyGame,
+  saveCombatCommand,
+  saveLegacyGuess,
+  saveRankedDailyAction,
+  listPracticeRematches,
+  loadSettledRatings,
+  requestPracticeRematch,
+  settleLegacyRankedDaily,
+  settleRankedDaily,
+  settleRankedPractice,
+} from '@/adapters/supabase/combat';
+import type {
+  CombatProjection,
+  LegacyRow,
+  RankedDailyProjection,
+  RankedPracticeSettlement,
+  RematchRequest,
+  SettledRatingRow,
+} from '@/adapters/supabase/combat';
+import { getBrowserSupabase } from '@/adapters/supabase/browser';
+import { ServiceError, operationId } from '@/adapters/supabase/shared';
+import { loadPublicWordSet } from '@/adapters/word-lists';
+import { queueAccountCompletion, reconcileCompletionOutbox } from '@/application/completion-outbox';
+import { invalidateAccountProjections } from '@/application/account-query-freshness';
+import { playKeyboardSound } from '@/application/keyboard-feedback';
+import { matchDirectNavigationShortcut } from '@/application/keyboard-shortcuts';
+import { GameKeyboard } from '@/components/game-keyboard';
+import { PlayerIdentityLink } from '@/components/player-identity-link';
+import { useAuth } from '@/components/providers';
+import { useFeedbackPreferences } from '@/components/feedback-preferences';
+import { AccountGate, SkeletonRows } from '@/components/route-states';
+import { derivePuzzleKeyboardEvidence, scoreGuess } from '@/domain/game';
+import type { EvidenceState } from '@/domain/game';
+import type { KeyboardFeedbackEvent } from '@/domain/feedback';
+import { isGuessRuleRejection } from '@/domain/feedback';
+import { historyRowSchema } from '@/domain/account-continuity';
+import { shouldAutoSettleTimeout } from '@/domain/clock';
+import { rematchViewState } from '@/domain/combat-rematch';
+import { classifyServiceFailure } from '@/domain/service-failure';
+import { MatchUnavailable } from './match-unavailable';
+import { validSeededTranscriptRows } from '@/domain/combat-transcript';
+import type { AccountHistoryRow } from '@/domain/account-continuity';
+import { WordDefinition } from '@/features/words/word-definition';
+import { ClockValue, useCombatClockReading } from './match-clock';
+import { MoveBoards } from './combat-transcript';
+
+/*
+ * How long to wait before re-offering an automatic timeout settlement the server refused.
+ * Long enough that a refusal costs nothing (this only runs while a clock is already at
+ * zero, which is rare), short enough that a match settles well inside a player's patience.
+ */
+const AUTO_SETTLE_RETRY_MS = 15_000;
+
+interface MatchState {
+  authority: 0 | 1 | 2;
+  legacy?: LegacyRow;
+  rankedDaily?: RankedDailyProjection;
+  game?: CombatProjection;
+}
+
+async function loadMatch(gameId: string): Promise<MatchState> {
+  /*
+   * A3. Control flow is unchanged; only the reason survives it. The legacy fallback used
+   * to replace every failure with a flat NOT_FOUND, so a match that was private to two
+   * other players reported itself as a broken link and the "private" wording could never
+   * be reached.
+   */
+  let primary: ServiceError | null = null;
+  try {
+    return { authority: 2, game: await getCombatGame(gameId) };
+  } catch (error) {
+    if (error instanceof ServiceError) {
+      if (!['P0002', 'NOT_FOUND', 'FORBIDDEN', '42501'].includes(error.code)) throw error;
+      primary = error;
+    }
+    try {
+      const rankedDaily = await getRankedDailyGame(gameId);
+      if (rankedDaily) return { authority: 1, rankedDaily };
+    } catch (dailyError) {
+      if (
+        dailyError instanceof ServiceError &&
+        !['P0002', 'NOT_FOUND', 'FORBIDDEN', '42501'].includes(dailyError.code)
+      ) {
+        throw dailyError;
+      }
+    }
+    const legacy = await getLegacyPractice(gameId);
+    if (!legacy) throw primary ?? new ServiceError('That match was not found.', 'NOT_FOUND');
+    return { authority: 0, legacy };
+  }
+}
+
+export function MatchController({
+  gameId,
+  presentation = 'auto',
+}: {
+  gameId: string;
+  presentation?: 'auto' | 'review';
+}) {
+  return (
+    <AccountGate>
+      <MatchControllerInner gameId={gameId} presentation={presentation} />
+    </AccountGate>
+  );
+}
+
+function MatchControllerInner({
+  gameId,
+  presentation,
+}: {
+  gameId: string;
+  presentation: 'auto' | 'review';
+}) {
+  const auth = useAuth();
+  const queryClient = useQueryClient();
+  const feedback = useFeedbackPreferences();
+  const [draft, setDraft] = useState('');
+  const [message, setMessage] = useState('');
+  const [rankedPracticeSettlement, setRankedPracticeSettlement] =
+    useState<RankedPracticeSettlement | null>(null);
+  const [settledRatings, setSettledRatings] = useState<SettledRatingRow[]>([]);
+  const match = useQuery({
+    queryKey: ['combat', 'match', gameId],
+    queryFn: () => loadMatch(gameId),
+    refetchInterval: () => (document.visibilityState === 'visible' ? 5_000 : false),
+  });
+  const length = match.data?.game?.wordLength ?? match.data?.legacy?.projection.wordLength;
+  const words = useQuery({
+    queryKey: ['word-set', length],
+    queryFn: () => loadPublicWordSet(length ?? 0),
+    enabled: match.data?.authority === 0 && Boolean(length),
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  const refetchMatch = match.refetch;
+  const terminal = Boolean(
+    match.data?.game?.outcome.terminal ||
+    (match.data?.rankedDaily &&
+      ['won', 'lost', 'cancelled'].includes(match.data.rankedDaily.status)) ||
+    (match.data?.legacy &&
+      ['won', 'lost', 'cancelled'].includes(match.data.legacy.projection.status)),
+  );
+
+  useEffect(() => {
+    document.documentElement.dataset.gamePresentation =
+      presentation === 'review' || terminal ? 'review' : 'active';
+    return () => {
+      delete document.documentElement.dataset.gamePresentation;
+    };
+  }, [presentation, terminal]);
+
+  useEffect(() => {
+    const supabase = getBrowserSupabase();
+    if (!supabase) return;
+    const channel = supabase
+      .channel(`combat:${gameId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'async_multiplayer_games',
+          filter: `id=eq.${gameId}`,
+        },
+        () => {
+          void queryClient.invalidateQueries({ queryKey: ['combat', 'match', gameId] });
+          void queryClient.invalidateQueries({ queryKey: ['combat', 'active'] });
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [gameId, queryClient]);
+
+  useEffect(() => {
+    const refetch = () => {
+      if (document.visibilityState === 'visible' && navigator.onLine) {
+        void refetchMatch();
+      }
+    };
+    document.addEventListener('visibilitychange', refetch);
+    window.addEventListener('online', refetch);
+    return () => {
+      document.removeEventListener('visibilitychange', refetch);
+      window.removeEventListener('online', refetch);
+    };
+  }, [refetchMatch]);
+
+  const command = useMutation({
+    mutationFn: async (kind: 'guess' | 'advance' | 'cancel' | 'forfeit' | 'timeout') => {
+      const state = match.data;
+      const userId = auth.user?.id;
+      if (!state || !userId) throw new Error('Match state is unavailable.');
+      if (state.authority === 2 && state.game) {
+        return {
+          authority: 2 as const,
+          game: await saveCombatCommand({
+            gameId,
+            actionId: operationId(`combat:${kind}`),
+            expectedVersion: state.game.version,
+            expectedMoveCount: state.game.moveCount,
+            command: kind,
+            ...(kind === 'guess' ? { guess: draft } : {}),
+          }),
+        };
+      }
+      if (state.authority === 1 && state.rankedDaily) {
+        if (kind !== 'guess' && kind !== 'forfeit') {
+          throw new Error('That action is unavailable in this ranked Daily.');
+        }
+        // Ranked Daily has no player-owned clock, so `timeout` cannot reach here.
+        return {
+          authority: 1 as const,
+          rankedDaily: await saveRankedDailyAction({
+            gameId,
+            expectedVersion: state.rankedDaily.authorityVersion,
+            expectedMoveCount: state.rankedDaily.moves.length,
+            actionId: operationId(`ranked-daily:${kind}`),
+            ...(kind === 'guess' ? { guess: draft } : { forfeit: true }),
+          }),
+        };
+      }
+      if (kind !== 'guess' || !state.legacy) {
+        throw new Error('That action is unavailable in this match.');
+      }
+      if (!words.data) throw new Error('The selected word list is still loading.');
+      return {
+        authority: 0 as const,
+        legacy: await saveLegacyGuess({
+          gameId,
+          userId,
+          guess: draft,
+          sanctionedWords: words.data,
+          actionId: operationId('combat:guess'),
+        }),
+      };
+    },
+    onSuccess: (state) => {
+      setDraft('');
+      setMessage('');
+      queryClient.setQueryData(['combat', 'match', gameId], state);
+      void queryClient.invalidateQueries({ queryKey: ['combat', 'active'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+    onError: (error, kind) => {
+      if (
+        kind === 'guess' &&
+        feedback.settings.sound &&
+        !feedback.settings.reducedEffects &&
+        isGuessRuleRejection(error)
+      ) {
+        void playKeyboardSound(feedback.settings.keyboardSoundProfile, 'reject');
+      }
+      /*
+       * `timeout` is no longer something a player can ask for — it is issued only by
+       * the automatic settlement effect below. Every way it can be refused is an expected
+       * race: TIMEOUT_PENDING when this client's reading crossed zero a moment before the
+       * server's, TERMINAL or STATE_CONFLICT when the other seat's client settled first.
+       * None of them describes anything the player did or could act on, and announcing
+       * them into an assertive live region would interrupt a screen reader with noise
+       * attached to no user action. Refetch so a settlement by the other seat lands, and
+       * say nothing.
+       */
+      if (kind === 'timeout') {
+        void match.refetch();
+        return;
+      }
+      const raw = error instanceof Error ? error.message : '';
+      setMessage(raw || 'That action was not accepted.');
+      void match.refetch();
+    },
+  });
+
+  /*
+   * Stable by construction: `mutate` keeps its identity across renders, so the effect
+   * that drives automatic settlement can hold an interval without tearing it down on
+   * every tick of the 250ms clock.
+   */
+  const mutateCommand = command.mutate;
+  const autoSettleTimeout = useCallback(
+    (done: () => void) => mutateCommand('timeout', { onSettled: done }),
+    [mutateCommand],
+  );
+
+  const game = match.data?.game;
+  useEffect(() => {
+    if (!game || game.status !== 'holding' || !game.holdUntil || !game.capabilities.canAdvance) {
+      return;
+    }
+    const delay = Math.max(0, Date.parse(game.holdUntil) - Date.now());
+    const timer = window.setTimeout(() => command.mutate('advance'), delay);
+    return () => window.clearTimeout(timer);
+  }, [command, game]);
+
+  useEffect(() => {
+    const legacy = match.data?.legacy?.projection;
+    if (
+      match.data?.authority !== 0 ||
+      legacy?.status !== 'holding' ||
+      !legacy.holdUntil ||
+      !words.data
+    ) {
+      return;
+    }
+    const delay = Math.max(0, Date.parse(legacy.holdUntil) - Date.now());
+    const timer = window.setTimeout(() => {
+      void advanceLegacyGo(gameId, words.data)
+        .then((row) =>
+          queryClient.setQueryData(['combat', 'match', gameId], {
+            authority: 0 as const,
+            legacy: row,
+          }),
+        )
+        .catch(() => void match.refetch());
+    }, delay);
+    return () => window.clearTimeout(timer);
+  }, [gameId, match, queryClient, words.data]);
+
+  const settle = useMutation({
+    mutationFn: async () => {
+      if (match.data?.authority === 1) {
+        await settleLegacyRankedDaily(gameId, `ranked-daily:settle:${gameId}`);
+        return { authority: 1 as const, receipt: null };
+      }
+      const receipt =
+        match.data?.game?.scope === 'daily'
+          ? await settleRankedDaily(gameId, `amordle-ranked-daily-v3:settle:${gameId}`)
+          : await settleRankedPractice(gameId, `amordle-ranked-practice-v2:settle:${gameId}`);
+      return { authority: 2 as const, receipt };
+    },
+    onSuccess: (result) => {
+      if (result.authority === 2 && result.receipt) {
+        setRankedPracticeSettlement(result.receipt);
+        // Both seats' movement, for the panel. Never allowed to fail the settlement.
+        void loadSettledRatings(result.receipt.matchResultId)
+          .then(setSettledRatings)
+          .catch(() => undefined);
+      }
+      void match.refetch();
+      if (auth.user?.id) {
+        void invalidateAccountProjections(queryClient, auth.user.id, { includeRanked: true });
+      }
+    },
+    /*
+     * Silent. Settlement is no longer something a player asks for, so a failure is not
+     * something they did — and it is retried by the effect below rather than by them.
+     */
+    onError: () => undefined,
+  });
+
+  /*
+   * Every ranked result counts, automatically.
+   *
+   * Until now `UPDATE RATING` was the ONLY writer of ELO in the entire system: four update
+   * sites, all inside settlement RPCs, each with exactly one call site — that button. No
+   * trigger, no command RPC, no job, and RLS grants only `select`. If neither player pressed
+   * it the match was unrated and invisible to the leaderboard, which meant a player could
+   * decline a loss simply by closing the tab.
+   *
+   * The same latched shape as the W1 timeout settlement: fire once the match is terminal and
+   * settleable, throttle on wall-clock time held in a ref so a re-render storm cannot turn
+   * this into a request flood, and swallow refusals. The RPC is genuinely idempotent — its
+   * key is derived from the game id inside the function, both seats are updated in one
+   * statement, and an advisory lock plus `for update` serialize concurrent callers — so both
+   * clients firing at once is safe and the second gets its own correct numbers back.
+   *
+   * This closes the exploit for anyone who does not deliberately kill their browser at the
+   * exact moment a match ends. Only server-side settlement makes it impossible; that is
+   * Cycle C, and it needs a migration.
+   */
+  const settleAttempt = useRef({ inFlight: false, lastMs: 0 });
+  const canSettle = Boolean(match.data?.game?.capabilities.canSettleRating);
+  const settleRating = settle.mutate;
+  useEffect(() => {
+    if (!canSettle || rankedPracticeSettlement) {
+      settleAttempt.current.lastMs = 0;
+      return;
+    }
+    const fire = () => {
+      const state = settleAttempt.current;
+      if (state.inFlight || Date.now() - state.lastMs < AUTO_SETTLE_RETRY_MS) return;
+      state.inFlight = true;
+      state.lastMs = Date.now();
+      settleRating(undefined, {
+        onSettled: () => {
+          settleAttempt.current.inFlight = false;
+        },
+      });
+    };
+    fire();
+    const timer = window.setInterval(fire, AUTO_SETTLE_RETRY_MS);
+    return () => window.clearInterval(timer);
+  }, [canSettle, rankedPracticeSettlement, settleRating]);
+
+  useEffect(() => {
+    const userId = auth.user?.id;
+    const row =
+      userId && match.data
+        ? combatHistoryRow(match.data, userId, rankedPracticeSettlement?.ratingDelta ?? null)
+        : null;
+    if (!row || !userId) return;
+    void queueAccountCompletion(row)
+      .then(() => reconcileCompletionOutbox(userId))
+      .then(() => invalidateAccountProjections(queryClient, userId, { includeRanked: true }))
+      .catch(() => undefined);
+  }, [auth.user?.id, match.data, queryClient, rankedPracticeSettlement?.ratingDelta]);
+
+  if (match.isPending) return <SkeletonRows label="Loading match…" rows={5} />;
+  if (match.isError || !match.data) {
+    return (
+      <MatchUnavailable
+        gameId={gameId}
+        kind={classifyServiceFailure({
+          code: match.error instanceof ServiceError ? match.error.code : undefined,
+          online: typeof navigator === 'undefined' ? true : navigator.onLine,
+        })}
+        onRetry={() => void match.refetch()}
+      />
+    );
+  }
+  if (match.data.authority === 0 && match.data.legacy) {
+    return (
+      <LegacyMatch
+        row={match.data.legacy}
+        userId={auth.user?.id ?? ''}
+        draft={draft}
+        setDraft={setDraft}
+        submit={() => command.mutate('guess')}
+        pending={command.isPending}
+        wordsReady={Boolean(words.data)}
+        message={message || (words.isError ? 'The published word list is unavailable.' : '')}
+      />
+    );
+  }
+  if (match.data.authority === 1 && match.data.rankedDaily) {
+    return (
+      <RankedDailyMatch
+        game={match.data.rankedDaily}
+        userId={auth.user?.id ?? ''}
+        draft={draft}
+        setDraft={setDraft}
+        submit={() => command.mutate('guess')}
+        forfeit={() => {
+          if (window.confirm('Forfeit this ranked Daily? This cannot be reversed.')) {
+            command.mutate('forfeit');
+          }
+        }}
+        pending={command.isPending || settle.isPending}
+        message={message}
+      />
+    );
+  }
+  if (!game) return null;
+  return (
+    <AuthoritativeMatch
+      game={game}
+      observedAtMs={match.dataUpdatedAt}
+      draft={draft}
+      setDraft={setDraft}
+      submit={() => command.mutate('guess')}
+      forfeit={() => {
+        if (window.confirm('Forfeit this match? This cannot be reversed.'))
+          command.mutate('forfeit');
+      }}
+      cancel={() => {
+        if (
+          window.confirm('Cancel this match before play? No result or rating will be recorded.')
+        ) {
+          command.mutate('cancel');
+        }
+      }}
+      autoSettleTimeout={autoSettleTimeout}
+      settlement={rankedPracticeSettlement}
+      settledRatings={settledRatings}
+      viewerUserId={auth.user?.id}
+      pending={command.isPending || settle.isPending}
+      message={message}
+    />
+  );
+}
+
+function RankedDailyMatch({
+  game,
+  userId,
+  draft,
+  setDraft,
+  submit,
+  forfeit,
+  pending,
+  message,
+}: {
+  game: RankedDailyProjection;
+  userId: string;
+  draft: string;
+  setDraft(value: string): void;
+  submit(): void;
+  forfeit(): void;
+  pending: boolean;
+  message: string;
+}) {
+  const viewerSeat = game.playerUserIds['player-one'] === userId ? 'player-one' : 'player-two';
+  const terminal = game.status === 'won' || game.status === 'lost' || game.status === 'cancelled';
+  const turn = !terminal && game.currentTurn === viewerSeat;
+  const lastMove = game.moves.at(-1);
+  const puzzleIndex =
+    game.mode === 'go' &&
+    lastMove &&
+    lastMove.tiles.every((tile) => tile.state === 'correct') &&
+    lastMove.puzzleIndex < 4
+      ? lastMove.puzzleIndex + 1
+      : (lastMove?.puzzleIndex ?? 0);
+  const visibleMoves = game.moves.filter((move) => move.puzzleIndex === puzzleIndex);
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex: puzzleIndex,
+    moves: game.moves,
+  });
+  return (
+    <section className="combat-game" aria-labelledby="combat-heading">
+      <CombatHeader
+        title="Ranked Daily"
+        detail={`${game.mode.toUpperCase()} · UTC ${game.dailyDateKey}${game.hardMode ? ' · Hard Mode' : ''}${
+          game.mode === 'go' ? ` · puzzle ${puzzleIndex + 1}/5` : ''
+        }`}
+        status={
+          terminal
+            ? game.winnerId === viewerSeat
+              ? 'You won'
+              : game.winnerId
+                ? 'Opponent won'
+                : 'Match complete'
+            : turn
+              ? 'Your turn'
+              : 'Opponent’s turn'
+        }
+      />
+      <MoveBoards
+        moves={visibleMoves.map((move) => ({
+          id: move.id,
+          seat: move.playerId,
+          guess: move.guess,
+          tiles: move.tiles,
+          acceptedAt: move.createdAt,
+        }))}
+        length={5}
+        viewerSeat={viewerSeat}
+        actorLabels={{
+          [viewerSeat]: 'You',
+          [viewerSeat === 'player-one' ? 'player-two' : 'player-one']: 'Rival',
+        }}
+      />
+      {!terminal && (
+        <CombatInput
+          draft={draft}
+          length={5}
+          evidence={keyboardEvidence}
+          setDraft={setDraft}
+          submit={submit}
+          disabled={!turn || pending}
+        />
+      )}
+      <p className="game-message" aria-live="assertive">
+        {message}
+      </p>
+      {!terminal && (
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={forfeit}
+          disabled={pending}
+        >
+          {game.moves.length ? 'FORFEIT MATCH' : 'CANCEL BEFORE PLAY'}
+        </button>
+      )}
+      {terminal && game.status !== 'cancelled' && (
+        <div className="result-panel">
+          <h2>Ranked result</h2>
+          {/* No button here either: the rating is applied automatically. */}
+          <p>The result is final and your rating has been updated.</p>
+          <div className="action-row">
+            <Link className="button" href={`/combat/results/${game.id}`}>
+              VIEW RESULT
+            </Link>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+/**
+ * What a ranked match did to both players' ratings.
+ *
+ * Shown unconditionally at the end of every ranked match — there is no button, because
+ * there is no choice. A cancel before play never settles (`canSettleRating` requires
+ * `status = 'completed'`), so it renders honestly as a pair of unchanged ratings and a `±0`
+ * rather than inventing a settlement that did not happen.
+ *
+ * The diff is the only colored element, using the same three tokens the History page uses:
+ * a gain is `--correct-text`, a loss `--danger-text`, and no change `--present-text`. The
+ * sign and the numbers carry the meaning on their own, so color is never the only signal.
+ */
+function RatingOutcome({
+  settlement,
+  rows,
+  viewerUserId,
+  players,
+  viewerSeat,
+  cancelled,
+}: {
+  settlement: RankedPracticeSettlement | null;
+  rows: SettledRatingRow[];
+  viewerUserId: string | undefined;
+  players: CombatProjection['players'];
+  viewerSeat: 'player-one' | 'player-two';
+  cancelled: boolean;
+}) {
+  const nameFor = (seat: 'player-one' | 'player-two') =>
+    players.find((participant) => participant.seat === seat)?.displayName ??
+    (seat === viewerSeat ? 'You' : 'Rival');
+
+  /*
+   * Prefer the two transaction rows, which name both seats. Fall back to the viewer's own
+   * receipt when the opponent's row has not arrived — a partial panel is better than none —
+   * and to a flat pair when nothing settled at all.
+   */
+  const entries: Array<{ key: string; name: string; from: number; to: number; delta: number }> =
+    rows.length > 0
+      ? rows.map((row) => ({
+          key: row.userId ?? row.label,
+          name: row.userId && row.userId === viewerUserId ? `${row.label} (you)` : row.label,
+          from: row.oldRating,
+          to: row.newRating,
+          delta: row.ratingDelta,
+        }))
+      : settlement
+        ? [
+            {
+              key: 'viewer',
+              name: `${nameFor(viewerSeat)} (you)`,
+              from: settlement.oldRating,
+              to: settlement.newRating,
+              delta: settlement.ratingDelta,
+            },
+          ]
+        : [];
+
+  if (entries.length === 0 && !cancelled) return null;
+
+  return (
+    <div className="rating-outcome">
+      <h3>Rating</h3>
+      {cancelled && entries.length === 0 ? (
+        <p className="rating-outcome-note">
+          Cancelled before play — no rating change for either player.
+        </p>
+      ) : null}
+      <ul>
+        {entries.map((entry) => (
+          <li key={entry.key}>
+            <span className="rating-outcome-name">{entry.name}</span>
+            <span className="rating-outcome-move mono">
+              {entry.from} → {entry.to}
+            </span>
+            <strong
+              className="rating-outcome-delta mono"
+              data-direction={entry.delta > 0 ? 'up' : entry.delta < 0 ? 'down' : 'level'}
+            >
+              ({entry.delta >= 0 ? '+' : ''}
+              {entry.delta})
+            </strong>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function LegacyMatch({
+  row,
+  userId,
+  draft,
+  setDraft,
+  submit,
+  pending,
+  wordsReady,
+  message,
+}: {
+  row: LegacyRow;
+  userId: string;
+  draft: string;
+  setDraft(value: string): void;
+  submit(): void;
+  pending: boolean;
+  wordsReady: boolean;
+  message: string;
+}) {
+  const game = row.projection;
+  const currentPuzzleIndex = game.currentPuzzleIndex ?? 0;
+  const seat = row.player_one_user_id === userId ? 'player-one' : 'player-two';
+  const turn = game.status === 'playing' && game.currentTurn === seat;
+  const terminal = game.status === 'won' || game.status === 'lost' || game.status === 'cancelled';
+  const seededRows =
+    game.mode === 'go' && currentPuzzleIndex > 0
+      ? Array.from({ length: currentPuzzleIndex }, (_, puzzleIndex) => {
+          const solvedMove = game.moves.find(
+            (move) =>
+              (move.puzzleIndex ?? 0) === puzzleIndex &&
+              move.tiles.every((tile) => tile.state === 'correct'),
+          );
+          return solvedMove
+            ? {
+                id: solvedMove.id,
+                sourcePuzzleIndex: puzzleIndex,
+                guess: solvedMove.guess,
+                tiles: scoreGuess(game.answer, solvedMove.guess),
+              }
+            : null;
+        }).filter((candidate) => candidate !== null)
+      : [];
+  const visibleMoves = game.moves.filter((move) => (move.puzzleIndex ?? 0) === currentPuzzleIndex);
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex,
+    moves: game.moves,
+    seededRows,
+  });
+  return (
+    <section className="combat-game" aria-labelledby="combat-heading">
+      <CombatHeader
+        title="Public Practice"
+        detail={`${game.mode.toUpperCase()} · ${game.wordLength} letters · ${game.difficulty}`}
+        status={
+          game.status === 'waiting'
+            ? 'Waiting for another player'
+            : game.status === 'holding'
+              ? 'Puzzle solved · preparing next board'
+              : terminal
+                ? game.winnerSeat === seat
+                  ? 'You won'
+                  : 'Match complete'
+                : turn
+                  ? 'Your turn'
+                  : 'Opponent’s turn'
+        }
+      />
+      {game.status === 'waiting' && (
+        <div className="combat-wait-state" role="status">
+          <strong>Waiting for another player</strong>
+          <span>Both players get the same puzzle.</span>
+        </div>
+      )}
+      <MoveBoards
+        moves={visibleMoves}
+        length={game.wordLength}
+        seededRows={validSeededTranscriptRows({
+          candidates: seededRows.map((row) => ({
+            sourcePuzzleIndex: row.sourcePuzzleIndex,
+            guess: row.guess,
+            tiles: row.tiles,
+          })),
+          currentPuzzleIndex,
+          wordLength: game.wordLength,
+        })}
+        viewerSeat={seat}
+        actorLabels={{
+          [seat]: 'You',
+          [seat === 'player-one' ? 'player-two' : 'player-one']: 'Rival',
+        }}
+      />
+      {!terminal && game.status === 'playing' && (
+        <CombatInput
+          draft={draft}
+          length={game.wordLength}
+          evidence={keyboardEvidence}
+          setDraft={setDraft}
+          submit={submit}
+          disabled={!turn || pending || !wordsReady}
+        />
+      )}
+      <p className="game-message" aria-live="assertive">
+        {message}
+      </p>
+      {terminal && (
+        <div className="result-panel">
+          <h2>Answer</h2>
+          <p className="mono">{game.answer.toUpperCase()}</p>
+          <Link className="button primary" href={`/combat/results/${game.id}`}>
+            VIEW RESULT
+          </Link>
+          <RematchActions sourceGameId={game.id} />
+        </div>
+      )}
+    </section>
+  );
+}
+
+function RematchActions({ sourceGameId }: { sourceGameId: string }) {
+  const queryClient = useQueryClient();
+  const [message, setMessage] = useState('');
+  const requests = useQuery({
+    queryKey: ['combat', 'rematches', sourceGameId],
+    queryFn: () => listPracticeRematches(sourceGameId),
+    // Stop once a rematch exists to join, and never poll a tab nobody is looking at.
+    refetchInterval: (query) =>
+      document.visibilityState === 'visible' && !query.state.data?.[0]?.created_game_id
+        ? 5_000
+        : false,
+  });
+  const act = useMutation({
+    mutationFn: async ({
+      action,
+      request,
+    }: {
+      action: 'request' | 'accept' | 'decline' | 'cancel';
+      request?: RematchRequest;
+    }) => {
+      if (action === 'request') {
+        return requestPracticeRematch(sourceGameId, operationId(`rematch-request:${sourceGameId}`));
+      }
+      if (!request) throw new Error('Rematch request is unavailable.');
+      if (action === 'cancel') return cancelPracticeRematch(request.request_id);
+      if (action === 'decline') return declinePracticeRematch(request.request_id);
+      return acceptPracticeRematch(request, operationId(`rematch-accept:${request.request_id}`));
+    },
+    onSuccess: (request) => {
+      void queryClient.invalidateQueries({
+        queryKey: ['combat', 'rematches', sourceGameId],
+      });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      if (request.created_game_id) {
+        window.location.assign(`/combat/match/${request.created_game_id}`);
+      } else {
+        setMessage(`Rematch ${request.request_status}.`);
+      }
+    },
+    onError: (error) =>
+      setMessage(error instanceof Error ? error.message : 'Rematch action was not accepted.'),
+  });
+  const latest = requests.data?.[0];
+  // Evaluated as of the last poll rather than `Date.now()`: pure during render, and at
+  // most one 5s interval stale, which is the same freshness the row itself has.
+  const view = rematchViewState(latest, requests.dataUpdatedAt);
+  /*
+   * A1. A link rather than an automatic redirect: navigating a player out of the page
+   * from a background poll takes away the back button and fires at a moment they did
+   * not choose. The accepting player keeps their existing redirect because that
+   * navigation follows their own click.
+   */
+  const notice =
+    view.action === 'join'
+      ? 'Your rematch is ready.'
+      : message || (view.lastOutcome ? `Rematch ${view.lastOutcome}.` : '');
+  return (
+    <div className="field-stack">
+      {view.action === 'join' && view.joinGameId ? (
+        <Link className="button primary" href={`/combat/match/${view.joinGameId}`}>
+          JOIN REMATCH
+        </Link>
+      ) : view.action !== 'respond' && view.action !== 'cancel' ? (
+        <button
+          type="button"
+          disabled={act.isPending}
+          onClick={() => act.mutate({ action: 'request' })}
+        >
+          REQUEST REMATCH
+        </button>
+      ) : !latest ? null : view.action === 'respond' ? (
+        <div className="action-row">
+          <button
+            className="primary"
+            disabled={act.isPending}
+            onClick={() => act.mutate({ action: 'accept', request: latest })}
+          >
+            ACCEPT REMATCH
+          </button>
+          <button
+            disabled={act.isPending}
+            onClick={() => act.mutate({ action: 'decline', request: latest })}
+          >
+            DECLINE
+          </button>
+        </div>
+      ) : (
+        <button
+          disabled={act.isPending}
+          onClick={() => act.mutate({ action: 'cancel', request: latest })}
+        >
+          CANCEL REMATCH REQUEST
+        </button>
+      )}
+      <p aria-live="polite">{notice}</p>
+    </div>
+  );
+}
+
+function AuthoritativeMatch({
+  game,
+  observedAtMs,
+  draft,
+  setDraft,
+  submit,
+  forfeit,
+  cancel,
+  autoSettleTimeout,
+  settlement,
+  settledRatings,
+  viewerUserId,
+  pending,
+  message,
+}: {
+  game: CombatProjection;
+  observedAtMs: number;
+  draft: string;
+  setDraft(value: string): void;
+  submit(): void;
+  forfeit(): void;
+  cancel(): void;
+  autoSettleTimeout(done: () => void): void;
+  settlement: RankedPracticeSettlement | null;
+  settledRatings: SettledRatingRow[];
+  viewerUserId: string | undefined;
+  pending: boolean;
+  message: string;
+}) {
+  const terminal = game.outcome.terminal;
+  const player = game.playerState[game.viewerSeat];
+  const opponent = game.players.find((participant) => participant.seat !== game.viewerSeat);
+  /*
+   * Read the clock of whoever is on move, not the opponent's: settlement is symmetric,
+   * so this client sends the command whether the seat that ran out is theirs or not.
+   * When nobody is on move the seat argument is irrelevant — `shouldAutoSettleTimeout`
+   * returns false on a missing `currentTurn` before the reading is consulted.
+   */
+  const activeClock = useCombatClockReading(
+    game,
+    game.currentTurn ?? game.viewerSeat,
+    observedAtMs,
+  );
+  const shouldSettle = shouldAutoSettleTimeout({
+    status: game.status,
+    terminal,
+    currentTurn: game.currentTurn,
+    activeClock,
+  });
+
+  /*
+   * No control, no message — the match just ends.
+   *
+   * Three properties carry this, and each one is load-bearing:
+   *
+   * 1. It is latched. `operationId()` mints a fresh UUID per call, so the server's
+   *    action-id ledger never dedupes a repeat: an unlatched effect would issue one real
+   *    RPC per 250ms clock tick, and every refusal calls `refetch()`, so it would build
+   *    into a request storm rather than settling anything.
+   * 2. It retries slowly instead of firing once. This client's reading can cross zero a
+   *    moment before the server's, and a single refused attempt would strand the match at
+   *    0:00 until someone reloaded.
+   * 3. It stops as soon as the state stops qualifying, because `shouldSettle` goes false
+   *    the instant the projection comes back terminal.
+   */
+  const settleAttempt = useRef({ inFlight: false, lastMs: 0 });
+  useEffect(() => {
+    if (!shouldSettle) {
+      settleAttempt.current.lastMs = 0;
+      return;
+    }
+    /*
+     * Throttled on wall-clock time held in a ref, not merely on an in-flight flag and
+     * not on the effect running once. That is deliberate: it makes the guarantee
+     * independent of whether `mutate` keeps its identity across renders. If it ever does
+     * not, this effect re-runs on every one of the four-per-second clock ticks, and an
+     * in-flight flag alone would let it fire again the instant each attempt resolved.
+     */
+    const fire = () => {
+      const state = settleAttempt.current;
+      if (state.inFlight || Date.now() - state.lastMs < AUTO_SETTLE_RETRY_MS) return;
+      state.inFlight = true;
+      state.lastMs = Date.now();
+      autoSettleTimeout(() => {
+        settleAttempt.current.inFlight = false;
+      });
+    };
+    fire();
+    const timer = window.setInterval(fire, AUTO_SETTLE_RETRY_MS);
+    return () => window.clearInterval(timer);
+  }, [shouldSettle, autoSettleTimeout]);
+
+  const turn = game.currentTurn === game.viewerSeat && game.capabilities.canSubmitGuess;
+  const visibleMoves = game.moves.filter(
+    (move) => move.type === 'guess' && move.puzzleIndex === game.currentPuzzleIndex,
+  );
+  const keyboardEvidence = derivePuzzleKeyboardEvidence({
+    currentPuzzleIndex: game.currentPuzzleIndex,
+    moves: game.moves.filter((move) => move.type === 'guess'),
+    seededRows: game.seededRows,
+  });
+  return (
+    <section className="combat-game" aria-labelledby="combat-heading">
+      <CombatHeader
+        title={`${game.ranked ? 'Ranked ' : ''}${game.scope === 'daily' ? 'Daily' : 'Practice'}`}
+        detail={`${game.mode.toUpperCase()} · ${game.wordLength} letters · ${game.difficulty}${game.hardMode ? ' · Hard Mode' : ''}`}
+        status={
+          terminal
+            ? game.outcome.winnerSeat === game.viewerSeat
+              ? 'You won'
+              : game.outcome.winnerSeat
+                ? 'Opponent won'
+                : 'Match complete'
+            : game.status === 'waiting'
+              ? 'Waiting for another player'
+              : game.status === 'holding'
+                ? 'Puzzle solved · preparing next board'
+                : turn
+                  ? 'Your turn'
+                  : 'Opponent’s turn'
+        }
+      />
+      {game.status === 'waiting' && (
+        <div className="combat-wait-state" role="status">
+          <strong>Waiting for another player</strong>
+          <span>Both players get the same puzzle.</span>
+        </div>
+      )}
+      <div className="combat-score" aria-label="Match score">
+        {game.players.map((participant) => (
+          <div key={participant.seat}>
+            <span>
+              <PlayerIdentityLink
+                publicProfileId={participant.publicProfileId}
+                displayName={participant.displayName}
+              />
+              {participant.seat === game.viewerSeat ? ' (you)' : ''}
+            </span>
+            <strong>{game.playerState[participant.seat].points} pts</strong>
+            {game.playerState[participant.seat].timeRemainingMs != null && (
+              <ClockValue game={game} seat={participant.seat} observedAtMs={observedAtMs} />
+            )}
+          </div>
+        ))}
+      </div>
+      <MoveBoards
+        moves={visibleMoves.map((move) => ({
+          id: move.actionId,
+          seat: move.seat,
+          guess: move.guess ?? '',
+          tiles: move.tiles,
+          acceptedAt: move.createdAt,
+        }))}
+        length={game.wordLength}
+        seededRows={validSeededTranscriptRows({
+          candidates: game.seededRows,
+          currentPuzzleIndex: game.currentPuzzleIndex,
+          wordLength: game.wordLength,
+        })}
+        viewerSeat={game.viewerSeat}
+        actorLabels={Object.fromEntries(
+          game.players.map((participant) => [
+            participant.seat,
+            participant.seat === game.viewerSeat ? 'You' : participant.displayName || 'Rival',
+          ]),
+        )}
+        actorProfileIds={Object.fromEntries(
+          game.players
+            .filter((participant) => participant.publicProfileId)
+            .map((participant) => [participant.seat, participant.publicProfileId]),
+        )}
+        /*
+         * On a forfeit, put the answer on the board rather than leaving it only in
+         * small print under the definition. Nobody guessed it, so it is red — a color no
+         * tile state has ever used.
+         *
+         * `revealedAnswers` is the whole GO chain, so it is indexed by the puzzle the match
+         * stopped on, not `[0]`. It arrives only when the authority reaches `completed`,
+         * which covers forfeit and correctly excludes a cancel before play.
+         */
+        forfeitedAnswer={
+          game.outcome.reason === 'forfeit'
+            ? game.revealedAnswers?.[game.currentPuzzleIndex]
+            : undefined
+        }
+      />
+      {!terminal && game.status === 'playing' && (
+        <CombatInput
+          draft={draft}
+          length={game.wordLength}
+          evidence={keyboardEvidence}
+          setDraft={setDraft}
+          submit={submit}
+          disabled={!turn || pending}
+        />
+      )}
+      <p className="game-message" aria-live="assertive">
+        {message}
+      </p>
+      {!terminal && game.capabilities.canCancel && (
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={cancel}
+          disabled={pending}
+        >
+          CANCEL BEFORE PLAY
+        </button>
+      )}
+      {!terminal && !game.capabilities.canCancel && game.capabilities.canForfeit && (
+        <button
+          type="button"
+          className="combat-secondary-action"
+          onClick={forfeit}
+          disabled={pending}
+        >
+          FORFEIT MATCH
+        </button>
+      )}
+      {terminal && (
+        <div className="result-panel">
+          <h2>Match complete</h2>
+          <p>
+            {game.outcome.reason?.replaceAll('_', ' ') ?? 'Final result recorded'} · {player.points}{' '}
+            points
+          </p>
+          {game.revealedAnswers && game.revealedAnswers.length > 0 && (
+            <div className="result-definitions" aria-label="Answer definitions">
+              {game.revealedAnswers.map((answer) => (
+                <WordDefinition word={answer} key={answer} />
+              ))}
+            </div>
+          )}
+          {game.ranked && (
+            <RatingOutcome
+              settlement={settlement}
+              rows={settledRatings}
+              viewerUserId={viewerUserId}
+              players={game.players}
+              viewerSeat={game.viewerSeat}
+              cancelled={game.status === 'cancelled'}
+            />
+          )}
+          {!game.ranked && game.scope === 'practice' && <RematchActions sourceGameId={game.id} />}
+          {/*
+           * Two tiers instead of one pile.
+           *
+           * This was nine-plus controls in a wrapping flex row with no mobile rule at all,
+           * which is why it read as a heap. The split is by what a player does next: one
+           * primary row of "play again" choices, then a quiet row of places to go.
+           *
+           * SEARCH AGAIN used to navigate to the setup form — it did not search. It is now
+           * NEW COMBAT, which is what it always did, and the name is freed for a control
+           * that genuinely re-queues. That one is ranked-only: unranked runs on lobbies and
+           * Daily is once a day, so there is nothing to search for in either.
+           */}
+          <nav className="result-actions" aria-label="Next COMBAT actions">
+            <div className="result-actions-primary">
+              {game.ranked && game.scope === 'practice' && (
+                <Link
+                  className="button primary"
+                  href={`/combat/practice?length=${game.wordLength}&requeue=1`}
+                >
+                  SEARCH AGAIN
+                </Link>
+              )}
+              {game.scope === 'practice' && (
+                <Link className="button" href={`/combat/practice?length=${game.wordLength}`}>
+                  NEW COMBAT
+                </Link>
+              )}
+              {game.scope === 'practice' && (
+                <Link className="button" href="/combat/daily">
+                  PLAY DAILY
+                </Link>
+              )}
+            </div>
+            <div className="result-actions-secondary">
+              <Link className="button" href={`/combat/results/${game.id}`}>
+                VIEW RESULT
+              </Link>
+              {opponent?.publicProfileId && (
+                <Link className="button" href={`/players/${opponent.publicProfileId}`}>
+                  VIEW RIVAL
+                </Link>
+              )}
+              {game.status !== 'cancelled' && (
+                <Link className="button" href="/history">
+                  HISTORY
+                </Link>
+              )}
+              <Link className="button" href="/combat/active">
+                ACTIVE
+              </Link>
+            </div>
+          </nav>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function CombatHeader({
+  title,
+  detail,
+  status,
+}: {
+  title: string;
+  detail: string;
+  status: string;
+}) {
+  return (
+    <header className="game-status combat-game-status">
+      <div className="game-mode-lockup">
+        <span className="game-context">COMBAT / MATCH</span>
+        <h1 id="combat-heading">{title}</h1>
+      </div>
+      <div className="game-status-facts combat-status-facts">
+        <span className="combat-match-detail">{detail.toUpperCase()}</span>
+        <strong className="combat-turn-state" aria-live="polite">
+          {status.toUpperCase()}
+        </strong>
+      </div>
+    </header>
+  );
+}
+
+function CombatInput({
+  draft,
+  length,
+  evidence,
+  setDraft,
+  submit,
+  disabled,
+}: {
+  draft: string;
+  length: number;
+  evidence: Readonly<Record<string, EvidenceState>>;
+  setDraft(value: string): void;
+  submit(): void;
+  disabled: boolean;
+}) {
+  const feedback = useFeedbackPreferences();
+  const soundEnabled = feedback.settings.sound;
+  const soundProfile = feedback.settings.keyboardSoundProfile;
+  const playCue = useCallback(
+    (event: KeyboardFeedbackEvent) => {
+      if (soundEnabled) void playKeyboardSound(soundProfile, event);
+    },
+    [soundEnabled, soundProfile],
+  );
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (
+        disabled ||
+        matchDirectNavigationShortcut(event) ||
+        event.metaKey ||
+        event.ctrlKey ||
+        event.altKey ||
+        event.target instanceof HTMLInputElement ||
+        event.target instanceof HTMLTextAreaElement
+      ) {
+        return;
+      }
+      if (/^[a-zA-Z]$/.test(event.key) && draft.length < length) {
+        event.preventDefault();
+        setDraft(`${draft}${event.key.toLowerCase()}`);
+        playCue('input');
+      } else if (event.key === 'Backspace' && draft.length > 0) {
+        event.preventDefault();
+        setDraft(draft.slice(0, -1));
+        playCue('delete');
+      } else if (event.key === 'Enter' && draft.length === length) {
+        event.preventDefault();
+        playCue('submit');
+        submit();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [disabled, draft, length, playCue, setDraft, submit]);
+  return (
+    /*
+     * `disabled` reached the keydown guard and GameKeyboard's props and stopped
+     * there, so nothing in the DOM said "not your turn" — the draft row's blinking
+     * cursor kept inviting input during the opponent's turn, most misleadingly at the
+     * very start of a match when the board is empty and neither player has moved.
+     * Presentation only; the flag it reflects is the same one that already governs
+     * input, so nothing about who may type changes.
+     */
+    <div
+      className="combat-input"
+      data-word-length={length}
+      data-turn-locked={disabled ? 'true' : undefined}
+      style={{ '--word-length': length } as CSSProperties}
+    >
+      <div className="board-row is-draft" aria-label="Current guess">
+        {Array.from({ length }, (_, index) => (
+          <div className="tile" key={index}>
+            {draft[index]?.toUpperCase() ?? ''}
+          </div>
+        ))}
+      </div>
+      <GameKeyboard
+        evidence={evidence}
+        disabled={disabled}
+        submitDisabled={disabled || draft.length !== length}
+        deleteDisabled={disabled || !draft}
+        onLetter={(letter) => {
+          if (draft.length < length) {
+            setDraft(`${draft}${letter}`);
+            playCue('input');
+          }
+        }}
+        onSubmit={() => {
+          playCue('submit');
+          submit();
+        }}
+        onDelete={() => {
+          setDraft(draft.slice(0, -1));
+          playCue('delete');
+        }}
+      />
+    </div>
+  );
+}
+
+function combatHistoryRow(
+  state: MatchState,
+  userId: string,
+  rankedPracticeRatingDelta: number | null,
+): AccountHistoryRow | null {
+  if (state.authority === 2 && state.game?.outcome.terminal) {
+    const game = state.game;
+    const viewerSeat = game.viewerSeat;
+    const opponent = game.players.find((player) => player.seat !== viewerSeat);
+    const guesses = game.moves.filter((move) => move.type === 'guess' && move.seat === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: game.endedAt ?? game.updatedAt,
+      entry: {
+        schemaVersion: 3,
+        kind: game.scope === 'daily' ? 'combat-daily' : 'combat-practice',
+        lane: game.scope,
+        mode: game.mode,
+        ranked: game.ranked,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.outcome.winnerSeat === viewerSeat
+              ? 'won'
+              : game.outcome.winnerSeat
+                ? 'lost'
+                : 'draw',
+        terminalReason: game.outcome.reason ?? game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? (game.goPuzzleCount ?? 5) : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: game.playerState[viewerSeat].puzzlesSolved,
+        points: game.playerState[viewerSeat].points,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ...(game.dailyDateKey === undefined ? {} : { dailyDate: game.dailyDateKey }),
+        ratingDelta: game.ranked ? rankedPracticeRatingDelta : null,
+        revealedAnswers: game.revealedAnswers ?? [],
+        ...(opponent
+          ? {
+              opponent: {
+                ...(opponent.publicProfileId === undefined
+                  ? {}
+                  : { publicProfileId: opponent.publicProfileId }),
+                displayName: opponent.displayName || 'Rival',
+              },
+            }
+          : {}),
+      },
+    });
+  }
+
+  if (state.authority === 1 && state.rankedDaily) {
+    const game = state.rankedDaily;
+    if (!['won', 'lost', 'cancelled'].includes(game.status)) return null;
+    const viewerSeat = game.playerUserIds['player-one'] === userId ? 'player-one' : 'player-two';
+    const guesses = game.moves.filter((move) => move.playerId === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    const solved = new Set(
+      guesses
+        .filter((move) => move.tiles.every((tile) => tile.state === 'correct'))
+        .map((move) => move.puzzleIndex),
+    ).size;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: game.endedAt ?? game.updatedAt,
+      entry: {
+        schemaVersion: 2,
+        kind: 'combat-daily',
+        lane: 'daily',
+        mode: game.mode,
+        ranked: true,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.winnerId === viewerSeat
+              ? 'won'
+              : game.winnerId
+                ? 'lost'
+                : 'draw',
+        terminalReason: game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? 5 : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: solved,
+        points: solved,
+        rewardCoins: 0,
+        rewardXp: 0,
+        dailyDate: game.dailyDateKey,
+        ratingDelta: null,
+        opponent: { displayName: 'Rival' },
+      },
+    });
+  }
+
+  if (state.authority === 0 && state.legacy) {
+    const row = state.legacy;
+    const game = row.projection;
+    if (!['won', 'lost', 'cancelled'].includes(game.status)) return null;
+    const viewerSeat =
+      row.player_one_user_id === userId
+        ? 'player-one'
+        : row.player_two_user_id === userId
+          ? 'player-two'
+          : null;
+    if (!viewerSeat) return null;
+    const guesses = game.moves.filter((move) => move.seat === viewerSeat);
+    if (game.status === 'cancelled' && guesses.length === 0) return null;
+    const solved = new Set(
+      guesses
+        .filter((move) => move.tiles.every((tile) => tile.state === 'correct'))
+        .map((move) => move.puzzleIndex ?? 0),
+    ).size;
+    return historyRowSchema.parse({
+      id: `combat:${game.id}:${viewerSeat}`,
+      user_id: userId,
+      completed_at: row.updated_at,
+      entry: {
+        schemaVersion: 3,
+        kind: 'combat-practice',
+        lane: 'practice',
+        mode: game.mode,
+        ranked: false,
+        result:
+          game.status === 'cancelled'
+            ? 'cancelled'
+            : game.winnerSeat === viewerSeat
+              ? 'won'
+              : 'lost',
+        terminalReason: game.status,
+        wordLength: game.wordLength,
+        difficulty: game.difficulty,
+        hardMode: game.hardMode,
+        goPuzzleCount: game.mode === 'go' ? game.goPuzzleCount : null,
+        acceptedGuesses: guesses.length,
+        puzzlesSolved: solved,
+        points: solved,
+        rewardCoins: 0,
+        rewardXp: 0,
+        ratingDelta: null,
+        revealedAnswers: [game.answer],
+        opponent: { displayName: 'Rival' },
+      },
+    });
+  }
+
+  return null;
+}

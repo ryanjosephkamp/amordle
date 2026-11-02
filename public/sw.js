@@ -1,0 +1,110 @@
+/*
+ * The version arrives on the registration URL (`/sw.js?v=<build>`) rather than being
+ * hardcoded here, because this file is static and byte-stable: without it the browser's
+ * update check never sees a change, the worker never re-installs, and the `activate`
+ * purge below never runs. Registering a different script URL installs unconditionally,
+ * which is what actually evicts a stale precached shell.
+ */
+const VERSION = new URL(self.location.href).searchParams.get('v') || 'dev';
+const CACHE = `amordle-shell-${VERSION}`;
+const PRESERVED_CACHE_PREFIXES = ['amordle-public-word-lists-'];
+const SAFE_SHELL = ['/', '/play', '/play/solo', '/help', '/about'];
+
+self.addEventListener('install', (event) => {
+  event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(SAFE_SHELL)));
+});
+
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys
+            .filter(
+              (key) =>
+                key !== CACHE && !PRESERVED_CACHE_PREFIXES.some((prefix) => key.startsWith(prefix)),
+            )
+            .map((key) => caches.delete(key)),
+        ),
+      ),
+  );
+});
+
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') self.skipWaiting();
+});
+
+self.addEventListener('fetch', (event) => {
+  const url = new URL(event.request.url);
+  if (
+    event.request.method === 'GET' &&
+    url.origin === self.location.origin &&
+    url.pathname.startsWith('/_next/static/')
+  ) {
+    event.respondWith(
+      caches.match(event.request).then(
+        (cached) =>
+          cached ??
+          fetch(event.request).then((response) => {
+            if (response.ok) {
+              const copy = response.clone();
+              void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+            }
+            return response;
+          }),
+      ),
+    );
+    return;
+  }
+  if (
+    event.request.method !== 'GET' ||
+    url.origin !== self.location.origin ||
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/word-lists/') ||
+    url.pathname.startsWith('/auth') ||
+    url.pathname.startsWith('/combat') ||
+    event.request.headers.has('authorization')
+  ) {
+    return;
+  }
+  if (url.pathname === '/words') {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches
+            .match(event.request)
+            .then(async (cached) => cached ?? (await caches.match('/words')) ?? caches.match('/')),
+        ),
+    );
+    return;
+  }
+  if (url.pathname.startsWith('/play/solo/')) {
+    event.respondWith(
+      fetch(event.request)
+        .then((response) => {
+          if (response.ok) {
+            const copy = response.clone();
+            void caches.open(CACHE).then((cache) => cache.put(event.request, copy));
+          }
+          return response;
+        })
+        .catch(() =>
+          caches.match(event.request).then((cached) => cached ?? caches.match('/play/solo')),
+        ),
+    );
+    return;
+  }
+  event.respondWith(
+    fetch(event.request).catch(() =>
+      caches.match(event.request).then((cached) => cached ?? caches.match('/')),
+    ),
+  );
+});

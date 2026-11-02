@@ -1,0 +1,5466 @@
+/*
+ * Quiet System Shell
+ *
+ * This presentation layer keeps the Alt-Screen TUI typography and interaction
+ * grammar while removing the faux desktop-window frame. The application is a
+ * single adaptive browser surface; active games own a contained viewport.
+ */
+
+:root {
+  --tui-font:
+    ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Monaco, Consolas, var(--font-geist-mono),
+    monospace;
+  --background: oklch(0.975 0.006 220);
+  --surface: oklch(0.955 0.008 220);
+  --surface-strong: oklch(0.895 0.014 220);
+  --surface-inset: oklch(0.99 0.003 220);
+  --ink: oklch(0.19 0.018 225);
+  --muted: oklch(0.42 0.018 225);
+  --border: oklch(0.68 0.02 220);
+  --accent: oklch(0.66 0.14 165);
+  --accent-text: oklch(0.4 0.12 165);
+  --accent-ink: oklch(0.12 0.025 180);
+  --accent-soft: oklch(0.89 0.045 165);
+  --correct: oklch(0.57 0.14 145);
+  --correct-text: oklch(0.39 0.13 145);
+  --present: oklch(0.68 0.14 85);
+  --present-text: oklch(0.4 0.11 85);
+  /*
+   * Ink for text sitting ON the semantic present fill. Semantic colors never inherit
+   * the player accent, and `.badge` was pairing this
+   * background with `--accent-ink` — which a custom accent flips to white, giving 2.02:1.
+   * `--present` is a light amber in both schemes, so one near-black serves both.
+   */
+  --present-solid-ink: oklch(0.14 0.02 85);
+  --accent-soft-muted: var(--muted);
+  --absent: oklch(0.55 0.018 220);
+  --removed: oklch(0.5 0.06 25);
+  --key-unknown-background: oklch(0.84 0.04 165);
+  --key-unknown-border: oklch(0.54 0.08 165);
+  --key-unknown-ink: oklch(0.18 0.03 175);
+  --key-absent-background: oklch(0.18 0.01 220);
+  --key-absent-border: oklch(0.34 0.018 220);
+  --key-absent-ink: oklch(0.96 0.006 210);
+  --danger: oklch(0.56 0.19 28);
+  /*
+   * W4b. The ink counterpart to `--danger`, completing the pair that `--correct-text` and
+   * `--present-text` already establish. `--danger` is tuned to sit on the page background,
+   * where it measures 4.77:1 — but a history row flips to `--accent-soft` on hover, and
+   * there the same red drops to 3.76:1. Every semantic fill in this system has a darker
+   * text sibling for exactly this reason; red was the one that never needed it until now.
+   */
+  --danger-text: oklch(0.42 0.16 28);
+  --attention-background: var(--accent);
+  --attention-ink: var(--accent-ink);
+  --focus: oklch(0.58 0.15 165);
+  --terminal-glass: oklch(0.975 0.006 220 / 0.92);
+  --terminal-title: oklch(0.88 0.008 220 / 0.96);
+  --terminal-selected: oklch(0.24 0.025 225);
+  --terminal-selected-ink: oklch(0.98 0.004 220);
+  --terminal-selected-muted: oklch(0.86 0.01 220);
+  /*
+   * The canonical foreground for any control painting the `--terminal-selected`
+   * surface, in either scheme. In dark scheme that surface is a near-white and this
+   * resolves to the near-black seen on Profile.
+   */
+  --control-ink-on-selected: var(--terminal-selected-ink);
+  /*
+   * Disabled controls must clear 3:1 while staying unmistakably disabled. State is
+   * never carried by this alone — disabled controls also keep `cursor: not-allowed`
+   * and, where it matters, an explicit textual label (APP-06.d).
+   */
+  --control-disabled-opacity: 0.74;
+  --field-surface: oklch(0.925 0.01 220);
+  --field-surface-hover: oklch(0.895 0.014 220);
+  --field-border: oklch(0.56 0.025 220);
+  --field-placeholder: oklch(0.4 0.018 225);
+  --terminal-rule: 1px solid var(--border);
+  --control-height: 2.75rem;
+  --radius-control: 0.125rem;
+  --radius-panel: 0;
+}
+
+/*
+ * The six NAMED accents are scoped to a bare attribute rather than `:root[data-accent]`, so
+ * any subtree can carry its own accent. The Help COMBAT figure needs exactly that: two
+ * keyboards belonging to two players, one of whom is the viewer. Scoped to `:root` those
+ * attributes matched nothing on a nested element and both keyboards silently rendered in
+ * the page accent.
+ *
+ * Specificity drops from (0,2,0) to (0,1,0), which equals the base `:root` block above —
+ * these still win because they are declared after it.
+ *
+ * `custom` deliberately stays at `:root`. It is driven by fourteen `--custom-*` variables
+ * that only a signed-in account's active preset supplies, and `accent-preset-dialog` puts
+ * `data-accent="custom"` on a non-root node; leaving it scoped keeps that inert instead of
+ * repainting the dialog from variables that may not exist.
+ */
+[data-accent='ice'] {
+  --accent: oklch(0.68 0.085 210);
+  --accent-text: oklch(0.43 0.095 210);
+  --accent-ink: oklch(0.12 0.025 225);
+  --accent-soft: oklch(0.9 0.035 210);
+  --focus: oklch(0.61 0.11 210);
+  --key-unknown-background: oklch(0.86 0.035 210);
+  --key-unknown-border: oklch(0.58 0.07 210);
+  --key-unknown-ink: oklch(0.2 0.025 220);
+}
+
+[data-accent='aurora'] {
+  --accent: oklch(0.66 0.14 165);
+  --accent-text: oklch(0.4 0.12 165);
+  --accent-ink: oklch(0.12 0.025 180);
+  --accent-soft: oklch(0.89 0.045 165);
+  --focus: oklch(0.58 0.15 165);
+  --key-unknown-background: oklch(0.84 0.04 165);
+  --key-unknown-border: oklch(0.54 0.08 165);
+  --key-unknown-ink: oklch(0.18 0.03 175);
+}
+
+[data-accent='cyan'] {
+  --accent: oklch(0.62 0.13 215);
+  --accent-text: oklch(0.45 0.13 215);
+  --accent-ink: oklch(0.12 0.025 225);
+  --accent-soft: oklch(0.88 0.045 215);
+  --focus: oklch(0.62 0.13 215);
+  --key-unknown-background: oklch(0.78 0.035 220);
+  --key-unknown-border: oklch(0.56 0.045 215);
+  --key-unknown-ink: oklch(0.22 0.025 225);
+}
+
+[data-accent='violet'] {
+  --accent: oklch(0.64 0.16 295);
+  --accent-text: oklch(0.43 0.15 295);
+  --accent-ink: oklch(0.13 0.025 295);
+  --accent-soft: oklch(0.89 0.045 295);
+  --focus: oklch(0.59 0.17 295);
+  --key-unknown-background: oklch(0.84 0.04 295);
+  --key-unknown-border: oklch(0.56 0.09 295);
+  --key-unknown-ink: oklch(0.2 0.03 295);
+}
+
+[data-accent='rose'] {
+  --accent: oklch(0.65 0.16 15);
+  --accent-text: oklch(0.43 0.15 15);
+  --accent-ink: oklch(0.13 0.025 15);
+  --accent-soft: oklch(0.9 0.045 15);
+  --focus: oklch(0.59 0.17 15);
+  --key-unknown-background: oklch(0.85 0.04 15);
+  --key-unknown-border: oklch(0.56 0.09 15);
+  --key-unknown-ink: oklch(0.2 0.03 15);
+}
+
+[data-accent='amber'] {
+  --accent: oklch(0.73 0.14 80);
+  --accent-text: oklch(0.4 0.105 80);
+  --accent-ink: oklch(0.14 0.025 80);
+  --accent-soft: oklch(0.91 0.045 80);
+  --focus: oklch(0.61 0.14 80);
+  --key-unknown-background: oklch(0.84 0.035 75);
+  --key-unknown-border: oklch(0.55 0.08 75);
+  --key-unknown-ink: oklch(0.2 0.025 75);
+}
+
+:root[data-accent='custom'] {
+  --accent: var(--custom-accent);
+  --accent-text: var(--custom-accent-text-light);
+  --accent-ink: var(--custom-accent-ink);
+  --accent-soft: var(--custom-accent-soft-light);
+  --accent-soft-muted: var(--custom-accent-soft-muted-light);
+  --focus: var(--custom-focus-light);
+  --key-unknown-background: var(--custom-key-background-light);
+  --key-unknown-border: var(--custom-key-border-light);
+  --key-unknown-ink: var(--custom-key-ink-light);
+  --attention-background: var(--custom-accent);
+  --attention-ink: var(--custom-accent-ink);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: oklch(0.12 0.012 225);
+    --surface: oklch(0.16 0.014 225);
+    --surface-strong: oklch(0.23 0.018 225);
+    --surface-inset: oklch(0.105 0.01 225);
+    --ink: oklch(0.91 0.008 205);
+    --muted: oklch(0.67 0.014 210);
+    --border: oklch(0.38 0.018 220);
+    --accent: oklch(0.76 0.13 165);
+    --accent-text: oklch(0.8 0.12 165);
+    --accent-ink: oklch(0.12 0.025 225);
+    --accent-soft: oklch(0.25 0.045 165);
+    --correct: oklch(0.7 0.15 145);
+    --correct-text: oklch(0.79 0.13 145);
+    --present: oklch(0.78 0.14 85);
+    --present-text: oklch(0.82 0.11 85);
+    --present-solid-ink: oklch(0.14 0.02 85);
+    --accent-soft-muted: var(--muted);
+    --absent: oklch(0.47 0.018 220);
+    --removed: oklch(0.65 0.07 25);
+    --key-unknown-background: oklch(0.24 0.05 165);
+    --key-unknown-border: oklch(0.48 0.09 165);
+    --key-unknown-ink: oklch(0.94 0.01 210);
+    --key-absent-background: oklch(0.11 0.01 220);
+    --key-absent-border: oklch(0.34 0.018 220);
+    --key-absent-ink: oklch(0.94 0.008 205);
+    --danger: oklch(0.7 0.18 28);
+    --danger-text: oklch(0.8 0.13 28);
+    --attention-background: var(--accent);
+    --attention-ink: var(--accent-ink);
+    --focus: oklch(0.77 0.14 165);
+    --terminal-glass: oklch(0.105 0.01 225 / 0.92);
+    --terminal-title: oklch(0.22 0.012 225 / 0.96);
+    --terminal-selected: oklch(0.9 0.008 205);
+    --terminal-selected-ink: oklch(0.13 0.015 225);
+    --terminal-selected-muted: oklch(0.34 0.018 225);
+    --field-surface: oklch(0.205 0.016 225);
+    --field-surface-hover: oklch(0.245 0.02 225);
+    --field-border: oklch(0.49 0.025 220);
+    --field-placeholder: oklch(0.72 0.014 210);
+    /*
+     * On a near-black ground a tinted shadow is invisible, so the dark scheme deepens
+     * to true black at a higher alpha. Composing from these two names means the three
+     * elevation levels themselves are declared once, in globals.css.
+     */
+    --shadow-color: oklch(0 0 0 / 0.5);
+    --shadow-color-strong: oklch(0 0 0 / 0.72);
+  }
+
+  [data-accent='ice'] {
+    --accent: oklch(0.8 0.075 210);
+    --accent-text: oklch(0.82 0.075 210);
+    --accent-soft: oklch(0.26 0.04 210);
+    --focus: oklch(0.8 0.085 210);
+    --key-unknown-background: oklch(0.25 0.04 210);
+    --key-unknown-border: oklch(0.5 0.07 210);
+    --key-unknown-ink: oklch(0.95 0.01 210);
+  }
+
+  [data-accent='aurora'] {
+    --accent: oklch(0.76 0.13 165);
+    --accent-text: oklch(0.8 0.12 165);
+    --accent-soft: oklch(0.25 0.045 165);
+    --focus: oklch(0.77 0.14 165);
+    --key-unknown-background: oklch(0.24 0.05 165);
+    --key-unknown-border: oklch(0.48 0.09 165);
+    --key-unknown-ink: oklch(0.95 0.01 165);
+  }
+
+  [data-accent='cyan'] {
+    --accent: oklch(0.76 0.12 210);
+    --accent-text: oklch(0.78 0.11 210);
+    --accent-soft: oklch(0.25 0.045 210);
+    --focus: oklch(0.76 0.12 210);
+    --key-unknown-background: oklch(0.25 0.035 220);
+    --key-unknown-border: oklch(0.47 0.045 215);
+    --key-unknown-ink: oklch(0.94 0.01 210);
+  }
+
+  [data-accent='violet'] {
+    --accent: oklch(0.76 0.14 295);
+    --accent-text: oklch(0.81 0.12 295);
+    --accent-soft: oklch(0.26 0.045 295);
+    --focus: oklch(0.77 0.15 295);
+    --key-unknown-background: oklch(0.25 0.05 295);
+    --key-unknown-border: oklch(0.49 0.09 295);
+    --key-unknown-ink: oklch(0.95 0.01 295);
+  }
+
+  [data-accent='rose'] {
+    --accent: oklch(0.75 0.14 15);
+    --accent-text: oklch(0.8 0.12 15);
+    --accent-soft: oklch(0.25 0.045 15);
+    --focus: oklch(0.76 0.15 15);
+    --key-unknown-background: oklch(0.25 0.05 15);
+    --key-unknown-border: oklch(0.49 0.09 15);
+    --key-unknown-ink: oklch(0.95 0.01 15);
+  }
+
+  [data-accent='amber'] {
+    --accent: oklch(0.8 0.13 80);
+    --accent-text: oklch(0.84 0.11 80);
+    --accent-soft: oklch(0.27 0.045 80);
+    --focus: oklch(0.81 0.14 80);
+    --key-unknown-background: oklch(0.25 0.04 70);
+    --key-unknown-border: oklch(0.48 0.08 70);
+    --key-unknown-ink: oklch(0.95 0.01 75);
+  }
+
+  :root[data-accent='custom'] {
+    --accent: var(--custom-accent);
+    --accent-text: var(--custom-accent-text-dark);
+    --accent-ink: var(--custom-accent-ink);
+    --accent-soft: var(--custom-accent-soft-dark);
+    --accent-soft-muted: var(--custom-accent-soft-muted-dark);
+    --focus: var(--custom-focus-dark);
+    --key-unknown-background: var(--custom-key-background-dark);
+    --key-unknown-border: var(--custom-key-border-dark);
+    --key-unknown-ink: var(--custom-key-ink-dark);
+    --attention-background: var(--custom-accent);
+    --attention-ink: var(--custom-accent-ink);
+  }
+}
+
+/*
+ * V7-12. The hardcoded dark page background and the two decorative radial gradients are
+ * gone. They belonged to the faux-desktop-window generation of this shell, were painted
+ * unconditionally outside any scheme query, and were already overridden further down by
+ * `html, body { background: var(--background) }` — so they never reached a rendered page
+ * in either scheme. What remains here is the live typographic base.
+ */
+body {
+  position: relative;
+  min-height: 100dvh;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-3);
+  line-height: 1.45;
+}
+
+button,
+input,
+select,
+textarea {
+  font-family: var(--tui-font);
+}
+
+button,
+.button {
+  border: var(--terminal-rule);
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink);
+  font-size: var(--text-2);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+button:hover,
+.button:hover {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * V7.2-01. When a control flips to the inverse `--terminal-selected` surface, plain
+ * descendant text must stop painting `--muted` on it — surface and ink travel together.
+ *
+ * The exclusion is the point. A descendant that carries its OWN background is not plain
+ * text on the control's surface; it is a surface of its own, and forcing it to inherit
+ * strips its ink while leaving its background. `.attention-badge` — the alerts count —
+ * is a `<span>` inside the alerts `<button>`, so it matched here and inherited the
+ * trigger's muted gray while keeping its accent fill: 6.93:1 at rest, 2.89:1 hovered,
+ * across every accent. On touch the hover latches after a tap, so it was the state a
+ * phone user saw for as long as the panel stayed open. This also beat the forced-colors
+ * override for the same element, since a media query adds no specificity.
+ *
+ * Two branches below are currently dead — no `.primary` button in the app contains a
+ * `p`, `small` or `span` — and the `[aria-current]` / `[aria-pressed]` branches are
+ * covered by narrower rules further down. They are kept because the intent is sound and
+ * deleting them buys nothing; the contrast sweep now forces hover and focus on
+ * accent-backed surfaces, so a regression here is caught rather than shipped.
+ */
+button:hover :is(p, small, span):not(.attention-badge, .badge),
+.button:hover :is(p, small, span):not(.attention-badge, .badge),
+.button.primary :is(p, small, span):not(.attention-badge, .badge),
+button.primary :is(p, small, span):not(.attention-badge, .badge),
+[aria-current='page'] :is(p, small, span):not(.attention-badge, .badge),
+[aria-pressed='true'] :is(p, small, span):not(.attention-badge, .badge) {
+  color: inherit;
+}
+
+button:active,
+.button:active {
+  translate: 0;
+}
+
+.button.primary,
+button.primary {
+  border-color: var(--terminal-selected);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+  text-transform: lowercase;
+}
+
+.button.primary:hover,
+button.primary:hover {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.skip-link {
+  border-radius: 0;
+  font-family: var(--tui-font);
+}
+
+.global-chrome {
+  position: sticky;
+  z-index: var(--z-chrome);
+  top: 0;
+  border-bottom: var(--terminal-rule);
+  background: color-mix(in oklch, var(--terminal-glass) 92%, transparent);
+}
+
+.context-ready {
+  color: var(--correct-text);
+}
+
+.context-ready::before {
+  content: '● ';
+}
+
+.wordmark {
+  min-width: 8rem;
+  gap: var(--space-3);
+  border-inline-end: var(--terminal-rule);
+  padding: 0 var(--space-4);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.wordmark span {
+  color: var(--accent-text);
+}
+
+/*
+ * V7-04. `flex: 1` gave the navigation a zero basis and a grow factor, so it split the
+ * toolbar's free space evenly with the breadcrumb instead of taking the width its items
+ * actually need. At 1440px that left it 496px for 513px of content and silently clipped
+ * the last route through `overflow-x: auto`. It now sizes to its content and may still
+ * shrink and scroll when genuinely squeezed; the breadcrumb absorbs the remaining space
+ * and truncates with an ellipsis, which is already its designed and tested behavior.
+ */
+.desktop-nav {
+  display: flex;
+  min-width: 0;
+  flex: 0 1 auto;
+  align-items: stretch;
+  overflow-x: auto;
+}
+
+.desktop-nav a,
+.more-menu > button,
+.notification-menu > button {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: var(--space-3);
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: 550;
+  letter-spacing: 0;
+  text-decoration: none;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.desktop-nav a kbd {
+  color: color-mix(in oklch, var(--muted) 72%, transparent);
+  font: inherit;
+}
+
+.desktop-nav a .nav-marker {
+  width: 0.7rem;
+  color: var(--accent-text);
+}
+
+/*
+ * V7-06. "You are here" was a solid inverse block — the loudest element on most pages,
+ * for the weakest statement on them. It is now a 2px accent underline sitting on the
+ * toolbar's own bottom rule, with the label stepping up from muted to full ink. Hover
+ * takes a faint tint of the same accent, so the two states are visibly related without
+ * either shouting. Inverse selection is retained elsewhere for genuine selection.
+ */
+.desktop-nav a {
+  position: relative;
+}
+
+.desktop-nav a[aria-current='page'] {
+  background: transparent;
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.desktop-nav a[aria-current='page']::after {
+  position: absolute;
+  right: var(--space-4);
+  bottom: -1px;
+  left: var(--space-4);
+  height: 2px;
+  background: var(--accent);
+  content: '';
+}
+
+.desktop-nav a:hover {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+  color: var(--ink);
+  box-shadow: none;
+}
+
+.desktop-nav a[aria-current='page'] kbd,
+.desktop-nav a:hover kbd,
+.desktop-nav a[aria-current='page'] .nav-marker {
+  color: inherit;
+}
+
+.topbar-tools,
+.account-summary {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: stretch;
+}
+
+.account-summary {
+  border-inline-start: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--tui-font);
+}
+
+.account-summary a {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.more-menu > button,
+.notification-menu > button {
+  min-height: 2.75rem;
+  border-inline-start: 0;
+}
+
+.menu-popover {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  top: max(7.3rem, var(--chrome-bottom, 0px));
+  right: max(1.75rem, calc((100vw - 96rem) / 2 + 0.75rem));
+  width: min(21rem, calc(100vw - 2rem));
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  box-shadow: var(--elevation-2);
+}
+
+.menu-heading,
+.menu-footer {
+  position: relative;
+  min-height: 1.15rem;
+  border: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-4) var(--space-2);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  letter-spacing: 0;
+  white-space: nowrap;
+}
+
+.menu-heading::before,
+.menu-heading::after,
+.menu-footer::before,
+.menu-footer::after {
+  position: absolute;
+  inset-inline: 0.45rem;
+  height: 0.55rem;
+  border-inline: var(--terminal-rule);
+  content: '';
+}
+
+.menu-heading::before {
+  top: 0.28rem;
+  border-top: var(--terminal-rule);
+}
+
+.menu-heading span {
+  position: relative;
+  z-index: 1;
+  background: var(--surface-inset);
+  padding-inline: var(--space-2);
+}
+
+.menu-footer {
+  padding-block: var(--space-1) var(--space-3);
+}
+
+.menu-footer::before {
+  bottom: 0.28rem;
+  border-bottom: var(--terminal-rule);
+}
+
+.menu-popover a {
+  display: block;
+  min-height: 2.5rem;
+  border: 0;
+  padding: var(--space-4) var(--space-5);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  text-decoration: none;
+}
+
+.menu-popover a:hover,
+.menu-popover a:focus-visible {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.badge {
+  border: 0;
+  border-radius: 0;
+  background: var(--present);
+  color: var(--present-solid-ink);
+  font-family: var(--tui-font);
+}
+
+.attention-badge {
+  border: 0;
+  border-radius: 0;
+  background: var(--attention-background);
+  color: var(--attention-ink);
+  font-family: var(--tui-font);
+}
+
+.notification-popover {
+  padding: var(--space-4);
+}
+
+/*
+ * `.menu-popover a { display: block }` above has the same specificity as the
+ * notification row's own display, and used to lose only on source order — the status and
+ * timestamp collapsed into one inline run with no separator at all ("Match ready8/2/2026,
+ * 4:40:46 PM"). The selector below is scoped to the popover so it outranks that rule
+ * outright rather than depending on which of two equal-specificity rules comes last.
+ */
+/*
+ * Stacked lines, not a grid.
+ *
+ * History of this row: it was auto-placed grid children with an implicit second row and a
+ * baseline group spanning both, which is exactly where Gecko and Blink diverge, and on
+ * Firefox for Android the title painted on top of the date. the redesign replaced that with
+ * named areas, explicitly sized rows, and `align-items: start` — provably engine-
+ * independent in Chromium, Gecko and WebKit on the desktop, and the overlap was
+ * still reported on a phone afterwards.
+ *
+ * Desktop Gecko does not reproduce it, with or without `:has()`, so there is nothing here
+ * to debug against. What can be done instead is to stop asking any engine to place
+ * anything: the row is a column of two block-level lines, and each line is a single flex
+ * line. Block boxes in normal flow cannot overlap one another, and a flex line cannot
+ * spill onto the line above it. There is no placement decision left for an engine to get
+ * wrong.
+ *
+ * The mobile shape is likewise a column rather than a wrapped row, so no flex line ever
+ * has to wrap and no baseline group can span one.
+ */
+.notification-popover .notification-list a {
+  display: flex;
+  /*
+   * `min-width: 0` because the row is itself a flex item of the list, and a flex item's
+   * default `min-width: auto` refuses to shrink below its content's minimum — here the
+   * whole untruncated title plus the timestamp, which overflowed the popover by 75px.
+   * The grid this replaced hid the same problem inside `minmax(0, 1fr)`.
+   */
+  min-width: 0;
+  /*
+   * Never shrink. The row is a flex item of a scrolling column, and a
+   * row that gives up height to fit is a row whose second line lands on the next row's
+   * border — which is exactly what a height-constrained grid was doing here before.
+   */
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: var(--space-1);
+  border-block-start: var(--terminal-rule);
+}
+
+.notification-head,
+.notification-summary {
+  display: flex;
+  min-width: 0;
+  gap: var(--space-4);
+  justify-content: space-between;
+}
+
+.notification-head {
+  align-items: baseline;
+}
+
+.notification-summary {
+  align-items: center;
+}
+
+.notification-stamp {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-4);
+  align-items: baseline;
+}
+
+.notification-status {
+  min-width: 0;
+  overflow: hidden;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-detail {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.notification-list a.is-unread .notification-detail {
+  color: var(--accent-soft-muted);
+}
+
+.notification-list a:hover .notification-detail,
+.notification-list a:focus-visible .notification-detail {
+  color: var(--terminal-selected-muted);
+}
+
+/*
+ * The board snapshot: evidence color only, at a size that reads as a shape
+ * rather than as tiles. It never grows a line on its own and never takes the line's
+ * remaining width.
+ */
+.notification-board {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.notification-board-row {
+  display: grid;
+  grid-template-columns: repeat(var(--snapshot-columns, 5), 0.3rem);
+  gap: 1px;
+}
+
+/*
+ * The three fills are the board's own evidence tokens, not new colors, so the
+ * snapshot reads as the same board seen from further away. At this size the tiles are
+ * solid rather than the board's tinted `color-mix` — a 31% wash over four pixels is
+ * indistinguishable from empty.
+ */
+.notification-board-tile {
+  display: block;
+  block-size: 0.3rem;
+  border: 1px solid var(--key-absent-border);
+  background: var(--key-absent-background);
+}
+
+.notification-board-tile.is-correct {
+  border-color: var(--correct);
+  background: var(--correct);
+}
+
+.notification-board-tile.is-present {
+  border-color: var(--present);
+  background: var(--present);
+}
+
+/*
+ * The lanes. Chips rather than a select, because the counts have to be visible
+ * without opening anything — the point of the filter is to answer "is there anything
+ * waiting on me" before you decide to read the list.
+ */
+.notification-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding-block: var(--space-3);
+}
+
+/*
+ * A chip declares its own rest surface, so — per the rule `.segmented` states above —
+ * it must declare its own ink too. Omitting `color` leaves `button:hover` painting
+ * `--control-ink-on-selected` on a surface that never flipped: in the dark scheme the
+ * selected surface is light and its ink is near-black, so a chip keeping `--surface`
+ * measured 1.04:1 on hover for every accent.
+ */
+.notification-filters button {
+  display: inline-flex;
+  gap: var(--space-2);
+  align-items: center;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  text-transform: lowercase;
+}
+
+.notification-filters button.is-selected {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+  color: var(--ink);
+}
+
+/* Last, so hover and focus win over selection at equal specificity — a hovered chip
+   takes the shell's inverse surface whether or not it is the current lane. */
+.notification-filters button:hover,
+.notification-filters button:focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * The count inherits its chip's ink. It is deliberately not accent-colored.
+ *
+ * Accent ink was tried and measured on all three surfaces a chip can present, and it
+ * failed on every one: 3.60:1 on `--accent-soft` when selected, 4.26:1 on `--surface`
+ * at rest, and as low as 1.01:1 on the inverse `--terminal-selected` surface under
+ * hover and focus — the last being the same defect as the alerts badge, a colored
+ * descendant keeping its ink while its container flips surface.
+ *
+ * There is no color to rescue here, because color was never carrying meaning: the
+ * number is already a number, and weight plus tabular figures set it apart from the
+ * label. Inheriting means it is correct on every surface by construction.
+ */
+.notification-filter-count {
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+  font-weight: 650;
+}
+
+.notification-list a.is-unread :is(.notification-date, .notification-time) {
+  color: var(--accent-soft-muted);
+}
+
+/*
+ * V7.2-02. Hovering or focusing a notification row flips it to the inverse
+ * `--terminal-selected` surface, but the date and time are `<time>` elements carrying
+ * their own muted ink, so they kept painting gray on the dark slab — 1.94:1, and worse
+ * on an unread row where the tint had already been accounted for. `<time>` is not in
+ * the `:is(p, small, span)` list above, so nothing was correcting it.
+ *
+ * `--terminal-selected-muted` is the token that exists for exactly this: secondary text
+ * that stays secondary on a selected surface. Same treatment `.route-link:hover span`
+ * already uses. Placed after the unread rule so it wins at equal specificity.
+ */
+.notification-list a:hover :is(.notification-date, .notification-time),
+.notification-list a:focus-visible :is(.notification-date, .notification-time) {
+  color: var(--terminal-selected-muted);
+}
+
+.notification-date,
+.notification-time {
+  color: var(--muted);
+  font-size: var(--text-1);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
+}
+
+/*
+ * The unread marker rides the status text, not the link. As a child of the flex row it
+ * would become a flex item of its own and take a slot in the line.
+ */
+.notification-list a.is-unread .notification-status::before {
+  color: var(--accent-text);
+  content: '● ';
+}
+
+/*
+ * Same cause as the `<time>` elements repaired above it, one element further out:
+ * the unread bullet keeps `--accent-text` when the row flips to `--terminal-selected`,
+ * measuring as low as 1.01:1. On touch the hover state latches after a tap, so this is
+ * not a flicker — it is the state for as long as the panel stays open.
+ */
+.notification-list a.is-unread:hover .notification-status::before,
+.notification-list a.is-unread:focus-visible .notification-status::before {
+  color: var(--terminal-selected-muted);
+}
+
+@media (max-width: 47.99rem) {
+  /*
+   * At phone widths the head becomes a column too, rather than a row that
+   * wraps.
+   *
+   * Wrapping is the last place a line could have interacted with the line above it, and
+   * a wrapped flex line with `align-items: baseline` is the flexbox analogue of the grid
+   * construct that started all of this. Stacking removes it: title on its own line,
+   * then date and time pushed to the two ends of the line below.
+   */
+  .notification-head {
+    flex-direction: column;
+    gap: var(--space-1);
+    align-items: stretch;
+  }
+
+  .notification-status {
+    white-space: normal;
+  }
+
+  .notification-date {
+    text-align: left;
+  }
+}
+
+#main-content {
+  min-width: 0;
+}
+
+.route-frame {
+  width: min(112rem, 100%);
+  max-width: 100%;
+  min-height: 100%;
+  margin-inline: auto;
+  padding: clamp(0.8rem, 2vw, 1.5rem);
+}
+
+.route-frame.is-narrow {
+  width: min(96rem, 100%);
+  margin-inline: auto;
+}
+
+.route-header {
+  margin: 0 0 var(--space-5);
+  padding: 0;
+}
+
+/*
+ * V7-02. The prompt glyph occupies a fixed `--marker-gutter` column instead of an
+ * `auto` one with a gap, so the heading text starts at the same offset on every
+ * route regardless of the glyph, and the intro paragraph can hang from that same
+ * column. The trailing rule takes its own leading space rather than inheriting the
+ * grid gap, which previously also pushed the heading right.
+ */
+.route-title-line {
+  display: grid;
+  grid-template-columns: var(--marker-gutter) auto minmax(2rem, 1fr);
+  gap: 0;
+  align-items: center;
+}
+
+.route-prompt {
+  width: auto !important;
+  height: auto !important;
+  flex: 0 0 auto !important;
+  background: none !important;
+  color: var(--accent-text);
+  font-size: var(--text-4);
+}
+
+.route-title-line > span:last-child {
+  height: 0;
+  margin-inline-start: var(--space-5);
+  border-top: var(--terminal-rule);
+}
+
+.route-header h1 {
+  margin: 0;
+  font-family: var(--tui-font);
+  font-size: var(--text-5);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-wrap: balance;
+}
+
+/*
+ * V7-02. The old `margin-left: 1.65rem` (26.4px) matched nothing else on the page —
+ * not the 24px frame gutter, not the heading text, not the region label — and gave
+ * every route a third left edge in its first 120 pixels. Route intros now hang from
+ * the same `--marker-gutter` column as the heading text; standalone prose inside a
+ * region body takes no indent at all, because the region already provides one.
+ * Vertical rhythm is owned solely by the header's flex gap.
+ */
+.route-header p,
+.prose {
+  max-width: 72ch;
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+.route-header p {
+  margin-inline-start: var(--marker-gutter);
+}
+
+/*
+ * V7.1-01. Prose lists. The app had no list rules outside three bespoke teaching aids,
+ * so a `<ul>` in an intro or a Help section fell to the browser default: a 40px indent
+ * that ignores `--marker-gutter` and breaks the single text column v7 established. The
+ * marker hangs in that same gutter, matching the `❯` on headings and the row markers in
+ * the command list, and the text lands on the shared column.
+ */
+.route-header ul,
+.route-header ol,
+.prose-sections ul,
+.prose-sections ol,
+.prose ul,
+.prose ol {
+  max-width: 72ch;
+  /*
+   * Tailwind's preflight (still shipped for its reset, see the v7 Phase 3 report) sets
+   * `list-style: none` on every list, so a `<ul>` renders with no marker at all unless
+   * it is restored here. Restoring it is the whole point of these being real lists.
+   */
+  list-style: disc outside;
+  margin: var(--space-3) 0 0;
+  padding-inline-start: var(--space-5);
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.route-header ol,
+.prose-sections ol,
+.prose ol {
+  list-style: decimal outside;
+}
+
+.route-header li::marker,
+.prose-sections li::marker,
+.prose li::marker {
+  color: var(--accent-text);
+}
+
+.route-header ul,
+.route-header ol {
+  margin-inline-start: var(--marker-gutter);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+.route-header li + li,
+.prose-sections li + li,
+.prose li + li {
+  margin-block-start: var(--space-2);
+}
+
+.route-header p + p,
+.prose-sections p + p,
+.prose-sections ul + p,
+.prose ul + p {
+  margin-block-start: var(--space-4);
+}
+
+/* Inline prose links read as links without borrowing the button treatment. */
+.route-header a:not(.button),
+.prose-sections a:not(.button),
+.prose a:not(.button) {
+  color: var(--accent-text);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+.workbench-region {
+  min-width: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
+.workbench-region-header {
+  display: grid;
+  min-height: 1.8rem;
+  grid-template-columns: auto auto minmax(1rem, 1fr) auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  border: 0;
+  background: transparent;
+  padding: 0;
+}
+
+.workbench-region-header h2,
+.workbench-region-status {
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.workbench-region-header h2 {
+  color: var(--ink);
+}
+
+.region-rule {
+  height: 0;
+  border-top: var(--terminal-rule);
+}
+
+.workbench-region-body {
+  min-width: 0;
+  border-inline: var(--terminal-rule);
+  background: transparent;
+  padding: var(--space-2) var(--space-4) var(--space-3);
+}
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(18rem, 0.9fr);
+  gap: var(--space-5);
+}
+
+/*
+ * V7-08. The command list runs to the region's own edges so each row's marker sits in
+ * the page gutter and its label lands on the shared text column — and so the primary
+ * row's rail and the hover tint read as full-width bands rather than floating boxes.
+ */
+.home-commands .workbench-region-body {
+  padding: var(--space-1) 0 var(--space-2);
+}
+
+.command-list {
+  border: 0;
+}
+
+.command-row {
+  display: grid;
+  min-height: 3.1rem;
+  grid-template-columns: minmax(10rem, 0.85fr) minmax(13rem, 1.5fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  color: var(--muted);
+  font-family: var(--tui-font);
+  text-decoration: none;
+}
+
+.command-row:last-child {
+  border-bottom: 0;
+}
+
+/*
+ * V7-06. "Recommended" and "you are here" are weaker statements than "selected", and
+ * they were all painted with the same full-width inverse slab — so the Home page had
+ * three shouting elements and nothing quiet to shout against. The recommended row now
+ * carries an accent rail and a faint tint; full inverse is reserved for genuine
+ * selection (an open account menu, a selected word, keyboard-driven selection).
+ *
+ * Because the row no longer inverts, its children can hold fixed colors instead of
+ * inheriting a flipped one, which is also what gives the label and its description
+ * distinct ranks rather than the single muted tone they shared before.
+ */
+.command-row.is-primary {
+  background: color-mix(in oklch, var(--accent) 10%, transparent);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+.command-row:hover,
+.command-row:focus-visible {
+  background: color-mix(in oklch, var(--accent) 14%, transparent);
+}
+
+.command-code,
+.command-row strong {
+  font-size: var(--text-2);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+/*
+ * V7-08. Flex rather than inline flow, so the marker occupies exactly one
+ * `--marker-gutter` and the label lands on the shared text column. In normal inline
+ * flow the literal space between `<i>` and the label in the markup added roughly
+ * seven further pixels, which is precisely the kind of almost-aligned this phase is
+ * removing. A flex container collapses that leading whitespace.
+ */
+.command-code {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--ink);
+}
+
+.command-row strong {
+  color: var(--muted);
+}
+
+.command-row.is-primary strong {
+  color: var(--accent-text);
+}
+
+.command-code i {
+  display: inline-block;
+  width: var(--marker-gutter);
+  flex: 0 0 var(--marker-gutter);
+  color: var(--accent-text);
+  font-style: normal;
+}
+
+.command-row > span:nth-child(2) {
+  color: var(--muted);
+  font-size: var(--text-2);
+}
+
+.command-row strong::after {
+  content: '';
+}
+
+.data-list {
+  border: 0;
+}
+
+/*
+ * The desktop list used the generic `.data-row`, which put lane, mode,
+ * length, difficulty, Hard Mode, accepted count, and GO progress in one inline run
+ * ("Practice · OG5 letters · standard · 3 accepted") with no column alignment. It now
+ * reuses the accepted `.responsive-table` primitive already used by History, Help, and
+ * Leaderboards, so each field is its own aligned column on desktop and collapses to
+ * labeled rows below 47.99rem with no extra CSS.
+ */
+.solo-session-table td .action-row {
+  flex-wrap: nowrap;
+  gap: var(--space-3);
+  justify-content: flex-end;
+}
+
+.solo-session-table td .action-row > * {
+  flex: 0 0 auto;
+}
+
+.solo-session-note {
+  display: block;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+@media (max-width: 47.99rem) {
+  .solo-session-table td .action-row {
+    justify-content: flex-start;
+  }
+}
+
+/*
+ * V7-09. The shell footer. Level 0 elevation: a hairline and nothing else. It sits in
+ * the shell grid's third row, which the `minmax(0, 1fr)` main row pushes to the bottom
+ * of the viewport, so a short page closes at the foot of the screen rather than
+ * trailing off. Uppercase micro-label treatment, so it reads as chrome and never
+ * competes with page content.
+ */
+.app-footer {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2) var(--space-6);
+  border-top: var(--terminal-rule);
+  padding: var(--space-4) max(var(--space-6), env(safe-area-inset-left))
+    max(var(--space-4), env(safe-area-inset-bottom));
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: var(--weight-medium);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.app-footer-hint {
+  min-width: 0;
+  color: color-mix(in oklch, var(--muted) 82%, transparent);
+}
+
+/* Quieter than the hint: identification, not information. */
+.app-footer-build {
+  flex: 0 0 auto;
+  color: color-mix(in oklch, var(--muted) 58%, transparent);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * V7-11. `.field-help`, `.field-error` and `.form-error` had no rules at all outside a
+ * single scoped `.accent-fieldset > .field-error`, so every other use rendered as the
+ * browser's default paragraph — full body size, default color, default margins. Help
+ * and error text sat at the same weight as the field label above it, and an error was
+ * distinguishable only by its wording. They are now a matched pair: same size, same
+ * rhythm, with error carrying the danger color and a marker so it never depends on
+ * color alone.
+ */
+.field-help,
+.field-error,
+.form-error {
+  margin: var(--space-2) 0 0;
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  line-height: var(--leading-snug);
+}
+
+.field-help {
+  color: var(--muted);
+}
+
+.field-error,
+.form-error {
+  color: var(--danger);
+  font-weight: var(--weight-medium);
+}
+
+.field-error::before,
+.form-error::before {
+  content: '! ';
+}
+
+.attention-detail {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+}
+
+.active-solo-compact {
+  display: grid;
+  min-width: 0;
+  gap: var(--space-2);
+}
+
+.active-solo-compact a {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.data-row,
+.request-row {
+  position: relative;
+  display: grid;
+  min-height: 2.75rem;
+  grid-template-columns: minmax(9rem, 0.7fr) minmax(0, 1.3fr);
+  gap: var(--space-5);
+  align-items: center;
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4) var(--space-3) 0;
+  background: transparent;
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+/*
+ * V7-08. The row marker hangs in the region's gutter rather than sitting at a fixed
+ * offset inside the row, so it lines up with the prompt glyph on the route heading and
+ * the marker on each command row instead of landing on top of its own label. Below
+ * 48rem the region gives its gutter back to content, so there is nowhere for the marker
+ * to hang and it is dropped — alignment carries the structure there.
+ */
+.data-row::before,
+.request-row::before {
+  position: absolute;
+  left: calc(var(--marker-gutter) * -1);
+  color: var(--accent-text);
+  content: '·';
+}
+
+@media (max-width: 47.99rem) {
+  .data-row::before,
+  .request-row::before {
+    content: none;
+  }
+}
+
+.data-row:last-child,
+.request-row:last-child {
+  border-bottom: 0;
+}
+
+.data-row > :last-child {
+  text-align: left;
+}
+
+.data-row a,
+.request-row a {
+  color: var(--accent-text);
+}
+
+.feedback-profile-row {
+  align-items: start;
+}
+
+.feedback-profile-control {
+  display: grid;
+  width: min(100%, 24rem);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+}
+
+.feedback-profile-control select,
+.feedback-profile-control button {
+  min-height: 2.75rem;
+}
+
+.settings-description {
+  margin: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4) var(--space-3) var(--space-6);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  line-height: 1.55;
+}
+
+.account-settings-list,
+.danger-zone,
+.danger-action-list,
+.account-action-form,
+.danger-disclosure {
+  display: grid;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.account-setting-card,
+.danger-action-list article {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.account-setting-card h3,
+.account-setting-card p,
+.danger-action-list h3,
+.danger-action-list p,
+.danger-zone-warning p,
+.danger-disclosure h3,
+.danger-final-confirmation p {
+  margin: 0;
+}
+
+.account-setting-card h3,
+.danger-action-list h3,
+.danger-zone-warning strong,
+.danger-disclosure h3 {
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.account-setting-card p,
+.danger-action-list p,
+.danger-zone-warning p,
+.danger-disclosure,
+.danger-final-confirmation {
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.danger-zone {
+  border: 1px solid var(--danger);
+}
+
+.danger-zone-warning {
+  border-bottom: 1px solid var(--danger);
+  padding: var(--space-4);
+}
+
+.danger-zone-warning strong,
+.danger-action-list h3,
+.danger-disclosure section:first-child h3 {
+  color: var(--danger);
+}
+
+.danger-action,
+.danger-action:hover,
+.danger-action:focus-visible {
+  border-color: var(--danger);
+}
+
+.danger-action--final {
+  color: var(--danger);
+  font-weight: 800;
+}
+
+/*
+ * Tailwind's preflight applies `margin: 0` to `*` and `::backdrop`, which
+ * cancels the `margin: auto` the UA `dialog:modal` rule relies on for centring. With
+ * `inset: 0` still in force the dialog then pins to the top-left corner — exactly what
+ * shows. `.accent-preset-dialog` and `.word-detail-dialog` happened to restore
+ * `margin: auto` individually; `.account-action-dialog` did not.
+ *
+ * `.app-modal` is now the single geometry authority for every true modal dialog, so a
+ * future dialog cannot silently inherit the preflight reset again.
+ */
+.app-modal {
+  margin: auto;
+  max-height: calc(100dvh - 2rem);
+  overflow: auto;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  padding: 0;
+  color: var(--ink);
+}
+
+.app-modal::backdrop {
+  background: rgb(0 0 0 / 76%);
+}
+
+.account-action-dialog {
+  width: min(42rem, calc(100vw - 2rem));
+  background: var(--surface-strong);
+}
+
+.account-action-form {
+  padding: var(--space-5);
+}
+
+.account-action-form label {
+  display: grid;
+  gap: var(--space-2);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.danger-dialog {
+  border-color: var(--danger);
+}
+
+.danger-disclosure {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.danger-disclosure section {
+  min-width: 0;
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.danger-disclosure ul {
+  margin-block: var(--space-3) 0;
+  padding-inline-start: var(--space-5);
+}
+
+.danger-final-confirmation {
+  display: grid;
+  gap: var(--space-4);
+  border: 1px solid var(--danger);
+  padding: var(--space-4);
+}
+
+@media (max-width: 47.99rem) {
+  .account-setting-card,
+  .danger-action-list article,
+  .danger-disclosure {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .account-setting-card > button,
+  .danger-action-list article > button {
+    width: 100%;
+  }
+}
+
+.combat-lobby-region {
+  min-width: 0;
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+  container-type: inline-size;
+}
+
+.combat-lobby-region + .combat-lobby-region {
+  margin-top: var(--space-5);
+}
+
+.combat-lobby-region-heading {
+  border-bottom: var(--terminal-rule);
+  padding-bottom: var(--space-4);
+}
+
+.combat-lobby-region-heading p {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}
+
+.open-lobbies {
+  min-width: 0;
+  container-type: inline-size;
+}
+
+.lobby-row {
+  grid-template-columns: minmax(0, 1fr) minmax(9rem, 18rem);
+  padding-inline-end: var(--space-4);
+}
+
+.lobby-row-summary {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.lobby-row-action,
+.lobby-row-action > :is(button, .button) {
+  width: 100%;
+  min-width: 0;
+}
+
+@container (max-width: 42rem) {
+  .lobby-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .lobby-row-action {
+    width: min(100%, 18rem);
+  }
+}
+
+.form-panel,
+.status-panel:not(.workbench-region),
+.confirmation-panel,
+.calendar-selection,
+.split-layout > section:not(.form-panel, .workbench-region),
+.spectator-game,
+.result-panel {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.form-panel > h2,
+.section-heading h2,
+.status-panel:not(.workbench-region) h2,
+.confirmation-panel h2 {
+  font-family: var(--tui-font);
+  font-size: var(--text-3);
+  font-weight: 650;
+  text-transform: lowercase;
+}
+
+.form-panel > h2::before,
+.status-panel:not(.workbench-region) h2::before,
+.confirmation-panel h2::before {
+  color: var(--accent-text);
+  content: '❯ ';
+}
+
+.field-stack {
+  gap: 0;
+}
+
+.field-stack label {
+  display: grid;
+  min-height: 3.15rem;
+  grid-template-columns: minmax(9rem, 0.65fr) minmax(12rem, 1.35fr);
+  align-items: center;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+.field-stack input,
+.field-stack select,
+.field-stack textarea,
+.inline-form input,
+.explorer-controls input,
+.explorer-controls select,
+.calendar-controls input,
+.directory-controls input,
+.directory-controls select {
+  min-height: var(--control-height);
+  border: 1px solid var(--field-border);
+  border-radius: 0;
+  background: var(--field-surface);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+}
+
+.field-stack input:focus,
+.field-stack select:focus,
+.field-stack textarea:focus,
+.inline-form input:focus,
+.explorer-controls input:focus,
+.explorer-controls select:focus {
+  border-color: var(--focus);
+  background: var(--field-surface-hover);
+}
+
+.field-stack label.checkbox-row {
+  display: flex;
+  min-height: var(--control-height);
+  flex-direction: row;
+  justify-content: flex-start;
+}
+
+.checkbox-row input {
+  border-inline-start: 0;
+}
+
+.segmented {
+  display: flex;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+/*
+ * Controls that opt out of the `--terminal-selected` hover surface must also opt out
+ * of its ink, or `button:hover` leaves `--control-ink-on-selected` painted on a
+ * transparent background — the mirror image of the selected-state rule. Surface and ink always travel
+ * together; the control-contrast sweep enforces it.
+ */
+.segmented button {
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+}
+
+.segmented button:last-child {
+  border-inline-end: 0;
+}
+
+/*
+ * `aria-checked` alongside `aria-pressed`.
+ *
+ * A one-of-two choice is a radiogroup, not two independent toggles — announcing OG and GO
+ * as two switches that happen to disagree is wrong. But the selected style only matched
+ * `aria-pressed`, so the portal's mode control rendered with nothing selected at all.
+ * Both idioms are legitimate; the style follows either.
+ */
+.segmented button[aria-pressed='true'],
+.segmented button[aria-checked='true'] {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.section-heading {
+  border-bottom: var(--terminal-rule);
+  background: transparent;
+}
+
+.balance-line {
+  border-block: var(--terminal-rule);
+  background: transparent;
+  font-family: var(--tui-font);
+}
+
+.table-scroll {
+  border: var(--terminal-rule);
+  border-radius: 0;
+}
+
+table {
+  font-family: var(--tui-font);
+}
+
+th,
+td {
+  border-color: var(--border);
+}
+
+th {
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--text-1);
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+tbody tr:hover {
+  background: var(--accent-soft);
+}
+
+/*
+ * W4b. RESULT was plain text. Color is redundant emphasis here, never the signal — the
+ * word `won`, `lost`, `draw` or `cancelled` is always present and is what a screen reader
+ * announces.
+ *
+ * No new token was needed, and the obvious choice would have been wrong. `--present` is
+ * the amber fill and measures 2.71:1 as text in light scheme, which is exactly the
+ * wash-out that was flagged; `--present-text` is its ink counterpart at 8.61:1 light and
+ * 11.56:1 dark. Stats already chose amber for draw (`.result-composition-track .is-draw`),
+ * so this agrees with a decision the app had already made.
+ *
+ * `cancelled` deliberately has no color. Nobody won and nobody lost, and giving it one
+ * would put an abandoned match on the same visual footing as a real outcome.
+ */
+.responsive-table td[data-result='won'] {
+  color: var(--correct-text);
+}
+
+.responsive-table td[data-result='lost'] {
+  color: var(--danger-text);
+}
+
+.responsive-table td[data-result='draw'] {
+  color: var(--present-text);
+}
+
+.route-grid,
+.metric-grid {
+  display: block;
+  border-block: var(--terminal-rule);
+}
+
+.route-link,
+.metric {
+  display: grid;
+  min-height: 3.2rem;
+  grid-template-columns: minmax(10rem, 0.7fr) minmax(0, 1.3fr);
+  align-items: center;
+  gap: var(--space-5);
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-4) var(--space-4);
+  box-shadow: none;
+}
+
+.route-link:last-child,
+.metric:last-child {
+  border-bottom: 0;
+}
+
+.route-link::before {
+  color: var(--accent-text);
+  content: '›';
+}
+
+.route-link {
+  grid-template-columns: auto minmax(10rem, 0.7fr) minmax(0, 1.3fr);
+}
+
+.route-link:hover,
+.route-link:focus-visible {
+  border-color: var(--border);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.route-link:hover span,
+.route-link:focus-visible span {
+  color: var(--terminal-selected-muted);
+}
+
+/*
+ * The `›` marker is `--accent-text`, which is tuned to sit on the page background,
+ * not on the inverse slab a hovered route link becomes. Measured as low as 1.01:1. It
+ * was never caught because a pseudo-element is invisible to `getComputedStyle(element)`
+ * — the contrast sweep now measures `::before` and `::after` wherever they carry real
+ * content, which is how this surfaced at all.
+ */
+.route-link:hover::before,
+.route-link:focus-visible::before {
+  color: var(--terminal-selected-muted);
+}
+
+.route-link strong,
+.route-link span,
+.metric span,
+.metric strong {
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.public-profile {
+  border-block: var(--terminal-rule);
+}
+
+.profile-avatar {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+button.calendar-day {
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--tui-font);
+}
+
+button.calendar-day.is-selected {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.word-list {
+  border: var(--terminal-rule);
+  border-radius: 0;
+}
+
+.word-list button {
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  color: var(--ink);
+  text-transform: none;
+}
+
+.word-list button[aria-selected='true'] {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.word-list button[aria-selected='true'] span:last-child {
+  color: inherit;
+}
+
+.feedback-preview {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  font-family: var(--tui-font);
+}
+
+.equation {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  font-family: var(--tui-font);
+}
+
+.skeleton-row {
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+.skeleton-row i {
+  background: color-mix(in oklch, var(--border) 48%, transparent);
+}
+
+.update-toast,
+.connectivity-status,
+.ranked-search-status {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  box-shadow: var(--elevation-4);
+  font-family: var(--tui-font);
+}
+
+/*
+ * The search strip is chrome, not content, so its controls take the same
+ * compact treatment the toolbar's do rather than the page's full-size buttons.
+ */
+.ranked-search-status :is(a, button) {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface);
+  padding: var(--space-2) var(--space-4);
+  /* Declares a surface, so it declares its ink — see the filter chips below. */
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  text-decoration: none;
+  text-transform: lowercase;
+}
+
+.ranked-search-status :is(a, button):hover,
+.ranked-search-status :is(a, button):focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.focus-exit {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  font-family: var(--tui-font);
+  text-transform: lowercase;
+}
+
+@media (max-width: 67rem) {
+  .account-summary {
+    display: none;
+  }
+
+  .home-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 47.99rem) {
+  body {
+    background: var(--background);
+  }
+
+  body::before {
+    display: none;
+  }
+
+  .app-shell {
+    width: 100%;
+    min-height: 100dvh;
+    margin: 0;
+    padding-bottom: calc(4.9rem + env(safe-area-inset-bottom));
+    border: 0;
+    border-radius: 0;
+    background: var(--background);
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .app-shell.is-game-surface {
+    padding-bottom: 0;
+  }
+
+  .wordmark {
+    min-width: 0;
+    flex: 1;
+    border-inline-end: 0;
+    padding-inline: var(--space-3);
+  }
+
+  .desktop-nav,
+  .more-menu > button {
+    display: none;
+  }
+
+  .is-game-surface .more-menu > button {
+    display: inline-flex;
+  }
+
+  .topbar-tools,
+  .notification-menu > button {
+    min-height: 2.5rem;
+  }
+
+  /*
+   * This variant grows upward from the bottom, so it cannot be pushed
+   * down — it is capped instead, and scrolls, so its top edge can never rise into the
+   * header however tall the header becomes or however long the list is.
+   */
+  .menu-popover {
+    top: auto;
+    right: 0.5rem;
+    bottom: calc(4.75rem + env(safe-area-inset-bottom));
+    width: calc(100vw - 1rem);
+    max-block-size: calc(
+      100dvh - var(--chrome-bottom, 3.4rem) - 5.5rem - env(safe-area-inset-bottom)
+    );
+    overflow-y: auto;
+  }
+
+  .route-frame {
+    padding: var(--space-4) var(--space-3);
+  }
+
+  .route-header {
+    margin-bottom: var(--space-4);
+  }
+
+  .route-header p,
+  .prose {
+    margin-inline-start: var(--space-6);
+    font-size: var(--text-1);
+  }
+
+  .workbench-region-header {
+    grid-template-columns: auto auto minmax(0.5rem, 1fr) auto auto;
+  }
+
+  .workbench-region-body {
+    padding-inline: var(--space-3);
+  }
+
+  .home-layout {
+    gap: var(--space-5);
+  }
+
+  .command-row {
+    min-height: 3.6rem;
+    grid-template-columns: minmax(7.5rem, 0.8fr) minmax(0, 1.2fr) auto;
+    gap: var(--space-3);
+    padding-inline: var(--space-3);
+  }
+
+  .command-row > span:nth-child(2) {
+    font-size: var(--text-1);
+  }
+
+  .command-code,
+  .command-row strong {
+    font-size: var(--text-1);
+  }
+
+  .data-row,
+  .request-row,
+  .route-link,
+  .metric {
+    grid-template-columns: minmax(7.5rem, 0.8fr) minmax(0, 1.2fr);
+    gap: var(--space-3);
+  }
+
+  .feedback-profile-control {
+    width: 100%;
+    grid-template-columns: 1fr;
+  }
+
+  .route-link {
+    grid-template-columns: auto minmax(7rem, 0.75fr) minmax(0, 1.25fr);
+  }
+
+  .field-stack label {
+    grid-template-columns: minmax(6.5rem, 0.7fr) minmax(0, 1.3fr);
+    gap: var(--space-3);
+  }
+
+  .split-layout {
+    gap: var(--space-5);
+  }
+}
+
+@media (max-width: 23rem) {
+  .route-frame {
+    padding-inline: var(--space-2);
+  }
+
+  .command-row {
+    grid-template-columns: minmax(7rem, 1fr) auto;
+  }
+
+  .command-row > span:nth-child(2) {
+    grid-column: 1 / -1;
+    padding-inline-start: var(--space-5);
+  }
+
+  .data-row,
+  .request-row,
+  .field-stack label,
+  .route-link,
+  .metric {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .route-link {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .route-link span {
+    grid-column: 2;
+  }
+
+  .field-stack input,
+  .field-stack select,
+  .field-stack textarea {
+    border-inline-start: 0;
+    border-top: var(--terminal-rule);
+  }
+}
+
+/*
+ * V7-10. The partial reduced-motion copy that lived here is gone. It set the transition
+ * properties but omitted `animation-duration` and `animation-iteration-count`, so it
+ * silently disagreed with the block in `globals.css`. That block is now the only one.
+ */
+
+@media (forced-colors: active) {
+  body,
+  .app-shell,
+  .global-chrome,
+  .menu-popover {
+    background: Canvas;
+    color: CanvasText;
+    backdrop-filter: none;
+    box-shadow: none;
+  }
+
+  body::before {
+    display: none;
+  }
+
+  .desktop-nav a[aria-current='page'],
+  .command-row.is-primary,
+  .command-row:hover,
+  .segmented button[aria-pressed='true'],
+  .word-list button[aria-selected='true'],
+  button.calendar-day.is-selected {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .app-shell {
+    padding-bottom: 0;
+  }
+}
+
+@supports not (backdrop-filter: blur(1px)) {
+  .app-shell {
+    background: var(--background);
+  }
+}
+
+/*
+ * v5: quiet system shell and responsive play surface.
+ * These rules intentionally follow the earlier provenance styles so the v5
+ * authority can supersede them without disturbing functional selectors.
+ */
+
+html,
+body {
+  background: var(--background);
+}
+
+body {
+  min-height: 100dvh;
+}
+
+/*
+ * V7-12. This is now the only `.app-shell` geometry in the file. It previously restated
+ * every property of a rounded, blurred, inset "window" declared 1,400 lines earlier in
+ * order to switch all of it off; that declaration is gone, and `position: relative` —
+ * the one property it did not override — has moved here.
+ */
+.app-shell,
+.app-shell.is-focus {
+  position: relative;
+  display: grid;
+  width: 100%;
+  min-height: 100dvh;
+  margin: 0;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: visible;
+  border: 0;
+  border-radius: 0;
+  background: var(--background);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.app-shell.is-game-surface,
+.app-shell.is-focus {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.app-shell.is-focus {
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.global-chrome {
+  position: sticky;
+  z-index: var(--z-chrome);
+  top: 0;
+  border-bottom: var(--terminal-rule);
+  background: color-mix(in oklch, var(--background) 96%, transparent);
+  backdrop-filter: blur(12px);
+}
+
+.app-toolbar {
+  display: flex;
+  min-width: 0;
+  min-height: 3rem;
+  align-items: stretch;
+}
+
+.wordmark {
+  min-width: 7.4rem;
+  border-inline-end: var(--terminal-rule);
+  padding-inline: var(--space-4);
+}
+
+.toolbar-context {
+  display: flex;
+  min-width: 0;
+  flex: 1 1 12rem;
+  overflow: hidden;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-1);
+  white-space: nowrap;
+}
+
+.toolbar-context > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.context-ready {
+  color: var(--correct-text);
+}
+
+.context-ready::before {
+  content: '● ';
+}
+
+.desktop-nav a,
+.more-menu > button,
+.notification-menu > button,
+.account-menu > button,
+.account-menu > a,
+.account-summary a,
+.topbar-tools,
+.account-summary {
+  min-height: 3rem;
+}
+
+/*
+ * V7-06. The navigation items no longer carry a rule between each other. Five hairline
+ * dividers across five destinations read as a segmented control — five separate things
+ * to weigh — when the group is one thing, and the current route is already marked. The
+ * boundaries that encode real structure are kept: the breadcrumb still closes with its
+ * own rule, and the account and menu controls keep theirs, so the toolbar still reads
+ * as identity | context | navigation | tools.
+ */
+.desktop-nav a {
+  border-inline: 0;
+}
+
+.more-menu > button,
+.notification-menu > button,
+.account-menu > button,
+.account-menu > a {
+  border-inline-end: 0;
+  border-inline-start: var(--terminal-rule);
+}
+
+.topbar-tools {
+  flex: 0 0 auto;
+  margin-inline-start: auto;
+}
+
+.mobile-route-rail {
+  display: none;
+}
+
+.menu-popover {
+  top: max(3.4rem, var(--chrome-bottom, 0px));
+}
+
+.account-menu {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+}
+
+.account-menu > button,
+.account-menu > a {
+  display: inline-flex;
+  min-height: 3rem;
+  align-items: center;
+  border: 0;
+  border-inline-start: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  /*
+   * V7-04. This was `font: inherit`, and the shorthand resets size, family and weight
+   * to the inherited body values — so the account trigger rendered at 14px while every
+   * other control in the same toolbar row rendered at 11px, and no `font-size` declared
+   * elsewhere in this rule could take effect. It now sits on the scale with its
+   * neighbours, which also stops it overrunning the last navigation item at 1440px.
+   */
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: var(--weight-medium);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.account-menu > button:hover,
+.account-menu > a:hover,
+.account-menu > button[aria-expanded='true'] {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * The trigger now carries account identity, so it must stay bounded: the
+ * toolbar cannot grow, collide, or overflow at any supported width. The full name
+ * stays available through `title` and the accessible name.
+ */
+.account-label {
+  display: block;
+  max-width: 10ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 47.99rem) {
+  .account-label {
+    max-width: 8ch;
+  }
+}
+
+.account-popover {
+  right: 0.4rem;
+  width: min(18rem, calc(100vw - 1rem));
+  padding-block: var(--space-2);
+}
+
+.account-popover-summary {
+  min-height: 6.8rem;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4) var(--space-5) var(--space-4);
+}
+
+.account-popover-summary > strong {
+  display: block;
+  overflow: hidden;
+  margin-bottom: var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-2);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.account-popover-summary dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.account-popover-summary dl > div {
+  min-width: 0;
+  border-inline-end: var(--terminal-rule);
+  padding-inline: var(--space-3);
+}
+
+.account-popover-summary dl > div:first-child {
+  padding-inline-start: 0;
+}
+
+.account-popover-summary dl > div:last-child {
+  border-inline-end: 0;
+  padding-inline-end: 0;
+}
+
+.account-popover-summary dt {
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-transform: lowercase;
+}
+
+.account-popover-summary dd {
+  overflow: hidden;
+  margin: var(--space-1) 0 0;
+  color: var(--ink);
+  font-size: var(--text-2);
+  font-variant-numeric: tabular-nums;
+  text-overflow: ellipsis;
+}
+
+.account-popover-summary small {
+  display: block;
+  margin-top: var(--space-3);
+  color: var(--present-text);
+  font-size: var(--text-1);
+}
+
+.account-popover > button[role='menuitem'] {
+  display: block;
+  width: 100%;
+  min-height: 2.5rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-4) var(--space-5);
+  color: var(--ink);
+  font: inherit;
+  text-align: left;
+}
+
+.account-popover > button[role='menuitem']:hover,
+.account-popover > button[role='menuitem']:focus-visible {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+#main-content {
+  min-width: 0;
+  min-height: 0;
+}
+
+.is-game-surface #main-content,
+.is-focus #main-content {
+  overflow: hidden;
+}
+
+.route-frame {
+  padding-bottom: clamp(1.25rem, 3vw, 2.5rem);
+}
+
+.game-route {
+  width: min(96rem, 100%);
+  height: 100%;
+  min-height: 0;
+  margin-inline: auto;
+  padding: var(--space-3) max(0.5rem, env(safe-area-inset-left))
+    max(0.5rem, env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.workbench-region {
+  border: 0;
+}
+
+/*
+ * V7-08. Region labels join the single text column.
+ *
+ * Phase 1 brought route headings and their intros onto one left edge; section labels
+ * and row content were still at two further offsets, so the top of every page still
+ * showed three edges rather than one. The label now hangs from the same
+ * `--marker-gutter` the route prompt occupies. No marker glyph is added: generated
+ * content is announced by some screen readers, and the alignment is what carries the
+ * structure here, not the ornament.
+ */
+.workbench-region-header {
+  min-height: 1.75rem;
+  grid-template-columns: auto minmax(1rem, 1fr) auto;
+  gap: var(--space-3);
+  padding-inline-start: var(--marker-gutter);
+}
+
+/*
+ * V7-08. The body carries the gutter so everything inside a region — prose, data rows,
+ * status copy — lands on the same text column as the region's own label, without each
+ * kind of content having to remember to indent itself. Lists that are deliberately
+ * full-bleed (the Home command list) opt out and supply their own marker column, so
+ * their selected and hovered rows read as bands rather than floating boxes.
+ */
+.workbench-region-body {
+  border: 0;
+  padding: var(--space-3) 0 0 var(--marker-gutter);
+}
+
+/*
+ * V7-08. The hanging gutter is a desktop reading affordance. At phone widths it costs
+ * 20px of a 320px viewport, which is enough to push a loading leaderboard's lane
+ * switcher past the edge before its data settles. Regions run to the frame edge below
+ * 48rem; the route heading keeps its offset there because a visible prompt glyph
+ * occupies it, which is legible hanging structure rather than an arbitrary indent.
+ */
+@media (max-width: 47.99rem) {
+  .workbench-region-header,
+  .workbench-region-body {
+    padding-inline-start: 0;
+  }
+}
+
+.workbench-region.is-pane {
+  border-block: var(--terminal-rule);
+}
+
+.workbench-region.is-pane .workbench-region-header,
+.workbench-region.is-pane .workbench-region-body {
+  padding-inline: var(--space-4);
+}
+
+.calendar-route {
+  width: min(72rem, 100%);
+}
+
+.calendar-view {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.calendar-toolbar {
+  display: flex;
+  min-height: 2.75rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-block: var(--terminal-rule);
+}
+
+.calendar-toolbar > div:first-child {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: var(--space-4);
+}
+
+.calendar-toolbar strong {
+  font-size: var(--text-2);
+}
+
+.calendar-toolbar span {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.calendar-month {
+  max-width: 100%;
+  border-block: var(--terminal-rule);
+  overflow: hidden;
+  touch-action: pan-y;
+}
+
+.calendar-month-header {
+  display: grid;
+  min-height: 3rem;
+  grid-template-columns: 3rem minmax(0, 1fr) 3rem;
+  align-items: center;
+  border-bottom: var(--terminal-rule);
+}
+
+.calendar-month-header h2 {
+  margin: 0;
+  font-size: var(--text-2);
+  text-align: center;
+}
+
+.calendar-month-header button {
+  min-width: 0;
+  min-height: 3rem;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 0;
+  color: var(--ink);
+}
+
+.calendar-month-header button:first-child {
+  border-inline-end: var(--terminal-rule);
+}
+
+.calendar-month-header button:last-child {
+  border-inline-start: var(--terminal-rule);
+}
+
+.calendar-weekdays,
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+}
+
+.calendar-weekdays {
+  border-bottom: var(--terminal-rule);
+}
+
+.calendar-weekdays span {
+  overflow: hidden;
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-2) var(--space-1);
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-align: center;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+}
+
+.calendar-grid {
+  border-inline-start: var(--terminal-rule);
+}
+
+button.calendar-day,
+.calendar-blank {
+  min-width: 0;
+  min-height: 4.25rem;
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3);
+}
+
+button.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  background: transparent;
+  color: var(--ink);
+  text-align: left;
+}
+
+button.calendar-day.is-selected {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+  box-shadow: none;
+}
+
+button.calendar-day.is-selected strong {
+  color: inherit;
+}
+
+button.calendar-day:disabled {
+  opacity: var(--control-disabled-opacity);
+  cursor: not-allowed;
+}
+
+.calendar-day strong {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: var(--text-1);
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.calendar-selection {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-5);
+  margin: 0;
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) 0 var(--space-4);
+}
+
+.calendar-selection .action-row {
+  justify-content: flex-end;
+}
+
+.calendar-details {
+  border-bottom: var(--terminal-rule);
+}
+
+.calendar-details summary {
+  min-height: 2.75rem;
+  padding: var(--space-4) 0;
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.calendar-controls {
+  align-items: end;
+  margin: 0;
+  padding: 0 0 var(--space-4) var(--space-5);
+}
+
+.explorer-controls {
+  border-block: var(--terminal-rule);
+  padding-block: var(--space-4);
+}
+
+.explorer-controls label {
+  color: var(--muted);
+}
+
+.explorer-controls input,
+.explorer-controls select {
+  border: var(--terminal-rule);
+  background: var(--surface-strong);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--ink) 4%, transparent);
+}
+
+.explorer-controls input::placeholder {
+  color: var(--muted);
+}
+
+.word-detail-dialog {
+  width: min(34rem, calc(100vw - 1.5rem));
+  max-height: min(32rem, calc(100dvh - 2rem));
+  background: var(--surface-inset);
+  box-shadow: var(--elevation-3);
+}
+
+.word-detail-dialog-content {
+  display: grid;
+  gap: var(--space-5);
+  padding: var(--space-4);
+}
+
+.word-detail-dialog header {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  padding-bottom: var(--space-4);
+}
+
+.word-detail-dialog h2,
+.word-detail-dialog p {
+  margin: 0;
+}
+
+.word-detail-dialog header span {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.word-detail-dialog header button {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+  font-size: var(--text-4);
+}
+
+.help-example {
+  width: min(34rem, 100%);
+  margin: var(--space-4) 0 0;
+  border-block: var(--terminal-rule);
+  padding: var(--space-4) 0;
+  font-family: var(--tui-font);
+}
+
+.help-example figcaption {
+  margin-bottom: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.help-tile-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.help-tile-row > div {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/*
+ * V7.2-03. Help's evidence swatches had no presentation at all. The rules that draw a
+ * tile — its frame, its fill, and the corner glyph — live in `solo-game.css`, which only
+ * the play and combat routes import, so on `/help` every tile rendered with a fully
+ * transparent background and an unpositioned glyph sitting under the letter. Measured
+ * background alpha 0.00 on all three at 1400px and at 390px, so this was never a mobile
+ * problem; the ✓ ~ × marks carried the whole figure.
+ *
+ * Help gets its own presentation rather than importing a stylesheet it does not own,
+ * built from the same semantic tokens and the same `color-mix` ratios the board uses —
+ * a figure explaining what these colors mean has to show the colors they actually are.
+ * Evidence semantics are unchanged; this only makes them visible where they are taught.
+ */
+.help-tile-row .tile,
+.help-hard-evidence .tile {
+  border: var(--terminal-rule);
+  background: transparent;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.help-tile-row .tile {
+  position: relative;
+  display: inline-grid;
+  width: 2.4rem;
+  aspect-ratio: 1;
+  place-items: center;
+}
+
+.help-tile-row .tile-letter {
+  line-height: 1;
+}
+
+.help-tile-row .tile-evidence {
+  position: absolute;
+  right: 0.18rem;
+  bottom: 0.08rem;
+  font-size: 0.5em;
+  line-height: 1;
+}
+
+.help-tile-row .tile.is-correct,
+.help-hard-evidence .tile.is-correct {
+  border-color: color-mix(in oklch, var(--correct) 72%, var(--border));
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+}
+
+.help-tile-row .tile.is-present,
+.help-hard-evidence .tile.is-present {
+  border-color: color-mix(in oklch, var(--present) 72%, var(--border));
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+}
+
+.help-tile-row .tile.is-absent,
+.help-hard-evidence .tile.is-absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
+}
+
+/*
+ * V7.2-04. The teaching aids resolve one beat at a time. A tile that has not resolved
+ * yet is the pending frame the board already uses for a draft row, and the cursor marks
+ * the cell about to land — the whole vocabulary is "terminal output arriving", not
+ * "content fading in". Letters never change opacity, so every word stays legible mid
+ * sequence and the contrast sweep never samples a half-faded color.
+ */
+/*
+ * The advancing marker for the chain aid: a rail, not a fade. Scoped through
+ * `.help-sequence` on the figure so it out-specifies the shared box border these items
+ * already carry, which is otherwise declared later in this file and would win.
+ */
+.help-sequence.help-chain li {
+  border-inline-start: 2px solid transparent;
+}
+
+.help-sequence.help-chain li[data-reached] {
+  border-inline-start-color: var(--accent);
+}
+
+.help-replay {
+  min-height: 2.25rem;
+  margin-block-start: var(--space-4);
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-1);
+}
+
+.help-hard-prompt {
+  margin-block: var(--space-4) var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.help-hard-candidates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.help-hard-verdict {
+  margin-block-start: var(--space-4);
+  font-size: var(--text-2);
+}
+
+.help-hard-verdict .is-accepted strong {
+  color: var(--correct-text);
+}
+
+.help-hard-verdict .is-refused strong {
+  color: var(--danger);
+}
+
+.help-hard-verdict strong {
+  margin-inline-end: var(--space-2);
+}
+
+.help-tile-row small {
+  max-width: 8rem;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.help-combat-row {
+  display: grid;
+  min-height: 2rem;
+  grid-template-columns: 2rem 4rem minmax(0, 1fr);
+  align-items: center;
+  border-bottom: var(--terminal-rule);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.help-combat-row.is-current {
+  color: var(--ink);
+}
+
+.help-combat-row.is-current strong::before {
+  color: var(--accent-text);
+  content: '❯ ';
+}
+
+.help-example > p {
+  margin: var(--space-3) 0 0;
+  color: var(--accent-text);
+  font-size: var(--text-1);
+}
+
+.help-chain ol,
+.help-tool-grid,
+.help-lane-comparison,
+.help-privacy-aid dl {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-chain ol {
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+}
+
+.help-chain li,
+.help-lane-comparison > div,
+.help-tool-grid > div,
+.help-privacy-aid dl > div {
+  display: grid;
+  gap: var(--space-2);
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+/*
+ * The lane comparison's rail used to be an ADVANCING marker, painted through a
+ * `data-reached` attribute that existed only because the sequence pre-set its own final
+ * step. Removing the animation would therefore have silently removed the rail as well —
+ * which is why that removal was not the clean subtraction the tile figure was. Hard-coding
+ * `data-reached="true"` onto a static figure would have kept a test green while leaving a
+ * lie in the markup, so the rail is simply unconditional now.
+ *
+ * Declared here, after the `border` shorthand above, rather than beside the chain rail:
+ * at equal specificity the later rule wins, and that shorthand would otherwise reset it.
+ */
+.help-lane-comparison > div {
+  border-inline-start: 2px solid var(--accent);
+}
+
+.help-chain li:nth-child(2) {
+  grid-template-columns: auto;
+  border: 0;
+  color: var(--accent-text);
+  text-align: center;
+}
+
+.help-lane-comparison,
+.help-tool-grid,
+.help-privacy-aid dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.help-hard-evidence {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-block-end: var(--space-4);
+}
+
+.help-hard-evidence .tile {
+  display: inline-flex;
+  width: 3rem;
+  height: 3rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.15rem;
+}
+
+.help-hard-facts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.help-hard-facts span {
+  border: var(--terminal-rule);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-1);
+}
+
+.help-hard-facts .is-present {
+  border-color: var(--present);
+}
+
+.help-hard-facts .is-absent {
+  border-color: var(--absent);
+}
+
+.help-hard-mode ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.help-hard-mode li {
+  border-inline-start: 0.22rem solid var(--danger);
+  padding-inline-start: var(--space-4);
+}
+
+.help-hard-mode li.is-accepted {
+  border-color: var(--correct);
+}
+
+.help-keys-aid > div {
+  display: grid;
+  grid-template-columns: minmax(9rem, auto) 1fr;
+  gap: var(--space-4);
+  align-items: center;
+  border-bottom: var(--terminal-rule);
+  padding-block: var(--space-3);
+}
+
+.help-advanced {
+  border: var(--terminal-rule);
+}
+
+.help-advanced > summary {
+  min-height: 3.25rem;
+  padding: var(--space-4) var(--space-5);
+  color: var(--accent-text);
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.help-advanced > div {
+  border-top: var(--terminal-rule);
+  padding: var(--space-5);
+}
+
+@media (max-width: 35.49rem) {
+  .help-chain ol,
+  .help-lane-comparison,
+  .help-tool-grid,
+  .help-privacy-aid dl {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .help-chain li:nth-child(2) {
+    grid-template-columns: 1fr auto 1fr;
+  }
+
+  .help-keys-aid > div {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media print {
+  .help-advanced > div {
+    display: block !important;
+  }
+}
+
+.calendar-controls p {
+  max-width: 56ch;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+@media (max-width: 67rem) {
+  .toolbar-context {
+    min-width: 0;
+    flex: 1;
+  }
+
+  .toolbar-context .context-ready {
+    display: none;
+  }
+
+  .desktop-nav {
+    display: none;
+  }
+}
+
+@media (max-width: 47.99rem) {
+  .app-shell,
+  .app-shell.is-focus {
+    min-height: 100dvh;
+    padding-bottom: 0;
+  }
+
+  .app-shell.is-game-surface,
+  .app-shell.is-focus {
+    height: 100dvh;
+  }
+
+  .global-chrome {
+    backdrop-filter: none;
+  }
+
+  .app-toolbar {
+    min-height: 2.75rem;
+  }
+
+  .wordmark {
+    min-width: auto;
+    flex: 0 0 auto;
+    border-inline-end: var(--terminal-rule);
+    padding-inline: var(--space-3);
+  }
+
+  .toolbar-context {
+    min-width: 0;
+    min-height: 2.75rem;
+    flex: 1;
+    overflow: hidden;
+    border-inline-end: 0;
+    padding-inline: var(--space-3);
+  }
+
+  .toolbar-context > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .topbar-tools,
+  .notification-menu > button,
+  .account-menu > button,
+  .account-menu > a,
+  .more-menu > button {
+    min-height: 2.75rem;
+  }
+
+  .account-menu > button,
+  .account-menu > a {
+    min-height: 2.75rem;
+    padding-inline: var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .topbar-tools .more-menu > button {
+    display: none;
+  }
+
+  .is-game-surface .topbar-tools .more-menu > button {
+    display: inline-flex;
+  }
+
+  .mobile-route-rail {
+    display: grid;
+    min-height: 2.5rem;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    border-top: var(--terminal-rule);
+    background: var(--background);
+  }
+
+  .is-game-surface .mobile-route-rail {
+    display: none;
+  }
+
+  html[data-game-presentation='review'] .is-game-surface .mobile-route-rail {
+    display: grid;
+  }
+
+  .mobile-route-rail a,
+  .mobile-route-rail button {
+    display: flex;
+    min-width: 0;
+    min-height: 2.5rem;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-2);
+    overflow: hidden;
+    border: 0;
+    border-inline-end: var(--terminal-rule);
+    border-radius: 0;
+    padding: var(--space-2) var(--space-1);
+    color: var(--muted);
+    font-size: var(--text-1);
+    text-decoration: none;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .mobile-route-rail a[aria-current='page'] {
+    background: var(--terminal-selected);
+    color: var(--control-ink-on-selected);
+  }
+
+  .menu-popover {
+    top: max(5.6rem, var(--chrome-bottom, 0px));
+    right: 0.4rem;
+    bottom: auto;
+    width: calc(100vw - 0.8rem);
+  }
+
+  .is-game-surface .menu-popover {
+    top: max(2.95rem, var(--chrome-bottom, 0px));
+  }
+
+  .route-frame {
+    padding: var(--space-4) var(--space-3) max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .game-route {
+    height: 100%;
+    padding: 0.35rem max(0.3rem, env(safe-area-inset-left))
+      max(0.35rem, env(safe-area-inset-bottom));
+  }
+
+  .workbench-region-header {
+    grid-template-columns: auto minmax(0.5rem, 1fr) auto;
+  }
+
+  .calendar-route {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+
+  .calendar-toolbar {
+    align-items: stretch;
+  }
+
+  .calendar-toolbar > div:first-child {
+    flex-direction: column;
+    justify-content: center;
+    gap: 0;
+  }
+
+  button.calendar-day,
+  .calendar-blank {
+    min-width: 0;
+    min-height: 3.75rem;
+    padding: var(--space-2);
+    font-size: var(--text-1);
+  }
+
+  .calendar-selection {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-4);
+  }
+
+  .calendar-selection .action-row {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .calendar-selection .button,
+  .calendar-selection button {
+    min-width: 0;
+    padding-inline: var(--space-2);
+    font-size: var(--text-1);
+  }
+
+  .calendar-controls {
+    align-items: stretch;
+    flex-direction: column;
+    padding-inline-start: 0;
+  }
+
+  .calendar-controls input {
+    border: var(--terminal-rule);
+  }
+}
+
+html[data-game-presentation='review'] .app-shell.is-game-surface {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .is-game-surface #main-content,
+html[data-game-presentation='review'] .game-route {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+}
+
+/*
+ * v5.2: a single explicit field vocabulary. Text-entry controls must remain
+ * discoverable without relying on placeholder text or route-specific CSS.
+ */
+:where(
+  input:not([type]),
+  input[type='text'],
+  input[type='search'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'],
+  input[type='date'],
+  input[type='url'],
+  textarea,
+  select
+) {
+  border: 1px solid var(--field-border);
+  border-radius: 0;
+  background: var(--field-surface);
+  color: var(--ink);
+  box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--ink) 4%, transparent);
+}
+
+:where(
+    input:not([type]),
+    input[type='text'],
+    input[type='search'],
+    input[type='email'],
+    input[type='password'],
+    input[type='number'],
+    input[type='date'],
+    input[type='url'],
+    textarea,
+    select
+  ):hover:not(:disabled) {
+  border-color: color-mix(in oklch, var(--field-border) 55%, var(--ink));
+  background: var(--field-surface-hover);
+}
+
+:where(
+  input:not([type]),
+  input[type='text'],
+  input[type='search'],
+  input[type='email'],
+  input[type='password'],
+  input[type='number'],
+  input[type='date'],
+  input[type='url'],
+  textarea,
+  select
+):focus-visible {
+  border-color: var(--focus);
+  background: var(--field-surface-hover);
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+}
+
+:where(input, textarea)::placeholder {
+  color: var(--field-placeholder);
+  opacity: 1;
+}
+
+:where(input, textarea, select):disabled {
+  cursor: not-allowed;
+  opacity: var(--control-disabled-opacity);
+}
+
+:where(input, textarea, select):user-invalid {
+  border-color: var(--danger);
+}
+
+:where(input, textarea):-webkit-autofill,
+:where(input, textarea):autofill {
+  box-shadow: 0 0 0 1000px var(--field-surface) inset;
+  -webkit-text-fill-color: var(--ink);
+}
+
+.accent-fieldset {
+  display: grid;
+  min-width: 0;
+  min-height: 3.15rem;
+  grid-template-columns: minmax(9rem, 0.65fr) minmax(12rem, 1.35fr);
+  align-items: center;
+  gap: var(--space-5);
+  margin: 0;
+  border: 0;
+  border-bottom: var(--terminal-rule);
+  padding: 0;
+}
+
+.accent-fieldset legend {
+  display: contents;
+  color: var(--muted);
+  font-size: var(--text-2);
+}
+
+.accent-options {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-inline-start: var(--terminal-rule);
+}
+
+.field-stack .accent-option {
+  display: flex;
+  min-width: 0;
+  min-height: 2.75rem;
+  grid-template-columns: none;
+  align-items: center;
+  gap: var(--space-3);
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-3);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.field-stack .accent-option:nth-child(3n) {
+  border-inline-end: 0;
+}
+
+.field-stack .accent-option:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+
+.accent-option input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  margin: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.accent-swatch {
+  width: 1rem;
+  height: 1rem;
+  flex: 0 0 auto;
+  border: 1px solid color-mix(in oklch, var(--profile-accent) 60%, var(--ink));
+  background: var(--profile-accent);
+}
+
+.accent-option:has(input:checked) {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.accent-option:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset-inset);
+}
+
+.custom-accent-heading {
+  display: flex;
+  align-self: stretch;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.custom-accent-options {
+  display: grid;
+  grid-column: 2;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  border-block-start: var(--terminal-rule);
+  border-inline-start: var(--terminal-rule);
+}
+
+.custom-accent-option {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: stretch;
+  border-inline-end: var(--terminal-rule);
+  border-block-end: var(--terminal-rule);
+}
+
+.custom-accent-option > label {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-3);
+  cursor: pointer;
+}
+
+.custom-accent-option input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+}
+
+.custom-accent-option label > span:last-child {
+  display: grid;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.custom-accent-option small {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.custom-accent-option:has(input:checked) {
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * Third instance of one defect family: secondary text keeping `--muted` after its
+ * surface flips to `--terminal-selected`. Measured 1.94:1 light and 2.21:1 dark — the
+ * accent's name and its hex both, not just the hex that was reported.
+ *
+ * Every existing guard missed this because the flip is applied by `:has(input:checked)`
+ * on a plain <div>. The rule that corrects hovered controls requires a `button`, `.button`
+ * or an `[aria-pressed]` ancestor; `.accent-option:has(input:checked)` is safe only
+ * because there the class sits on the <label> itself, so it colors the element that
+ * would otherwise inherit from `.field-stack label`. Here the label is nested one level
+ * inside the flipped div, and that one level is the whole bug.
+ *
+ * The name is primary text and takes the surface's own ink. The hex is genuinely
+ * secondary and takes `--terminal-selected-muted`, the token that exists for secondary
+ * text on a selected surface — the same treatment `.route-link:hover span` uses.
+ */
+.custom-accent-option:has(input:checked) > label {
+  color: inherit;
+}
+
+.custom-accent-option:has(input:checked) small {
+  color: var(--terminal-selected-muted);
+}
+
+.custom-accent-option:has(input:focus-visible) {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset-inset);
+}
+
+.custom-accent-option .text-action {
+  min-width: 3.5rem;
+  border-block: 0;
+  border-inline-end: 0;
+  padding-inline: var(--space-3);
+}
+
+.custom-accent-create,
+.accent-fieldset > .field-error {
+  grid-column: 2;
+}
+
+.custom-accent-create {
+  width: 100%;
+}
+
+.accent-preset-dialog {
+  width: min(42rem, calc(100vw - 1.5rem));
+  background: var(--surface-inset);
+  box-shadow: var(--elevation-3);
+}
+
+.accent-preset-form {
+  display: grid;
+  gap: var(--space-4);
+  padding: var(--space-4);
+}
+
+.accent-preset-form .section-heading {
+  margin: 0;
+}
+
+.dialog-close {
+  width: 2.75rem;
+  min-width: 2.75rem;
+  padding: 0;
+  font-size: var(--text-4);
+}
+
+.accent-preset-fields {
+  display: grid;
+  grid-template-columns: 7rem 9rem minmax(0, 1fr);
+  gap: var(--space-4);
+}
+
+.accent-preset-fields label {
+  display: grid;
+  align-content: start;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.accent-color-picker input[type='color'] {
+  width: 100%;
+  min-height: 2.75rem;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--field-surface);
+  padding: var(--space-2);
+  cursor: pointer;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-size: var(--text-1);
+  font-weight: 400;
+}
+
+.accent-preset-preview {
+  display: grid;
+  gap: var(--space-4);
+  border: var(--terminal-rule);
+  background: var(--surface);
+  padding: var(--space-4);
+}
+
+.accent-preview-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  color: var(--custom-accent-text-light);
+}
+
+.accent-preset-preview .attention-badge {
+  background: var(--custom-accent);
+  color: var(--custom-accent-ink);
+}
+
+.accent-preview-keys {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(2.6rem, 1fr));
+  gap: var(--space-2);
+}
+
+.accent-preview-key {
+  display: grid;
+  min-height: 2.75rem;
+  place-items: center;
+  border: 1px solid var(--custom-key-border-light);
+  background: var(--custom-key-background-light);
+  color: var(--custom-key-ink-light);
+  font-weight: 700;
+}
+
+.accent-preview-key--focus {
+  box-shadow: inset 0 0 0 2px var(--custom-focus-light);
+}
+
+.accent-preview-key--correct {
+  border-color: var(--correct);
+  background: color-mix(in oklch, var(--correct) 34%, transparent);
+  color: var(--ink);
+}
+
+.accent-preview-key--present {
+  border-color: var(--present);
+  background: color-mix(in oklch, var(--present) 31%, transparent);
+  color: var(--ink);
+}
+
+.accent-preview-key--absent {
+  border-color: var(--key-absent-border);
+  background: var(--key-absent-background);
+  color: var(--key-absent-ink);
+}
+
+.accent-preview-key--removed {
+  border-color: var(--removed);
+  background: color-mix(in oklch, var(--removed) 27%, transparent);
+  color: var(--ink);
+}
+
+.accent-preset-preview small {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.accent-preset-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+}
+
+.accent-preset-actions button {
+  flex: 1 1 10rem;
+}
+
+.danger-action {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+@media (prefers-color-scheme: dark) {
+  .accent-preview-row {
+    color: var(--custom-accent-text-dark);
+  }
+
+  .accent-preview-key {
+    border-color: var(--custom-key-border-dark);
+    background: var(--custom-key-background-dark);
+    color: var(--custom-key-ink-dark);
+  }
+
+  .accent-preview-key--focus {
+    box-shadow: inset 0 0 0 2px var(--custom-focus-dark);
+  }
+}
+
+.stats-console {
+  display: grid;
+  gap: var(--space-5);
+}
+
+/*
+ * Shared degraded-state banner. Only the `--warning` modifier existed before, so its
+ * `justify-content` was inert (no flex context) and its `border-color` invisible
+ * (preflight zeroes border-width). Used on Stats, History, Profile, and public
+ * profiles, on both `<div>` and `<p>`, so this stays element-agnostic.
+ */
+.status-line {
+  display: flex;
+  min-height: 2.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  border: 1px solid var(--border);
+  padding: var(--space-3) var(--space-4);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.status-line--warning {
+  justify-content: space-between;
+  border-color: var(--present);
+  color: var(--present-text);
+}
+
+/* the notification refresh notice reuses the same degraded-state vocabulary. */
+.notification-source-warning {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-3);
+  border: 1px solid var(--present);
+  padding: var(--space-3) var(--space-3);
+  color: var(--present-text);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.notification-source-warning button {
+  flex: 0 0 auto;
+  min-height: 2.25rem;
+}
+
+.text-action {
+  min-height: 2.5rem;
+  border: 0;
+  padding-inline: var(--space-4);
+  background: transparent;
+  color: currentColor;
+  text-decoration: underline;
+  text-underline-offset: 0.22em;
+}
+
+.stats-section {
+  border: var(--terminal-rule);
+}
+
+.stats-section > header {
+  display: flex;
+  min-height: 2.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  background: var(--surface);
+  font-family: var(--tui-font);
+}
+
+.stats-section > header h2 {
+  margin: 0;
+  font-size: var(--text-2);
+  text-transform: lowercase;
+}
+
+.stats-section > header span {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.stats-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.stats-metric {
+  display: grid;
+  min-height: 4.4rem;
+  align-content: center;
+  gap: var(--space-2);
+  border-inline-end: var(--terminal-rule);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4) var(--space-4);
+  font-family: var(--tui-font);
+}
+
+.stats-metric:nth-child(4n) {
+  border-inline-end: 0;
+}
+
+.stats-metric span {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.stats-metric strong {
+  overflow-wrap: anywhere;
+  font-size: var(--text-3);
+}
+
+.distribution-row {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: minmax(6rem, 0.35fr) minmax(8rem, 1fr) 2rem;
+  align-items: center;
+  gap: var(--space-4);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.distribution-track {
+  display: block;
+  height: 0.65rem;
+  border: var(--terminal-rule);
+}
+
+.distribution-track > span {
+  display: block;
+  height: 100%;
+  background: var(--accent);
+}
+
+.stats-activity {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stats-activity li {
+  display: grid;
+  min-height: 2.8rem;
+  grid-template-columns: minmax(11rem, 1fr) auto auto auto;
+  align-items: center;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.stats-activity em {
+  color: var(--present-text);
+  font-style: normal;
+}
+
+.empty-copy {
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: var(--space-5) var(--space-4);
+  color: var(--muted);
+}
+
+.stats-provenance {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+/* v6.2 public identity, definition, and data-visualization surfaces. */
+.profile-editor-intro,
+.public-profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-5);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4) 0;
+}
+
+.profile-editor-intro {
+  grid-template-columns: auto;
+}
+
+.public-profile p {
+  max-width: 68ch;
+  margin: 0;
+}
+
+/*
+ * The third grid column is content-sized, so laying COPY LINK and EDIT PROFILE
+ * out side by side would widen it and squeeze the name and bio. Stacked, they
+ * cost the column one button's width whether there are one or two.
+ */
+.public-profile > .action-row {
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/*
+ * A heading and two buttons do not share one line on a phone. section-heading
+ * does not wrap by default, and an unwrapped row here would push the page wider
+ * than the viewport, which the responsive suite asserts against.
+ */
+.form-panel > .section-heading {
+  flex-wrap: wrap;
+  row-gap: var(--space-3);
+}
+
+.profile-visibility-summary {
+  display: grid;
+  margin: 0;
+  border-block: var(--terminal-rule);
+}
+
+.profile-visibility-summary > div {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: 6rem minmax(0, 1fr);
+  gap: var(--space-4);
+  padding: var(--space-3) 0;
+}
+
+.profile-visibility-summary > div + div {
+  border-top: var(--terminal-rule);
+}
+
+.profile-visibility-summary dt {
+  color: var(--accent-text);
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.profile-visibility-summary dd {
+  min-width: 0;
+  margin: 0;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.profile-avatar--large {
+  width: clamp(6.5rem, 14vw, 9.5rem);
+  overflow: hidden;
+  border: 2px solid var(--profile-accent, var(--accent));
+  background: var(--surface-inset);
+  color: var(--ink);
+  font-size: clamp(1.25rem, 4vw, 2.25rem);
+}
+
+.profile-avatar--large img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.context-help {
+  position: relative;
+  width: fit-content;
+  max-width: 100%;
+}
+
+.context-help-trigger {
+  min-height: 2.75rem;
+}
+
+.context-help-trigger > span {
+  display: inline-grid;
+  width: 1.35rem;
+  height: 1.35rem;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: 50%;
+}
+
+.context-help-panel {
+  position: absolute;
+  z-index: var(--z-dropdown);
+  inset-block-start: calc(100% + 0.35rem);
+  inset-inline-start: 0;
+  width: min(32rem, calc(100vw - 3rem));
+  padding: var(--space-5) var(--space-5);
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+  box-shadow: var(--elevation-2);
+}
+
+.context-help-panel p {
+  margin: 0;
+}
+
+.context-help-panel p + p {
+  margin-block-start: var(--space-4);
+}
+
+.focus-utility-rail {
+  position: fixed;
+  z-index: var(--z-sticky);
+  inset-block-start: max(0.75rem, env(safe-area-inset-top));
+  inset-inline-end: max(0.75rem, env(safe-area-inset-right));
+  display: flex;
+  align-items: stretch;
+  border: 1px solid var(--border);
+  background: var(--surface-strong);
+}
+
+.focus-utility-rail > * + * {
+  border-inline-start: 1px solid var(--border);
+}
+
+.focus-utility-rail .focus-exit {
+  position: static;
+}
+
+@media (max-width: 47.99rem) {
+  .context-help-panel {
+    position: fixed;
+    inset-inline: 1rem;
+    inset-block: auto max(1rem, env(safe-area-inset-bottom));
+    width: auto;
+    max-height: min(24rem, calc(100dvh - 2rem));
+    overflow: auto;
+  }
+
+  .focus-utility-rail {
+    inset-block-start: auto;
+    inset-block-end: max(0.65rem, env(safe-area-inset-bottom));
+    inset-inline: 0.65rem;
+    justify-content: center;
+  }
+}
+
+.profile-kicker,
+.profile-tags,
+.public-profile-copy {
+  font-family: var(--tui-font);
+}
+
+.profile-kicker {
+  color: var(--profile-accent, var(--accent-text));
+  font-size: var(--text-1);
+}
+
+.public-profile-copy h2 {
+  margin: var(--space-2) 0 var(--space-3);
+  font-size: var(--text-6);
+}
+
+.profile-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+  margin-top: var(--space-4);
+}
+
+.profile-tags span {
+  border: var(--terminal-rule);
+  padding: var(--space-2) var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-transform: uppercase;
+}
+
+/*
+ * The Creator chip. Distinguished by the accent border and ink the shell
+ * already uses for emphasis rather than by a color of its own — --accent-text
+ * is measured against the page background by every contrast sweep, so this
+ * inherits that guarantee instead of introducing a pairing nothing checks.
+ */
+.profile-tags span.is-creator {
+  border-color: var(--accent);
+  color: var(--accent-text);
+}
+
+.public-profile-console,
+.public-stats,
+.private-challenge-form,
+.profile-challenge-gate {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.public-profile-console {
+  gap: var(--space-5);
+}
+
+.public-stats,
+.private-challenge-form,
+.profile-challenge-gate {
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.public-stat-grid,
+.public-breakdown-grid {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border-block: var(--terminal-rule);
+}
+
+.public-stat-grid > div,
+.public-breakdown-grid > div {
+  min-width: 0;
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-4);
+  font-family: var(--tui-font);
+}
+
+.public-stat-grid > div:nth-child(3n),
+.public-breakdown-grid > div:last-child {
+  border-inline-end: 0;
+}
+
+.public-stat-grid dt,
+.public-breakdown-grid dt,
+.rating-bucket dt,
+.directory-list dt {
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-transform: lowercase;
+}
+
+.public-stat-grid dd,
+.public-breakdown-grid dd,
+.rating-bucket dd,
+.directory-list dd {
+  margin: var(--space-2) 0 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.public-rating-list,
+/*
+ * `.rating-bucket-grid` is a direct child of `.stats-metrics`, which is a
+ * four-column grid. Unlike every other full-bleed child (`.distribution-row`,
+ * `.stats-activity`, `.empty-copy`, `.stats-visual`) it never claimed the full row, so
+ * it rendered at a quarter width and stranded three columns of empty space — exactly
+ * the blank area that was marked in review.
+ */
+.rating-bucket-grid {
+  display: grid;
+  grid-column: 1 / -1;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr));
+  border: var(--terminal-rule);
+}
+
+.rating-bucket-grid,
+.rating-bucket,
+.rating-bucket > header,
+.rating-bucket dl,
+.rating-bucket dl > div {
+  min-width: 0;
+}
+
+.public-rating-list article,
+.rating-bucket {
+  display: grid;
+  gap: var(--space-3);
+  border-inline-end: var(--terminal-rule);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4);
+  font-family: var(--tui-font);
+}
+
+.public-rating-list article:nth-child(2n),
+.rating-bucket:nth-child(2n) {
+  border-inline-end: 0;
+}
+
+.public-rating-list article > span,
+.public-rating-list article > small {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.public-rating-list article > strong {
+  color: var(--profile-accent, var(--accent-text));
+  font-size: var(--text-5);
+}
+
+.challenge-grid,
+.directory-controls {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+/*
+ * `align-items: end` bottom-aligned controls of unequal intrinsic height,
+ * and `.directory-controls` was missing from the shared control-geometry rule, so the
+ * search/number inputs kept their UA height while selects and Apply sat at 2.75rem.
+ * Stretching the tracks makes every label column the same height and lets each
+ * control fill it, so heights and baselines line up without fixed positioning.
+ */
+.directory-controls {
+  grid-template-columns: minmax(10rem, 1.5fr) repeat(4, minmax(8rem, 1fr)) auto;
+  align-items: stretch;
+  border-block: var(--terminal-rule);
+  padding-block: var(--space-4);
+}
+
+.directory-controls label {
+  align-content: end;
+}
+
+.directory-controls > .primary {
+  align-self: end;
+}
+
+.directory-controls label,
+.challenge-grid label {
+  display: grid;
+  gap: var(--space-2);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.directory-list {
+  display: grid;
+  border: var(--terminal-rule);
+}
+
+.directory-list article {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(10rem, 0.8fr) minmax(18rem, 1.2fr);
+  align-items: stretch;
+  border-bottom: var(--terminal-rule);
+  font-family: var(--tui-font);
+}
+
+.directory-list article:last-child {
+  border-bottom: 0;
+}
+
+.directory-list article > div:first-child {
+  display: grid;
+  align-content: center;
+  gap: var(--space-2);
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.directory-list article,
+.leaderboard-table tbody tr {
+  box-shadow: inset 3px 0 var(--profile-accent, var(--accent));
+}
+
+.directory-player-name,
+.player-identity-link {
+  color: var(--accent-text);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+/*
+ * The creator mark.
+ *
+ * Three colors, chosen per scheme against the page background and measured in
+ * tests/domain/creator-identity.test.ts rather than eyeballed. The middle beat
+ * is white in dark scheme and near-black in light, because white text on a
+ * light page is not a color choice, it is an unreadable one — the red and blue
+ * bookends carry the identity either way.
+ */
+:root {
+  --creator-a: #c8102e;
+  --creator-b: #10161b;
+  --creator-c: #0b3d91;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --creator-a: #ff6b6b;
+    --creator-b: #ffffff;
+    --creator-c: #7fa9ff;
+  }
+}
+
+/*
+ * Rests on --creator-a, which is the frame the contrast sweep samples once it
+ * disables animation, and the frame reduced motion freezes on. Both are red,
+ * and red is the tightest of the three ratios, so whatever those two see is the
+ * worst case rather than a lucky moment mid-cycle.
+ */
+.is-creator-name {
+  color: var(--creator-a);
+  font-weight: 650;
+  animation: creator-name 6s var(--ease-standard) infinite;
+}
+
+/*
+ * A CSS animation outranks every normal declaration, including the rules that
+ * invert text on a selected surface. Where a name sits on inverted ink, the
+ * animation is switched off entirely so the existing inversion wins — a name
+ * that is unreadable for three seconds out of six is worse than one that is not
+ * decorated at all.
+ */
+button:hover .is-creator-name,
+[aria-current='page'] .is-creator-name,
+[aria-selected='true'] .is-creator-name,
+.notification-list a.is-unread .is-creator-name {
+  animation: none;
+  color: inherit;
+}
+
+/*
+ * The profile page treatment, scoped to one console on one page. Nothing here
+ * can reach the shell, a board, the keyboard, or another player's profile,
+ * because every selector below is a descendant of `.creator-console`.
+ */
+.creator-console .public-profile {
+  position: relative;
+  border-block-color: transparent;
+}
+
+.creator-console .public-profile::before,
+.creator-console .public-profile::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  left: 0;
+  height: 2px;
+  background: linear-gradient(
+    90deg,
+    var(--creator-a),
+    var(--creator-b),
+    var(--creator-c),
+    var(--creator-b),
+    var(--creator-a)
+  );
+  background-size: 200% 100%;
+  animation: creator-rail 7s linear infinite;
+}
+
+.creator-console .public-profile::before {
+  top: -1px;
+}
+
+.creator-console .public-profile::after {
+  bottom: -1px;
+}
+
+.creator-console .profile-avatar--large {
+  animation: creator-frame 6s var(--ease-standard) infinite;
+}
+
+@media (forced-colors: active) {
+  /*
+   * Gradients and border colors are replaced by the system palette here, so
+   * the rails would render as flat blocks and the frame would stop meaning
+   * anything. Restore the ordinary rule and stop the work.
+   */
+  .creator-console .public-profile {
+    border-block-color: CanvasText;
+  }
+
+  .creator-console .public-profile::before,
+  .creator-console .public-profile::after {
+    display: none;
+  }
+
+  .creator-console .profile-avatar--large,
+  .is-creator-name {
+    animation: none;
+  }
+}
+
+.directory-list article > div:first-child > span {
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-transform: uppercase;
+}
+
+.directory-list dl,
+.rating-bucket dl {
+  display: grid;
+  margin: 0;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.rating-bucket dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.directory-list dl > div,
+.rating-bucket dl > div {
+  min-width: 0;
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.directory-list dl > div:last-child,
+.rating-bucket dl > div:last-child {
+  border-inline-end: 0;
+}
+
+.rating-bucket {
+  padding: 0;
+}
+
+.rating-bucket > header {
+  display: flex;
+  min-width: 0;
+  min-height: 3.4rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.rating-bucket > header span {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.rating-bucket > header strong {
+  color: var(--accent-text);
+  font-size: var(--text-4);
+}
+
+.rating-bucket dd {
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.rating-bucket dl > div:nth-child(2n) {
+  border-inline-end: 0;
+}
+
+@media (max-width: 63.99rem) {
+  .directory-controls {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .directory-controls > .primary {
+    grid-column: 1 / -1;
+  }
+}
+
+.stats-visual {
+  display: grid;
+  grid-column: 1 / -1;
+  gap: var(--space-3);
+  margin: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4);
+  font-family: var(--tui-font);
+}
+
+.stats-visual figcaption {
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.result-composition-track,
+.comparison-track,
+.stats-progress-track {
+  display: flex;
+  height: 0.72rem;
+  overflow: hidden;
+  border: var(--terminal-rule);
+}
+
+.stats-progress-track {
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+}
+
+.stats-progress-track > span {
+  display: block;
+  background: var(--accent);
+}
+
+.result-composition-track > span:focus-visible,
+.comparison-row:focus-visible,
+.distribution-row:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+}
+
+.stats-rating-comparison .comparison-row > span:first-child {
+  overflow-wrap: anywhere;
+}
+
+.result-composition-track .is-win {
+  background: var(--correct);
+}
+
+.result-composition-track .is-loss {
+  background: var(--absent);
+}
+
+.result-composition-track .is-draw {
+  background: var(--present);
+}
+
+.result-composition-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+.comparison-row {
+  display: grid;
+  grid-template-columns: 5rem minmax(6rem, 1fr) 2rem;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-1);
+}
+
+.comparison-track > span {
+  display: block;
+  background: var(--accent);
+}
+
+/* code-native ranked rating trajectory. No chart dependency. */
+.trajectory-chart {
+  width: 100%;
+  height: 4rem;
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+}
+
+.trajectory-baseline {
+  stroke: var(--border);
+  stroke-width: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.trajectory-line {
+  fill: none;
+  stroke: var(--accent);
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
+}
+
+/*
+ * The wins line inside the results timeline. Drawn beneath the games line in the
+ * semantic `--correct` rather than the accent, because the two lines mean different
+ * things and the accent already names "games played". Dashed as well as colored, so the
+ * pair stays separable without color — the ordered list underneath is the real
+ * equivalent, but a figure that only works in color is still a worse figure.
+ */
+.timeline-wins {
+  fill: none;
+  stroke: var(--correct);
+  stroke-width: 2;
+  stroke-dasharray: 4 3;
+  vector-effect: non-scaling-stroke;
+}
+
+.trajectory-values {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 1fr));
+  gap: var(--space-1) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-1);
+}
+
+.trajectory-values li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: var(--space-3);
+  border-bottom: var(--terminal-rule);
+  padding-block: var(--space-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.trajectory-values span {
+  color: var(--muted);
+}
+
+@media (forced-colors: active) {
+  .trajectory-line {
+    stroke: CanvasText;
+  }
+
+  .trajectory-baseline {
+    stroke: GrayText;
+  }
+
+  /* Forced colors collapse the palette, so the dash pattern is what keeps the two
+     lines of the results timeline distinguishable from each other. */
+  .timeline-wins {
+    stroke: Highlight;
+  }
+}
+
+@media print {
+  .trajectory-chart {
+    display: none;
+  }
+}
+
+.word-definition {
+  display: grid;
+  gap: var(--space-4);
+  border-block: var(--terminal-rule);
+  padding-block: var(--space-4);
+}
+
+.definition-status {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-5);
+}
+
+.definition-status h3,
+.word-definition p,
+.history-definition-dialog h3 {
+  margin: 0;
+}
+
+.definition-status h3 {
+  font-size: var(--text-2);
+  text-transform: uppercase;
+}
+
+.definition-status span {
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.definition-list {
+  display: grid;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.definition-list li {
+  display: grid;
+  grid-template-columns: minmax(5rem, 0.2fr) minmax(0, 1fr);
+  gap: var(--space-4);
+  border-bottom: var(--terminal-rule);
+  padding-bottom: var(--space-3);
+}
+
+.definition-list strong {
+  color: var(--accent-text);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+/*
+ * The end-of-match actions, in two tiers.
+ *
+ * This was nine-plus controls in a single wrapping flex row with NO mobile rule of any
+ * kind — the pile in the screenshot was the browser's default wrapping, not a
+ * layout. Splitting by intent gives it a shape: what to play next, then where to go.
+ *
+ * Both tiers are grids of equal columns rather than wrapping flex, so buttons line up
+ * instead of stranding one on its own row. On a phone the primary tier is a single column,
+ * because those are the choices a player is most likely to want and they should be
+ * full-width targets.
+ */
+.result-actions {
+  display: grid;
+  gap: var(--space-4);
+  margin-block-start: var(--space-5);
+}
+
+.result-actions-primary,
+.result-actions-secondary {
+  display: grid;
+  gap: var(--space-3);
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}
+
+.result-actions-secondary {
+  border-block-start: var(--terminal-rule);
+  padding-block-start: var(--space-4);
+}
+
+.result-actions .button {
+  width: 100%;
+}
+
+@media (max-width: 47.99rem) {
+  .result-actions-primary {
+    grid-auto-flow: row;
+  }
+
+  /*
+   * Two columns rather than one for the quiet tier: these are short labels a player scans
+   * rather than reads, and four full-width bars would push the primary actions off screen.
+   */
+  .result-actions-secondary {
+    grid-auto-flow: row;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/*
+ * What a ranked match did to both players' ratings.
+ *
+ * There is no button to reveal this and no choice about it: the rating is applied
+ * automatically, so the panel simply states the outcome for both seats.
+ *
+ * Only the diff is colored, and it reuses the History page's three tokens exactly rather
+ * than introducing new ones — `--correct-text` for a gain, `--danger-text` for a loss,
+ * `--present-text` for no change. All three are the darker ink counterparts of their fills,
+ * which is what keeps them legible; the fill versions would not be. The sign and the numbers
+ * carry the meaning on their own, so color is never the only signal.
+ */
+.rating-outcome {
+  width: min(44rem, 100%);
+  margin: var(--space-4) auto 0;
+  border: var(--terminal-rule);
+  padding: var(--space-4);
+}
+
+.rating-outcome h3 {
+  margin: 0 0 var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.rating-outcome ul {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rating-outcome li {
+  display: grid;
+  align-items: baseline;
+  gap: var(--space-3);
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  font-size: var(--text-2);
+}
+
+.rating-outcome-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.rating-outcome-move {
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-outcome-delta {
+  font-variant-numeric: tabular-nums;
+}
+
+.rating-outcome-delta[data-direction='up'] {
+  color: var(--correct-text);
+}
+
+.rating-outcome-delta[data-direction='down'] {
+  color: var(--danger-text);
+}
+
+.rating-outcome-delta[data-direction='level'] {
+  color: var(--present-text);
+}
+
+.rating-outcome-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+}
+
+/*
+ * The definition's own actions are subordinate to the match's.
+ *
+ * COPY WORD and SEARCH WEB come from `WordDefinition`, which repeats once per revealed
+ * answer — up to ten times in a GO match — and rendered at the same weight as the match's
+ * next actions, which is most of why the cluster read as a heap. `WordDefinition` is shared
+ * with Word Explorer and History, so it is scoped from here rather than changed: the
+ * buttons stay, they simply stop competing.
+ */
+.result-definitions .action-row {
+  justify-content: flex-end;
+  gap: var(--space-3);
+}
+
+.result-definitions .action-row :is(button, .button) {
+  min-height: 2.25rem;
+  padding-inline: var(--space-4);
+  font-size: var(--text-1);
+}
+
+.result-definitions {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.history-definition-dialog h3 {
+  color: var(--accent-text);
+}
+
+@media (max-width: 47.99rem) {
+  .accent-fieldset {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+    padding-top: var(--space-3);
+  }
+
+  .accent-options {
+    margin-top: var(--space-3);
+    border-top: var(--terminal-rule);
+    border-inline-start: 0;
+  }
+
+  .custom-accent-heading {
+    min-height: 2.5rem;
+  }
+
+  .custom-accent-options,
+  .custom-accent-create,
+  .accent-fieldset > .field-error {
+    grid-column: 1;
+  }
+
+  .custom-accent-options {
+    grid-template-columns: minmax(0, 1fr);
+    border-inline-start: 0;
+  }
+
+  .accent-preset-fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .accent-preview-keys {
+    grid-template-columns: repeat(3, minmax(2.6rem, 1fr));
+  }
+
+  .stats-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .stats-metric:nth-child(4n) {
+    border-inline-end: var(--terminal-rule);
+  }
+
+  .stats-metric:nth-child(2n) {
+    border-inline-end: 0;
+  }
+
+  .stats-activity li {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-4);
+  }
+
+  .stats-activity time,
+  .stats-activity em {
+    color: var(--muted);
+  }
+
+  .profile-editor-intro,
+  .public-profile {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  /* Full width below the avatar and the name, where a row fits and wraps. */
+  .public-profile > .action-row {
+    grid-column: 1 / -1;
+    flex-direction: row;
+  }
+
+  .profile-visibility-summary > div {
+    grid-template-columns: 4.75rem minmax(0, 1fr);
+  }
+
+  .profile-avatar--large {
+    width: clamp(5.5rem, 27vw, 7.5rem);
+  }
+
+  .public-stat-grid,
+  .public-breakdown-grid,
+  .public-rating-list,
+  .rating-bucket-grid,
+  .challenge-grid,
+  .directory-controls {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .public-stat-grid > div,
+  .public-breakdown-grid > div,
+  .public-rating-list article,
+  .rating-bucket {
+    border-inline-end: 0;
+  }
+
+  .directory-list article {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .directory-list article > div:first-child {
+    border-inline-end: 0;
+    border-bottom: var(--terminal-rule);
+  }
+
+  .directory-list dl,
+  .rating-bucket dl {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .rating-bucket-grid,
+  .rating-bucket {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .rating-bucket dd {
+    overflow-wrap: normal;
+    word-break: normal;
+  }
+
+  .rating-bucket dl > div:nth-child(3) dd,
+  .rating-bucket dl > div:nth-child(4) dd {
+    font-size: var(--text-1);
+    white-space: nowrap;
+  }
+
+  .directory-list dl > div:nth-child(2n),
+  .rating-bucket dl > div:nth-child(2n) {
+    border-inline-end: 0;
+  }
+
+  .definition-list li {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+}
+
+@media (forced-colors: active) {
+  .global-chrome,
+  .mobile-route-rail {
+    background: Canvas;
+    color: CanvasText;
+    backdrop-filter: none;
+  }
+
+  :where(input, textarea, select),
+  .accent-option:has(input:checked) {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .accent-swatch {
+    border-color: CanvasText;
+    background: CanvasText;
+  }
+
+  .accent-preset-dialog,
+  .accent-preset-preview,
+  .accent-preview-key {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+  }
+
+  .attention-badge {
+    border: 1px solid ButtonText;
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .result-composition-track span,
+  .comparison-track > span {
+    background: Highlight;
+  }
+}
+
+/*
+ * The COMBAT portal.
+ *
+ * A tile grid. Each tile is a real button
+ * that enters a queue, so it takes the shell's control treatment rather than being a
+ * decorated div — and it declares its own ink alongside its own surface, per the rule
+ * `.segmented` states above.
+ */
+.combat-portal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-7);
+}
+
+.portal-heading {
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+}
+
+.portal-switches {
+  display: flex;
+  flex: 0 0 auto;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-5);
+  align-items: center;
+}
+
+/* OG and GO are acronyms in every other line of copy in the app; the chrome's lowercase
+   idiom is for words like "home" and "menu", not for these. */
+.portal-switches .segmented button {
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-switches .checkbox-row {
+  display: inline-flex;
+  gap: var(--space-3);
+  align-items: center;
+  white-space: nowrap;
+}
+
+/*
+ * `auto-fit` with a floor rather than a fixed column count: ten controls should be three
+ * across on a desktop and two on a phone without a breakpoint deciding it, and a tile
+ * narrower than about ten characters cannot hold "45 minutes" on one line.
+ */
+/*
+ * Two columns on a phone and four on a desktop, from one rule.
+ *
+ * `auto-fit` alone cannot express both — a floor low enough to give two columns at 390px
+ * gives seven at 1280px, which is a row of thin slabs rather than the reference's grid of
+ * substantial tiles. The cap is what holds the tile size steady: the grid stops growing
+ * and the page keeps its margin, exactly as the reference does.
+ */
+.portal-tiles {
+  display: grid;
+  max-width: 46rem;
+  grid-template-columns: repeat(auto-fit, minmax(10.5rem, 1fr));
+  gap: var(--space-4);
+}
+
+.portal-tile {
+  display: flex;
+  min-height: 6.5rem;
+  flex-direction: column;
+  gap: var(--space-1);
+  align-items: flex-start;
+  justify-content: center;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: var(--surface-inset);
+  padding: var(--space-5);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  text-align: start;
+  text-transform: none;
+}
+
+.portal-tile-clock {
+  font-size: var(--text-5);
+  font-weight: 650;
+  line-height: var(--leading-tight);
+}
+
+.portal-tile-kind {
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.portal-tile-occupancy {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-block-start: var(--space-3);
+}
+
+.portal-tile-count {
+  font-size: var(--text-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.portal-tile-count.is-quiet {
+  color: var(--muted);
+}
+
+.portal-tile-searching {
+  color: var(--accent-text);
+  font-size: var(--text-1);
+  font-weight: 650;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/*
+ * An occupied control has to look different from an empty one.
+ *
+ * Every tile rendered identically whether anyone was there or not, which made live
+ * occupancy — the entire reason this page exists — invisible. Presence now raises the
+ * tile: a full-strength border, the standard surface instead of the recessed one, and an
+ * accent rail down its leading edge that thickens with the band.
+ *
+ * The rail is a `box-shadow` rather than a border so it cannot shift the tile's box, and
+ * `data-band` drives only its weight — the text inside already says "3–5 waiting", so
+ * nothing here is the sole carrier of the meaning.
+ */
+.portal-tile.is-occupied {
+  border-color: var(--ink);
+  background: var(--surface);
+  box-shadow: inset 3px 0 var(--accent);
+}
+
+.portal-tile.is-occupied[data-band='some'] {
+  box-shadow: inset 5px 0 var(--accent);
+}
+
+.portal-tile.is-occupied[data-band='many'],
+.portal-tile.is-occupied[data-band='busy'] {
+  box-shadow: inset 7px 0 var(--accent);
+}
+
+.portal-tile.is-occupied .portal-tile-count:not(.is-quiet) {
+  color: var(--accent-text);
+  font-weight: 650;
+}
+
+.portal-tile.is-searching {
+  border-color: var(--accent-text);
+  background: var(--accent-soft);
+}
+
+.portal-tile:hover,
+.portal-tile:focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+/*
+ * On the inverse surface every descendant that declared its own ink has to be brought
+ * back, or it keeps a color chosen for the light surface underneath. This is the same
+ * defect class as the alerts badge and the notification timestamps.
+ */
+.portal-tile:hover :is(.portal-tile-kind, .portal-tile-count, .portal-tile-searching),
+.portal-tile:focus-visible :is(.portal-tile-kind, .portal-tile-count, .portal-tile-searching) {
+  color: var(--terminal-selected-muted);
+}
+
+.portal-tile:hover .portal-tile-count:not(.is-quiet),
+.portal-tile:focus-visible .portal-tile-count:not(.is-quiet) {
+  color: var(--control-ink-on-selected);
+}
+
+.portal-lane-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));
+  gap: var(--space-4);
+}
+
+.portal-lane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+  padding: var(--space-4);
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.portal-lane strong {
+  font-family: var(--tui-font);
+}
+
+.portal-lane span {
+  color: var(--muted);
+  font-size: var(--text-2);
+}
+
+.portal-lane:hover,
+.portal-lane:focus-visible {
+  border-color: var(--ink);
+  background: var(--terminal-selected);
+  color: var(--control-ink-on-selected);
+}
+
+.portal-lane:hover span,
+.portal-lane:focus-visible span {
+  color: var(--terminal-selected-muted);
+}
+
+/*
+ * The leaderboard's lane picker.
+ *
+ * The same controls as the COMBAT portal, so choosing a lane to read reads like choosing
+ * one to play. Wrapping matters here: ten time-control buttons cannot sit on one line at
+ * a phone width, and a horizontally scrolling row of them hides the ones off-screen.
+ */
+.leaderboard-lanes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3) var(--space-4);
+  align-items: center;
+  margin-block-end: var(--space-5);
+}
+
+.leaderboard-lanes .checkbox-row {
+  display: inline-flex;
+  gap: var(--space-3);
+  align-items: center;
+  white-space: nowrap;
+}
+
+.leaderboard-lanes .segmented {
+  flex-wrap: wrap;
+}
+
+.leaderboard-lanes .segmented button {
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+/*
+ * The clock row is its own wrapping group. A `border-inline-end` on every button would
+ * leave a stray divider at the end of each wrapped line, so the separator is drawn as an
+ * inset shadow that a wrapped row cannot strand.
+ */
+.leaderboard-clocks button {
+  border-inline-end: 0;
+  box-shadow: inset -1px 0 var(--border);
+}
+
+.leaderboard-clocks button:last-child {
+  box-shadow: none;
+}
+
+/*
+ * The technical half of the error page.
+ *
+ * Closed by default so an ordinary player meets the calm sentence first, and monospace
+ * with wrapping when opened — a stack trace that scrolls sideways on a phone is a stack
+ * trace nobody sends.
+ */
+.error-report {
+  margin-block-start: var(--space-5);
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+  padding: var(--space-4);
+}
+
+.error-report > summary {
+  color: var(--muted);
+  cursor: pointer;
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+}
+
+.error-report-detail {
+  overflow-x: auto;
+  margin-block: var(--space-4);
+  border: var(--terminal-rule);
+  background: var(--surface);
+  padding: var(--space-4);
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  line-height: var(--leading-snug);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * The credit row that closes About, Help, Methodology, and the not-found page. It reads the
+ * scheme and accent tokens, so it follows light, dark, and every accent without its own palette.
+ */
+.site-credit {
+  --credit-ink: var(--ink);
+  --credit-muted: var(--muted);
+  --credit-line: var(--border);
+  --credit-accent: var(--accent-text);
+  --credit-heart: var(--accent-text);
+  --credit-hover: var(--surface-strong);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-block-start: var(--space-6);
+  border-block-start: var(--terminal-rule);
+  padding-block-start: var(--space-5);
+}
+
+.site-credit-made {
+  margin: 0;
+  color: var(--credit-ink);
+  font-weight: 600;
+}
+
+.site-credit-made a {
+  color: inherit;
+  text-decoration: underline;
+  text-decoration-color: var(--credit-accent);
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
+}
+
+.site-credit-social {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.site-credit-social a {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  color: var(--credit-muted);
+  transition:
+    color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.site-credit-social a:hover {
+  color: var(--credit-ink);
+  background: var(--credit-hover);
+}
+
+.site-credit-social svg {
+  width: 19px;
+  height: 19px;
+}
+
+.site-credit-sponsor {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-inline-start: auto;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--credit-line);
+  border-radius: 999px;
+  color: var(--credit-ink);
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-decoration: none;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+}
+
+.site-credit-sponsor svg {
+  width: 17px;
+  height: 17px;
+  color: var(--credit-heart);
+}
+
+.site-credit-sponsor:hover {
+  border-color: var(--credit-muted);
+  background: var(--credit-hover);
+}
+
+.site-credit a:focus-visible {
+  outline: 2px solid var(--credit-accent);
+  outline-offset: 2px;
+}
+
+@media (max-width: 720px) {
+  .site-credit-sponsor {
+    margin-inline-start: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .site-credit a {
+    transition: none;
+  }
+}

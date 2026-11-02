@@ -1,0 +1,1903 @@
+@import 'tailwindcss';
+
+/*
+ * V7-01. Design tokens.
+ *
+ * One vocabulary for type, rhythm, focus and motion, so a value is chosen from a
+ * scale rather than typed by hand. Color is deliberately absent: this file used to
+ * declare a full palette here, but every one of those 22 light names and all 18 dark
+ * names was redeclared by `tui-shell.css`, which loads second and owns the light,
+ * dark and per-accent variants. Those copies never reached the page and are gone.
+ * `--rule` and the `--z-*` scale stay because nothing downstream redeclares them.
+ */
+:root {
+  color-scheme: light dark;
+
+  /*
+   * Type: six steps. Body is `--text-3` at 14px, which is what v6.7 already shipped,
+   * so running text does not reflow. The scale replaces 34 fixed sizes and 11 one-off
+   * `clamp()` ramps, 19 of which sat inside a single 4.5px band and carried no
+   * hierarchy. Micro-labels take `--text-1` with `--tracking-label` and uppercase
+   * rather than shrinking below it.
+   */
+  --text-1: 0.6875rem;
+  --text-2: 0.75rem;
+  --text-3: 0.875rem;
+  --text-4: 1.0625rem;
+  --text-5: 1.3125rem;
+  --text-6: 1.6875rem;
+
+  --leading-tight: 1.25;
+  --leading-snug: 1.4;
+  --leading-body: 1.55;
+
+  --weight-regular: 450;
+  --weight-medium: 550;
+  --weight-bold: 650;
+
+  --tracking-label: 0.08em;
+
+  /* Rhythm: seven steps on a 4px grid, plus 2px for hairline nudges. */
+  --space-1: 0.125rem;
+  --space-2: 0.25rem;
+  --space-3: 0.5rem;
+  --space-4: 0.75rem;
+  --space-5: 1rem;
+  --space-6: 1.5rem;
+  --space-7: 2.5rem;
+
+  /*
+   * The hanging gutter a prompt glyph or row marker occupies. Headings, prose,
+   * region labels and row content all share the single text column to its right.
+   */
+  --marker-gutter: 1.25rem;
+
+  /*
+   * Focus: one width and one color everywhere. The offset is outset by default and
+   * inset only where an outset ring would collide with a neighbour — the accent
+   * swatch grids. Before v7 there were four unrelated geometries (3px/3px, 2px/2px,
+   * 2px/-3px, 1px dashed/-4px), so tabbing a page changed the ring's shape.
+   */
+  --focus-width: 2px;
+  --focus-offset: 2px;
+  --focus-offset-inset: -3px;
+
+  /*
+   * Elevation. Levels 0 and 1 — the page, boards, table rows, panels and form groups —
+   * carry no shadow at all; a terminal surface separates with a hairline, and 67 of the
+   * app's 80 radius declarations resolve to zero by design. Only things that genuinely
+   * float get a shadow, and there are exactly three of those tiers. This replaces four
+   * unrelated recipes that expressed the same intent: `0 6px 8px` at three different
+   * alphas, `0 1rem 3rem`, `0 0.9rem 2.3rem` written in a different color space, and
+   * `0 2px 5px`. The color is a token so the dark scheme can deepen it in one place
+   * rather than each recipe guessing.
+   */
+  --shadow-color: oklch(0.15 0.02 230 / 0.14);
+  --shadow-color-strong: oklch(0.15 0.02 230 / 0.26);
+  --elevation-2: 0 1px 2px var(--shadow-color);
+  --elevation-3: 0 2px 4px var(--shadow-color), 0 8px 20px -8px var(--shadow-color-strong);
+  --elevation-4: 0 4px 8px var(--shadow-color), 0 18px 40px -14px var(--shadow-color-strong);
+
+  /* Motion: declared here, applied in the v7 motion pass. */
+  --duration-feedback: 90ms;
+  --duration-surface: 160ms;
+  --ease-standard: ease-out;
+
+  --rule: 1px solid var(--border);
+  --z-nav: 20;
+  --z-dropdown: 30;
+  --z-sticky: 40;
+  --z-chrome: 45;
+  /*
+   * V7-05. `--z-backdrop: 50` and `--z-modal: 60` were declared but never referenced,
+   * while raw `z-index: 24` and `40` sat in that band instead. They are not needed:
+   * every dialog in the app uses native `<dialog>` with `showModal()`, which promotes
+   * it to the browser's top layer above all z-index. The raw literals now use the
+   * tokens that actually describe them — a help popover and a sticky utility rail.
+   */
+  --z-toast: 70;
+  --z-tooltip: 80;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  min-width: 20rem;
+  background: var(--background);
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100dvh;
+  margin: 0;
+  overflow-x: clip;
+  background: var(--background);
+  color: var(--ink);
+  font-family: var(--font-geist-sans), system-ui, sans-serif;
+  font-size: var(--text-3);
+  line-height: 1.5;
+  text-rendering: optimizeLegibility;
+}
+
+button,
+input,
+select,
+textarea {
+  color: inherit;
+  font: inherit;
+}
+
+button,
+select,
+input[type='submit'] {
+  min-height: 2.75rem;
+}
+
+a {
+  color: inherit;
+  text-underline-offset: 0.2em;
+}
+
+button,
+.button {
+  display: inline-flex;
+  min-height: var(--control-height);
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-5);
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  font-weight: 700;
+  letter-spacing: 0.015em;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color var(--duration-feedback) var(--ease-standard),
+    border-color var(--duration-feedback) var(--ease-standard),
+    box-shadow var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
+}
+
+button:hover,
+.button:hover {
+  border-color: color-mix(in oklch, var(--border) 45%, var(--ink));
+  background: var(--surface-strong);
+}
+
+button:active,
+.button:active {
+  translate: 0 1px;
+}
+
+button:disabled,
+.button[aria-disabled='true'] {
+  cursor: not-allowed;
+  /* V7-03. The fallback disagreed with the token's real value (0.74, tui-shell.css). */
+  opacity: var(--control-disabled-opacity, 0.74);
+}
+
+::placeholder {
+  color: var(--muted);
+  opacity: 1;
+}
+
+:focus-visible {
+  outline: var(--focus-width) solid var(--focus);
+  outline-offset: var(--focus-offset);
+}
+
+.skip-link {
+  position: fixed;
+  z-index: var(--z-tooltip);
+  left: 1rem;
+  top: 1rem;
+  translate: 0 -200%;
+  border-radius: var(--radius-control);
+  background: var(--ink);
+  padding: var(--space-4) var(--space-5);
+  color: var(--background);
+}
+
+.skip-link:focus {
+  translate: 0;
+}
+
+.global-chrome {
+  position: sticky;
+  z-index: var(--z-chrome);
+  top: 0;
+  border-bottom: var(--rule);
+  background: var(--background);
+}
+
+.wordmark {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-3);
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.wordmark span {
+  color: var(--accent-text);
+}
+
+.desktop-nav {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 0;
+  align-self: stretch;
+}
+
+.desktop-nav a,
+.more-menu > button,
+.notification-menu > button {
+  min-height: 100%;
+  border: 0;
+  border-inline-start: var(--rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  font-weight: 700;
+  letter-spacing: 0.035em;
+  text-decoration: none;
+}
+
+.desktop-nav a[aria-current='page'],
+.desktop-nav a:hover {
+  background: var(--accent-soft);
+  color: var(--ink);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.more-menu,
+.notification-menu {
+  position: relative;
+}
+
+.more-menu > button,
+.notification-menu > button {
+  min-height: 3rem;
+}
+
+.topbar-tools {
+  display: flex;
+  min-height: 3rem;
+  align-items: stretch;
+  margin-inline-start: auto;
+}
+
+.menu-popover {
+  position: fixed;
+  z-index: var(--z-dropdown);
+  /*
+   * `max()` against the header's measured bottom edge. The literal is the
+   * fallback for the frame before the shell has measured, and for any surface that has
+   * no header at all; the measurement wins whenever the header is taller than the
+   * literal assumed. See the note in app-shell.tsx for what this is guarding against.
+   */
+  top: max(3.1rem, var(--chrome-bottom, 0px));
+  right: 1rem;
+  display: flex;
+  width: min(16rem, calc(100vw - 2rem));
+  flex-direction: column;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+  padding: 0;
+  box-shadow: var(--elevation-2);
+}
+
+.menu-heading {
+  border-bottom: var(--rule);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-1);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.menu-popover a {
+  min-height: 2.75rem;
+  border-bottom: var(--rule);
+  border-radius: 0;
+  padding: var(--space-4);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  text-decoration: none;
+}
+
+.menu-popover a:hover {
+  background: var(--accent-soft);
+}
+
+.context-ready {
+  color: var(--correct-text);
+}
+
+.notification-popover {
+  width: min(24rem, calc(100vw - 2rem));
+  gap: var(--space-3);
+}
+
+/*
+ * A column that scrolls, not a grid that squeezes.
+ *
+ * This was `display: grid` with a `max-height`, which is a combination that quietly
+ * compresses. A grid whose height is constrained sizes its `auto` tracks to fit, down
+ * to each item's automatic minimum — and the row's minimum is the 2.5rem `min-height`
+ * every popover link carries. So past roughly eight notifications every row's box
+ * became 40px while its content needed 59px, the second line overflowed the bottom
+ * edge, and the following row's top border painted straight through the timestamp.
+ *
+ * It needed a full list to appear, which is why it survived every check here and why
+ * it showed in both engines at once: it was never engine-specific, it was
+ * quantity-specific (an account with eighteen).
+ *
+ * A flex column with unshrinkable children cannot do this. `100dvh` rather than
+ * `100vh` for the same reason the panels now measure the header: on a phone `100vh` is
+ * the viewport with the browser toolbar retracted, so it overstates what is visible.
+ */
+.notification-list {
+  display: flex;
+  max-height: min(30rem, calc(100dvh - 8rem));
+  flex-direction: column;
+  gap: var(--space-2);
+  overflow-y: auto;
+}
+
+.notification-list a.is-unread {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.attention-badge {
+  display: inline-grid;
+  min-width: 1.35rem;
+  min-height: 1.35rem;
+  place-items: center;
+  margin-inline-start: var(--space-2);
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  font-weight: 800;
+}
+
+.route-frame {
+  width: min(80rem, 100%);
+  margin-inline: auto;
+  padding: var(--space-6) max(1rem, env(safe-area-inset-left));
+  padding-bottom: max(6rem, calc(2rem + env(safe-area-inset-bottom)));
+}
+
+/*
+ * V7-02. `max-width: 70ch` was removed. It dated from an earlier design where the
+ * route header was a block of text; `tui-shell.css` later redefined the header as a
+ * full-width ruled line but never reset the cap, so at 1440px the heading rule died
+ * at 613px while every region rule beneath it ran to 1416px — on every route.
+ */
+.route-header {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin-bottom: var(--space-6);
+}
+
+.route-header h1,
+.route-header p {
+  margin: 0;
+}
+
+.route-title-line {
+  display: flex;
+  align-items: center;
+  gap: var(--space-5);
+}
+
+.route-title-line > span {
+  height: 1px;
+  flex: 1;
+  background: var(--border);
+}
+
+.route-header h1 {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-6);
+  line-height: 1.15;
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+.route-header p,
+.prose {
+  max-width: 72ch;
+  color: var(--muted);
+  line-height: 1.6;
+  text-wrap: pretty;
+}
+
+.action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.button.primary,
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--accent-ink);
+  text-transform: uppercase;
+}
+
+.button.primary:hover,
+button.primary:hover {
+  border-color: color-mix(in oklch, var(--accent) 72%, var(--ink));
+  background: color-mix(in oklch, var(--accent) 88%, var(--ink));
+}
+
+.workbench-region {
+  min-width: 0;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+}
+
+.workbench-region-header {
+  display: flex;
+  min-height: 2.25rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-bottom: var(--rule);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+.workbench-region-header h2 {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  font-weight: 750;
+  letter-spacing: 0.045em;
+}
+
+.workbench-region-status {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-1);
+  font-weight: 650;
+  letter-spacing: 0.03em;
+  text-align: right;
+}
+
+.workbench-region-body {
+  min-width: 0;
+  padding: var(--space-5);
+}
+
+.home-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(18rem, 0.65fr);
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.home-commands .workbench-region-body {
+  padding: 0;
+}
+
+.command-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.command-row {
+  display: grid;
+  min-height: 5.25rem;
+  grid-template-columns: minmax(10rem, 0.7fr) minmax(13rem, 1fr) auto;
+  gap: var(--space-5);
+  align-items: center;
+  border-bottom: var(--rule);
+  padding: var(--space-5);
+  text-decoration: none;
+  transition:
+    background-color var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
+}
+
+.command-row:last-child {
+  border-bottom: 0;
+}
+
+.command-row:hover {
+  background: var(--surface-inset);
+}
+
+.command-row.is-primary {
+  background: var(--accent-soft);
+}
+
+.command-code,
+.command-row strong {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  letter-spacing: 0.025em;
+}
+
+.command-code {
+  color: var(--muted);
+}
+
+.command-row > span:nth-child(2) {
+  color: var(--muted);
+}
+
+.command-row strong::after {
+  content: ' →';
+  color: var(--accent-text);
+}
+
+.data-list {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--rule);
+}
+
+.data-row {
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-bottom: var(--rule);
+  padding: var(--space-4) var(--space-2);
+}
+
+/*
+ * Contextual foregrounds live in the `context` layer so they can tint ordinary value
+ * text without ever overriding a control's own state color. Unlayered declarations
+ * beat every layered one regardless of specificity, which is what keeps a light
+ * `--terminal-selected` surface paired with `--control-ink-on-selected` no matter how
+ * deeply a control is nested.
+ */
+@layer context {
+  .data-row > :last-child,
+  .request-row > :last-child {
+    color: var(--muted);
+  }
+}
+
+.data-row > :last-child {
+  text-align: right;
+}
+
+.data-row p,
+.setting-row p,
+.product-row p,
+.request-row p {
+  margin: var(--space-2) 0;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.mono {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.route-frame.is-narrow {
+  width: min(52rem, 100%);
+}
+
+.form-panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+  padding: 0;
+}
+
+.form-panel h2,
+.section-heading h2 {
+  margin-top: 0;
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.form-panel > h2 {
+  margin: 0;
+  border-bottom: var(--rule);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+  font-size: var(--text-2);
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.form-panel > form,
+.form-panel > .field-stack,
+.form-panel > .data-row,
+.form-panel > p {
+  margin: var(--space-5);
+}
+
+.form-panel > .segmented,
+.form-panel > .action-row,
+.form-panel > details {
+  margin: var(--space-4) var(--space-5);
+}
+
+.form-intro,
+.form-note {
+  color: var(--muted);
+}
+
+form.form-panel.field-stack {
+  padding-bottom: var(--space-5);
+}
+
+form.form-panel.field-stack > :not(h2) {
+  margin-inline: var(--space-5);
+}
+
+form.form-panel.field-stack > h2 + * {
+  margin-top: var(--space-5);
+}
+
+.status-panel .action-row {
+  margin-top: var(--space-5);
+}
+
+.status-panel .workbench-region-body {
+  background: var(--surface-inset);
+}
+
+.status-panel:not(.workbench-region) {
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+}
+
+.status-panel:not(.workbench-region) h2 {
+  margin-top: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-4);
+}
+
+.skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  border-top: var(--rule);
+}
+
+.skeleton-row {
+  display: grid;
+  min-height: 3.25rem;
+  grid-template-columns: minmax(7rem, 0.35fr) minmax(10rem, 0.65fr);
+  gap: var(--space-5);
+  align-items: center;
+  border-bottom: var(--rule);
+  padding: var(--space-4);
+}
+
+.skeleton-row i {
+  display: block;
+  height: 0.7rem;
+  background: var(--surface-strong);
+  opacity: 0.72;
+  animation: skeleton-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.skeleton-row i:last-child {
+  justify-self: end;
+  width: min(100%, 18rem);
+}
+
+@keyframes skeleton-pulse {
+  from {
+    opacity: 0.45;
+  }
+
+  to {
+    opacity: 0.9;
+  }
+}
+
+.confirmation-panel {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-6);
+  margin-top: var(--space-5);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-panel);
+  background: var(--accent-soft);
+  padding: var(--space-5);
+}
+
+.confirmation-panel h2,
+.confirmation-panel p {
+  margin: 0;
+}
+
+.confirmation-panel h2 {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-4);
+}
+
+.confirmation-panel p {
+  margin-top: var(--space-2);
+  color: var(--muted);
+}
+
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.field-stack label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-weight: 650;
+}
+
+.field-stack input,
+.field-stack select,
+.field-stack textarea,
+.inline-form input {
+  width: 100%;
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface-inset);
+  padding: var(--space-4) var(--space-4);
+}
+
+.field-stack input:hover,
+.field-stack select:hover,
+.field-stack textarea:hover,
+.inline-form input:hover {
+  border-color: color-mix(in oklch, var(--border) 45%, var(--ink));
+}
+
+.field-stack textarea {
+  resize: vertical;
+}
+
+.field-stack label.checkbox-row {
+  min-height: 2.75rem;
+  flex-direction: row;
+  align-items: center;
+}
+
+.checkbox-row input {
+  width: 1.25rem;
+  min-height: 1.25rem;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-4);
+}
+
+.form-message {
+  min-height: 1.5rem;
+  color: var(--muted);
+}
+
+.segmented {
+  display: inline-flex;
+  max-width: 100%;
+  gap: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  padding: 0;
+  overflow-x: auto;
+}
+
+.segmented button {
+  border: 0;
+  border-inline-end: var(--rule);
+  border-radius: 0;
+  background: transparent;
+  white-space: nowrap;
+}
+
+.segmented button[aria-pressed='true'] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.split-layout {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 28rem), 1fr));
+  gap: var(--space-5);
+  align-items: start;
+}
+
+.split-layout > *,
+.section-heading > *,
+.data-row > *,
+.request-row > *,
+.action-row > * {
+  min-width: 0;
+}
+
+.split-layout > section:not(.form-panel, .workbench-region) {
+  min-width: 0;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  padding: var(--space-5);
+}
+
+.split-layout > section:not(.form-panel, .workbench-region) > .section-heading:first-child {
+  margin: -1rem -1rem var(--space-5);
+  border-bottom: var(--rule);
+  background: var(--surface);
+  padding: var(--space-3) var(--space-4);
+}
+
+.split-layout > section:not(.form-panel, .workbench-region) > .section-heading:first-child h2 {
+  margin: 0;
+  font-size: var(--text-2);
+  letter-spacing: 0.035em;
+  text-transform: uppercase;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-bottom: var(--space-5);
+}
+
+.section-heading h2,
+.section-heading p {
+  margin-block: 0;
+}
+
+.balance-line,
+.account-summary {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.balance-line {
+  justify-content: space-between;
+  border-bottom: var(--rule);
+  padding: var(--space-5) 0;
+}
+
+.account-summary {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-1);
+  white-space: nowrap;
+}
+
+.account-summary a {
+  color: var(--muted);
+  text-decoration: none;
+}
+
+.switch-control {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-family: var(--font-geist-mono), monospace;
+}
+
+.switch-control input {
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.table-scroll {
+  max-width: 100%;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  scrollbar-gutter: stable;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-3);
+}
+
+th,
+td {
+  min-width: 7rem;
+  border-bottom: var(--rule);
+  padding: var(--space-4);
+  text-align: left;
+}
+
+th {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--text-2);
+  letter-spacing: 0.025em;
+}
+
+.metric-grid,
+.route-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr));
+  gap: 0;
+  border-top: var(--rule);
+  border-inline-start: var(--rule);
+}
+
+.metric {
+  display: flex;
+  min-height: 7rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  background: var(--background);
+  padding: var(--space-5);
+}
+
+.metric span {
+  color: var(--muted);
+}
+
+.metric strong {
+  font-size: var(--text-6);
+}
+
+.route-link {
+  display: flex;
+  min-height: 7rem;
+  flex-direction: column;
+  justify-content: space-between;
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  border-radius: 0;
+  background: var(--background);
+  padding: var(--space-5);
+  text-decoration: none;
+}
+
+.route-link:hover {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.route-link strong {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-3);
+  letter-spacing: 0.02em;
+}
+
+.route-link span {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.public-profile {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: var(--space-6);
+  align-items: start;
+}
+
+.profile-avatar {
+  display: grid;
+  width: 4.5rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.badge {
+  display: inline-flex;
+  min-height: 1.75rem;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  background: var(--surface);
+  padding: var(--space-2) var(--space-3);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+  white-space: nowrap;
+}
+
+.request-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-5);
+  border-bottom: var(--rule);
+  padding-block: var(--space-5);
+}
+
+.combat-game {
+  width: min(72rem, 100%);
+  margin-inline: auto;
+}
+
+.combat-score {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0;
+}
+
+.combat-score {
+  margin-block: var(--space-4);
+  border-top: var(--rule);
+  border-inline-start: var(--rule);
+}
+
+.combat-score > div {
+  display: flex;
+  min-height: 3.25rem;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  padding: var(--space-4) var(--space-4);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+}
+
+.combat-turn-state {
+  display: inline-flex;
+  min-height: 100%;
+  align-items: center;
+  border-inline-start: var(--rule);
+  padding: var(--space-3) var(--space-4);
+  color: var(--accent-text);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-1);
+  letter-spacing: 0.035em;
+  white-space: nowrap;
+}
+
+.combat-wait-state {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-block: var(--space-4);
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--accent-soft);
+  padding: var(--space-4);
+}
+
+.combat-wait-state strong {
+  font-family: var(--font-geist-mono), monospace;
+}
+
+/*
+ * `--accent-soft` tracks the scheme, so `--muted` on it is comfortable for every
+ * named accent and only fails under a custom one — measured 3.57:1, invisible to any
+ * sweep that covers named accents alone. `--accent-soft-muted` is the token derived per
+ * custom accent for exactly this surface; the unread notification row, which is the same
+ * accent-soft tint, already uses it.
+ */
+.combat-wait-state span {
+  color: var(--accent-soft-muted);
+}
+
+.combat-input {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+  margin-top: var(--space-4);
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+}
+
+.combat-input > .action-row {
+  justify-content: center;
+}
+
+.spectator-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.spectator-game {
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  padding: var(--space-5);
+}
+
+.spectator-game footer {
+  color: var(--muted);
+}
+
+button.calendar-day {
+  min-width: 0;
+  min-height: 4.5rem;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  border: 0;
+  border-right: var(--rule);
+  border-bottom: var(--rule);
+  border-radius: 0;
+  background: var(--background);
+  padding: var(--space-3);
+  font-size: var(--text-2);
+}
+
+button.calendar-day.is-selected {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.calendar-day strong {
+  color: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+}
+
+.calendar-controls,
+.calendar-selection {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--space-5);
+  margin-top: var(--space-5);
+}
+
+.calendar-controls label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  font-weight: 650;
+}
+
+.calendar-controls input {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: var(--space-3);
+}
+
+.calendar-selection {
+  align-items: center;
+  border-block: var(--rule);
+  padding-block: var(--space-5);
+}
+
+.calendar-selection h2,
+.calendar-selection p {
+  margin: 0;
+}
+
+.explorer-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: var(--space-4);
+}
+
+.explorer-controls label {
+  display: flex;
+  min-width: min(100%, 9rem);
+  flex-direction: column;
+  gap: var(--space-2);
+  font-weight: 650;
+}
+
+.explorer-controls input,
+.explorer-controls select {
+  min-height: 2.75rem;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: var(--space-3);
+}
+
+.word-list {
+  display: flex;
+  max-height: 36rem;
+  flex-direction: column;
+  overflow: auto;
+  border-top: var(--rule);
+}
+
+.word-list button {
+  justify-content: space-between;
+  border: 0;
+  border-bottom: var(--rule);
+  border-radius: 0;
+  background: transparent;
+  text-align: left;
+}
+
+.word-list button[aria-selected='true'] {
+  background: var(--accent-soft);
+  box-shadow: inset 0 -2px var(--accent);
+}
+
+.word-list button span:last-child {
+  color: var(--muted);
+  font-size: var(--text-2);
+}
+
+.pagination {
+  display: flex;
+  gap: var(--space-4);
+  margin-top: var(--space-6);
+}
+
+.prose-sections {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.prose-sections section {
+  border-top: var(--rule);
+  padding-top: var(--space-5);
+}
+
+.prose-sections h2 {
+  margin: 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-4);
+}
+
+/*
+ * No prose page had a third heading level before Methodology, and preflight
+ * resets headings to inherit, so an <h3> here would have been indistinguishable
+ * from a paragraph. One step below h2 on the existing scale, inheriting the
+ * section's ink so it is already covered by the contrast sweep.
+ */
+.prose-sections h3 {
+  margin: var(--space-3) 0 0;
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-3);
+  font-weight: 650;
+}
+
+.prose-sections p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+.feedback-preview {
+  max-height: 32rem;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/*
+ * A displayed equation. Scrolls inside its own box rather than widening the
+ * document, because the responsive suite asserts no route ever creates
+ * horizontal document scrolling and an equation is the one thing on a prose
+ * page that cannot be made to wrap sensibly.
+ */
+.equation {
+  max-width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+  font-size: var(--text-3);
+  line-height: 1.9;
+}
+
+.equation b {
+  font-weight: 650;
+  color: var(--accent-text);
+}
+
+.rating-spread {
+  margin: 0;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface-inset);
+  padding: var(--space-5);
+}
+
+/*
+ * Capped at the viewBox width so the figure renders 1:1 on a wide screen. The
+ * labels are sized in user units, so letting it stretch to a 96rem column would
+ * scale 13px text up past the page's largest heading.
+ */
+.rating-spread svg {
+  display: block;
+  width: 100%;
+  max-width: 640px;
+  height: auto;
+  margin: 0 auto;
+}
+
+.rating-spread-fill {
+  fill: var(--accent-soft);
+}
+
+.rating-spread-curve {
+  stroke: var(--accent);
+  stroke-width: 2;
+}
+
+.rating-spread-axis {
+  stroke: var(--border);
+  stroke-width: 1;
+}
+
+.rating-spread-mean {
+  stroke: var(--border);
+  stroke-width: 1;
+  stroke-dasharray: 3 3;
+}
+
+.rating-spread-label {
+  fill: var(--muted);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 13px;
+}
+
+.rating-spread figcaption {
+  margin-top: var(--space-4);
+  color: var(--muted);
+  font-size: var(--text-2);
+  line-height: 1.7;
+}
+
+@media (forced-colors: active) {
+  /* Fills and strokes are ignored in forced colors; keep the figure legible as
+     outlines rather than letting the curve disappear into the background. */
+  .rating-spread-fill {
+    fill: none;
+  }
+
+  .rating-spread-curve,
+  .rating-spread-axis,
+  .rating-spread-mean {
+    stroke: CanvasText;
+  }
+
+  .rating-spread-label {
+    fill: CanvasText;
+  }
+}
+
+/*
+ * The creator mark's motion.
+ *
+ * Here rather than in tui-shell.css because globals owns the one authoritative
+ * reduced-motion block, and a keyframe declared where that block cannot see it
+ * is a keyframe that ignores the preference. Under reduced motion the duration
+ * collapses to 0.01ms and each of these freezes on its 0% frame, which is why
+ * every 0% below is the red — the readable resting state rather than whichever
+ * color the cycle happened to be passing through.
+ */
+@keyframes creator-name {
+  0%,
+  100% {
+    color: var(--creator-a);
+  }
+
+  33% {
+    color: var(--creator-b);
+  }
+
+  66% {
+    color: var(--creator-c);
+  }
+}
+
+@keyframes creator-frame {
+  0%,
+  100% {
+    border-color: var(--creator-a);
+  }
+
+  33% {
+    border-color: var(--creator-b);
+  }
+
+  66% {
+    border-color: var(--creator-c);
+  }
+}
+
+/*
+ * The rails travel rather than blink: the gradient is twice the width of the
+ * element and slides one full width, so the three colors sweep along the rule
+ * continuously with no seam. Frozen, it is a static tricolor gradient, which
+ * still reads as deliberate.
+ */
+@keyframes creator-rail {
+  from {
+    background-position: 0% 50%;
+  }
+
+  to {
+    background-position: 200% 50%;
+  }
+}
+
+.admin-refresh {
+  margin-top: var(--space-6);
+}
+
+.update-toast {
+  position: fixed;
+  z-index: var(--z-toast);
+  right: 1rem;
+  bottom: 1rem;
+  display: flex;
+  max-width: calc(100vw - 2rem);
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+  padding: var(--space-4);
+}
+
+/*
+ * The floating status column.
+ *
+ * The ranked search strip and the connectivity warning used to be two independently
+ * fixed elements in the same corner, which was survivable only while they could not
+ * co-occur. A ranked search that outlives the page it started on can now be running
+ * when the connection drops, so they share one stack and lay out against each other
+ * instead of overlapping.
+ */
+.status-stack {
+  position: fixed;
+  z-index: var(--z-toast);
+  right: 1rem;
+  bottom: max(1rem, env(safe-area-inset-bottom));
+  left: auto;
+  display: flex;
+  max-width: min(30rem, calc(100vw - 2rem));
+  flex-direction: column;
+  gap: var(--space-3);
+  align-items: stretch;
+  /* An empty column must not intercept clicks on the page beneath it. */
+  pointer-events: none;
+}
+
+.status-stack > * {
+  pointer-events: auto;
+}
+
+.connectivity-status,
+.ranked-search-status {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  border: var(--rule);
+  border-radius: var(--radius-panel);
+  background: var(--background);
+  padding: var(--space-4);
+  font-family: var(--font-geist-mono), monospace;
+  font-size: var(--text-2);
+}
+
+.connectivity-status strong {
+  color: var(--present-text);
+}
+
+.connectivity-status span {
+  color: var(--muted);
+}
+
+.ranked-search-status {
+  flex-wrap: wrap;
+}
+
+.ranked-search-status > strong {
+  color: var(--present-text);
+  letter-spacing: 0.06em;
+}
+
+.ranked-search-status.is-matched > strong {
+  color: var(--correct-text);
+}
+
+.ranked-search-status > span {
+  flex: 1 1 12rem;
+  color: var(--muted);
+}
+
+.ranked-search-elapsed {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.ranked-search-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+@media (max-width: 47.99rem) {
+  .status-stack {
+    right: 0.75rem;
+    left: 0.75rem;
+    max-width: none;
+  }
+}
+
+.focus-exit {
+  position: fixed;
+  z-index: var(--z-sticky);
+  top: max(0.75rem, env(safe-area-inset-top));
+  right: max(0.75rem, env(safe-area-inset-right));
+  border-radius: var(--radius-control);
+  background: var(--surface);
+  padding: var(--space-4) var(--space-5);
+  font-size: var(--text-3);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+@media (max-width: 47.99rem) {
+  .desktop-nav {
+    display: none;
+  }
+
+  .topbar-tools {
+    margin-inline-start: auto;
+  }
+
+  .topbar-tools .more-menu > button {
+    display: none;
+  }
+
+  .connectivity-status {
+    right: 0.5rem;
+    bottom: calc(3.5rem + env(safe-area-inset-bottom));
+    left: 0.5rem;
+    max-width: none;
+  }
+
+  .route-frame {
+    padding: var(--space-5) var(--space-4) max(5.25rem, calc(1rem + env(safe-area-inset-bottom)));
+  }
+
+  .route-header {
+    margin-bottom: var(--space-5);
+  }
+
+  .route-header h1 {
+    font-size: var(--text-5);
+  }
+
+  .home-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .command-row {
+    min-height: 6.25rem;
+    grid-template-columns: 1fr auto;
+    gap: var(--space-3) var(--space-5);
+  }
+
+  .command-row > span:nth-child(2) {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .command-row strong {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .data-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .data-row > :last-child {
+    text-align: left;
+  }
+
+  .account-summary {
+    display: none;
+  }
+
+  .split-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .request-row {
+    flex-direction: column;
+  }
+
+  .request-row .action-row {
+    width: 100%;
+  }
+
+  .calendar-controls,
+  .calendar-selection,
+  .confirmation-panel,
+  .combat-wait-state {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  button.calendar-day {
+    min-height: 3.5rem;
+    padding: var(--space-2);
+    font-size: var(--text-1);
+  }
+
+  .calendar-day strong {
+    max-width: 100%;
+    overflow: hidden;
+    font-size: var(--text-1);
+    text-overflow: ellipsis;
+  }
+
+  .workbench-region-body {
+    padding: var(--space-4);
+  }
+
+  .responsive-table,
+  .responsive-table tbody,
+  .responsive-table tr,
+  .responsive-table td {
+    display: block;
+    width: 100%;
+  }
+
+  .responsive-table thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+  }
+
+  .responsive-table tr {
+    border-bottom: var(--rule);
+    padding-block: var(--space-3);
+  }
+
+  .responsive-table td {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 7rem minmax(0, 1fr);
+    align-items: center;
+    gap: var(--space-4);
+    border-bottom: 0;
+    padding: var(--space-3) var(--space-4);
+    overflow-wrap: anywhere;
+  }
+
+  /*
+   * W4a. Every value on this card is a bare text node except the definitions link, which
+   * is a <button>. That one difference produced the whole defect: a text node becomes an
+   * anonymous grid item that hugs the start edge, while a button becomes a real grid item
+   * at the initial `stretch`, filling the column and the row — and `button` carries
+   * `display: inline-flex; justify-content: center; align-items: center`, so its label
+   * centerd itself horizontally and sat about 10px below the label's baseline.
+   *
+   * Three declarations, one per cause, and `align-items: center` on the cell above so the
+   * label meets it. The 2.5rem `min-height` from `.text-action` is deliberately left
+   * alone: this is the mobile card, where shrinking a touch target to fix an alignment
+   * problem would be a poor trade.
+   */
+  .responsive-table td > .text-action {
+    justify-self: start;
+    justify-content: flex-start;
+    padding-inline: 0;
+  }
+
+  .responsive-table td::before {
+    content: attr(data-label);
+    color: var(--muted);
+    font-size: var(--text-1);
+    font-weight: 700;
+    letter-spacing: 0.025em;
+    text-transform: uppercase;
+  }
+}
+
+/*
+ * V7-10. Motion.
+ *
+ * Before v7 the app had two transition declarations in total, against roughly a hundred
+ * hover, focus, active, disabled, pressed and current-page state rules — so every state
+ * change except two snapped, which is a large part of why a finished app read as a
+ * static mockup. Two durations and one curve now cover all of them.
+ *
+ * What is deliberately excluded: tiles, and anything on the path between a keypress and
+ * the board. Key-to-tile response is held under 100ms at p95 by an existing test and
+ * nothing here goes near it. The keyboard keeps the color transition it already had —
+ * only its duration moves onto the scale, so evidence still resolves the way it did.
+ */
+:is(
+  .desktop-nav a,
+  .menu-popover a,
+  .account-menu > button,
+  .account-menu > a,
+  .more-menu > button,
+  .notification-menu > button,
+  .segmented button,
+  .word-list button,
+  .accent-option,
+  .route-link,
+  .data-row,
+  .request-row
+) {
+  transition:
+    background-color var(--duration-feedback) var(--ease-standard),
+    border-color var(--duration-feedback) var(--ease-standard),
+    box-shadow var(--duration-feedback) var(--ease-standard),
+    color var(--duration-feedback) var(--ease-standard);
+}
+
+/*
+ * Surfaces that mount rather than toggle — popovers, toasts, dialogs — fade in. Menus
+ * and dialogs get opacity only: they appear directly under a pointer that is about to
+ * click them, and moving a target as it arrives is worse than not moving it. Toasts
+ * enter from the page edge, where a short rise reads as arrival rather than drift.
+ */
+@keyframes surface-fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes surface-rise-in {
+  from {
+    opacity: 0;
+    translate: 0 4px;
+  }
+}
+
+.menu-popover,
+.context-help-panel,
+dialog.app-modal[open] {
+  animation: surface-fade-in var(--duration-surface) var(--ease-standard);
+}
+
+dialog.app-modal[open]::backdrop {
+  animation: surface-fade-in var(--duration-surface) var(--ease-standard);
+}
+
+.update-toast,
+.connectivity-status {
+  animation: surface-rise-in var(--duration-surface) var(--ease-standard);
+}
+
+/*
+ * The single authoritative reduced-motion block. `tui-shell.css` previously carried a
+ * partial copy that set the transition properties but omitted both animation ones, so
+ * which rules actually stopped depended on which file won — the kind of near-duplicate
+ * this cycle exists to remove.
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
+
+@media (forced-colors: active) {
+  button,
+  .button,
+  .menu-popover,
+  .update-toast,
+  .status-panel,
+  .form-panel,
+  .route-link,
+  .table-scroll {
+    border: 1px solid ButtonText;
+  }
+
+  .context-ready,
+  .wordmark span,
+  .command-row strong::after {
+    color: ButtonText;
+  }
+}
+
+/*
+ * The notification panel's header.
+ *
+ * `.section-heading` is a two-child layout — title, then one action — with no wrap. Adding
+ * Clear all made it three children inside a 24rem panel, so the title was flexed below its
+ * own text width and, with nothing clipping it, spilled underneath the buttons while each
+ * button broke its label across two lines.
+ *
+ * The actions are one group now, restoring the two-child shape, and the heading may wrap so
+ * the group drops to its own row when it cannot sit beside the title. No breakpoint is
+ * involved: the content decides, which is why this holds at any panel width and in any
+ * translation.
+ */
+.notification-heading {
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--space-3) var(--space-4);
+}
+
+.notification-heading > strong {
+  flex: 1 1 auto;
+}
+
+.notification-heading-actions {
+  display: flex;
+  flex: 0 0 auto;
+  gap: var(--space-3);
+  align-items: center;
+}
+
+/*
+ * A label that wraps mid-phrase reads as broken rather than as tight. The group wraps; the
+ * words inside a button do not.
+ *
+ * Scoped to the heading rather than to the group, so it holds for any action placed there
+ * — including one added as a direct sibling, which is the shape that failed.
+ */
+.notification-heading button {
+  white-space: nowrap;
+}

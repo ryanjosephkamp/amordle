@@ -1,0 +1,159 @@
+import { createHash } from 'node:crypto';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { resolve } from 'node:path';
+
+const root = process.cwd();
+const ledgerPath = resolve(root, 'supabase/migrations.sha256');
+const expectedLedgerHash = 'f73fc5e4260585a93035c4dc2b5bb9216d5576124c55f652d4a66b1369fd14bf';
+const authorizedAdditiveMigrations = new Map([
+  [
+    '20260730193000_amordle_combat_authority_v3.sql',
+    '1ade2a1b7e49e50cb46bc938d393c9d1e6ca8e62508678baa8efef203c937179',
+  ],
+  [
+    '20260801032334_amordle_public_community_v1.sql',
+    'ee1885032983b79577b08afbe7f989221dbe264f09401849f78f5e9b34d11d52',
+  ],
+  [
+    '20260801051509_amordle_public_community_stats_repair.sql',
+    '7897de557bd118ce2ca7e5f23e260e6cf06e5d58f7d49915ee5668df956d5a22',
+  ],
+  [
+    '20260801193000_amordle_accent_presets_v2.sql',
+    '26d488ee2d64e69a6a08a28ef7891e01289874ab6c1de7a1f1eb1ffc6fa75f84',
+  ],
+  [
+    '20260801221500_amordle_feedback_preferences_v2.sql',
+    'cde752fb637554292435292880b5375d6d8ce02c69793757d3655d7b1ba6c368',
+  ],
+  [
+    '20260801222500_amordle_public_avatars_v1.sql',
+    '1259a67886b9e7c64911b66cacfec39868a75d78e6e7a3a79966b274a8610f17',
+  ],
+  [
+    '20260802193000_amordle_account_lifecycle_v1.sql',
+    'caad339a608a0a23f5589a25bed6a1f2d415d033e04db707fce214687192c9f3',
+  ],
+  // Repairs get_public_ranked_leaderboard to the current Amordle v2 rating buckets
+  // (applied 2026-08-05).
+  [
+    '20260805200000_amordle_ranked_leaderboard_bucket_repair.sql',
+    '5093ce9326258c4d2eb647b7a422a59e900e8d46171e7fe8bc2d21ee517aaa3b',
+  ],
+  [
+    '20260810020000_amordle_ranked_buckets_v4.sql',
+    '485aa2ee183ef345fd1949b64d437187ce9f98db6fa685ecf113a40ce8624b89',
+  ],
+  [
+    '20260810090000_amordle_combat_portal_v1.sql',
+    '5bc580ab6672e9c4bb08a95351269850f06a0ea645058eec017c6a53cb48a8b2',
+  ],
+  [
+    '20260811010000_amordle_matchmaking_repair_v1.sql',
+    '32749fb5fe2f4973789d4c6a6d59ffc8baf5102ac84edc6f01623fbf3ac97442',
+  ],
+  [
+    '20260814010000_amordle_public_ranked_lanes_v4.sql',
+    '7ee3650210b5e6a2b94006417bde647856497f14e5df89d559f11408f0981f3a',
+  ],
+  [
+    '20260814120000_amordle_system_settlement_and_reaper_v1.sql',
+    'a72d8170a6f89698d6ffa000dfefe7c92edec30a0b900f34880051c86b085ed3',
+  ],
+  // The Creator flair and the Voltage accent, bound to one account by a CHECK
+  // constraint on the row rather than a test of the caller (applied 2026-08-15).
+  [
+    '20260815055205_amordle_creator_identity_v1.sql',
+    '7b0600cc0ab501dbe6bcfe4477a66a184ee359e93cb45a338676e51a2317001f',
+  ],
+  // Moves the is_active coalesce in list_my_accent_presets_v2 from the client to
+  // the source (applied 2026-08-16, verified in pg_proc).
+  [
+    '20260816013000_amordle_accent_preset_is_active_coalesce_v1.sql',
+    '6e7aa2ba3a8450359d7bb7009d176b1fa708b26d40a28227a4c3ab375409dbf5',
+  ],
+  // Economy authority and polling cost (applied 2026-08-18, verified in pg_proc
+  // and in has_function_privilege).
+  [
+    '20260818120000_amordle_solo_reward_authority_v1.sql',
+    '16a39fbc8c39c86f1e436aa3f2ac6082f50c5cdcc7b65bc56c3f7db3640d07ac',
+  ],
+  [
+    '20260818121000_amordle_daily_entitlement_authority_v1.sql',
+    'a272ff4a19281fb284714b288068de0bea181bcebd42aedb730a8f0607e5365f',
+  ],
+  [
+    '20260818122000_amordle_notification_feed_v1.sql',
+    'a539ff731513fef3e7a992e5a66f6d76dfc77ccf8a74b02259f58771363aa502',
+  ],
+]);
+// Reviewed and written but NOT yet applied to the linked project. Empty is the
+// normal state; an entry here means the repository is ahead of the database.
+const reviewedPendingMigrations = new Map([]);
+const sha256 = (value) => createHash('sha256').update(value).digest('hex');
+const failures = [];
+
+if (!existsSync(ledgerPath)) {
+  failures.push('migration ledger is missing');
+} else if (sha256(readFileSync(ledgerPath)) !== expectedLedgerHash) {
+  failures.push('migration ledger hash mismatch');
+}
+
+const migrationsDirectory = resolve(root, 'supabase/migrations');
+const migrations = readdirSync(migrationsDirectory)
+  .filter((name) => name.endsWith('.sql'))
+  .sort();
+const rows = readFileSync(ledgerPath, 'utf8')
+  .trim()
+  .split('\n')
+  .map((line) => line.match(/^([a-f0-9]{64})  migrations\/(.+\.sql)$/))
+  .filter(Boolean);
+
+if (rows.length !== 45) {
+  failures.push('immutable migration ledger row count is not 45');
+}
+
+for (const [, expected, name] of rows) {
+  const path = resolve(migrationsDirectory, name);
+  if (!existsSync(path) || sha256(readFileSync(path)) !== expected) {
+    failures.push(`migration hash mismatch: ${name}`);
+  }
+}
+
+const immutableNames = new Set(rows.map(([, , name]) => name));
+const additiveNames = migrations.filter((name) => !immutableNames.has(name));
+const recognizedAdditiveMigrations = new Map([
+  ...authorizedAdditiveMigrations,
+  ...reviewedPendingMigrations,
+]);
+if (
+  migrations.length !== rows.length + recognizedAdditiveMigrations.size ||
+  additiveNames.length !== recognizedAdditiveMigrations.size
+) {
+  failures.push('additive migration count is not recognized');
+}
+for (const name of additiveNames) {
+  const expected = recognizedAdditiveMigrations.get(name);
+  const path = resolve(migrationsDirectory, name);
+  if (!expected || !existsSync(path) || sha256(readFileSync(path)) !== expected) {
+    failures.push(`unauthorized or changed additive migration: ${name}`);
+  }
+}
+
+if (!failures.some((failure) => failure.includes('migration'))) {
+  process.stdout.write(
+    `PASS immutable migrations 45/45 + authorized additive ${
+      additiveNames.filter((name) => authorizedAdditiveMigrations.has(name)).length
+    }/${authorizedAdditiveMigrations.size}\n`,
+  );
+  process.stdout.write(
+    `PASS reviewed pending additive ${reviewedPendingMigrations.size}/${reviewedPendingMigrations.size}\n`,
+  );
+}
+
+if (failures.length) {
+  process.stderr.write(
+    `Migration verification failed:\n${failures.map((failure) => `- ${failure}`).join('\n')}\n`,
+  );
+  process.exit(1);
+}

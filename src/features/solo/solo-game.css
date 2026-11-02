@@ -1,0 +1,1343 @@
+/*
+ * V7-07. One play column.
+ *
+ * The play screen previously stacked four different measures: the status bar, board
+ * frame and message line at min(76rem) = 1216px, the keyboard, tools and evidence at
+ * min(44rem) = 704px, and the board itself at its own content width — 358px for a
+ * five-letter word, floating with roughly 400px of dead space on either side. Nothing
+ * shared a vertical edge with anything above or below it.
+ *
+ * The column is now the keyboard's own 44rem. That width is fixed, accepted, and
+ * asserted by the keyboard-fit matrix, so making it the shared measure rather than
+ * inventing a new one means every band lines up exactly and the keyboard is untouched.
+ * The 44rem children clamp to 100% and therefore fill the column automatically. The
+ * board stays centerd, but now inside something close to its own size, so the space
+ * around it reads as breathing room rather than a missing feature. Long words still
+ * scroll inside the board region exactly as before.
+ */
+.game-layout {
+  display: grid;
+  width: min(44rem, 100%);
+  min-height: calc(100dvh - 10rem);
+  margin-inline: auto;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: var(--space-4);
+  padding: var(--space-4) max(0.75rem, env(safe-area-inset-left)) var(--space-5);
+  font-family: var(--tui-font);
+}
+
+.game-status {
+  position: sticky;
+  z-index: var(--z-sticky);
+  top: 7rem;
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  gap: 0;
+  border: 0;
+  border-block: var(--terminal-rule);
+  border-radius: 0;
+  background: color-mix(in oklch, var(--background) 94%, transparent);
+}
+
+.is-focus .game-status {
+  top: 0;
+}
+
+.game-mode-lockup {
+  display: flex;
+  min-width: 15rem;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--space-4);
+  border-inline-end: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+}
+
+.game-context {
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+/*
+ * V7-04. Set one step below a route title rather than by nearest-value mapping. This
+ * is the play screen's heading and was previously 12.16px — smaller than the body text
+ * on every other route, so the most-looked-at screen had the least legible title. The
+ * status bar's 2.75rem minimum already accommodates it, so it costs no play height.
+ */
+.game-status h1 {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--tui-font);
+  font-size: var(--text-4);
+  font-weight: 650;
+  letter-spacing: 0;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.game-status h1::before {
+  color: var(--accent-text);
+  content: '❯ ';
+}
+
+.game-status-facts {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: stretch;
+  justify-content: flex-end;
+}
+
+.game-status-facts > span {
+  display: inline-flex;
+  min-height: 100%;
+  align-items: center;
+  gap: var(--space-2);
+  border-inline-start: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  letter-spacing: 0;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+
+.game-status-facts b {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.game-board-region {
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  border: 0;
+  border-inline: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  scrollbar-gutter: stable;
+}
+
+.game-region-header {
+  position: sticky;
+  z-index: 1;
+  top: 0;
+  display: grid;
+  min-height: 1.8rem;
+  grid-template-columns: auto minmax(2rem, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  border-bottom: var(--terminal-rule);
+  background: var(--surface);
+  padding: var(--space-2) var(--space-4);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+  font-weight: 550;
+  letter-spacing: 0;
+  text-transform: lowercase;
+}
+
+.game-region-header::before {
+  color: var(--accent-text);
+  content: '┌─';
+}
+
+.game-region-header::after {
+  color: var(--muted);
+  content: '─┐';
+}
+
+.game-board {
+  display: flex;
+  width: fit-content;
+  max-width: 100%;
+  min-width: min-content;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-5) var(--space-5) var(--space-4);
+}
+
+.board-entry {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.board-entry::after {
+  width: 1.8rem;
+  flex: 0 0 1.8rem;
+  content: '';
+}
+
+.board-entry-label {
+  position: absolute;
+  right: calc(100% + 2.8rem);
+  width: 8rem;
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: 0.58rem;
+  font-weight: 550;
+  text-align: right;
+}
+
+.board-row-number {
+  width: 1.8rem;
+  flex: 0 0 1.8rem;
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: 0.68rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+/*
+ * Only the SIZING stays on this route. Everything else a tile is — its frame, its
+ * evidence fills, the draft treatment and the caret — now lives in
+ * `@/features/board/board-surface.css`, which Help imports too. A game screen sizes its
+ * board from the viewport; a figure sizes itself from the column it sits in, which is the
+ * one thing the two genuinely disagree about.
+ */
+.tile {
+  width: clamp(2rem, 9vw, 3.35rem);
+  max-width: calc((100vw - 5rem) / 5);
+  font-size: clamp(0.82rem, 4vw, 1.35rem);
+}
+
+.evidence-legend {
+  display: flex;
+  max-width: 44rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-3) var(--space-5);
+  margin: 0 auto;
+  border-top: var(--terminal-rule);
+  padding: var(--space-3) var(--space-5);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-1);
+}
+
+.evidence-legend::before {
+  color: var(--accent-text);
+  content: '▸ evidence';
+}
+
+.evidence-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.evidence-legend b {
+  color: var(--ink);
+}
+
+.game-message {
+  display: grid;
+  height: 2.4rem;
+  min-height: 2.4rem;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  margin: 0;
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  font-family: var(--tui-font);
+  font-size: var(--text-2);
+  text-align: left;
+}
+
+/*
+ * V7-03. `actionState` is empty most of the time, but `.game-message` forces a fixed
+ * height and a border, so every Solo and COMBAT screen carried a permanently empty
+ * bordered rectangle beneath the keyboard.
+ *
+ * The element cannot simply be dropped from the markup or hidden with `display: none`:
+ * it is the `aria-live` region that announces action results, and a live region is
+ * only announced reliably if it is already present and exposed when its content
+ * changes. So when it has no content it takes the visually-hidden treatment instead —
+ * still in the accessibility tree, still announced, but out of the layout entirely
+ * rather than merely collapsed, which would otherwise leave a stray grid gap.
+ */
+.game-message:empty {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  min-height: 0;
+  border: 0;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.game-message-copy {
+  min-width: 0;
+  color: var(--accent-text);
+  font-weight: 650;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.game-backup-warning {
+  display: inline-flex;
+  min-width: 0;
+  align-items: center;
+  gap: var(--space-3);
+  color: var(--present-text);
+  font-size: var(--text-1);
+  white-space: nowrap;
+}
+
+.game-backup-warning[data-visible='false'] {
+  visibility: hidden;
+}
+
+.game-backup-warning button {
+  min-height: 1.7rem;
+  padding: var(--space-1) var(--space-3);
+  font-size: var(--text-1);
+}
+
+/* The play/combat routes center the keyboard in the 44rem play column. */
+.keyboard {
+  width: min(44rem, 100%);
+  margin-inline: auto;
+}
+
+.game-tools {
+  display: flex;
+  width: min(44rem, 100%);
+  margin-inline: auto;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0;
+  border: var(--terminal-rule);
+  border-radius: 0;
+}
+
+.game-tools button {
+  min-height: var(--control-height);
+  flex: 1 1 auto;
+  border: 0;
+  border-inline-end: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  font-size: var(--text-1);
+}
+
+.game-tools button::before {
+  content: '[';
+}
+
+.game-tools button::after {
+  content: ']';
+}
+
+.game-tools button:last-child {
+  border-inline-end: 0;
+}
+
+.result-panel {
+  width: min(44rem, 100%);
+  margin: 0 auto var(--space-4);
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  padding: var(--space-4);
+  text-align: left;
+}
+
+.result-panel h2 {
+  margin: 0;
+  font-family: var(--tui-font);
+  font-size: var(--text-3);
+  font-weight: 650;
+}
+
+.result-panel h2::before {
+  color: var(--accent-text);
+  content: '❯ ';
+}
+
+.result-panel .action-row {
+  justify-content: flex-start;
+}
+
+.encountered-go-review {
+  display: grid;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+}
+
+.encountered-go-review > h3 {
+  margin: 0;
+  font-size: var(--text-3);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.encountered-go-list {
+  display: grid;
+  gap: var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.encountered-go-entry {
+  border: var(--terminal-rule);
+}
+
+.encountered-go-entry > h3 {
+  margin: 0;
+  border-bottom: var(--terminal-rule);
+  padding: var(--space-4) var(--space-4);
+  font-size: var(--text-2);
+}
+
+.encountered-go-entry .word-definition {
+  border: 0;
+}
+
+.game-loading {
+  display: grid;
+  min-height: 60dvh;
+  place-items: center;
+  color: var(--muted);
+  font-family: var(--tui-font);
+}
+
+.combat-game {
+  font-family: var(--tui-font);
+}
+
+.combat-score {
+  border-radius: 0;
+}
+
+.combat-wait-state {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+  font-family: var(--tui-font);
+}
+
+.combat-wait-state::before {
+  color: var(--accent-text);
+  content: '❯ ';
+}
+
+.combat-input {
+  border: var(--terminal-rule);
+  border-radius: 0;
+  background: transparent;
+}
+
+@media (max-width: 47.99rem) {
+  .game-layout {
+    min-height: calc(100dvh - 11.8rem);
+    grid-template-rows: auto auto auto auto auto;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-2) max(2rem, env(safe-area-inset-bottom));
+  }
+
+  .game-layout > *,
+  .game-status-facts,
+  .game-board-region,
+  .evidence-legend,
+  .game-tools,
+  .keyboard {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .game-status {
+    top: 6.3rem;
+    flex-direction: column;
+  }
+
+  .game-mode-lockup {
+    min-width: 0;
+    border-inline-end: 0;
+    border-bottom: var(--terminal-rule);
+    padding: var(--space-3) var(--space-3);
+  }
+
+  .game-status-facts {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .game-status-facts > span {
+    min-height: 1.8rem;
+    border-inline-start: 0;
+    border-inline-end: var(--terminal-rule);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .game-region-header {
+    min-height: 1.65rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .game-board {
+    padding: var(--space-3) var(--space-2) var(--space-3);
+  }
+
+  .board-entry {
+    gap: var(--space-3);
+  }
+
+  .board-row-number {
+    width: 1.45rem;
+    flex-basis: 1.45rem;
+    font-size: 0.6rem;
+  }
+
+  .tile {
+    width: clamp(1.75rem, 10.7vw, 2.55rem);
+    max-width: calc((100vw - 4.4rem) / 5);
+  }
+
+  .board-entry-label {
+    display: none;
+  }
+
+  .evidence-legend {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    gap: var(--space-4);
+    overflow-x: auto;
+    padding: var(--space-3) var(--space-3);
+    white-space: nowrap;
+  }
+
+  .game-message {
+    height: 2.2rem;
+    min-height: 2.2rem;
+    padding: var(--space-3) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .game-backup-warning > span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+  }
+
+  .game-tools button {
+    min-width: 0;
+    flex-basis: 0;
+    padding-inline: var(--space-1);
+    font-size: var(--text-1);
+  }
+
+  button.key {
+    min-height: 2.75rem;
+  }
+}
+
+@media (max-width: 23rem) {
+  .game-layout {
+    padding-inline: var(--space-2);
+  }
+
+  .keyboard-row {
+    gap: 0.1rem;
+  }
+
+  button.key {
+    min-height: 2.75rem;
+    padding-inline: 0.03rem;
+  }
+}
+
+/* Tile and key forced-colors handling moved to board-surface.css with the rules it
+   belongs to; these are the route's own chrome. */
+@media (forced-colors: active) {
+  .game-status,
+  .game-board-region,
+  .game-tools,
+  .result-panel,
+  .combat-wait-state,
+  .combat-input {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+}
+
+/*
+ * v5 contained play surface.
+ * The document does not scroll during active play; only history regions do.
+ */
+
+.game-layout {
+  width: min(44rem, 100%);
+  min-width: 0;
+  max-width: 100%;
+  height: 100%;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+  gap: var(--space-3);
+  overflow: hidden;
+  padding: var(--space-3) max(0.5rem, env(safe-area-inset-left))
+    max(0.5rem, env(safe-area-inset-bottom));
+}
+
+.game-status,
+.is-focus .game-status {
+  position: static;
+  min-height: 2.75rem;
+  flex-wrap: wrap;
+  background: var(--background);
+}
+
+.game-mode-lockup {
+  min-width: 13rem;
+  padding: var(--space-3) var(--space-3);
+}
+
+.game-board-region {
+  display: grid;
+  min-height: 0;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.game-region-header {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+
+.game-region-header::before,
+.game-region-header::after {
+  content: none;
+}
+
+.game-region-header > span:last-child {
+  justify-self: end;
+}
+
+.game-history-shell {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.game-history-viewport {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  touch-action: pan-y;
+}
+
+html[data-game-presentation='review'] .combat-game {
+  height: auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .game-layout {
+  min-height: 0;
+  grid-template-rows: auto auto auto auto auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .game-board-region,
+html[data-game-presentation='review'] .game-board-region .game-history-shell,
+html[data-game-presentation='review'] .game-board-region .game-history-viewport {
+  height: auto;
+  min-height: 0;
+  overflow: visible;
+  overscroll-behavior: auto;
+  touch-action: pan-y;
+}
+
+html[data-game-presentation='review'] .game-board-region .latest-row-button {
+  display: none;
+}
+
+html[data-game-presentation='review'] .combat-transcript-frame {
+  min-height: 20rem;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .combat-history,
+html[data-game-presentation='review'] .combat-history .game-history-viewport {
+  height: auto;
+  overflow: visible;
+}
+
+html[data-game-presentation='review'] .combat-history .latest-row-button {
+  display: none;
+}
+
+.game-history-viewport:focus-visible {
+  outline-offset: -3px;
+}
+
+.latest-row-button {
+  position: absolute;
+  z-index: 2;
+  right: 0.5rem;
+  bottom: 0.5rem;
+  min-height: 2.75rem;
+  border-color: var(--accent);
+  background: var(--surface-inset);
+  box-shadow: var(--elevation-2);
+}
+
+.game-board {
+  gap: var(--space-2);
+  padding: var(--space-3) var(--space-4);
+}
+
+.tile {
+  width: clamp(1.7rem, 6dvh, 3.1rem);
+  max-width: none;
+}
+
+.game-message {
+  min-height: 2.1rem;
+  padding: var(--space-3) var(--space-3);
+}
+
+.game-auxiliary {
+  width: min(44rem, 100%);
+  min-width: 0;
+  margin-inline: auto;
+}
+
+.game-auxiliary-toggle {
+  display: none;
+  width: 100%;
+  min-height: 2.75rem;
+  align-items: center;
+  border: var(--terminal-rule);
+  padding: var(--space-3) var(--space-4);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: var(--text-1);
+}
+
+.game-tool-status {
+  min-height: 1.25rem;
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+.game-auxiliary-content {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.game-auxiliary .evidence-legend {
+  width: 100%;
+  max-width: none;
+  border: var(--terminal-rule);
+}
+
+.keyboard {
+  flex: 0 0 auto;
+}
+
+.combat-game {
+  display: flex;
+  width: min(72rem, 100%);
+  height: 100%;
+  min-height: 0;
+  margin-inline: auto;
+  flex-direction: column;
+  gap: var(--space-3);
+  overflow: hidden;
+}
+
+.combat-game > * {
+  flex: 0 0 auto;
+}
+
+.combat-score {
+  min-height: 0;
+  margin: 0;
+}
+
+.combat-score > div {
+  min-height: 2.75rem;
+  padding-block: var(--space-3);
+}
+
+.combat-wait-state {
+  margin: 0;
+}
+
+.combat-transcript-frame {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: var(--terminal-rule);
+}
+
+.combat-transcript-header {
+  display: grid;
+  min-height: 1.75rem;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  align-items: center;
+  border-bottom: var(--terminal-rule);
+  background: var(--surface);
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+.combat-transcript-header > .combat-transcript-meta {
+  justify-self: end;
+}
+
+.combat-transcript {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  container-type: inline-size;
+}
+
+.combat-transcript-entry {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.combat-transcript-meta {
+  display: inline-grid;
+  width: min(9rem, 100%);
+  min-width: 0;
+  grid-template-columns: 2rem 0.5rem minmax(0, 1fr);
+  align-items: center;
+  justify-self: end;
+  gap: var(--space-2);
+  padding-inline-end: var(--space-2);
+}
+
+.combat-transcript-header .combat-transcript-meta {
+  grid-template-columns: 2rem 0.5rem minmax(3.5rem, 1fr);
+}
+
+.combat-transcript-entry .board-row-number {
+  width: 2rem;
+  flex-basis: 2rem;
+}
+
+.combat-transcript-entry .combat-actor {
+  align-self: center;
+  overflow: hidden;
+  color: var(--muted);
+  font-size: var(--text-1);
+  line-height: 1;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.combat-meta-divider {
+  color: var(--border);
+  text-align: center;
+}
+
+.combat-transcript-entry .combat-transcript-move {
+  min-width: 0;
+  justify-self: center;
+}
+
+.combat-transcript-entry.is-empty .combat-transcript-empty {
+  min-width: 0;
+  justify-self: center;
+}
+
+.combat-transcript .tile {
+  width: clamp(1.45rem, 4.4dvh, 2.15rem);
+  font-size: clamp(0.62rem, 2dvh, 0.9rem);
+}
+
+.combat-input {
+  display: grid;
+  width: min(44rem, 100%);
+  margin: 0 auto;
+  gap: var(--space-2);
+  padding: var(--space-2);
+}
+
+.game-layout .tile,
+.combat-transcript-frame .tile,
+.combat-input .tile {
+  max-width: calc((100vw - 6rem) / var(--word-length, 5));
+}
+
+@media (min-width: 48rem) and (min-height: 43.76rem) {
+  .game-layout:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .game-board
+    .tile {
+    width: clamp(3.625rem, min(5vw, 7dvh), 4.5rem);
+    font-size: clamp(1.2rem, 2.4vw, 1.7rem);
+  }
+
+  .combat-transcript-frame:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .combat-transcript
+    .tile,
+  .combat-input:is(
+      [data-word-length='2'],
+      [data-word-length='3'],
+      [data-word-length='4'],
+      [data-word-length='5'],
+      [data-word-length='6'],
+      [data-word-length='7']
+    )
+    .tile {
+    width: clamp(3.25rem, min(4.4vw, 6.2dvh), 4rem);
+    font-size: clamp(1.05rem, 2vw, 1.45rem);
+  }
+}
+
+.combat-input > .board-row {
+  margin-inline: auto;
+}
+
+/*
+ * W2a. The draft caret is an invitation to type, so it must not blink while the other
+ * player is on move. `content: none` removes the pseudo-element outright rather than
+ * hiding it, which also settles the two sibling rules that target the same selector
+ * further up this file — the reduced-motion `animation: none` and the forced-colors
+ * `background: Highlight` — without either having to be restated here.
+ *
+ * Scoped to `.combat-input`, which only COMBAT renders. Solo shares this stylesheet and
+ * is unaffected: there it is always the player's turn, and nothing sets the attribute.
+ */
+.combat-input[data-turn-locked='true'] .board-row.is-draft .tile:empty:first-child::after {
+  content: none;
+}
+
+/*
+ * W2b. The existing dim was the generic `button:disabled` rule at 0.74 — the same value
+ * every disabled control in the app uses, from calendar days to form fields. Deepening
+ * the token would have dimmed the whole product, so this is scoped to the keyboard of a
+ * COMBAT match on the opponent's turn. It composites with the per-key 0.74 rather than
+ * replacing it; the measured result is asserted by the contrast sweep against the 3:1
+ * disabled floor, in both schemes across every accent.
+ */
+.combat-input[data-turn-locked='true'] .keyboard {
+  opacity: 0.74;
+}
+
+.combat-secondary-action {
+  align-self: flex-end;
+}
+
+@media (max-width: 47.99rem) {
+  .game-layout {
+    width: calc(100vw - 0.6rem);
+    max-width: 100%;
+    height: 100%;
+    min-height: 0;
+    grid-template-rows: auto minmax(0, 1fr) auto auto auto;
+    gap: var(--space-2);
+    padding: 0.35rem max(0.28rem, env(safe-area-inset-left))
+      max(0.35rem, env(safe-area-inset-bottom));
+  }
+
+  .game-status {
+    display: grid;
+    min-height: 2.4rem;
+    grid-template-columns: minmax(7.2rem, auto) minmax(0, 1fr);
+    flex-direction: initial;
+  }
+
+  .game-mode-lockup {
+    min-width: 0;
+    border-inline-end: var(--terminal-rule);
+    border-bottom: 0;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .game-context {
+    display: none;
+  }
+
+  /*
+   * V7-04. The play title steps down one scale step below its desktop size. At the
+   * narrowest supported width the status bar is a single row shared with the fact
+   * chips; a 17px title consumes enough of it to push those chips onto a second line,
+   * which costs the board the vertical room it needs to show six rows inside its own
+   * region at 320x568. 14px keeps a clear rank over the 11px chips and keeps one row.
+   */
+  .game-status h1 {
+    font-size: var(--text-3);
+  }
+
+  .game-status-facts {
+    min-width: 0;
+    flex-wrap: wrap;
+    overflow: hidden;
+  }
+
+  .game-status-facts > span {
+    min-height: 2.35rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .game-region-header {
+    min-height: 1.5rem;
+    padding: var(--space-2) var(--space-3);
+  }
+
+  .game-board {
+    gap: var(--space-1);
+    padding: var(--space-2) var(--space-2);
+  }
+
+  .tile {
+    width: min(3.35rem, 15.5vw, max(2.85rem, 6.35dvh));
+  }
+
+  .board-entry {
+    gap: var(--space-2);
+  }
+
+  .game-message {
+    height: 1.95rem;
+    min-height: 1.95rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .game-auxiliary-toggle {
+    display: flex;
+  }
+
+  .game-auxiliary-content {
+    padding-top: var(--space-2);
+  }
+
+  .evidence-legend {
+    justify-content: flex-start;
+  }
+
+  .keyboard {
+    width: 100%;
+    max-width: calc(100vw - max(0.56rem, env(safe-area-inset-left)));
+    gap: 0.18rem;
+  }
+
+  .keyboard-row {
+    display: grid;
+    width: 100%;
+    gap: 0.14rem;
+  }
+
+  .keyboard-row:nth-child(1) {
+    grid-template-columns: repeat(10, minmax(0, 1fr));
+  }
+
+  .keyboard-row:nth-child(2) {
+    grid-template-columns: repeat(9, minmax(0, 1fr));
+  }
+
+  .keyboard-row:nth-child(3) {
+    grid-template-columns: minmax(3.45rem, 1.7fr) repeat(7, minmax(0, 1fr)) minmax(3.45rem, 1.7fr);
+  }
+
+  button.key,
+  button.key.is-wide {
+    min-height: 2.75rem;
+    width: 100%;
+    padding-inline: 0.05rem;
+  }
+
+  .combat-game {
+    gap: var(--space-2);
+  }
+
+  .combat-game .game-status {
+    flex: 0 0 auto;
+  }
+
+  .combat-game-status {
+    grid-template-columns: minmax(7.2rem, auto) minmax(0, 1fr);
+  }
+
+  .combat-status-facts {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) max-content;
+    overflow: visible;
+  }
+
+  .combat-status-facts > .combat-match-detail {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .combat-status-facts > .combat-turn-state {
+    min-height: 2.35rem;
+    border-inline-start: var(--terminal-rule);
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .combat-score {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .combat-score > div {
+    min-height: 2.4rem;
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-1);
+  }
+
+  .combat-transcript-header {
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+  }
+
+  .combat-transcript {
+    padding: var(--space-2);
+  }
+
+  .combat-transcript-entry {
+    grid-template-columns: minmax(0, 1fr) max-content minmax(0, 1fr);
+    gap: var(--space-2);
+  }
+
+  .combat-transcript-meta {
+    width: min(5.5rem, 100%);
+    grid-template-columns: 1.45rem 0.4rem minmax(0, 1fr);
+    gap: var(--space-2);
+    padding-inline-end: var(--space-2);
+  }
+
+  .combat-transcript-header .combat-transcript-meta {
+    grid-template-columns: 1.45rem 0.4rem minmax(2.75rem, 1fr);
+  }
+
+  .combat-transcript-entry .board-row-number {
+    width: 1.75rem;
+    flex-basis: 1.75rem;
+  }
+
+  .combat-transcript-entry .combat-transcript-move {
+    justify-self: center;
+  }
+
+  .combat-transcript .tile {
+    width: min(2.8rem, 12.4vw, max(2.1rem, 5.2dvh));
+  }
+
+  .combat-input {
+    gap: var(--space-2);
+    padding: var(--space-2);
+  }
+
+  .combat-input > .board-row .tile {
+    width: min(2.8rem, 12.4vw, max(2.1rem, 5.2dvh));
+  }
+
+  .combat-secondary-action {
+    min-height: 2.75rem;
+    font-size: var(--text-1);
+  }
+}
+
+@media (max-width: 22rem) {
+  .combat-game-status {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .combat-game-status .game-mode-lockup {
+    border-inline-end: 0;
+    border-bottom: var(--terminal-rule);
+  }
+}
+
+@media (max-width: 47.99rem) and (max-height: 43.75rem) {
+  .game-auxiliary-content {
+    max-height: 8.5rem;
+    overflow: auto;
+  }
+
+  .game-auxiliary .evidence-legend {
+    display: none;
+  }
+}
+
+@media (max-width: 35.49rem) and (max-height: 40rem) {
+  .game-board {
+    gap: var(--space-1);
+    padding-block: var(--space-1);
+  }
+
+  .game-board .tile {
+    width: clamp(1.75rem, 5.1dvh, 2.2rem);
+  }
+}
+
+@media (max-width: 35.49rem) and (min-height: 40.01rem) and (max-height: 43.75rem) {
+  .game-board {
+    gap: var(--space-1);
+    padding-block: var(--space-1);
+  }
+
+  .game-board .tile {
+    width: clamp(1.75rem, 6.2dvh, 2.85rem);
+  }
+}
+
+@media (max-height: 43.75rem) {
+  .game-auxiliary-toggle {
+    display: flex;
+  }
+}
+
+@media (min-width: 35.5rem) and (max-height: 30rem) {
+  .game-layout {
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
+    grid-template-rows: auto minmax(0, 1fr) auto;
+    column-gap: var(--space-3);
+  }
+
+  .game-layout > .game-status {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .game-layout > .game-board-region {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .game-layout > .game-message {
+    grid-column: 1;
+    grid-row: 3;
+  }
+
+  .game-layout > .game-auxiliary {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .game-layout > .keyboard {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .game-board .tile {
+    width: clamp(1.15rem, 4.5dvh, 1.55rem);
+  }
+
+  .game-board {
+    gap: var(--space-1);
+    padding-block: var(--space-1);
+  }
+
+  .combat-game {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(18rem, 0.9fr);
+    grid-template-rows: auto minmax(0, 1fr) auto auto;
+    column-gap: var(--space-3);
+  }
+
+  .combat-game > .game-status {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+
+  .combat-game > .combat-score,
+  .combat-game > .combat-wait-state {
+    grid-column: 1;
+  }
+
+  .combat-game > .combat-transcript-frame {
+    grid-column: 1;
+    grid-row: 2 / 5;
+  }
+
+  .combat-game > .combat-input {
+    grid-column: 2;
+    grid-row: 2;
+    align-self: center;
+  }
+
+  .combat-game > .game-message {
+    grid-column: 2;
+    grid-row: 3;
+  }
+
+  .combat-game > .combat-secondary-action {
+    grid-column: 2;
+    grid-row: 4;
+    justify-self: end;
+  }
+}
+
+@media (forced-colors: active) {
+  .game-history-shell,
+  .game-history-viewport,
+  .combat-transcript-frame,
+  .combat-transcript-header,
+  .game-auxiliary-toggle {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+
+  button.key.is-unknown,
+  button.key.is-absent,
+  button.key.is-removed {
+    border-color: CanvasText;
+    background: Canvas;
+    color: CanvasText;
+  }
+}

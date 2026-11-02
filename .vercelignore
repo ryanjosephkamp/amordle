@@ -1,0 +1,14 @@
+.cache/
+.git/
+.pnpm-store/
+.tooling/
+.vercel/
+coverage/
+dist/
+.next/cache/
+node_modules/
+out/
+playwright-report/
+test-results/
+supabase/
+*.log

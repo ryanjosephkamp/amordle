@@ -1,0 +1,364 @@
+/*
+ * Geometry and composition for the Help teaching figures.
+ *
+ * Route-scoped on purpose: `globals.css` and `tui-shell.css` ship from the root layout, so
+ * every rule added to either counts against the home and game CSS budgets even though it
+ * only ever paints on `/help`. Imported by the Help page alone, this costs those budgets
+ * nothing. The paint itself — tiles, evidence colors, keys — comes from the shared
+ * `board-surface.css`, so the figures cannot drift from the real board.
+ */
+
+/*
+ * `.help-example` caps every Help figure at 34rem, which is right for a three-swatch
+ * legend and wrong for a board. At 34rem the COMBAT figure sits below its own 44rem
+ * container breakpoint, so it would have stacked at EVERY width and the two-keyboard
+ * composition could never have appeared in the app at all — the artifact was reviewed at
+ * 800px, and this cap is the difference.
+ *
+ * 52rem is this rule's own choice, not an inherited bound: `.route-frame.is-narrow` reads
+ * `min(52rem, 100%)` in globals.css but is redeclared at `min(96rem, 100%)` in
+ * tui-shell.css, which loads second and wins. Delete the line below and the figures jump
+ * to roughly 1490px.
+ */
+.help-example.help-figure {
+  width: min(52rem, 100%);
+}
+
+.help-figure {
+  --tile-size: 2.4rem;
+  container-type: inline-size;
+}
+
+.help-figure .tile {
+  width: var(--tile-size);
+  font-size: calc(var(--tile-size) * 0.42);
+}
+
+/*
+ * The single-keyboard figures get the REAL keyboard: the same width rule the play routes
+ * use, the same key height, the same font ramp. At 44rem the Remove figure is
+ * pixel-for-pixel the keyboard a player actually types on. Only COMBAT compresses, below,
+ * because two keyboards have to flank a board.
+ */
+.help-figure .keyboard {
+  width: min(44rem, 100%);
+  margin-inline: auto;
+}
+
+.help-combat .keyboard {
+  width: 100%;
+}
+
+.help-combat :is(button, span).key {
+  min-height: 2.1rem;
+  padding: 0.3rem 0.1rem;
+  font-size: 0.7rem;
+}
+
+/*
+ * SUBMIT and DELETE, proportionally rather than at the real `3.5rem`.
+ *
+ * On the real 44rem keyboard that basis is 7.95% of the row. Reused as a fixed 56px inside
+ * a 247px figure column it would eat half the row and crush the seven letters beside it to
+ * about 12px. As a percentage it reproduces the real ratio at ANY width: the row-three
+ * letter lands at 0.92x the row-one key, against the game's own 0.93x.
+ *
+ * Declared after the compressed `.key` rule above on purpose — both are (0,2,1), so
+ * without this the figure's 0.7rem would win and the wide keys would render LARGER than
+ * real ones instead of smaller.
+ */
+.help-figure :is(button, span).key.is-wide {
+  flex-basis: 8%;
+  font-size: clamp(0.45rem, 1.4cqi, 0.66rem);
+}
+
+/*
+ * A pressed key. The game itself has no press state at all — `button:active` sets a 1px
+ * nudge in globals.css and tui-shell.css cancels it with `translate: 0` — so the only
+ * thing a real key ever shows is the hover treatment, which on touch IS the tap state,
+ * because hover latches after a tap. That treatment is the first two declarations here,
+ * copied from `button.key:hover:not(:disabled)` in board-surface.css.
+ *
+ * The amplification is the RING, doubled to 2px, not a fill — and that is a correction.
+ * The first attempt tinted the key with `--accent-soft`, which the new contrast sweep
+ * immediately caught at 1.31:1: an absent key carries near-white ink on a near-black
+ * ground, and dropping a light accent tint underneath it left white on pale green. A fill
+ * would have to be mixed differently for all five key states in both schemes across seven
+ * accents to stay safe. The ring cannot fail, because it never touches the text/background
+ * pair at all — and on a 22px key, 2px is proportionally far stronger than the 1px a real
+ * 68px key shows, so it reads as at least as emphatic as the fill did.
+ *
+ * It eases over the same `--duration-feedback` a real button uses, so it reads as a press
+ * rather than a flicker. Reduced motion clamps the transition; the figure stays legible.
+ */
+.help-figure :is(button, span).key.is-pressed {
+  border-color: var(--accent);
+  box-shadow: inset 0 0 0 2px var(--accent);
+}
+
+.help-stage {
+  border: var(--terminal-rule);
+  background: var(--surface-inset);
+  padding: var(--space-4);
+}
+
+.help-board {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.help-board-entry {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+.help-row-meta {
+  width: 5.2rem;
+  flex: 0 0 5.2rem;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.help-row-meta.is-seed {
+  color: var(--accent-text);
+}
+
+.help-note {
+  min-height: 2.4rem;
+  margin-block: var(--space-3) 0;
+  color: var(--muted);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+/*
+ * COMBAT. The board box reserves its FINAL nine-slot height from the first frame while the
+ * board itself grows inside it from six. Both requirements fall out of that
+ * one decision: the gameplay area stays above the midline between the two keyboards at
+ * every stage of the match, and the keyboards do not slide down the page as the board
+ * extends past row six — which is exactly when a reader is trying to look at them.
+ */
+.help-combat {
+  display: grid;
+  align-items: center;
+  gap: var(--space-4);
+  grid-template-columns: 1fr auto 1fr;
+}
+
+.help-combat-board {
+  min-height: 24rem;
+  grid-column: 2;
+}
+
+.help-combat-side {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-combat-side .keyboard {
+  width: 100%;
+}
+
+/*
+ * Rook is violet so that one keyboard is unmistakably not yours. If the viewer's own
+ * accent happens to BE violet, that distinction collapses and we are back to the defect
+ * this fixes — so in that one case Rook is retinted amber instead.
+ *
+ * Only the properties a keyboard and a draft row actually read are restated: the three
+ * `--key-unknown-*`, plus `--accent` and `--accent-soft` for the draft outline, caret and
+ * pressed fill, plus `--accent-text` for the turn marker. Values are lifted verbatim from
+ * the amber blocks in tui-shell.css; nothing new is invented.
+ *
+ * A custom accent that happens to look violet cannot be detected and is accepted.
+ */
+:root[data-accent='violet'] .help-combat [data-accent='violet'] {
+  --accent: oklch(0.73 0.14 80);
+  --accent-text: oklch(0.4 0.105 80);
+  --accent-soft: oklch(0.91 0.045 80);
+  --key-unknown-background: oklch(0.84 0.035 75);
+  --key-unknown-border: oklch(0.55 0.08 75);
+  --key-unknown-ink: oklch(0.2 0.025 75);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-accent='violet'] .help-combat [data-accent='violet'] {
+    --accent: oklch(0.8 0.13 80);
+    --accent-text: oklch(0.84 0.11 80);
+    --accent-soft: oklch(0.27 0.045 80);
+    --key-unknown-background: oklch(0.25 0.04 70);
+    --key-unknown-border: oklch(0.48 0.08 70);
+    --key-unknown-ink: oklch(0.95 0.01 75);
+  }
+}
+
+.help-combat-name {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  border-inline-start: 2px solid transparent;
+  padding-inline-start: var(--space-3);
+  color: var(--muted);
+  font-size: var(--text-1);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+/*
+ * The turn marker is the app's own `❯` idiom plus an accent rail — never an opacity
+ * change, which would drag the inactive keyboard's contrast down with it and make the
+ * figure fail the sweep for a purely decorative reason.
+ */
+.help-combat-name::before {
+  color: var(--border);
+  content: '❯';
+}
+
+.help-combat-side.is-active .help-combat-name {
+  border-inline-start-color: var(--accent);
+  color: var(--ink);
+}
+
+.help-combat-side.is-active .help-combat-name::before {
+  color: var(--accent-text);
+}
+
+/*
+ * Below roughly 44rem the three-column composition cannot hold two keyboards and a
+ * five-wide board, so it stacks. Still two players, one board, shared evidence — only the
+ * literal left-and-right is lost, which is the right thing to give up.
+ */
+@container (max-width: 44rem) {
+  .help-combat {
+    align-items: stretch;
+    grid-template-columns: 1fr;
+  }
+
+  .help-combat-board {
+    min-height: 0;
+    grid-column: 1;
+    grid-row: 2;
+  }
+}
+
+.help-tool-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.help-tool-button {
+  border: var(--terminal-rule);
+  padding: var(--space-2) var(--space-4);
+  color: var(--ink);
+  font-size: var(--text-1);
+  text-transform: uppercase;
+}
+
+.help-tool-button::before {
+  content: '[';
+}
+
+.help-tool-button::after {
+  content: ']';
+}
+
+.help-tool-button.is-firing {
+  border-color: var(--accent);
+  background: color-mix(in oklch, var(--accent-soft) 50%, transparent);
+}
+
+.help-result {
+  margin-block-start: var(--space-3);
+  border: 1px solid var(--danger);
+  padding: var(--space-3);
+  color: var(--ink);
+  font-size: var(--text-1);
+  text-align: center;
+}
+
+.help-calendar {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.help-weekdays,
+.help-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 2px;
+}
+
+.help-weekdays {
+  color: var(--muted);
+  font-size: 0.55rem;
+  text-align: center;
+}
+
+.help-day {
+  display: grid;
+  min-height: 2.6rem;
+  align-content: center;
+  justify-items: center;
+  gap: 1px;
+  border: var(--terminal-rule);
+  color: var(--ink);
+  font-size: 0.66rem;
+}
+
+.help-day small {
+  color: var(--muted);
+  font-size: 0.48rem;
+}
+
+.help-day.is-future {
+  opacity: var(--control-disabled-opacity);
+}
+
+.help-day.is-target {
+  border-color: var(--accent);
+}
+
+.help-day.is-unlocked {
+  border-color: var(--correct);
+}
+
+.help-day.is-selected {
+  background: var(--terminal-selected);
+  color: var(--terminal-selected-ink);
+}
+
+/* W3's rule, applied ahead of the defect rather than after it: secondary text on a
+   selected surface takes the token that exists for exactly that. */
+.help-day.is-selected small {
+  color: var(--terminal-selected-muted);
+}
+
+@media (forced-colors: active) {
+  .help-stage,
+  .help-tool-button,
+  .help-day,
+  .help-result {
+    border-color: CanvasText;
+    background: Canvas;
+  }
+
+  .help-day.is-selected {
+    background: Highlight;
+    color: HighlightText;
+  }
+
+  .help-day.is-selected small {
+    color: HighlightText;
+  }
+}

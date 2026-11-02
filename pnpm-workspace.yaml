@@ -1,0 +1,22 @@
+packages:
+  - '.'
+
+allowBuilds:
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@supabase/auth-js@2.110.9'
+  - '@supabase/functions-js@2.110.9'
+  - '@supabase/postgrest-js@2.110.9'
+  - '@supabase/realtime-js@2.110.9'
+  - '@supabase/storage-js@2.110.9'
+  - '@supabase/supabase-js@2.110.9'
+  - web-vitals@6.0.1
+
+onlyBuiltDependencies:
+  - '@tailwindcss/oxide'
+  - 'esbuild'
+  - 'sharp'
+  - 'supabase'

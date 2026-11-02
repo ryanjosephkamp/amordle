@@ -1,0 +1,110 @@
+{
+  "schemaVersion": 1,
+  "title": "Amordle physical keyboard navigation",
+  "lastReviewed": "2026-07-29",
+  "direct": [
+    {
+      "id": "home",
+      "keys": "Shift + 1",
+      "ariaKeyShortcuts": "Shift+1",
+      "code": "Digit1",
+      "label": "Home",
+      "href": "/",
+      "description": "Open the Home route."
+    },
+    {
+      "id": "solo",
+      "keys": "Shift + 2",
+      "ariaKeyShortcuts": "Shift+2",
+      "code": "Digit2",
+      "label": "Solo",
+      "href": "/play/solo",
+      "description": "Open Solo setup."
+    },
+    {
+      "id": "daily",
+      "keys": "Shift + 3",
+      "ariaKeyShortcuts": "Shift+3",
+      "code": "Digit3",
+      "label": "Daily",
+      "href": "/calendar",
+      "description": "Open the Daily calendar."
+    },
+    {
+      "id": "combat",
+      "keys": "Shift + 4",
+      "ariaKeyShortcuts": "Shift+4",
+      "code": "Digit4",
+      "label": "COMBAT",
+      "href": "/combat",
+      "description": "Open COMBAT."
+    },
+    {
+      "id": "data",
+      "keys": "Shift + 5",
+      "ariaKeyShortcuts": "Shift+5",
+      "code": "Digit5",
+      "label": "Data",
+      "href": "/history",
+      "description": "Open account History and data."
+    },
+    {
+      "id": "menu",
+      "keys": "Shift + M",
+      "ariaKeyShortcuts": "Shift+M",
+      "code": "KeyM",
+      "label": "Menu",
+      "href": null,
+      "description": "Open or close the main navigation menu."
+    }
+  ],
+  "patterns": [
+    {
+      "id": "focus",
+      "keys": "Tab / Shift + Tab",
+      "label": "Move focus",
+      "description": "Move forward or backward through available controls."
+    },
+    {
+      "id": "activate",
+      "keys": "Enter / Space",
+      "label": "Activate",
+      "description": "Activate the focused button, link, tab, or menu item."
+    },
+    {
+      "id": "dismiss",
+      "keys": "Escape",
+      "label": "Close",
+      "description": "Close the topmost menu or dialog and return focus to its trigger."
+    },
+    {
+      "id": "game-letters",
+      "keys": "A–Z",
+      "label": "Enter a letter",
+      "description": "Type into the active game. Shift + M is reserved for the global Menu shortcut."
+    },
+    {
+      "id": "game-delete",
+      "keys": "Backspace / Delete",
+      "label": "Delete",
+      "description": "Remove the final letter from the current guess."
+    },
+    {
+      "id": "game-submit",
+      "keys": "Enter",
+      "label": "Submit",
+      "description": "Submit a complete current guess."
+    },
+    {
+      "id": "composite",
+      "keys": "Arrow keys",
+      "label": "Move within a control",
+      "description": "Move through tabs, radio groups, menus, listboxes, and supported grids."
+    }
+  ],
+  "rules": [
+    "Global Shift shortcuts do not run while typing in a text field, textarea, select, editable region, or modal dialog.",
+    "Plain letters and numbers keep their ordinary meaning.",
+    "Touch and pointer controls remain fully supported; physical-keyboard navigation is optional."
+  ]
+}

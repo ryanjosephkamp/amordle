@@ -1,0 +1,55 @@
+'use client';
+
+import { useEffect, useState } from 'react';
+import { applyServiceWorkerUpdate } from '@/application/service-worker-update';
+
+export function PwaController() {
+  const [waiting, setWaiting] = useState<ServiceWorker | null>(null);
+
+  useEffect(() => {
+    if (!('serviceWorker' in navigator) || process.env.NODE_ENV !== 'production') {
+      return;
+    }
+    let registration: ServiceWorkerRegistration | null = null;
+    const register = async () => {
+      registration = await navigator.serviceWorker.register(
+        // `||`, not `??`: an empty stamp must fall back too, or the key never changes.
+        `/sw.js?v=${process.env.NEXT_PUBLIC_BUILD_ID || 'dev'}`,
+      );
+      if (registration.waiting) setWaiting(registration.waiting);
+      registration.addEventListener('updatefound', () => {
+        const worker = registration?.installing;
+        worker?.addEventListener('statechange', () => {
+          if (worker.state === 'installed' && navigator.serviceWorker.controller) {
+            setWaiting(worker);
+          }
+        });
+      });
+    };
+    const timer = window.setTimeout(() => void register(), 1_000);
+    return () => {
+      window.clearTimeout(timer);
+      void registration;
+    };
+  }, []);
+
+  if (!waiting) return null;
+  return (
+    <aside className="update-toast" aria-live="polite">
+      <span>An Amordle update is ready.</span>
+      <button
+        type="button"
+        onClick={() => {
+          applyServiceWorkerUpdate(waiting, navigator.serviceWorker, () =>
+            window.location.reload(),
+          );
+        }}
+      >
+        Update now
+      </button>
+      <button type="button" onClick={() => setWaiting(null)}>
+        Later
+      </button>
+    </aside>
+  );
+}

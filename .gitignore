@@ -1,0 +1,34 @@
+# Private environment and local service linkage
+.env
+.env.*
+!.env.example
+*.local
+.vercel/
+supabase/.temp/
+
+# Dependencies, repository-local toolchain, and package stores
+node_modules/
+.pnpm-store/
+.tooling/
+.next/
+out/
+.turbo/
+
+# Builds, tests, and logs
+dist/
+dist-ssr/
+coverage/
+playwright-report/
+test-results/
+blob-report/
+*.log
+
+# Local tool caches and test evidence
+.cache/
+tests/browser/__screenshots__/
+
+# Editors and operating systems
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
