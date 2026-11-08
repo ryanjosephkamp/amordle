@@ -61,7 +61,7 @@ const workedExamples = [
   ['You are rated 1200, your opponent 1400', 'Loss', '24', '−6'],
   ['You are rated 1400, your opponent 1200', 'Win', '24', '+6'],
   ['You are rated 1400, your opponent 1200', 'Loss', '24', '−18'],
-  ['Your first nine games, evenly matched', 'Win', '40', '+20'],
+  ['Your first ten games, evenly matched', 'Win', '40', '+20'],
 ] as const;
 
 const continuationTable = [
@@ -129,14 +129,14 @@ export default function MethodologyPage() {
                 <tr>
                   <td data-label="Value">K = 40</td>
                   <td data-label="What it is">
-                    Used while a rating is provisional — your first ten games in that pool. Ratings
+                    Used while a rating is provisional – your first ten games in that pool. Ratings
                     move quickly at first so a new player reaches roughly the right level fast.
                   </td>
                 </tr>
                 <tr>
                   <td data-label="Value">K = 24</td>
                   <td data-label="What it is">
-                    Used from the tenth game onward, once the rating has settled. One result can
+                    Used from the eleventh game onward, once the rating has settled. One result can
                     then move it by at most 24 points.
                   </td>
                 </tr>
@@ -203,7 +203,7 @@ export default function MethodologyPage() {
             entirely independent of the others.
           </p>
           <p>
-            There are ten clocks, two modes — OG and GO — and Hard Mode on or off. That is forty
+            There are ten clocks, two modes – OG and GO – and Hard Mode on or off. That is forty
             ranked Practice pools, plus a separate pool for each of the two ranked Daily modes. Your
             rating in one says nothing about your rating in another, and you can be provisional in
             one while established in another.
@@ -230,7 +230,7 @@ export default function MethodologyPage() {
           </div>
           <p>
             The first seven are a budget for the whole match: run out and you lose on time. The last
-            three are a budget for each move, which refills every turn — those are the
+            three are a budget for each move, which refills every turn – those are the
             correspondence games, played over days.
           </p>
           <p>
@@ -246,7 +246,7 @@ export default function MethodologyPage() {
           <p>
             Ratings move on the result, and the result comes from points. Each guess scores on the
             evidence it produced, and solving the word is worth far more than the letters that led
-            there — so a player who solves in three guesses beats a player who almost solves in six.
+            there – so a player who solves in three guesses beats a player who almost solves in six.
           </p>
           <div className="table-scroll">
             <table className="responsive-table">
@@ -286,9 +286,9 @@ export default function MethodologyPage() {
           </div>
           <p>
             In a GO chain the attempts tighten as you go: six on the first puzzle, then five, four,
-            three, and two from the fifth puzzle onward. Fewer attempts also means more unused ones
-            are unavailable, so later puzzles are worth less by way of the solve bonus, not by a
-            separate rule.
+            three, and two from the fifth puzzle onward. Fewer attempts leave fewer unused ones to
+            cash in, so later puzzles are worth less through the solve bonus, not through a separate
+            rule.
           </p>
           <p>
             When a match settles, the server does not trust the running total it was shown. It
@@ -303,7 +303,7 @@ export default function MethodologyPage() {
           <p>
             Within a pool, players are ranked by rating, highest first. Where ratings are equal the
             order is decided by games played, then by peak rating, then by which rating changed most
-            recently, and finally by profile identifier — so the order is always definite and never
+            recently, and finally by profile identifier – so the order is always definite and never
             reshuffles between visits.
           </p>
           <p>
@@ -315,7 +315,7 @@ export default function MethodologyPage() {
 
         <section>
           <h2>Experience and levels</h2>
-          <p>Experience comes from Solo games — Practice and Daily.</p>
+          <p>Experience comes from Solo games – Practice and Daily.</p>
           <div className="table-scroll">
             <table className="responsive-table">
               <thead>
@@ -329,7 +329,7 @@ export default function MethodologyPage() {
                   <td data-label="Outcome">Win</td>
                   <td data-label="Experience">
                     40, plus 20 for each puzzle solved, plus a speed bonus of 10 minus the number of
-                    guesses you made — nothing if you made ten or more.
+                    guesses you made – nothing if you made ten or more.
                   </td>
                 </tr>
                 <tr>
@@ -344,7 +344,7 @@ export default function MethodologyPage() {
           <p>
             Levels are a square curve: level <b>n</b> begins at 100 × (n−1)². So level 2 arrives at
             100 experience, level 3 at 400, level 4 at 900, level 5 at 1,600. Each level takes
-            longer than the last, deliberately — the number should keep meaning something after a
+            longer than the last, deliberately – the number should keep meaning something after a
             hundred games.
           </p>
           <p>
@@ -372,7 +372,7 @@ export default function MethodologyPage() {
                 <tr>
                   <td data-label="Outcome">Loss</td>
                   <td data-label="Coins">
-                    1 for each puzzle solved, up to 4 — so a long chain that ends badly is still
+                    1 for each puzzle solved, up to 4 – so a long chain that ends badly is still
                     worth something, but not much.
                   </td>
                 </tr>
@@ -403,7 +403,7 @@ export default function MethodologyPage() {
                 </tr>
                 <tr>
                   <td data-label="Item">Another guess</td>
-                  <td data-label="Cost">Varies — see below</td>
+                  <td data-label="Cost">Varies – see below</td>
                 </tr>
               </tbody>
             </table>
@@ -429,7 +429,7 @@ cost = (H − C + 3) × (n + 1)          minimum 1`}
           </pre>
           <p>
             Being closer makes the next guess cheaper, because <b>C</b> rises with the proportion of
-            the word you have placed correctly — measured on your best row for the puzzle you are
+            the word you have placed correctly – measured on your best row for the puzzle you are
             currently on, not across the whole chain. Buying repeatedly makes it steeply more
             expensive: the second extra guess costs twice the base, the third three times. For a
             five-letter word:
