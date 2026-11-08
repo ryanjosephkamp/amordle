@@ -6,7 +6,9 @@ import { RouteHeader } from '@/components/route-states';
 const CHANGELOG = 'https://ryanjosephkamp.github.io/amordle-updates/';
 const REPOSITORY = 'https://github.com/ryanjosephkamp/amordle';
 const ISSUES = `${REPOSITORY}/issues/new`;
+const SECURITY_REPORT = `${REPOSITORY}/security/advisories/new`;
 const OPENLIST = 'https://english-openlist.pages.dev/';
+const DATASET = 'https://huggingface.co/datasets/ryanjosephkamp/english-openlist';
 
 export default function AboutPage() {
   return (
@@ -32,9 +34,9 @@ export default function AboutPage() {
             </li>
             <li>
               <strong>Comprehensive word lists:</strong> Solutions come from the{' '}
-              <ExternalLink href={OPENLIST}>English OpenList</ExternalLink>, the world&rsquo;s
-              largest list of Scrabble-compatible (and Wordle-compatible) English words. No valid
-              English word is off-limits.
+              <ExternalLink href={OPENLIST}>English OpenList</ExternalLink>, a free list of over
+              345,000 English words, checked against dictionaries every night. No valid English word
+              is off-limits.
             </li>
             <li>
               <strong>Game customization:</strong> Choose your own word lengths, solution
@@ -80,14 +82,15 @@ export default function AboutPage() {
         <section>
           <h2>Report something</h2>
           <p>
-            Bugs, security problems, and ideas all go to the same issue tracker. Anything you can
-            add about what you were doing at the time helps.
+            Bugs and ideas go to the issue tracker. Anything you can add about what you were doing
+            at the time helps. Security problems go through GitHub&rsquo;s private reporting
+            instead, so nobody sees them before they&rsquo;re fixed.
           </p>
           <div className="action-row">
             <ExternalLink href={`${ISSUES}?labels=bug&title=Bug%3A%20`} variant="button">
               REPORT A BUG
             </ExternalLink>
-            <ExternalLink href={`${ISSUES}?labels=security&title=Security%3A%20`} variant="button">
+            <ExternalLink href={SECURITY_REPORT} variant="button">
               REPORT A SECURITY ISSUE
             </ExternalLink>
             <ExternalLink
@@ -98,31 +101,57 @@ export default function AboutPage() {
             </ExternalLink>
           </div>
           <p>
-            The game is built in the open at <ExternalLink href={REPOSITORY}>GitHub</ExternalLink>.
+            The source is on <ExternalLink href={REPOSITORY}>GitHub</ExternalLink> under the
+            AGPL-3.0.
           </p>
         </section>
         <section>
           <h2>Where the words come from</h2>
           <p>
-            Every word in the game is drawn from the English OpenList, an open dataset of English
-            words also built by Ryan Kamp. It is published in full, so the vocabulary this game
-            draws on can be inspected rather than taken on trust.
+            Every word in the game is drawn from the{' '}
+            <ExternalLink href={OPENLIST}>English OpenList</ExternalLink> (EOL), Ryan&rsquo;s
+            attempt to assemble the world&rsquo;s biggest, most up-to-date, totally free dataset of
+            &ldquo;valid&rdquo; English words.
+          </p>
+          <p>
+            If you want to make{' '}
+            <Link href="/">a word game that checks whether a string of letters is legit</Link>, or
+            if you want to find{' '}
+            <ExternalLink href="https://ars-magna.pages.dev/">
+              every possible way to arrange the letters of anything into real words
+            </ExternalLink>
+            , then you need to know which words are acceptable and which ones aren&rsquo;t. But new
+            words are added to dictionaries practically every day, and until the EOL, there was no
+            suitable open list of this magnitude and updated on a daily basis.
+          </p>
+          <p>
+            And if you&rsquo;re wondering what makes a word &ldquo;valid&rdquo; or
+            &ldquo;invalid&rdquo; and think you have a better definition for wordhood, join the
+            club. You might even want your own EOL that uses a different validation algorithm. If
+            that&rsquo;s the case, then check out the EOL&rsquo;s cousin, the{' '}
+            <ExternalLink href="https://common-english-openlist.pages.dev/">
+              Common English OpenList
+            </ExternalLink>{' '}
+            (CEOL), which was created for exactly this purpose.
+          </p>
+          <p>
+            The EOL is <ExternalLink href={DATASET}>published in full</ExternalLink>, so the
+            vocabulary this game draws on can be inspected rather than taken on trust. The game
+            ships a pinned copy, so a word added to the EOL shows up here after the next reviewed
+            refresh.
           </p>
           <div className="action-row">
             <ExternalLink href={OPENLIST} variant="button">
-              THE OPENLIST
+              THE ENGLISH OPENLIST
             </ExternalLink>
-            <ExternalLink
-              href="https://huggingface.co/datasets/ryanjosephkamp/english-openlist"
-              variant="button"
-            >
-              DATASET
+            <ExternalLink href={DATASET} variant="button">
+              HUGGING FACE DATASET
             </ExternalLink>
             <ExternalLink
               href="https://github.com/ryanjosephkamp/english-openlist"
               variant="button"
             >
-              SOURCE
+              EOL ON GITHUB
             </ExternalLink>
           </div>
         </section>

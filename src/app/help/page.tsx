@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Link from 'next/link';
 import { CreditRow } from '@/components/credit-row';
 import { RouteHeader } from '@/components/route-states';
 import {
@@ -46,6 +47,10 @@ const sections: ReadonlyArray<readonly [string, ReactNode]> = [
           dark.
         </li>
       </ul>
+      <p>
+        Reading one row: in the sample row, C is green (correct spot), R is yellow (present
+        elsewhere), and A is dark (not in the word).
+      </p>
     </>,
   ],
   [
@@ -55,7 +60,7 @@ const sections: ReadonlyArray<readonly [string, ReactNode]> = [
       <ul>
         <li>OG/Wordle, but in a multi-puzzle chain.</li>
         <li>5, 7, or 10 puzzles (always 5 for Daily).</li>
-        <li>Solutions accumulate as guesses in later puzzles.</li>
+        <li>Each solved answer carries forward as a guess in the next puzzle.</li>
       </ul>
     </>,
   ],
@@ -70,8 +75,11 @@ const sections: ReadonlyArray<readonly [string, ReactNode]> = [
       </ul>
       <p>Daily:</p>
       <ul>
-        <li>Solo Daily: 5 letters, local time code.</li>
-        <li>COMBAT Daily: 5 letters, Universal Time Code (UTC).</li>
+        <li>Solo Daily: 5 letters, rolls over at your local midnight.</li>
+        <li>
+          COMBAT Daily: 5 letters, rolls over at midnight UTC (Coordinated Universal Time), so a
+          ranked match is the same puzzle everywhere.
+        </li>
       </ul>
     </>,
   ],
@@ -81,18 +89,32 @@ const sections: ReadonlyArray<readonly [string, ReactNode]> = [
       <p>Same as Wordle and Hurdle:</p>
       <ul>
         <li>Green letters (✓): must stay fixed.</li>
-        <li>Yellow letters (~): must be guessed at least as many times as evidence shows.</li>
+        <li>
+          Yellow letters (~): must appear in later guesses at least as many times as the evidence
+          shows.
+        </li>
         <li>Dark letters (×): must be avoided if completely absent.</li>
       </ul>
     </>,
   ],
   [
     'COMBAT',
-    'Players alternate accepted turns. Refreshing never spends a turn, and rejected guesses change nothing. Public Live views are read-only and keep private player details hidden.',
+    'COMBAT needs an account. Players alternate accepted turns. Refreshing never spends a turn, and rejected guesses change nothing. Public Live views are read-only and keep private player details hidden.',
   ],
   [
     'Coins and tools',
     'Reveal One Letter costs 25 coins and Remove Incorrect Letters costs 40. A locked past Daily costs 60. Continuations add exactly one Practice attempt and become more expensive as they are used. Retrying a confirmed purchase never charges twice.',
+  ],
+  [
+    'Daily streak',
+    <>
+      <p>
+        Your streak counts consecutive days on which you finished a Daily, OG or GO. Finishing
+        counts, not winning, so a Daily you lose keeps it. Miss a day and it starts over at one.
+        Unlocking a past Daily can&rsquo;t repair a streak.{' '}
+        <Link href="/methodology">The methodology page</Link> has the exact rules.
+      </p>
+    </>,
   ],
   [
     'Access and navigation',
@@ -134,7 +156,7 @@ export default function HelpPage() {
           </section>
         ))}
         <details className="help-advanced" id="keyboard-navigation">
-          <summary>Mouse-free mode — for keyboard diehards</summary>
+          <summary>Mouse-free mode – for keyboard diehards</summary>
           <div>
             <p>
               The entire interface remains clickable and touch-friendly. On desktop, these shortcuts

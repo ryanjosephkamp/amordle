@@ -506,7 +506,7 @@ test.describe('route and public boundary matrix', () => {
     const help = page.locator('#main-content');
     await expect(help.getByText(/ONE ANSWER BECOMES THE NEXT PUZZLE/i)).toBeVisible();
     await expect(help.getByText(/BUILD A COMPATIBLE HARD MODE GUESS/i)).toBeVisible();
-    const advanced = help.getByText(/Mouse-free mode — for keyboard diehards/i);
+    const advanced = help.getByText(/Mouse-free mode – for keyboard diehards/i);
     await expect(advanced).toBeVisible();
     await expect(help.locator('#keyboard-navigation')).not.toHaveAttribute('open', '');
     await advanced.click();
