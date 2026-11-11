@@ -83,4 +83,6 @@ Bug reports and feature requests are welcome as [issues](https://github.com/ryan
 
 Use it, change it, self-host it. The one condition is that if you run a modified version as a public service, you publish your source too. Amordle exists because word games got worse when they got monetized; the license is there so this one cannot quietly become the thing it was built against.
 
-The bundled word lists come from the English OpenList and are under the MIT license.
+The bundled word lists come from the [English OpenList](https://huggingface.co/datasets/ryanjosephkamp/english-openlist). Its maintainer's own contribution is MIT, and the sources it was assembled from keep their own terms; the dataset's card sets them out.
+
+The interface is set in [Geist](https://github.com/vercel/geist-font) Sans and Geist Mono, under the [SIL Open Font License 1.1](https://github.com/vercel/geist-font/blob/main/OFL.txt).
