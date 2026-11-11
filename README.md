@@ -50,6 +50,7 @@ pnpm dev
 ## Checks
 
 ```sh
+pnpm browser:install        # once, before the browser suites: Chromium, Firefox, and WebKit into .cache/playwright
 pnpm check                  # format, lint, types, build, and the structural verifiers
 pnpm test:domain            # pure domain tests, no browser
 pnpm test:browser           # component and interaction tests
@@ -59,7 +60,7 @@ pnpm test:acceptance:local  # all of the above, in order
 pnpm test:e2e:services      # the same flows against real services; needs the E2E_* values in .env.example
 ```
 
-The verifiers under `pnpm check` are the unusual part. They assert things types cannot: that the migration set is append-only and its applied files unchanged, that server-only code never reaches the browser bundle, that the published scoring numbers still match the SQL that computes them, and that the bundle stays inside its size budgets.
+The verifiers under `pnpm check` are the unusual part. They assert things types cannot: that the migration set is append-only and its applied files unchanged, that server-only code never reaches the browser bundle, and that the bundle stays inside its size budgets. The domain tests check that the published scoring numbers still match the SQL that computes them.
 
 ## Layout
 
