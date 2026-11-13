@@ -159,6 +159,10 @@ export default function AboutPage() {
           <h2>Credit</h2>
           <p>
             Built by <ExternalLink href="https://ryanjosephkamp.github.io">Ryan Kamp</ExternalLink>.
+            Set in <ExternalLink href="https://github.com/vercel/geist-font">Geist</ExternalLink>{' '}
+            (SIL Open Font License 1.1). The word lists come from the{' '}
+            <ExternalLink href={DATASET}>English OpenList</ExternalLink>; its dataset card gives
+            their terms.
           </p>
           <div className="action-row">
             <Link className="button" href="/players/f08161d7-6d57-4142-b42d-7bcf86b983fc">

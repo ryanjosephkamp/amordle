@@ -111,13 +111,15 @@ function normalizeSource(source) {
   assert(commitPattern.test(source.upstreamCommit), 'Invalid upstream dataset commit.');
   assert(hashPattern.test(source.upstreamManifestSha256), 'Invalid upstream manifest SHA-256.');
   assert(/^\d{4}-\d{2}-\d{2}$/.test(source.releaseDate), 'Invalid upstream release date.');
-  assert(source.license === 'MIT', 'Unexpected word-list license.');
+  // The English OpenList's dataset tag: the maintainer's contribution is MIT, and the
+  // sources keep their own terms (its card and NOTICES.md on Hugging Face).
+  assert(source.license === 'other', 'Unexpected word-list license.');
   return {
     dataset: WORD_DATASET,
     upstreamCommit: source.upstreamCommit,
     upstreamManifestSha256: source.upstreamManifestSha256,
     releaseDate: source.releaseDate,
-    license: 'MIT',
+    license: 'other',
     generatorVersion: WORD_GENERATOR_VERSION,
   };
 }
