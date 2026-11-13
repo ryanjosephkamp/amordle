@@ -40,7 +40,7 @@ const candidate = buildRuntimeAuthority(upstream.banks, {
     upstreamCommit,
     upstreamManifestSha256: upstreamManifest.sha256,
     releaseDate: upstreamManifest.manifest.release_date,
-    license: 'MIT',
+    license: 'other',
   },
 });
 const comparison = compareWordAuthorities(current, candidate);

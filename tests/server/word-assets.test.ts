@@ -43,7 +43,7 @@ const manifestSchema = z
         upstreamCommit: z.string().regex(/^[a-f0-9]{40}$/),
         upstreamManifestSha256: hashSchema,
         releaseDate: z.iso.date(),
-        license: z.literal('MIT'),
+        license: z.literal('other'),
         generatorVersion: z.literal('2.1.0'),
       })
       .strict(),
