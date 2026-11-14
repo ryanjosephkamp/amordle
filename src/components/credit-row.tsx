@@ -48,7 +48,7 @@ export function CreditRow() {
         </li>
         <li>
           <a
-            href="https://www.linkedin.com/in/rjk1999"
+            href="https://www.linkedin.com/in/ryanjosephkamp/"
             aria-label="Ryan Kamp on LinkedIn"
             title="LinkedIn"
           >

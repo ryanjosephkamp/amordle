@@ -239,7 +239,7 @@ test.describe('route and public boundary matrix', () => {
       await expect(row.getByText('Made by Ryan Kamp')).toBeVisible();
       await expect(row.getByRole('link', { name: 'Ryan Kamp on LinkedIn' })).toHaveAttribute(
         'href',
-        'https://www.linkedin.com/in/rjk1999',
+        'https://www.linkedin.com/in/ryanjosephkamp/',
       );
       await expect(row.getByRole('link', { name: 'Sponsor on GitHub' })).toBeVisible();
     }
