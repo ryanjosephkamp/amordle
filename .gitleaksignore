@@ -1,0 +1,2 @@
+# A word in the 16-letter list matches the Confluent token pattern; it is a word, not a key.
+data/word-lists/words_length_16.json:confluent-access-token:1
