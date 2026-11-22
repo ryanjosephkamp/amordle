@@ -213,14 +213,24 @@ button.key:focus-visible:not(:disabled) {
   font-size: clamp(0.54rem, 1.8vw, 0.66rem);
 }
 
+/*
+ * Correct and present keys are solid fills with their own ink. The tiles' translucent
+ * mix was too close to the untried key, which is itself a pale tint of the accent: under
+ * the default accent a correct key measured RGB 179, 211, 186 against an untried key's
+ * 179, 211, 196, and a present key sat as close to an untried key under the amber
+ * accent. A solid fill differs from every accent's untried key in lightness, in both
+ * schemes, and the mark (`game-keyboard.tsx`) carries the state without color.
+ */
 :is(button, span).key.is-correct {
-  border-color: var(--correct);
-  background: color-mix(in oklch, var(--correct) 34%, transparent);
+  border-color: var(--key-correct-border);
+  background: var(--key-correct-background);
+  color: var(--key-correct-ink);
 }
 
 :is(button, span).key.is-present {
-  border-color: var(--present);
-  background: color-mix(in oklch, var(--present) 31%, transparent);
+  border-color: var(--key-present-border);
+  background: var(--key-present-background);
+  color: var(--key-present-ink);
 }
 
 :is(button, span).key.is-absent {

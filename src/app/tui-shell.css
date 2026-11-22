@@ -41,6 +41,16 @@
   --key-absent-background: oklch(0.18 0.01 220);
   --key-absent-border: oklch(0.34 0.018 220);
   --key-absent-ink: oklch(0.96 0.006 210);
+  /*
+   * Solid keyboard fills for the two found states. Semantic like the tiles' colors, so
+   * no accent changes them; each pairs with an ink of its own, never the accent's.
+   */
+  --key-correct-background: oklch(0.45 0.13 145);
+  --key-correct-border: oklch(0.36 0.12 145);
+  --key-correct-ink: oklch(0.98 0.006 145);
+  --key-present-background: oklch(0.72 0.14 85);
+  --key-present-border: oklch(0.52 0.12 85);
+  --key-present-ink: oklch(0.14 0.02 85);
   --danger: oklch(0.56 0.19 28);
   /*
    * W4b. The ink counterpart to `--danger`, completing the pair that `--correct-text` and
@@ -202,6 +212,12 @@
     --key-absent-background: oklch(0.11 0.01 220);
     --key-absent-border: oklch(0.34 0.018 220);
     --key-absent-ink: oklch(0.94 0.008 205);
+    --key-correct-background: oklch(0.7 0.15 145);
+    --key-correct-border: oklch(0.8 0.13 145);
+    --key-correct-ink: oklch(0.14 0.02 145);
+    --key-present-background: oklch(0.78 0.14 85);
+    --key-present-border: oklch(0.86 0.11 85);
+    --key-present-ink: oklch(0.14 0.02 85);
     --danger: oklch(0.7 0.18 28);
     --danger-text: oklch(0.8 0.13 28);
     --attention-background: var(--accent);

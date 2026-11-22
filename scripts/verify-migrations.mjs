@@ -89,7 +89,14 @@ const authorizedAdditiveMigrations = new Map([
 ]);
 // Reviewed and written but NOT yet applied to the linked project. Empty is the
 // normal state; an entry here means the repository is ahead of the database.
-const reviewedPendingMigrations = new Map([]);
+const reviewedPendingMigrations = new Map([
+  // Lets guests read the public ranked leaderboard, as they already read the player
+  // directory (written 2026-11-21; not applied).
+  [
+    '20261121120000_amordle_public_leaderboard_guests_v1.sql',
+    'fe9f83378bbd9d3ef5b55aedb4e03a7f997f35295928b098571db3e1c06440c5',
+  ],
+]);
 const sha256 = (value) => createHash('sha256').update(value).digest('hex');
 const failures = [];
 

@@ -4,6 +4,18 @@ type KeyState = 'unknown' | 'correct' | 'present' | 'absent' | 'removed';
 
 const keyboardRows = ['qwertyuiop', 'asdfghjkl', 'zxcvbnm'] as const;
 
+/*
+ * The same marks the board's tiles carry, so a key never depends on its color alone.
+ * A correct key once differed from an untried one by a few points of blue (RGB 179, 211,
+ * 186 against 179, 211, 196 under the default accent) and had no mark at all.
+ */
+const keyMarks: Partial<Record<KeyState, string>> = {
+  correct: '✓',
+  present: '~',
+  absent: '×',
+  removed: '−',
+};
+
 export function GameKeyboard({
   evidence = {},
   disabled = false,
@@ -50,14 +62,9 @@ export function GameKeyboard({
                 data-evidence={state}
               >
                 <span>{letter.toUpperCase()}</span>
-                {state === 'absent' && (
+                {keyMarks[state] && (
                   <span className="key-evidence" aria-hidden="true">
-                    ×
-                  </span>
-                )}
-                {state === 'removed' && (
-                  <span className="key-evidence" aria-hidden="true">
-                    −
+                    {keyMarks[state]}
                   </span>
                 )}
               </button>

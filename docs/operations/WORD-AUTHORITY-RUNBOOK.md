@@ -13,11 +13,25 @@ or an operator workflow is unavailable.
 - Upstream revision:
   `5bda5dec2a7ee0f7b2d770ea45ef3254d02b5e08`
 - Runtime revision:
-  `6e60b3b6d7d2e121ca36d8006ec8d7162f76fe852000f8fd4b31256e77661703`
+  `9e9c758b692c9fd13b31741ffaf41e9162d5ecd96850114eded47aec2d601c40`
 - Generator: `2.1.0`
 - Lengths: 2–35, 34/34 files
-- Committed runtime output: 6,097,886 bytes
-- Generated public output: 6,097,886 bytes, ignored by Git
+- Answers: 53,107 (valid guesses unchanged at 378,661)
+- Committed runtime output: 5,990,501 bytes
+- Generated public output: 5,990,501 bytes, ignored by Git
+
+### Answers withdrawn on November 21, 2026
+
+The English OpenList demoted 33,594 generated forms in August 2026 and removed
+332 words in November, after this authority was pinned. 6,181 of its 59,288
+answers (lengths 6 to 35; lengths 2 to 5, and so the Daily, were untouched) were
+no longer on the OpenList's valid list (`data/merged_valid_words.txt` at dataset
+commit `8aa01690216847b9491ab459dc99eb3333d1fa11`, 344,830 words), such as
+*agiler* and *abnormalest*. They were removed from `answers`, in place and in
+order, and each changed length's `targetSampleSize` now records the answers it
+kept. The valid guesses were left as they were. A full refresh from a current
+upstream commit would also re-sample the answers and drop the demoted guesses;
+it is a separate change, to review on its own.
 
 Generator 2.1 validates the upstream curation seed but removes it from runtime
 and public files. Public assets contain candidate answers and accepted guesses;
