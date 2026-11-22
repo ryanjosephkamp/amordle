@@ -124,7 +124,7 @@ export const FigureKeyboard = memo(function FigureKeyboard({
             return (
               <span className={classes.filter(Boolean).join(' ')} key={letter}>
                 {letter.toUpperCase()}
-                {state === 'absent' || state === 'removed' ? (
+                {mark ? (
                   <span className="key-evidence" aria-hidden="true">
                     {mark}
                   </span>
